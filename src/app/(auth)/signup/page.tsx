@@ -77,7 +77,7 @@ export default function SignUpPage() {
     e.preventDefault();
     if (!passOk || !passwordsMatch) return;
     run(async () => {
-      const captchaToken = await getCaptchaToken("signup");
+      const captchaToken = await getCaptchaToken("signup_start");
       await authApi.signupStart({ email, password, captchaToken, accessCode: accessCode.trim() });
       setStep("verify");
     });
@@ -94,7 +94,7 @@ export default function SignUpPage() {
 
   const resendOtp = () =>
     run(async () => {
-      const captchaToken = await getCaptchaToken("resend_otp");
+      const captchaToken = await getCaptchaToken("signup_resend_otp");
       await authApi.signupResendOtp({ email, captchaToken });
     });
 
