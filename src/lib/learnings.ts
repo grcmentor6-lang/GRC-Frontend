@@ -35,6 +35,30 @@ export interface LearningProject {
   tasks: LearningTask[];
 }
 
+/**
+ * Full organisation context shown in the dashboard org drawer. Mirrors OrgProfileOut, but
+ * in camelCase — lib/api.ts deep-converts the backend's snake_case payload at the boundary.
+ */
+export interface OrgProfile {
+  subIndustry: string;
+  headOffice: string;
+  headOfficeCity: string;
+  headOfficeCountry: string;
+  primaryRegulator: string;
+  hqRegulatoryRationale: string;
+  organisationalContext: string;
+  officeLocations: { headOffice?: string; regionalOffices?: string[] };
+  servicesAndProducts: string[];
+  interestedParties: { internal?: string[]; external?: string[] };
+  keyRequirements: { stakeholder?: string[]; employee?: string[]; regulator?: string[]; partner?: string[] };
+  customerFacingProcesses: string[];
+  clientDataHandled: string[];
+  informationAssets: { onPremises?: string[]; cloud?: string[] };
+  mandatoryStandards: string[];
+  optionalStandards: string[];
+  regulatoryRequirements: string[];
+}
+
 export interface LearningOrg {
   id: string;
   name: string;
@@ -43,6 +67,7 @@ export interface LearningOrg {
   tone: string;
   status: TaskStatus;
   context: string;
+  profile?: OrgProfile | null;
   projects: LearningProject[];
 }
 

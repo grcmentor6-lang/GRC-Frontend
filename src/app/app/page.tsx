@@ -18,18 +18,6 @@ import { LRN_AVATAR, LRN_CHIP } from "@/lib/tones";
 
 const PROGRAM = "grc101";
 
-/** Status → pill styling, shared by the org detail panel. */
-const STATUS_CHIP: Record<string, { label: string; cls: string }> = {
-  "not-started": { label: "Not started", cls: "bg-slate-100 text-slate-500 ring-slate-200/70" },
-  pending: { label: "Not started", cls: "bg-slate-100 text-slate-500 ring-slate-200/70" },
-  "in-progress": { label: "In progress", cls: "bg-indigo-50 text-indigo-700 ring-indigo-100" },
-  active: { label: "Active", cls: "bg-indigo-50 text-indigo-700 ring-indigo-100" },
-  complete: { label: "Complete", cls: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
-  upcoming: { label: "Upcoming", cls: "bg-amber-50 text-amber-700 ring-amber-100" },
-  locked: { label: "Locked", cls: "bg-slate-100 text-slate-500 ring-slate-200/70" },
-};
-const chipFor = (s: string) => STATUS_CHIP[s] ?? STATUS_CHIP["not-started"];
-
 /** Next openable step in an org — drives the card "Next up" line and the panel "Continue" CTA. */
 function nextStepOf(o: LearningOrg): { id: string; taskCode: string; stepCode: string; verb: string; title: string } | null {
   for (const proj of o.projects) {
@@ -214,92 +202,181 @@ function StandardsCoverage({ standards, engaged }: { standards: Standard[]; enga
   );
 }
 
-/** Right-side detail panel for a single organisation engagement. */
-function OrgDetail({ org }: { org: LearningOrg }) {
-  const s = orgStats(org);
-  const cont = nextStepOf(org);
-  const locked = org.status === "locked";
-  const projects = org.projects.length;
-  const tasks = org.projects.reduce((n, p) => n + p.tasks.length, 0);
+/** A titled block in the org-context drawer. */
+function CtxSection({ icon, title, children }: { icon: IconName; title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-5">
-      {/* Identity + context */}
+    <section>
+      <div className="flex items-center gap-2 mb-2.5">
+        <Icon name={icon} size={14} className="text-indigo-500 shrink-0" />
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-500">{title}</h3>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Pills for a flat string list. */
+function Chips({ items, tone = "slate" }: { items?: string[]; tone?: string }) {
+  if (!items?.length) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map((s, i) => (
+        <span key={i} className={`inline-flex items-center px-2.5 h-7 rounded-lg text-[11.5px] font-medium tracking-tight ring-1 ${STD_TONE[tone] ?? STD_TONE.slate}`}>{s}</span>
+      ))}
+    </div>
+  );
+}
+
+/** Bulleted list of strings (for longer, sentence-like context). */
+function Bullets({ items }: { items?: string[] }) {
+  if (!items?.length) return null;
+  return (
+    <ul className="space-y-1.5">
+      {items.map((s, i) => (
+        <li key={i} className="flex gap-2 text-[12.5px] text-slate-600 tracking-tight leading-relaxed">
+          <span className="mt-[7px] w-1 h-1 rounded-full bg-indigo-300 shrink-0" />
+          <span style={{ textWrap: "pretty" }}>{s}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Labeled sub-group (e.g. Internal / External) rendered as chips. */
+function CtxGroup({ label, items, tone }: { label: string; items?: string[]; tone?: string }) {
+  if (!items?.length) return null;
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-1.5">{label}</div>
+      <Chips items={items} tone={tone} />
+    </div>
+  );
+}
+
+/** Right-side detail panel: the organisation's full context only — no engagement/progress data. */
+function OrgDetail({ org }: { org: LearningOrg }) {
+  const p = org.profile;
+  const locked = org.status === "locked";
+  const headOffice = p?.officeLocations?.headOffice || p?.headOffice || "";
+  const regional = p?.officeLocations?.regionalOffices ?? [];
+  const kr = p?.keyRequirements;
+  const hasReqs = !!kr && [kr.stakeholder, kr.employee, kr.regulator, kr.partner].some((v) => v?.length);
+
+  return (
+    <div className="space-y-6">
+      {/* Identity */}
       <div className="flex items-start gap-3.5">
         <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${LRN_AVATAR[org.tone] ?? LRN_AVATAR.indigo} flex items-center justify-center text-white text-[15px] font-semibold shrink-0 ${locked ? "opacity-50 grayscale" : ""}`}>
           {org.initials}
         </div>
         <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`inline-flex items-center gap-1.5 h-[20px] px-2 rounded-md text-[10.5px] font-medium tracking-tight ring-1 ${LRN_CHIP[org.tone] ?? LRN_CHIP.indigo}`}>
               <Icon name="briefcase" size={11} /> {org.industry}
             </span>
-            <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-medium ring-1 tracking-tight ${chipFor(org.status).cls}`}>{chipFor(org.status).label}</span>
+            {p?.subIndustry && (
+              <span className="inline-flex items-center h-[20px] px-2 rounded-md text-[10.5px] font-medium tracking-tight ring-1 bg-slate-100 text-slate-600 ring-slate-200/70">{p.subIndustry}</span>
+            )}
           </div>
-          {org.context && (
-            <p className="text-[12.5px] text-slate-500 tracking-tight mt-2 leading-relaxed" style={{ textWrap: "pretty" }}>{org.context}</p>
+          {headOffice && (
+            <div className="flex items-center gap-1.5 text-[12px] text-slate-500 tracking-tight mt-2">
+              <Icon name="mapPin" size={12} className="text-slate-400 shrink-0" /> {headOffice}
+            </div>
+          )}
+          {p?.primaryRegulator && (
+            <div className="flex items-start gap-1.5 text-[12px] text-slate-500 tracking-tight mt-1">
+              <Icon name="shield" size={12} className="text-slate-400 shrink-0 mt-0.5" /> <span style={{ textWrap: "pretty" }}>{p.primaryRegulator}</span>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Overall progress */}
-      <div className="rounded-xl ring-1 ring-slate-200/70 bg-slate-50/60 p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[12px] font-medium text-slate-600 tracking-tight">Engagement progress</span>
-          <span className="text-[12px] font-semibold text-slate-900 tabular-nums">{s.done}/{s.total} tasks</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Bar pct={s.pct || (locked ? 0 : 2)} tone={s.done === s.total && s.total > 0 ? "emerald" : locked ? "slate" : "indigo"} className="flex-1" />
-          <span className="text-[11px] font-semibold text-slate-500 tabular-nums shrink-0">{s.pct}%</span>
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {[{ label: "Projects", value: projects }, { label: "Tasks", value: tasks }].map((m) => (
-            <div key={m.label} className="rounded-lg bg-white ring-1 ring-slate-200/60 px-2 py-1.5 text-center">
-              <div className="text-[15px] font-semibold tracking-[-0.02em] text-slate-900 tabular-nums">{m.value}</div>
-              <div className="text-[10px] text-slate-500 tracking-tight">{m.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {(p?.organisationalContext || org.context) && (
+        <CtxSection icon="book" title="Overview">
+          <p className="text-[12.5px] text-slate-600 tracking-tight leading-relaxed" style={{ textWrap: "pretty" }}>{p?.organisationalContext || org.context}</p>
+        </CtxSection>
+      )}
 
-      {/* Project / task breakdown */}
-      <div className="space-y-4">
-        {org.projects.map((proj) => {
-          const done = proj.tasks.filter((t) => t.status === "complete").length;
-          return (
-            <div key={proj.id}>
-              <div className="flex items-center gap-2 mb-2.5">
-                <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-900 text-white text-[10.5px] font-mono font-semibold shrink-0">{proj.code}</span>
-                <div className="min-w-0">
-                  <div className="text-[13px] font-semibold tracking-tight text-slate-900 truncate">{proj.title}</div>
-                  <div className="text-[10.5px] text-slate-400 tracking-tight truncate">{proj.standards}</div>
-                </div>
-                <span className="ml-auto text-[11px] font-medium text-slate-500 tabular-nums shrink-0">{done}/{proj.tasks.length}</span>
-              </div>
-              <div className="space-y-2">
-                {proj.tasks.map((t) => (
-                  <div key={t.id} className="flex items-center gap-3 rounded-lg ring-1 ring-slate-200/70 bg-white px-3 py-2">
-                    <span className={`shrink-0 inline-flex items-center justify-center px-1.5 h-5 rounded-md text-[10.5px] font-mono font-medium ${t.status === "in-progress" ? "bg-indigo-600 text-white" : t.status === "locked" ? "bg-slate-200 text-slate-400" : "bg-slate-200 text-slate-600"}`}>{t.code}</span>
-                    <span className={`flex-1 min-w-0 text-[12.5px] tracking-tight truncate ${t.status === "locked" ? "text-slate-400" : "text-slate-700"}`}>{t.title}</span>
-                    <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium ring-1 tracking-tight ${chipFor(t.status).cls}`}>{chipFor(t.status).label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {p?.hqRegulatoryRationale && (
+        <CtxSection icon="flag" title="HQ regulatory rationale">
+          <p className="text-[12.5px] text-slate-600 tracking-tight leading-relaxed" style={{ textWrap: "pretty" }}>{p.hqRegulatoryRationale}</p>
+        </CtxSection>
+      )}
 
-      {/* CTA */}
-      <div className="pt-1 flex flex-wrap items-center gap-3">
-        {!locked && cont && (
-          <Link href={`/app/desk/${cont.id}`} className="focus-ring inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-indigo-600 text-white text-[13px] font-semibold tracking-tight no-underline hover:bg-indigo-700 transition-colors shadow-sm">
-            <Icon name="play" size={13} /> Continue · {cont.taskCode} · {cont.stepCode}
-          </Link>
-        )}
-        <Link href="/app/learnings" className="focus-ring inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-slate-100 text-slate-700 text-[13px] font-semibold tracking-tight no-underline hover:bg-slate-200 transition-colors">
-          View in Learnings <Icon name="arrowRight" size={13} />
-        </Link>
-      </div>
+      {(headOffice || regional.length > 0) && (
+        <CtxSection icon="globe" title="Office locations">
+          <div className="space-y-2.5">
+            <CtxGroup label="Head office" items={headOffice ? [headOffice] : undefined} tone="indigo" />
+            <CtxGroup label="Regional offices" items={regional} />
+          </div>
+        </CtxSection>
+      )}
+
+      {p?.servicesAndProducts?.length ? (
+        <CtxSection icon="cube" title="Services & products">
+          <Chips items={p.servicesAndProducts} tone="violet" />
+        </CtxSection>
+      ) : null}
+
+      {(p?.interestedParties?.internal?.length || p?.interestedParties?.external?.length) ? (
+        <CtxSection icon="users" title="Interested parties">
+          <div className="space-y-2.5">
+            <CtxGroup label="Internal" items={p?.interestedParties?.internal} tone="sky" />
+            <CtxGroup label="External" items={p?.interestedParties?.external} tone="amber" />
+          </div>
+        </CtxSection>
+      ) : null}
+
+      {hasReqs ? (
+        <CtxSection icon="checkSquare" title="Key requirements">
+          <div className="space-y-3">
+            <CtxGroup label="Stakeholder" items={kr?.stakeholder} />
+            <CtxGroup label="Employee" items={kr?.employee} />
+            <CtxGroup label="Regulator" items={kr?.regulator} />
+            <CtxGroup label="Partner" items={kr?.partner} />
+          </div>
+        </CtxSection>
+      ) : null}
+
+      {p?.customerFacingProcesses?.length ? (
+        <CtxSection icon="refresh" title="Customer-facing processes">
+          <Bullets items={p.customerFacingProcesses} />
+        </CtxSection>
+      ) : null}
+
+      {p?.clientDataHandled?.length ? (
+        <CtxSection icon="lock" title="Client data handled">
+          <Bullets items={p.clientDataHandled} />
+        </CtxSection>
+      ) : null}
+
+      {(p?.informationAssets?.onPremises?.length || p?.informationAssets?.cloud?.length) ? (
+        <CtxSection icon="layers" title="Information assets">
+          <div className="space-y-2.5">
+            <CtxGroup label="On-premises" items={p?.informationAssets?.onPremises} />
+            <CtxGroup label="Cloud" items={p?.informationAssets?.cloud} tone="sky" />
+          </div>
+        </CtxSection>
+      ) : null}
+
+      {(p?.mandatoryStandards?.length || p?.optionalStandards?.length) ? (
+        <CtxSection icon="shield" title="Standards & regulations">
+          <div className="space-y-2.5">
+            <CtxGroup label="Mandatory" items={p?.mandatoryStandards} tone="emerald" />
+            <CtxGroup label="Optional / recommended" items={p?.optionalStandards} />
+          </div>
+        </CtxSection>
+      ) : null}
+
+      {p?.regulatoryRequirements?.length ? (
+        <CtxSection icon="bullseye" title="Regulatory requirements">
+          <Bullets items={p.regulatoryRequirements} />
+        </CtxSection>
+      ) : null}
+
+      {!p && (
+        <p className="text-[12.5px] text-slate-400 tracking-tight">No organisation context available yet.</p>
+      )}
     </div>
   );
 }
@@ -550,7 +627,7 @@ export default function DashboardPage() {
       </Reveal>
 
       {/* Org detail panel */}
-      <Drawer open={!!activeOrg} onClose={() => setActiveOrg(null)} eyebrow="Engagement" title={activeOrg?.name}>
+      <Drawer open={!!activeOrg} onClose={() => setActiveOrg(null)} eyebrow="Organisation context" title={activeOrg?.name}>
         {activeOrg && <OrgDetail org={activeOrg} />}
       </Drawer>
 
