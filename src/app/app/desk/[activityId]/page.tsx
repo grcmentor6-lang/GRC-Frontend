@@ -16,6 +16,8 @@ import { VerbWorkspace } from "@/components/app/workspaces";
 import { VERB_FORMS, GENERIC_FORM, type FieldSpec } from "@/lib/verb-forms";
 import { useDeskLearnings } from "@/components/app/desk-context";
 import { ACTIVITY_CONTENT } from "@/lib/activity-content";
+import { WORKSPACE_REFS } from "@/lib/workspace-refs";
+import { StandardBanner } from "@/components/app/standards";
 import type { TaskReference } from "@/lib/taskmeta";
 
 function ReviewPanel({ review }: { review: Review }) {
@@ -61,8 +63,9 @@ function ReviewPanel({ review }: { review: Review }) {
 }
 
 /** Reference documents as an inline accordion (used inside the Resources drawer — no nested drawers). */
-function RefAccordion({ references }: { references: TaskReference[] }) {
-  const [openId, setOpenId] = useState<string | null>(references[0]?.id ?? null);
+// Remounted (via `key`) when the focused ref changes, so `openId` initialises to the focused doc.
+function RefAccordion({ references, focusId }: { references: TaskReference[]; focusId?: string | null }) {
+  const [openId, setOpenId] = useState<string | null>(focusId ?? references[0]?.id ?? null);
   return (
     <div className="space-y-2">
       {references.map((r) => {
@@ -228,6 +231,8 @@ export default function ActivityWorkspace() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [values, setValues] = useState<Record<string, unknown>>({});
+  const [notesVal, setNotesVal] = useState("");
+  const [focusRefId, setFocusRefId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResponse | null>(null);
@@ -249,7 +254,8 @@ export default function ActivityWorkspace() {
         if (cancelled) return;
         setActivity(a);
         if (a.draft) {
-          setValues({ ...(a.draft.fields ?? {}), notes: a.draft.notes ?? "" });
+          setValues(a.draft.fields ?? {});
+          setNotesVal(a.draft.notes ?? "");
         }
       })
       .catch((e) => !cancelled && setLoadError(e instanceof ApiError ? e.message : "Couldn't load this activity."))
@@ -270,11 +276,9 @@ export default function ActivityWorkspace() {
     return () => io.disconnect();
   }, [activity]);
 
-  const payload = (): ActivityPayload => {
-    const { notes, ...fields } = values;
-    return { fields, notes: String(notes ?? ""), attachments: [] };
-  };
-  const hasContent = Object.entries(values).some(([, v]) =>
+  const payload = (): ActivityPayload => ({ fields: values, notes: notesVal, attachments: [] });
+  const openRef = (id?: string) => { setFocusRefId(id ?? null); setBriefOpen(true); };
+  const hasContent = notesVal.trim() !== "" || Object.entries(values).some(([, v]) =>
     Array.isArray(v) ? v.some((x) => (typeof x === "string" ? x.trim() : Object.values(x ?? {}).some(Boolean))) : String(v ?? "").trim() !== "",
   );
 
@@ -363,6 +367,10 @@ export default function ActivityWorkspace() {
   const hasBrief = !!(content?.objective || (content?.whatToDo && content.whatToDo.length > 0));
   const hasChecklist = !!(verb?.layer1 && verb.layer1.length > 0);
   const formSpec = verb ? VERB_FORMS[verb.id] ?? GENERIC_FORM : GENERIC_FORM;
+  // Reference panel = the activity's required reading + the verb workspace's scripted artefacts
+  // (Scope Statement, Asset Register, …) opened via the workspace "Open" buttons. Deduped by id.
+  const references = [...(content?.references ?? []), ...(WORKSPACE_REFS[activity.verb.id] ?? [])]
+    .filter((r, i, a) => a.findIndex((x) => x.id === r.id) === i);
 
   // After a pass the backend marks the next step "current" — find it (from the refreshed tree) to advance.
   let nextStepId: string | null = null;
@@ -380,6 +388,9 @@ export default function ActivityWorkspace() {
 
   return (
     <div className="max-w-[920px] mx-auto px-6 py-6">
+      {/* standard banner — ties the step back to the framework it belongs to */}
+      <StandardBanner taskCode={activity.taskCode} />
+
       {/* header — description left, submission-feedback trigger on the right */}
       <div className="mb-5 flex items-start justify-between gap-4 flex-wrap">
         <div className="min-w-0">
@@ -473,13 +484,24 @@ export default function ActivityWorkspace() {
             className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200/70 text-slate-600 hover:bg-slate-100 text-[12px] font-medium tracking-tight transition-colors"
           >
             <Icon name="book" size={14} /> Reference material
-            {content?.references && content.references.length > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-semibold tabular-nums">{content.references.length}</span>
+            {references.length > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-semibold tabular-nums">{references.length}</span>
             )}
           </button>
         </div>
 
-        <VerbWorkspace verbId={activity.verb.id} value={values} onChange={setValues} />
+        <VerbWorkspace verbId={activity.verb.id} value={values} onChange={setValues} openRef={openRef} />
+
+        <div className="mt-5">
+          <div className="text-[12px] font-medium text-slate-700 tracking-tight mb-1.5">Additional notes</div>
+          <textarea
+            value={notesVal}
+            onChange={(e) => setNotesVal(e.target.value)}
+            rows={3}
+            placeholder="Anything else for the mentor to consider…"
+            className="w-full rounded-lg bg-white ring-1 ring-slate-200/80 p-3 text-[13px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 resize-y"
+          />
+        </div>
 
         {error && <div className="mt-4 text-[12.5px] text-rose-700 bg-rose-50 ring-1 ring-rose-100 rounded-lg px-3 py-2">{error}</div>}
 
@@ -527,13 +549,13 @@ export default function ActivityWorkspace() {
           stay mounted so the swap can fade rather than pop. */}
       {hasChecklist && (
         <>
-          <div className={`hidden md:block fixed top-[140px] right-4 z-20 w-[300px] max-h-[calc(100vh-160px)] overflow-y-auto transition-all duration-200 ease-out motion-reduce:transition-none ${criteriaHidden ? "opacity-0 -translate-y-1 pointer-events-none" : "opacity-100 translate-y-0"}`}>
+          <div className={`hidden md:block fixed top-[84px] right-4 z-20 w-[300px] max-h-[calc(100vh-104px)] overflow-y-auto transition-all duration-200 ease-out motion-reduce:transition-none ${criteriaHidden ? "opacity-0 -translate-y-1 pointer-events-none" : "opacity-100 translate-y-0"}`}>
             <AcceptanceChecklist criteria={verb!.layer1!} spec={formSpec} values={values} layer1={layer1} onClose={() => setCriteriaHidden(true)} />
           </div>
           <button
             onClick={() => setCriteriaHidden(false)}
             aria-hidden={!criteriaHidden}
-            className={`focus-ring hidden md:inline-flex fixed top-[140px] right-4 z-20 items-center gap-1.5 h-9 pl-2.5 pr-3.5 rounded-full bg-gradient-to-b from-white/85 to-indigo-50/85 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-indigo-200/70 shadow-[0_12px_40px_-14px_rgba(79,70,229,0.4)] text-indigo-700 hover:to-indigo-100/85 text-[12px] font-semibold tracking-tight transition-all duration-200 ease-out motion-reduce:transition-none cursor-pointer ${criteriaHidden ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 pointer-events-none"}`}
+            className={`focus-ring hidden md:inline-flex fixed top-[84px] right-4 z-20 items-center gap-1.5 h-9 pl-2.5 pr-3.5 rounded-full bg-gradient-to-b from-white/85 to-indigo-50/85 backdrop-blur-2xl backdrop-saturate-150 ring-1 ring-indigo-200/70 shadow-[0_12px_40px_-14px_rgba(79,70,229,0.4)] text-indigo-700 hover:to-indigo-100/85 text-[12px] font-semibold tracking-tight transition-all duration-200 ease-out motion-reduce:transition-none cursor-pointer ${criteriaHidden ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 pointer-events-none"}`}
           >
             <Icon name="checkSquare" size={14} className="text-indigo-600" /> Criteria
           </button>
@@ -550,14 +572,14 @@ export default function ActivityWorkspace() {
             </section>
           )}
 
-          {content?.references && content.references.length > 0 && (
+          {references.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-1.5">
                 <h3 className="text-[11px] font-semibold tracking-[0.12em] uppercase text-slate-500">Reference documents</h3>
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-700 bg-amber-50 ring-1 ring-amber-100 rounded-full px-2 h-5"><Icon name="info" size={10} /> Required</span>
               </div>
-              <p className="text-[12px] text-slate-500 tracking-tight mb-2.5">The facts and rules you need to complete this step correctly.</p>
-              <RefAccordion references={content.references} />
+              <p className="text-[12px] text-slate-500 tracking-tight mb-2.5">The facts, rules and artefacts you need to complete this step correctly.</p>
+              <RefAccordion key={focusRefId ?? "default"} references={references} focusId={focusRefId} />
             </section>
           )}
         </div>

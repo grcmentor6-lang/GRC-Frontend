@@ -14,19 +14,13 @@ export const VERB_FORMS: Record<string, FieldSpec[]> = {
   request: [
     { key: "to", label: "To (named role)", type: "text", placeholder: "e.g. IT Operations Lead" },
     { key: "subject", label: "Subject (≤ 80 chars)", type: "text" },
-    { key: "purpose", label: "Purpose", type: "textarea" },
     { key: "items", label: "Requested items (≥ 3)", type: "list", placeholder: "An item you're requesting" },
     { key: "deadline", label: "Deadline", type: "date" },
-    { key: "priority", label: "Priority", type: "select", options: ["Low", "Medium", "High"] },
   ],
   conduct: [
     { key: "stakeholder", label: "Stakeholder / role interviewed", type: "text", placeholder: "e.g. Process Owner" },
-    { key: "guide", label: "Walkthrough guide", type: "table", columns: [
-      { key: "question", label: "Guide question" }, { key: "answer", label: "Answer captured" },
-    ] },
     { key: "questionsAnswered", label: "Guide questions answered", type: "text", placeholder: "e.g. 9 / 10" },
     { key: "findings", label: "Key findings", type: "textarea" },
-    { key: "summary", label: "Closing summary", type: "textarea" },
   ],
   record: [
     { key: "register", label: "Register entries", type: "table", columns: [
@@ -120,16 +114,11 @@ export const VERB_FORMS: Record<string, FieldSpec[]> = {
   signoff: [
     { key: "decision", label: "Decision", type: "select", options: ["Approved", "Approved with conditions", "Rejected"] },
     { key: "conditions", label: "Conditions (if any)", type: "textarea" },
-    { key: "revisionPlan", label: "Revision plan (if rejected)", type: "textarea" },
     { key: "date", label: "Decision date", type: "date" },
   ],
   interview: [
     { key: "questions", label: "Open questions (≥ 5)", type: "list" },
-    { key: "notesPerQuestion", label: "Structured notes", type: "table", columns: [
-      { key: "type", label: "Type", type: "select", options: ["Quote", "Summary"] }, { key: "ref", label: "Attribution" },
-      { key: "note", label: "Note" }, { key: "followup", label: "Follow-up" },
-    ] },
-    { key: "summary", label: "Closing summary", type: "textarea" },
+    { key: "notesPerQuestion", label: "Structured notes", type: "textarea" },
   ],
   document: [
     { key: "sections", label: "Write-up", type: "textarea" },
