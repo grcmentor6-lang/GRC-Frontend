@@ -244,21 +244,27 @@ export default function ActivityWorkspace() {
   const [briefShown, setBriefShown] = useState(true);
   // The criteria HUD stays closed until the user scrolls the deliverable into view (see observer below).
   const [criteriaHidden, setCriteriaHidden] = useState(true);
-  // Live reference docs a workspace pushes in (e.g. the incoming stakeholder reply after a request).
+  // Live docs a workspace pushes in (e.g. the reply captured after a completed request).
   const [dynamicRefs, setDynamicRefs] = useState<TaskReference[]>([]);
+  // When a passed activity is reopened, lets the user choose to edit and submit again.
+  const [resubmit, setResubmit] = useState(false);
   const deliverableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
-    deskApi.submissions(activityId).then((h) => !cancelled && setHistory(h)).catch(() => {});
-    deskApi.activity(activityId)
-      .then((a) => {
+    Promise.all([deskApi.activity(activityId), deskApi.submissions(activityId).catch(() => [] as SubmissionDetail[])])
+      .then(([a, h]) => {
         if (cancelled) return;
         setActivity(a);
-        setDynamicRefs([]); // clear any incoming-reply docs from a previously viewed activity
-        if (a.draft) {
-          setValues(a.draft.fields ?? {});
-          setNotesVal(a.draft.notes ?? "");
+        setHistory(h);
+        setDynamicRefs([]); // clear captured docs from a previously viewed activity
+        setResubmit(false);
+        // Restore from the saved draft, or — for an already-submitted task — the latest submission,
+        // so a completed activity opens already filled in.
+        const restore = a.draft ?? h[0]?.submission.payload ?? null;
+        if (restore) {
+          setValues(restore.fields ?? {});
+          setNotesVal(restore.notes ?? "");
         }
       })
       .catch((e) => !cancelled && setLoadError(e instanceof ApiError ? e.message : "Couldn't load this activity."))
@@ -281,7 +287,7 @@ export default function ActivityWorkspace() {
 
   const payload = (): ActivityPayload => ({ fields: values, notes: notesVal, attachments: [] });
   const openRef = (id?: string) => { setFocusRefId(id ?? null); setBriefOpen(true); };
-  // Upsert a live reference by id, then surface it in the Reference-material panel.
+  // Upsert a captured doc by id and surface it in the Reference-material panel so the user sees it.
   const addReference = (ref: TaskReference) => {
     setDynamicRefs((prev) => prev.some((r) => r.id === ref.id) ? prev.map((r) => (r.id === ref.id ? ref : r)) : [...prev, ref]);
     setFocusRefId(ref.id);
@@ -290,6 +296,9 @@ export default function ActivityWorkspace() {
   const hasContent = notesVal.trim() !== "" || Object.entries(values).some(([, v]) =>
     Array.isArray(v) ? v.some((x) => (typeof x === "string" ? x.trim() : Object.values(x ?? {}).some(Boolean))) : String(v ?? "").trim() !== "",
   );
+  // Workspaces with a guided objective (e.g. the Request conversation) lift `objectiveMet`.
+  // While it's present and not yet true, submission is blocked until the right path is reached.
+  const objectiveBlocked = values.objectiveMet === false;
 
   const saveDraft = async () => {
     setBusy(true); setError(null);
@@ -302,6 +311,7 @@ export default function ActivityWorkspace() {
   };
 
   const submit = async () => {
+    if (objectiveBlocked) return; // guided objective not yet met
     setBusy(true); setError(null); setResult(null);
     try {
       const res = await deskApi.submit(activityId, payload());
@@ -311,6 +321,7 @@ export default function ActivityWorkspace() {
       if (res.review) {
         setActivity((a) => (a ? { ...a, status: res.review!.decision === "pass" ? "complete" : "in-progress", latestReview: res.review } : a));
         if (res.review.decision === "pass") {
+          setResubmit(false); // return to the completed view after a successful (re)submit
           await refreshTree(); // refresh tree so the next step unlocks in place
         }
       }
@@ -515,7 +526,7 @@ export default function ActivityWorkspace() {
         {error && <div className="mt-4 text-[12.5px] text-rose-700 bg-rose-50 ring-1 ring-rose-100 rounded-lg px-3 py-2">{error}</div>}
 
         <div className="mt-5">
-          {passed && !busy ? (
+          {passed && !busy && !resubmit ? (
             <div className="flex items-center gap-3 flex-wrap">
               <span className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-emerald-50 ring-1 ring-emerald-200/70 text-emerald-700 text-[13px] font-medium tracking-tight">
                 <Icon name="check" size={14} strokeWidth={3} /> Submitted — step complete{review ? ` · ${review.overallScore.toFixed(1)} / 5` : ""}
@@ -529,16 +540,25 @@ export default function ActivityWorkspace() {
                   Back to Working Desk <Icon name="arrowRight" size={15} />
                 </Link>
               )}
+              <button onClick={() => setResubmit(true)} className="focus-ring inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200/80 text-slate-700 text-[13px] font-medium tracking-tight hover:bg-slate-50">
+                <Icon name="refresh" size={14} /> Resubmit
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={submit} disabled={busy || !hasContent} className="focus-ring h-10 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:shadow-none text-white text-[13px] font-medium tracking-tight inline-flex items-center gap-2 shadow-[0_4px_14px_-4px_rgba(79,70,229,0.6)] transition-all">
+              <button onClick={submit} disabled={busy || !hasContent || objectiveBlocked} className="focus-ring h-10 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:shadow-none text-white text-[13px] font-medium tracking-tight inline-flex items-center gap-2 shadow-[0_4px_14px_-4px_rgba(79,70,229,0.6)] transition-all">
                 <Icon name="send" size={14} /> {busy ? "Grading…" : "Submit for review"}
               </button>
               <button onClick={saveDraft} disabled={busy} className="focus-ring h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200/80 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-[13px] font-medium tracking-tight">
                 Save draft
               </button>
+              {passed && resubmit && (
+                <button onClick={() => setResubmit(false)} disabled={busy} className="focus-ring h-10 px-4 rounded-lg text-slate-500 text-[13px] font-medium tracking-tight hover:bg-slate-50 disabled:opacity-50">
+                  Cancel
+                </button>
+              )}
               {savedAt && <span className="text-[11.5px] text-slate-400">Saved {savedAt}</span>}
+              {objectiveBlocked && <span className="text-[11.5px] text-amber-600">Complete the conversation successfully to submit.</span>}
             </div>
           )}
         </div>

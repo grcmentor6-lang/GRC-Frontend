@@ -23,7 +23,7 @@ export interface WorkspaceProps {
   taskCode?: string;
   /** This activity's code (e.g. "1.1"), used to select per-activity scripted content. */
   activityCode?: string;
-  /** Add (or upsert by id) a live reference document into the page's Reference-material panel. */
+  /** Add (or upsert by id) a live document into the page's Reference-material panel. */
   addReference?: (ref: TaskReference) => void;
 }
 

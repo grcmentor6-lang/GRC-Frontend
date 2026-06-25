@@ -53,8 +53,10 @@ export interface RequestConversation {
   subject: string;
   /** Default purpose seeded into the composer. */
   purpose: string;
-  /** Click-to-add suggested items (specific, authored) — the easy path to a scoped request. */
+  /** The correct items to request — these are what a scoped request should include. */
   suggestedItems: string[];
+  /** Plausible-but-wrong distractor items, mixed into the picker. Selecting these is a mistake. */
+  wrongItems: string[];
   threads: Record<MoodId, ConvThread>;
 }
 
@@ -69,27 +71,39 @@ const VAGUE_WORDS = [
 export interface MoodResult {
   mood: MoodId;
   reason: string;
+  /** Wrong/distractor items the mentee included (shown back to them as a mistake). */
+  wrongSelected: string[];
+  /** Correct items the mentee left out (shown back to them as a miss). */
+  missed: string[];
 }
 
 /**
- * Decide the stakeholder's mood from a Layer-1-PASSING request, deterministically.
- * - Over-broad / vague phrasing            → defensive
- * - Clean, ≥3 genuinely specific items      → cooperative
- * - Passes the rules but thin on specifics  → vague
+ * Decide the stakeholder's mood from the selected items, deterministically (no AI).
+ * - Any wrong item included, or over-broad phrasing → defensive
+ * - All the correct items requested, nothing wrong   → cooperative
+ * - Some correct items missing (but nothing wrong)   → vague
  */
-export function routeMood(input: { subject: string; purpose: string; items: string[] }): MoodResult {
+export function routeMood(input: {
+  subject: string; purpose: string; items: string[];
+  correctItems: string[]; wrongItems: string[];
+}): MoodResult {
   const text = `${input.subject} ${input.purpose} ${input.items.join(" ")}`.toLowerCase();
   const hasVague = VAGUE_WORDS.some((w) => text.includes(w));
-  const valid = input.items.map((i) => i.trim()).filter(Boolean);
-  const specific = valid.filter((i) => i.length >= 24).length;
+  const selected = input.items.map((i) => i.trim()).filter(Boolean);
+  const wrongSelected = input.wrongItems.filter((w) => selected.includes(w));
+  const correctSelected = input.correctItems.filter((c) => selected.includes(c));
+  const missed = input.correctItems.filter((c) => !selected.includes(c));
 
+  if (wrongSelected.length > 0) {
+    return { mood: "defensive", reason: "You asked for items that are out of scope or irrelevant — the stakeholder gets guarded and pushes back.", wrongSelected, missed };
+  }
   if (hasVague) {
-    return { mood: "defensive", reason: "Over-broad phrasing (e.g. “everything / full export”) reads as an unscoped demand — the stakeholder gatekeeps." };
+    return { mood: "defensive", reason: "Over-broad phrasing (e.g. “everything / full export”) reads as an unscoped demand — the stakeholder gatekeeps.", wrongSelected, missed };
   }
-  if (valid.length >= 3 && specific >= 3) {
-    return { mood: "cooperative", reason: "Clear, scoped request with at least three specific, named items — the stakeholder engages cooperatively." };
+  if (missed.length === 0 && correctSelected.length >= 3) {
+    return { mood: "cooperative", reason: "Clear, complete request — every key item, nothing extraneous. The stakeholder engages cooperatively.", wrongSelected, missed };
   }
-  return { mood: "vague", reason: "Passes the rules but the items are thin or generic — the stakeholder gives a hesitant, partial reply." };
+  return { mood: "vague", reason: "Your request leaves out some of the key items, so the stakeholder's reply is hesitant and partial.", wrongSelected, missed };
 }
 
 /* ─────────────────────────────── Authored conversations ─────────────────────────────── */
@@ -106,6 +120,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Inventory of servers, databases and data repositories (on-premises and cloud)",
       "List of end-user device types and shared network / file stores",
       "Most recent network or application architecture diagram (if available)",
+    ],
+    wrongItems: [
+      "Every employee's individual login passwords and credentials",
+      "The full HR payroll file for the business unit",
+      "Source code for all internally-developed applications",
     ],
     threads: {
       cooperative: {
@@ -206,6 +225,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Policy acknowledgement log showing staff sign-off for the AUP, Remote Working and Clean Desk policies",
       "Endpoint management console export showing device encryption / patch compliance",
     ],
+    wrongItems: [
+      "A named list of every employee who has ever breached a policy, for disciplinary use",
+      "Copies of staff personal emails so you can check their behaviour",
+      "The complete HR file (salary, performance reviews) for all staff",
+    ],
     threads: {
       cooperative: {
         mood: "cooperative",
@@ -304,6 +328,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Evidence of the claimed ISO 27001 certification — certificate and Statement of Applicability / scope",
       "Clarification of access-management controls where answers were vague (MFA coverage, privileged access handling)",
       "The documented incident-response / breach-notification procedure referenced but not attached",
+    ],
+    wrongItems: [
+      "The vendor's full internal source code and system architecture",
+      "A list of the vendor's other customers and their contract terms",
+      "Personal data and background checks of the vendor's employees",
     ],
     threads: {
       cooperative: {
@@ -404,6 +433,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "List of privileged / administrator accounts called out separately",
       "Any generic, shared or service accounts in use",
     ],
+    wrongItems: [
+      "The actual passwords or password hashes for every account",
+      "Each user's browsing history and personal file contents",
+      "The full network firewall and router configuration",
+    ],
     threads: {
       cooperative: {
         mood: "cooperative",
@@ -502,6 +536,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "List of currently active employees with department and job title",
       "Start date for each employee (to check joiner provisioning)",
       "Recent leavers in the last 3 months with their leaving date (to check de-provisioning)",
+    ],
+    wrongItems: [
+      "Each employee's salary and bank account details",
+      "Staff medical records and disciplinary history",
+      "Home addresses and next-of-kin details for all staff",
     ],
     threads: {
       cooperative: {
@@ -603,6 +642,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Defined RTO / RPO targets for each system",
       "Named recovery owner / on-call contact per system",
     ],
+    wrongItems: [
+      "Live production database credentials and admin passwords",
+      "A full copy of the production data to test recovery yourself",
+      "The personal mobile numbers of all on-call engineers",
+    ],
     threads: {
       cooperative: {
         mood: "cooperative",
@@ -703,6 +747,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "IT / SaaS vendor list from procurement or expense records",
       "Names of any department-level suppliers not centrally procured",
     ],
+    wrongItems: [
+      "Full contract values and pricing for every supplier",
+      "The bank account details used to pay each vendor",
+      "Internal email threads negotiating each contract",
+    ],
     threads: {
       cooperative: {
         mood: "cooperative",
@@ -801,6 +850,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Confirmation of which business process to map (e.g. student admissions / enrolment)",
       "Why it's in scope — the categories of personal data it handles",
       "Who the process owner is, so I can request the flow detail next",
+    ],
+    wrongItems: [
+      "The mentor to do the data-flow mapping for you",
+      "Approval to map every process in the organisation at once",
+      "Direct access to the live student records to start mapping",
     ],
     threads: {
       cooperative: {
@@ -902,6 +956,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Where the data is stored and how long it's retained",
       "Any special-category data involved (e.g. health, safeguarding)",
     ],
+    wrongItems: [
+      "Copies of actual students' ID documents and records",
+      "The admissions team's internal performance reviews",
+      "Your own login access to the admissions system",
+    ],
     threads: {
       cooperative: {
         mood: "cooperative",
@@ -1000,6 +1059,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Confirmed list of regulations/standards that apply to the organisation (e.g. GDPR, sector rules)",
       "Which jurisdictions / territories we operate or hold data in",
       "Any contractual or customer-driven compliance obligations to include",
+    ],
+    wrongItems: [
+      "A binding legal opinion you can hold the organisation to",
+      "Every law in every country mentioned online, just in case",
+      "Legal's confidential advice on past compliance breaches",
     ],
     threads: {
       cooperative: {
@@ -1101,6 +1165,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Where it's recorded, if anywhere",
       "Known pain points or cases that fell through the cracks",
     ],
+    wrongItems: [
+      "A list of every past incident naming who caused each one",
+      "Five years of all IT support tickets in full",
+      "Disciplinary records for staff who didn't report incidents",
+    ],
     threads: {
       cooperative: {
         mood: "cooperative",
@@ -1199,6 +1268,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "The privacy notice exactly as published on the live website (link or copy)",
       "When it was last reviewed or updated, and by whom",
       "Whether different notices exist for different audiences (e.g. students vs staff)",
+    ],
+    wrongItems: [
+      "All internal data-processing agreements and vendor contracts",
+      "The website's full source code and CMS admin access",
+      "Internal staff data-handling policies and procedures",
     ],
     threads: {
       cooperative: {
@@ -1299,6 +1373,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Evidence a control operates (e.g. records, logs, sign-offs from the last quarter)",
       "Any prior audit, review or risk-assessment outputs for the department",
     ],
+    wrongItems: [
+      "Each team member's individual performance ratings",
+      "Confidential board minutes discussing the department",
+      "A signed admission of every control failure for the record",
+    ],
     threads: {
       cooperative: {
         mood: "cooperative",
@@ -1397,6 +1476,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Each stakeholder's top compliance/risk pain points in their area",
       "Controls or processes they feel are missing or weak",
       "Their priorities for the next 6–12 months",
+    ],
+    wrongItems: [
+      "A ranking of which team is the worst performer",
+      "Confidential complaints staff have made about each other",
+      "Each stakeholder's personal opinion of their colleagues",
     ],
     threads: {
       cooperative: {
@@ -1498,6 +1582,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Any archive tiers and how long data sits there before deletion",
       "Current deletion practice — is anything actually deleted, and when?",
     ],
+    wrongItems: [
+      "A full export of the actual client files themselves",
+      "Detailed backup and network architecture diagrams",
+      "Admin credentials to the storage and archive systems",
+    ],
     threads: {
       cooperative: {
         mood: "cooperative",
@@ -1596,6 +1685,11 @@ export const REQUEST_CONVERSATIONS: Record<string, RequestConversation> = {
       "Their honest reaction to my top 3 lessons — do they ring true?",
       "Anything I've over-claimed or framed too positively",
       "A lesson from their rotation that I might be missing",
+    ],
+    wrongItems: [
+      "Them to rewrite your retrospective for you",
+      "A copy of their retrospective to submit as your own",
+      "Confirmation that everything you wrote is already perfect",
     ],
     threads: {
       cooperative: {
