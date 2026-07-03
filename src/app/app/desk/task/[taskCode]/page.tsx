@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DVerb } from "@/components/ui/dverb";
 import { VERB_TONES } from "@/lib/tones";
 import { TASK_META } from "@/lib/taskmeta";
+import { isGateVerb } from "@/lib/verbs";
 import { CONTROLS_BY_TASK } from "@/lib/controls";
 import type { LearningTask } from "@/lib/learnings";
 import { useDeskLearnings } from "@/components/app/desk-context";
@@ -89,14 +90,16 @@ export default function TaskOverview() {
         <div className="space-y-1.5">
           {task?.steps.map((s) => {
             const done = s.status === "complete";
+            const gate = isGateVerb(s.verb);
             return (
-              <Link key={s.id} href={`/app/desk/${s.id}`} className="focus-ring flex items-center gap-3 px-3 py-2.5 rounded-xl ring-1 ring-slate-200/60 bg-white hover:bg-slate-50 hover:ring-indigo-200/70 no-underline transition-all duration-200 group">
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center ring-1 shrink-0 ${done ? "bg-emerald-50 text-emerald-600 ring-emerald-100" : s.status === "in-progress" ? "bg-indigo-50 text-indigo-600 ring-indigo-100" : "bg-slate-50 text-slate-300 ring-slate-200/60"}`}>
-                  <Icon name={done ? "check" : "minus"} size={11} strokeWidth={done ? 3 : 2} />
+              <Link key={s.id} href={`/app/desk/${s.id}`} className={`focus-ring flex items-center gap-3 px-3 py-2.5 rounded-xl ring-1 no-underline transition-all duration-200 group ${gate ? "ring-violet-200/70 bg-violet-50/40 hover:bg-violet-50" : "ring-slate-200/60 bg-white hover:bg-slate-50 hover:ring-indigo-200/70"}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center ring-1 shrink-0 ${done ? "bg-emerald-50 text-emerald-600 ring-emerald-100" : gate ? "bg-violet-50 text-violet-600 ring-violet-100" : s.status === "in-progress" ? "bg-indigo-50 text-indigo-600 ring-indigo-100" : "bg-slate-50 text-slate-300 ring-slate-200/60"}`}>
+                  <Icon name={done ? "check" : gate ? (s.verb === "rua" ? "shield" : "globe") : "minus"} size={11} strokeWidth={done ? 3 : 2} />
                 </span>
                 <span className="font-mono text-[10.5px] text-slate-400 w-7 shrink-0">{s.code}</span>
                 <DVerb verbId={s.verb} />
                 <span className="text-[12.5px] text-slate-700 tracking-tight truncate flex-1">{s.title}</span>
+                {gate && <span className="inline-flex items-center h-[16px] px-1.5 rounded bg-violet-50 ring-1 ring-violet-200 text-violet-600 text-[9px] font-semibold tracking-[0.08em] shrink-0">GATE</span>}
                 <Icon name="arrowRight" size={14} className="text-slate-300 group-hover:text-indigo-500 shrink-0" />
               </Link>
             );

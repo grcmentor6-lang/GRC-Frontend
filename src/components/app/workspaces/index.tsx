@@ -17,6 +17,7 @@ import {
   AssessWorkspace, ScoreWorkspace, CompileWorkspace, BriefWorkspace,
   SignoffWorkspace, InterviewWorkspace, DocumentWorkspace,
 } from "./set-c";
+import { RuaWorkspace, ResearchWorkspace } from "./gates";
 import { useState } from "react";
 import { seed, useLift } from "./kit";
 
@@ -43,6 +44,9 @@ export const VERB_WORKSPACES: Record<string, (p: WorkspaceProps) => React.ReactE
   signoff: SignoffWorkspace,
   interview: InterviewWorkspace,
   document: DocumentWorkspace,
+  // task-boundary gates — RUA readiness gate opens a task, Research Submission closes it
+  rua: RuaWorkspace,
+  research: ResearchWorkspace,
 };
 
 /** Minimal fallback for any verb id not in the registry. */

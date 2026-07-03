@@ -32,3 +32,13 @@ export const VERBS: Record<string, VerbMeta> = {
 };
 
 export const VERB_LIST: VerbMeta[] = Object.values(VERBS).sort((a, b) => a.num - b.num);
+
+// Task-boundary gate verbs — the RUA readiness gate opens every task, Research Submission closes it.
+// Kept out of VERBS/VERB_LIST so the 22-verb method (CV grid, method copy) is unchanged.
+export const GATE_VERBS: Record<string, VerbMeta> = {
+  "rua": {"id": "rua", "code": "RA", "num": 23, "label": "Readiness", "color": "violet", "icon": "shield", "when": "You prove you understand the task — controls, templates, concepts and the deliverable contract — before starting work.", "layer1": ["Every governing control studied with a note", "All key concepts explained in the mentee's own words", "All readiness questions answered", "Deliverable contract confirmed and readiness attested"], "layer2": ["Specificity", "Standards Alignment", "Reasoning Quality"]},
+  "research": {"id": "research", "code": "RS", "num": 24, "label": "Research", "color": "emerald", "icon": "globe", "when": "You evidence the research behind your deliverable — required methods worked, sources cited — before the task closes.", "layer1": ["All three research methods completed with notes", "Every method cites at least one source", "Research summary states how findings shaped the deliverable"], "layer2": ["Specificity", "Reasoning Quality", "Risk Awareness"]},
+};
+
+/** True when a step's verb is a task-boundary gate (RUA / Research Submission), not one of the 22 method verbs. */
+export const isGateVerb = (verbId: string) => verbId in GATE_VERBS;

@@ -9,7 +9,7 @@ import { DVerb } from "@/components/ui/dverb";
 import { Drawer } from "@/components/ui/drawer";
 import { DraggablePanel } from "@/components/ui/draggable-panel";
 import { RefBody } from "@/components/app/reference-material";
-import { VERBS } from "@/lib/verbs";
+import { VERBS, GATE_VERBS } from "@/lib/verbs";
 import { deskApi, type ActivityDetail, type ActivityPayload, type SubmitResponse, type Review, type SubmissionDetail, type Layer1Result } from "@/lib/desk";
 import { ApiError } from "@/lib/api";
 import { VerbWorkspace } from "@/components/app/workspaces";
@@ -417,7 +417,7 @@ export default function ActivityWorkspace() {
     );
   }
 
-  const verb = VERBS[activity.verb.id];
+  const verb = VERBS[activity.verb.id] ?? GATE_VERBS[activity.verb.id];
   const content = ACTIVITY_CONTENT[`${activity.taskCode}/${activity.code}`];
   const layer1 = result?.layer1;
   const review = result?.review ?? activity.latestReview;

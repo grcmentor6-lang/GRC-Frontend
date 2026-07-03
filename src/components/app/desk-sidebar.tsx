@@ -8,6 +8,7 @@ import { DVerb } from "@/components/ui/dverb";
 import { VERB_TONES } from "@/lib/tones";
 import { OrgLogo } from "@/components/app/org-logo";
 import { TASK_META, METHOD_CATEGORY_ORDER } from "@/lib/taskmeta";
+import { isGateVerb } from "@/lib/verbs";
 import type { LearningOrg, LearningTask } from "@/lib/learnings";
 import { useDeskLearnings } from "./desk-context";
 
@@ -77,12 +78,22 @@ function TaskNode({ task, state, activeId, activeTaskCode }: { task: LearningTas
           {task.steps.map((s) => {
             const ss = stepState(s.status);
             const active = s.id === activeId;
+            // Task-boundary gates (RUA readiness / Research Submission) get a distinct shield node
+            // instead of the plain step dot — they gate the task, they aren't one of its actions.
+            const gate = isGateVerb(s.verb);
             const inner = (
               <>
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotCls(ss)}`} />
+                {gate ? (
+                  <span className={`w-3.5 h-3.5 rounded flex items-center justify-center shrink-0 ${ss === "complete" ? "bg-emerald-100 text-emerald-600" : "bg-violet-100 text-violet-600"}`}>
+                    <Icon name={s.verb === "rua" ? "shield" : "globe"} size={9} />
+                  </span>
+                ) : (
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotCls(ss)}`} />
+                )}
                 <span className="font-mono text-[9.5px] text-slate-400 shrink-0 w-6">{s.code}</span>
                 <DVerb verbId={s.verb} />
-                <span className={`text-[11.5px] tracking-tight truncate flex-1 ${active ? "text-indigo-700 font-medium" : ss === "locked" ? "text-slate-400" : "text-slate-600"}`}>{s.title}</span>
+                <span className={`text-[11.5px] tracking-tight truncate flex-1 ${active ? "text-indigo-700 font-medium" : ss === "locked" ? "text-slate-400" : gate ? "text-violet-700" : "text-slate-600"}`}>{s.title}</span>
+                {gate && ss !== "locked" && <span className="inline-flex items-center h-[15px] px-1 rounded bg-violet-50 ring-1 ring-violet-200 text-violet-600 text-[8.5px] font-semibold tracking-[0.08em] shrink-0">GATE</span>}
                 {ss === "locked" && <Icon name="lock" size={10} className="text-slate-300 shrink-0" />}
                 {ss === "current" && !active && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />}
               </>
@@ -90,7 +101,7 @@ function TaskNode({ task, state, activeId, activeTaskCode }: { task: LearningTas
             return ss === "locked" ? (
               <div key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-not-allowed opacity-70" title="Complete the previous step first">{inner}</div>
             ) : (
-              <Link key={s.id} href={`/app/desk/${s.id}`} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg no-underline transition-colors ${active ? "bg-indigo-50 ring-1 ring-indigo-100" : "hover:bg-slate-100/70"}`}>{inner}</Link>
+              <Link key={s.id} href={`/app/desk/${s.id}`} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg no-underline transition-colors ${active ? "bg-indigo-50 ring-1 ring-indigo-100" : gate ? "bg-violet-50/40 hover:bg-violet-50" : "hover:bg-slate-100/70"}`}>{inner}</Link>
             );
           })}
         </div>

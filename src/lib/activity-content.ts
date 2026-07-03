@@ -11,6 +11,16 @@ export interface ActivityContent {
 
 export const ACTIVITY_CONTENT: Record<string, ActivityContent> = {
   // ───────────── AA-001 · Information Asset Inventory & Classification (CloudTech) ─────────────
+  "AA-001/1.0": {
+    objective:
+      "You will prove you understand this task — the governing controls, the templates, the key concepts and the deliverable contract — before any real work begins. No passed gate, no step 1.1.",
+    whatToDo: [
+      "Study each governing control and note in a line what it requires of this task.",
+      "Inspect the provided templates and confirm the prerequisites are in hand.",
+      "Explain every key concept in your own words — the mentor grades these, not copied definitions.",
+      "Answer the readiness questions, accept the deliverable contract, and attest your readiness.",
+    ],
+  },
   "AA-001/1.1": {
     objective: "You will request the starting list of information assets from the people who run CloudTech's systems, so you have a base to build the register from.",
     whatToDo: [
@@ -228,6 +238,15 @@ ISO 27001 A.5.9 — every asset must have an owner; an ownerless asset is itself
 ## Sign-off
 Record the decision (approved / approved with conditions), any conditions, and the date. A presentation with no recorded decision isn't finished.`,
       },
+    ],
+  },
+  "AA-001/1.9": {
+    objective:
+      "You will evidence the research behind your Information Asset Register — the contextual, gap and horizon-scanning work that makes it CloudTech's register rather than a template — before the task closes.",
+    whatToDo: [
+      "Work each of the three research methods and capture your findings as notes.",
+      "Cite at least one source per method — clause, report, advisory or internal document.",
+      "Summarise how the research changed or confirmed the register you built.",
     ],
   },
 

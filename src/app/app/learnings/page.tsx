@@ -51,6 +51,58 @@ const DOMAIN_META: Record<string, { icon: IconName; tone: Tone }> = {
 };
 const domainMeta = (cat: string) => DOMAIN_META[cat] ?? { icon: "layers" as IconName, tone: "indigo" as Tone };
 
+// The four GRC pillars, and which pillar each task builds. This taxonomy is fixed product data
+// (from the GRC 101 catalogue — its 5/14/13/3 task split is the intended mapping); the *scores*
+// below are computed live from task completion, never hardcoded.
+type PillarId = "risk" | "audit" | "policy" | "tprm";
+const PILLAR_META: { id: PillarId; name: string; icon: IconName; tone: Tone }[] = [
+  { id: "risk",   name: "Risk Assessment",       icon: "target",      tone: "violet"  },
+  { id: "audit",  name: "Auditing & Assurance",  icon: "checkSquare", tone: "indigo"  },
+  { id: "policy", name: "Policy Development",     icon: "edit",        tone: "emerald" },
+  { id: "tprm",   name: "Third-Party Risk",      icon: "handshake",   tone: "amber"   },
+];
+const TASK_PILLAR: Record<string, PillarId> = {
+  "AA-001": "risk", "AA-002": "audit", "AA-003": "risk",
+  "GRM-001": "risk", "GRM-002": "policy", "GRM-003": "audit",
+  "CRM-001": "policy", "CRM-002": "audit", "CRM-003": "audit",
+  "DD-001": "policy", "DD-002": "policy", "DD-003": "policy",
+  "SPA-001": "policy", "SPA-002": "policy",
+  "IE-001": "audit", "IE-002": "policy",
+  "TV-001": "audit", "TV-002": "audit",
+  "MM-001": "audit", "MM-002": "risk",
+  "CA-001": "policy", "CA-002": "audit", "CA-003": "policy",
+  "RR-001": "audit",
+  "BCRP-001": "risk", "BCRP-002": "policy",
+  "TPRM-001": "tprm", "TPRM-002": "tprm", "LRC-001": "tprm",
+  "PE-001": "policy", "PE-002": "audit",
+  "QA-001": "audit", "QA-002": "audit",
+  "KT-001": "policy", "KT-002": "audit",
+};
+const levelFor = (pct: number) => pct >= 75 ? "Advanced" : pct >= 55 ? "Practitioner" : pct >= 35 ? "Developing" : "Foundational";
+
+type PillarStat = { id: PillarId; name: string; icon: IconName; tone: Tone; pct: number; level: string; taskCount: number; graded: number; skills: { label: string; pct: number }[] };
+
+// Roll the joined rows up into the four pillars — every number here is derived from live done/total.
+function computePillars(rows: Row[]): PillarStat[] {
+  return PILLAR_META.map((p) => {
+    const items = rows.filter((r) => TASK_PILLAR[r.code] === p.id);
+    const done = items.reduce((n, r) => n + r.done, 0);
+    const total = items.reduce((n, r) => n + r.total, 0);
+    const cats = new Map<string, { done: number; total: number; count: number }>();
+    for (const r of items) {
+      const c = cats.get(r.category) ?? { done: 0, total: 0, count: 0 };
+      c.done += r.done; c.total += r.total; c.count += 1;
+      cats.set(r.category, c);
+    }
+    const skills = [...cats.entries()]
+      .sort((a, b) => b[1].count - a[1].count || b[1].total - a[1].total)
+      .slice(0, 3)
+      .map(([label, v]) => ({ label, pct: v.total ? Math.round((v.done / v.total) * 100) : 0 }));
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    return { ...p, pct, level: levelFor(pct), taskCount: items.length, graded: done, skills };
+  });
+}
+
 // A task joined from the fixed catalogue (TASK_META) with its live status/progress.
 type Row = {
   code: string; name: string; category: string;
@@ -70,41 +122,59 @@ const statusChip = (s: string) => STATUS_CHIP[s] ?? STATUS_CHIP["not-started"];
 const isEngaged = (s: TaskStatus) => s === "in-progress" || s === "complete" || s === "active";
 
 // ---------- MASTERY DASHBOARD ----------
-function RubricCard({ label, value, out }: { label: string; value: number; out: number }) {
-  const pct = out ? Math.round((value / out) * 100) : 0;
-  const tone: Tone = pct >= 85 ? "emerald" : pct >= 70 ? "indigo" : "amber";
-  const t = LRN_TONE[tone];
+function PillarMasteryCard({ p }: { p: PillarStat }) {
+  const t = LRN_TONE[p.tone];
   return (
-    <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-5 flex flex-col justify-between">
-      <div className="flex items-start justify-between gap-2">
-        <div className="text-[13px] font-semibold tracking-tight text-slate-800 leading-snug">{label}</div>
-        <span className={`inline-flex items-center h-6 px-2 rounded-full text-[10.5px] font-semibold ${t.soft} ${t.text} ring-1 ${t.ring} shrink-0`}>{pct}%</span>
+    <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-5 flex flex-col">
+      <div className="flex items-center gap-3">
+        <div className={`w-10 h-10 rounded-xl ${t.soft} ${t.text} ring-1 ${t.ring} flex items-center justify-center`}>
+          <Icon name={p.icon} size={18} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13.5px] font-semibold tracking-tight text-slate-900 truncate">{p.name}</div>
+          <div className="text-[11px] text-slate-400 tracking-tight">{p.taskCount} tasks map here · {p.graded} graded</div>
+        </div>
       </div>
-      <div className="mt-4">
+      <div className="mt-4 flex items-end justify-between">
         <div className="flex items-baseline gap-1.5">
-          <span className="text-[26px] font-semibold tabular-nums tracking-[-0.02em] text-slate-900 leading-none">{value.toFixed(1)}</span>
-          <span className="text-[12px] text-slate-400 font-medium">/ {out}</span>
+          <span className="text-[30px] font-semibold tabular-nums tracking-[-0.02em] text-slate-900 leading-none">{p.pct}</span>
+          <span className="text-[13px] text-slate-400 font-medium">%</span>
         </div>
-        <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
-          <div className={`h-full rounded-full bg-gradient-to-r ${t.grad}`} style={{ width: `${pct}%` }} />
-        </div>
+        <span className={`inline-flex items-center h-6 px-2 rounded-full text-[10.5px] font-semibold ${t.soft} ${t.text} ring-1 ${t.ring}`}>{p.level}</span>
       </div>
+      <div className="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden">
+        <div className={`h-full rounded-full bg-gradient-to-r ${t.grad}`} style={{ width: `${p.pct}%` }} />
+      </div>
+      {p.skills.length > 0 && (
+        <div className="mt-4 space-y-2.5 pt-3 border-t border-slate-100">
+          {p.skills.map((s) => (
+            <div key={s.label}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11.5px] text-slate-600 tracking-tight truncate pr-2">{s.label}</span>
+                <span className="text-[10.5px] font-medium text-slate-400 tabular-nums shrink-0">{s.pct}%</span>
+              </div>
+              <div className="h-1 rounded-full bg-slate-100 overflow-hidden">
+                <div className={`h-full rounded-full ${t.bar} opacity-70`} style={{ width: `${s.pct}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function MasteryDashboard({
-  overallPct, level, engaged, total, rubric, out,
+  overallPct, level, engaged, total, pillars,
 }: {
-  overallPct: number; level: string; engaged: number; total: number;
-  rubric: { id: string; label: string; value: number }[]; out: number;
+  overallPct: number; level: string; engaged: number; total: number; pillars: PillarStat[];
 }) {
   const c = 2 * Math.PI * 52;
   return (
     <section>
       <div className="mb-4">
-        <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-900">GRC mastery</h2>
-        <p className="text-[12.5px] text-slate-500 tracking-tight">Your overall progress, and how your graded work scores against the mentor rubric.</p>
+        <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-900">GRC pillar mastery</h2>
+        <p className="text-[12.5px] text-slate-500 tracking-tight">How your graded work across the {total} tasks compounds into capability in the four core pillars.</p>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
         <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 flex flex-col items-center justify-center text-center">
@@ -122,19 +192,9 @@ function MasteryDashboard({
           <div className="mt-4 text-[13.5px] font-semibold tracking-tight">{level}</div>
           <div className="mt-1 text-[11.5px] text-slate-400 tracking-tight">{engaged} of {total} tasks engaged</div>
         </div>
-        {rubric.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {rubric.map((r) => <RubricCard key={r.id} label={r.label} value={r.value} out={out} />)}
-          </div>
-        ) : (
-          <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100 flex items-center justify-center shrink-0"><Icon name="star" size={18} /></div>
-            <div>
-              <div className="text-[13px] font-semibold tracking-tight text-slate-900">No rubric scores yet</div>
-              <div className="text-[12px] text-slate-500 tracking-tight">Your capability across the mentor rubric appears here once your first activity is reviewed.</div>
-            </div>
-          </div>
-        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {pillars.map((p) => <PillarMasteryCard key={p.id} p={p} />)}
+        </div>
       </div>
     </section>
   );
@@ -147,51 +207,37 @@ function StdChip({ label, tone, title }: { label: string; tone: Tone; title?: st
   </span>;
 }
 
-// ---------- DOMAIN COVERAGE ----------
-function DomainCard({ cat, rows, active, onClick }: { cat: string; rows: Row[]; active: boolean; onClick: () => void }) {
+// ---------- DOMAIN RAIL (left nav) ----------
+function DomainRailItem({ cat, count, active, onClick }: { cat: string; count: number; active: boolean; onClick: () => void }) {
   const { icon, tone } = domainMeta(cat);
   const t = LRN_TONE[tone];
-  const tones = [...new Set(rows.map((r) => r.standardTone))];
   return (
     <button onClick={onClick}
-      className={`text-left rounded-xl p-3 ring-1 transition-all ${active ? "bg-white ring-indigo-300 shadow-[0_4px_14px_-6px_rgba(99,102,241,0.3)]" : "bg-white/60 ring-slate-200/60 hover:bg-white hover:ring-slate-300"}`}>
-      <div className="flex items-center gap-2">
-        <div className={`w-7 h-7 rounded-lg ${t.soft} ${t.text} ring-1 ${t.ring} flex items-center justify-center shrink-0`}>
-          <Icon name={icon} size={13} />
-        </div>
-        <span className="text-[13px] font-semibold tabular-nums text-slate-900">{rows.length}</span>
-        <span className="text-[10px] text-slate-400">{rows.length === 1 ? "task" : "tasks"}</span>
+      className={`w-full text-left rounded-xl p-2.5 ring-1 transition-all flex items-center gap-2.5 ${active ? "bg-white ring-indigo-300 shadow-[0_4px_14px_-6px_rgba(99,102,241,0.3)]" : "bg-white/50 ring-slate-200/60 hover:bg-white hover:ring-slate-300"}`}>
+      <div className={`w-8 h-8 rounded-lg ${t.soft} ${t.text} ring-1 ${t.ring} flex items-center justify-center shrink-0`}>
+        <Icon name={icon} size={14} />
       </div>
-      <div className="mt-1.5 text-[11.5px] font-medium text-slate-700 tracking-tight leading-snug">{cat}</div>
-      <div className="mt-1.5 flex flex-wrap gap-1">
-        {tones.map((tn) => <span key={tn} className={`w-1.5 h-1.5 rounded-full ${LRN_TONE[tn].bar}`} />)}
+      <div className="min-w-0 flex-1">
+        <div className={`text-[12px] font-medium tracking-tight leading-snug ${active ? "text-slate-900" : "text-slate-700"}`}>{cat}</div>
       </div>
+      <span className={`shrink-0 inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full text-[10.5px] font-semibold tabular-nums ${active ? `${t.soft} ${t.text}` : "bg-slate-100 text-slate-500"}`}>{count}</span>
     </button>
   );
 }
 
-// ---------- CONTROL LIST ITEM ----------
-function ControlListItem({ row, active, onClick }: { row: Row; active: boolean; onClick: () => void }) {
-  const { icon, tone } = domainMeta(row.category);
-  const t = LRN_TONE[tone];
+// ---------- TASK PILL (right-side selector) ----------
+function TaskPill({ row, active, onClick }: { row: Row; active: boolean; onClick: () => void }) {
   const dot = row.status === "complete" ? "bg-emerald-500" : row.status === "in-progress" || row.status === "active" ? "bg-indigo-500" : "bg-slate-300";
   return (
     <button onClick={onClick}
-      className={`w-full text-left rounded-xl p-3 ring-1 transition-all ${active ? "bg-white ring-indigo-300 shadow-[0_4px_14px_-6px_rgba(99,102,241,0.3)]" : "bg-white/60 ring-slate-200/60 hover:bg-white hover:ring-slate-300"}`}>
-      <div className="flex items-start gap-2.5">
-        <div className={`mt-0.5 w-7 h-7 rounded-lg ${t.soft} ${t.text} ring-1 ${t.ring} flex items-center justify-center shrink-0`}>
-          <Icon name={icon} size={13} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-mono text-slate-400">{row.code}</span>
-            <span className={`w-1 h-1 rounded-full ${LRN_TONE[row.standardTone].bar}`} />
-            <span className={`text-[10px] font-medium ${LRN_TONE[row.standardTone].text}`}>{row.standardLabel}</span>
-            <span className={`ml-auto w-1.5 h-1.5 rounded-full ${dot}`} title={statusChip(row.status).label} />
-          </div>
-          <div className={`mt-0.5 text-[12.5px] font-medium tracking-tight leading-snug ${active ? "text-slate-900" : "text-slate-700"}`}>{row.name}</div>
-        </div>
+      className={`text-left rounded-lg px-3 py-2 ring-1 transition-all ${active ? "bg-white ring-indigo-300 shadow-[0_4px_14px_-6px_rgba(99,102,241,0.3)]" : "bg-white/60 ring-slate-200/60 hover:bg-white hover:ring-slate-300"}`}>
+      <div className="flex items-center gap-1.5 mb-0.5">
+        <span className="text-[10px] font-mono text-slate-400">{row.code}</span>
+        <span className={`w-1 h-1 rounded-full ${LRN_TONE[row.standardTone].bar}`} />
+        <span className={`text-[10px] font-medium ${LRN_TONE[row.standardTone].text}`}>{row.standardLabel}</span>
+        <span className={`ml-auto w-1.5 h-1.5 rounded-full ${dot}`} title={statusChip(row.status).label} />
       </div>
+      <div className={`text-[12px] font-medium tracking-tight leading-snug ${active ? "text-slate-900" : "text-slate-700"}`}>{row.name}</div>
     </button>
   );
 }
@@ -282,73 +328,68 @@ function ControlDetail({ row }: { row: Row }) {
   );
 }
 
-// ---------- FULL EXPLORER ----------
+// ---------- FULL EXPLORER (domain rail left · results right) ----------
 function LearningsExplorer({ rows }: { rows: Row[] }) {
-  const [filter, setFilter] = useState("all");
-  const [sel, setSel] = useState(rows[0]?.code ?? "");
-
   const byCategory = useMemo(() => {
     const m = new Map<string, Row[]>();
     for (const cat of METHOD_CATEGORY_ORDER) m.set(cat, []);
     for (const r of rows) (m.get(r.category) ?? m.set(r.category, []).get(r.category)!).push(r);
     return m;
   }, [rows]);
+  const categories = METHOD_CATEGORY_ORDER.filter((c) => (byCategory.get(c)?.length ?? 0) > 0);
 
-  const shownCats = filter === "all" ? METHOD_CATEGORY_ORDER : [filter];
-  const ctrl = rows.find((r) => r.code === sel) ?? rows[0];
+  const [domain, setDomain] = useState(categories[0] ?? "");
+  const [sel, setSel] = useState("");
+
+  const domainTasks = byCategory.get(domain) ?? [];
+  const ctrl = domainTasks.find((r) => r.code === sel) ?? domainTasks[0];
+  const { icon, tone } = domainMeta(domain);
+  const dt = LRN_TONE[tone];
+
+  const selectDomain = (cat: string) => {
+    setDomain(cat);
+    setSel((byCategory.get(cat) ?? [])[0]?.code ?? "");
+  };
 
   return (
     <section>
       <div className="mb-4">
         <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-slate-900">GRC 101 coverage · {METHOD_CATEGORY_ORDER.length} domains · {rows.length} tasks</h2>
-        <p className="text-[12.5px] text-slate-500 tracking-tight">Every method category and task, each pairing its technical control with the reason it exists.</p>
+        <p className="text-[12.5px] text-slate-500 tracking-tight">Pick a method category on the left — its tasks and their control ↔ business justification open on the right.</p>
       </div>
 
-      {/* domain coverage grid — doubles as filter */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 mb-4">
-        {METHOD_CATEGORY_ORDER.map((cat) => {
-          const items = byCategory.get(cat) ?? [];
-          if (!items.length) return null;
-          return <DomainCard key={cat} cat={cat} rows={items} active={filter === cat} onClick={() => setFilter(filter === cat ? "all" : cat)} />;
-        })}
-      </div>
-
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-[11.5px] text-slate-500 tracking-tight">
-          {filter === "all" ? `Showing all ${METHOD_CATEGORY_ORDER.length} domains` : `Filtered · ${filter}`}
-        </span>
-        {filter !== "all" && (
-          <button onClick={() => setFilter("all")} className="text-[11.5px] font-medium text-indigo-600 hover:text-indigo-700 inline-flex items-center gap-1">
-            <Icon name="x" size={12} />Clear filter
-          </button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 items-start">
-        {/* grouped list */}
-        <div className="space-y-4 lg:max-h-[720px] lg:overflow-y-auto lg:pr-1">
-          {shownCats.map((cat) => {
-            const items = byCategory.get(cat) ?? [];
-            if (!items.length) return null;
-            const { icon, tone } = domainMeta(cat);
-            return (
-              <div key={cat}>
-                <div className="flex items-center gap-2 mb-1.5 px-1">
-                  <Icon name={icon} size={12} className={LRN_TONE[tone].text} />
-                  <span className="text-[10.5px] font-semibold tracking-[0.08em] uppercase text-slate-500">{cat}</span>
-                  <span className="text-[10px] text-slate-400">{items.length}</span>
-                </div>
-                <div className="space-y-1.5">
-                  {items.map((r) => <ControlListItem key={r.code} row={r} active={r.code === sel} onClick={() => setSel(r.code)} />)}
-                </div>
-              </div>
-            );
-          })}
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 items-start">
+        {/* LEFT — domain rail */}
+        <div className="space-y-1.5 lg:max-h-[760px] lg:overflow-y-auto lg:px-1.5 lg:py-1">
+          {categories.map((cat) => (
+            <DomainRailItem key={cat} cat={cat} count={(byCategory.get(cat) ?? []).length} active={cat === domain} onClick={() => selectDomain(cat)} />
+          ))}
         </div>
 
-        {/* detail */}
-        <div className="rounded-3xl bg-slate-50/40 ring-1 ring-slate-200/60 p-5 lg:sticky lg:top-4">
-          {ctrl && <ControlDetail row={ctrl} />}
+        {/* RIGHT — results for the selected domain */}
+        <div className="space-y-4">
+          {/* domain header + task selector */}
+          <div className="rounded-2xl bg-slate-50/50 ring-1 ring-slate-200/60 p-4">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className={`w-9 h-9 rounded-xl ${dt.soft} ${dt.text} ring-1 ${dt.ring} flex items-center justify-center shrink-0`}>
+                <Icon name={icon} size={16} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[14px] font-semibold tracking-tight text-slate-900 leading-tight">{domain}</div>
+                <div className="text-[11px] text-slate-400 tracking-tight">{domainTasks.length} {domainTasks.length === 1 ? "task" : "tasks"} in this domain</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-1.5">
+              {domainTasks.map((r) => (
+                <TaskPill key={r.code} row={r} active={r.code === ctrl?.code} onClick={() => setSel(r.code)} />
+              ))}
+            </div>
+          </div>
+
+          {/* dual-pane detail */}
+          <div className="rounded-3xl bg-white ring-1 ring-slate-200/60 p-5">
+            {ctrl && <ControlDetail row={ctrl} />}
+          </div>
         </div>
       </div>
     </section>
@@ -386,12 +427,11 @@ export default function LearningsPage() {
     });
   }, [learnings]);
 
+  const pillars = useMemo(() => computePillars(rows), [rows]);
   const total = rows.length;
   const engaged = rows.filter((r) => isEngaged(r.status)).length;
   const overallPct = progress?.overallPct ?? (total ? Math.round((engaged / total) * 100) : 0);
-  const level = overallPct >= 75 ? "Advanced Practitioner" : overallPct >= 50 ? "Practitioner" : overallPct >= 20 ? "Developing Practitioner" : "Foundational";
-  const rubric = progress?.reviewsCount ? progress.rubricScores : [];
-  const scoreOut = progress?.scoreOutOf ?? 5;
+  const level = overallPct >= 75 ? "Advanced Practitioner" : overallPct >= 55 ? "Practitioner" : overallPct >= 35 ? "Developing Practitioner" : "Foundational";
 
   const loading = (lLoad || pLoad) && !learnings && !progress;
   const error = lErr ? (lErr instanceof ApiError ? lErr.message : "Couldn't load learnings.") : null;
@@ -419,7 +459,7 @@ export default function LearningsPage() {
         </Card>
       ) : (
         <>
-          <MasteryDashboard overallPct={overallPct} level={level} engaged={engaged} total={total} rubric={rubric} out={scoreOut} />
+          <MasteryDashboard overallPct={overallPct} level={level} engaged={engaged} total={total} pillars={pillars} />
           <LearningsExplorer rows={rows} />
         </>
       )}
