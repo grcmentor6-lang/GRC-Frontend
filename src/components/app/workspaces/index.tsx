@@ -17,7 +17,8 @@ import {
   AssessWorkspace, ScoreWorkspace, CompileWorkspace, BriefWorkspace,
   SignoffWorkspace, InterviewWorkspace, DocumentWorkspace,
 } from "./set-c";
-import { RuaWorkspace, ResearchWorkspace } from "./gates";
+import { ResearchWorkspace } from "./gates";
+import { RuaWorkspace } from "./rua-gate";
 import { useState } from "react";
 import { seed, useLift } from "./kit";
 

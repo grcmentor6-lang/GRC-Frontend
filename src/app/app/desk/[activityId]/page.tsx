@@ -15,7 +15,7 @@ import { ApiError } from "@/lib/api";
 import { VerbWorkspace } from "@/components/app/workspaces";
 import { VERB_FORMS, GENERIC_FORM, type FieldSpec } from "@/lib/verb-forms";
 import { useDeskLearnings } from "@/components/app/desk-context";
-import { ACTIVITY_CONTENT } from "@/lib/activity-content";
+import { getActivityContent } from "@/lib/activity-content";
 import { WORKSPACE_REFS } from "@/lib/workspace-refs";
 import { StandardBanner } from "@/components/app/standards";
 import { GuidedTour, type TourStep } from "@/components/app/guided-tour";
@@ -418,7 +418,7 @@ export default function ActivityWorkspace() {
   }
 
   const verb = VERBS[activity.verb.id] ?? GATE_VERBS[activity.verb.id];
-  const content = ACTIVITY_CONTENT[`${activity.taskCode}/${activity.code}`];
+  const content = getActivityContent(activity.taskCode, activity.code, activity.verb.id);
   const layer1 = result?.layer1;
   const review = result?.review ?? activity.latestReview;
   const passed = review?.decision === "pass" || activity.status === "complete";

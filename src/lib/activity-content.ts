@@ -2,6 +2,8 @@
 // (required reading) for each individual verb action. Keyed by `${taskCode}/${activityCode}`,
 // e.g. "AA-001/1.1". References carry the facts/rules you need for THAT step. Second person ("You will …").
 import type { TaskReference } from "./taskmeta";
+import { isGateVerb } from "./verbs";
+import { RUA_TASKS } from "./rua-tasks";
 
 export interface ActivityContent {
   objective: string;
@@ -11,16 +13,6 @@ export interface ActivityContent {
 
 export const ACTIVITY_CONTENT: Record<string, ActivityContent> = {
   // ───────────── AA-001 · Information Asset Inventory & Classification (CloudTech) ─────────────
-  "AA-001/1.0": {
-    objective:
-      "You will prove you understand this task — the governing controls, the templates, the key concepts and the deliverable contract — before any real work begins. No passed gate, no step 1.1.",
-    whatToDo: [
-      "Study each governing control and note in a line what it requires of this task.",
-      "Inspect the provided templates and confirm the prerequisites are in hand.",
-      "Explain every key concept in your own words — the mentor grades these, not copied definitions.",
-      "Answer the readiness questions, accept the deliverable contract, and attest your readiness.",
-    ],
-  },
   "AA-001/1.1": {
     objective: "You will request the starting list of information assets from the people who run CloudTech's systems, so you have a base to build the register from.",
     whatToDo: [
@@ -240,16 +232,6 @@ Record the decision (approved / approved with conditions), any conditions, and t
       },
     ],
   },
-  "AA-001/1.9": {
-    objective:
-      "You will evidence the research behind your Information Asset Register — the contextual, gap and horizon-scanning work that makes it CloudTech's register rather than a template — before the task closes.",
-    whatToDo: [
-      "Work each of the three research methods and capture your findings as notes.",
-      "Cite at least one source per method — clause, report, advisory or internal document.",
-      "Summarise how the research changed or confirmed the register you built.",
-    ],
-  },
-
   // ───────────── CRM-002 · ISO 27001 Control Mapping to Business Processes (CloudTech) ─────────────
   "CRM-002/8.1": {
     objective: "You will agree the five CloudTech business processes that the control-mapping exercise will cover, so the scope is clear and risk-relevant.",
@@ -2954,3 +2936,32 @@ The index is the evidence of your whole rotation — and the basis of your CV.` 
 Add your three improvements to the programme backlog so the next cohort benefits. A retrospective whose lessons go nowhere is wasted — closing the loop is the point.` }],
   },
 };
+
+/** Look up an activity's brief; task-boundary gates (RUA / Research Submission) get a brief
+ *  generated from the task's RUA catalog entry instead of 70 hand-written copies. */
+export function getActivityContent(taskCode: string, activityCode: string, verbId?: string): ActivityContent | undefined {
+  const staticContent = ACTIVITY_CONTENT[`${taskCode}/${activityCode}`];
+  if (staticContent || !verbId || !isGateVerb(verbId)) return staticContent;
+  const rua = RUA_TASKS[taskCode];
+  const deliverable = rua?.deliverable ?? "the deliverable";
+  const org = rua?.org ?? "the organisation";
+  if (verbId === "rua") {
+    return {
+      objective: `You will prove you understand this task — the governing controls, the templates, the key concepts and the contract for ${deliverable} — before any real work begins. No passed gate, no first step.`,
+      whatToDo: [
+        "Study each governing control and note in a line what it requires of this task.",
+        "Inspect the provided templates and confirm the prerequisites are in hand.",
+        "Explain every key concept in your own words — the mentor grades these, not copied definitions.",
+        "Answer the readiness questions, accept the deliverable contract, and attest your readiness.",
+      ],
+    };
+  }
+  return {
+    objective: `You will evidence the research behind your ${deliverable} — the contextual, gap and horizon-scanning work that makes it ${org}'s deliverable rather than a template — before the task closes.`,
+    whatToDo: [
+      "Work each of the three research methods and capture your findings as notes.",
+      "Cite at least one source per method — clause, report, advisory or internal document.",
+      `Summarise how the research changed or confirmed the ${deliverable}.`,
+    ],
+  };
+}
