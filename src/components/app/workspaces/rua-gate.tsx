@@ -13,9 +13,10 @@ import { useMemo, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { type WorkspaceProps, useLift, seed, GivenNote } from "./kit";
 import { TabRail, PaneNav, type TabDef } from "./gates";
+import { DocOpenStrip, FloatingDocs, useFloatingDocs } from "@/components/app/doc-windows";
 import { getRuaTask, type RuaTask } from "@/lib/rua-tasks";
 import { RUA_REFS, type RuaRef } from "@/lib/rua-refs";
-import { TASK_META } from "@/lib/taskmeta";
+import { TASK_META, type TaskReference } from "@/lib/taskmeta";
 import {
   microCheck, inspectExercise, boundaryItems, followUp,
   gradeParaphrase, gradeExplain, gradeAnswer, computeLedger, emptyProgress,
@@ -86,42 +87,13 @@ interface PaneProps {
   task: RuaTask; taskCode: string; p: RuaProgress; patch: Patch; goVerb: (k: string) => void;
   /** This tab's programme-provided reference artifacts. */
   refs: RuaRef[];
-  /** Opens a reference artifact in the page's Reference-material panel. */
-  openRef: (id?: string) => void;
-}
-
-/** Compact "handed to you" reference list — one row per artifact with an Open button. */
-function RefStrip({ refs, openRef, label = "Reference material for this step" }: { refs: RuaRef[]; openRef: (id?: string) => void; label?: string }) {
-  if (refs.length === 0) return null;
-  return (
-    <div className="rounded-xl bg-white ring-1 ring-slate-200/80 overflow-hidden mb-4">
-      <div className="px-3.5 py-2 border-b border-slate-100 flex items-center gap-1.5">
-        <Icon name="book" size={12} className="text-violet-600" />
-        <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-slate-400">{label}</span>
-        <span className="ml-auto text-[10px] text-slate-400">view-only · rendered in-app</span>
-      </div>
-      <div className="divide-y divide-slate-50">
-        {refs.map((r) => (
-          <div key={r.id} className="flex items-center gap-2.5 px-3.5 py-2">
-            <span className="w-6 h-6 rounded-md bg-violet-50 text-violet-600 flex items-center justify-center shrink-0"><Icon name="file" size={12} /></span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[12px] font-medium text-slate-800 tracking-tight truncate">{r.title}</span>
-              <span className="block text-[10px] text-slate-400 tracking-tight truncate">{r.kind}</span>
-            </span>
-            <button onClick={() => openRef(r.id)}
-              className="shrink-0 h-7 px-2.5 rounded-md text-[11px] font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 cursor-pointer focus-ring flex items-center gap-1 transition-colors">
-              <Icon name="arrowUpRight" size={12} /> Open
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  /** Opens a document in its own draggable floating window. */
+  openDoc: (d: TaskReference) => void;
 }
 
 /* ================= R1 · Study ================= */
 
-function StudyPane({ task, taskCode, p, patch, goVerb, refs, openRef }: PaneProps) {
+function StudyPane({ task, taskCode, p, patch, goVerb, refs, openDoc }: PaneProps) {
   const passedCount = task.controls.filter((_, i) => p.study[i]?.passed).length;
   const firstUnlocked = task.controls.findIndex((_, i) => !p.study[i]?.passed);
   const [open, setOpen] = useState(firstUnlocked === -1 ? 0 : firstUnlocked);
@@ -132,7 +104,7 @@ function StudyPane({ task, taskCode, p, patch, goVerb, refs, openRef }: PaneProp
       <ScreenHead v="R1" name="Study" title="Study the governing controls & cross-walk"
         subtitle={`Work through each ${task.standard} reference for its intent, then pass the comprehension check. Controls unlock in order.`}
         ring={{ value: passedCount / Math.max(1, task.controls.length), label: `${passedCount}/${task.controls.length}` }} />
-      <RefStrip refs={refs} openRef={openRef} />
+      <DocOpenStrip docs={refs} onOpen={openDoc} tone="violet" className="mb-4" />
       <div className="space-y-2.5">
         {task.controls.map((c, i) => {
           const done = !!p.study[i]?.passed;
@@ -236,7 +208,7 @@ function MicroCheckBox({ task, taskCode, idx, passed, attempts, onPass, onFail }
 const FMT_ICON = { sheet: "table", doc: "file", deck: "clipboard", diagram: "grid" } as const;
 const FMT_LABEL = { sheet: "Spreadsheet", doc: "Document", deck: "Slide deck", diagram: "Diagram" } as const;
 
-function InspectPane({ task, taskCode, p, patch, goVerb, refs, openRef }: PaneProps) {
+function InspectPane({ task, taskCode, p, patch, goVerb, refs, openDoc }: PaneProps) {
   const [open, setOpen] = useState<number | null>(task.templates.findIndex((_, i) => !p.inspect[i]));
   const passedCount = task.templates.filter((_, i) => p.inspect[i]).length;
   const allDone = passedCount === task.templates.length;
@@ -245,7 +217,7 @@ function InspectPane({ task, taskCode, p, patch, goVerb, refs, openRef }: PanePr
       <ScreenHead v="R2" name="Inspect" title="Open every provided template"
         subtitle="Prove you know each template's structure and purpose before you use it in anger. Open a card, study its fields, then pass the field-purpose exercise."
         ring={{ value: passedCount / Math.max(1, task.templates.length), label: `${passedCount}/${task.templates.length}` }} />
-      <RefStrip refs={refs} openRef={openRef} label="Template reference documents" />
+      <DocOpenStrip docs={refs} onOpen={openDoc} tone="violet" label="Template reference documents" className="mb-4" />
       <div className="space-y-2.5">
         {task.templates.map((tpl, i) => {
           const done = !!p.inspect[i];
@@ -387,7 +359,7 @@ function Fact({ k, v }: { k: string; v: string }) {
   return <div className="rounded-lg bg-slate-50 px-2.5 py-2"><div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-slate-400">{k}</div><div className="text-[12px] font-medium text-slate-700 tracking-tight leading-snug">{v}</div></div>;
 }
 
-function AcquirePane({ task, p, patch, goVerb, refs, openRef }: PaneProps) {
+function AcquirePane({ task, p, patch, goVerb, refs, openDoc }: PaneProps) {
   const prof = ORG_PROFILES[task.org];
   const needCtx = task.acquire.some((a) => a.type === "context");
   const resolved = task.acquire.filter((_, i) => p.acquire[i]).length;
@@ -398,7 +370,7 @@ function AcquirePane({ task, p, patch, goVerb, refs, openRef }: PaneProps) {
       <ScreenHead v="R3" name="Acquire" title="Retrieve prerequisite inputs & access"
         subtitle="Pull prior-task artefacts, acknowledge the organisation context, and confirm the access this task needs — before any work begins."
         ring={{ value: resolved / Math.max(1, task.acquire.length), label: `${resolved}/${task.acquire.length}` }} />
-      <RefStrip refs={refs} openRef={openRef} label="Prerequisite briefs" />
+      <DocOpenStrip docs={refs} onOpen={openDoc} tone="violet" label="Prerequisite briefs" className="mb-4" />
 
       <div className="space-y-2.5">
         {task.acquire.map((a, i) => {
@@ -457,7 +429,7 @@ function AcquirePane({ task, p, patch, goVerb, refs, openRef }: PaneProps) {
 
 /* ================= R4 · Clarify ================= */
 
-function ClarifyPane({ task, p, patch, goVerb, refs, openRef }: PaneProps) {
+function ClarifyPane({ task, p, patch, goVerb, refs, openDoc }: PaneProps) {
   const understood = task.steps.filter((_, i) => p.clarify[i]?.state === "understood").length;
   const openQ = task.steps.filter((_, i) => p.clarify[i]?.state === "query").length;
   const allDone = understood === task.steps.length;
@@ -466,7 +438,7 @@ function ClarifyPane({ task, p, patch, goVerb, refs, openRef }: PaneProps) {
       <ScreenHead v="R4" name="Clarify" title={`Walk the ${task.steps.length} activity steps`}
         subtitle="For each step of the task, either paraphrase it in your own words or raise a query. Every open query must be resolved before the gate."
         ring={{ value: understood / Math.max(1, task.steps.length), label: `${understood}/${task.steps.length}` }} />
-      <RefStrip refs={refs} openRef={openRef} label="Task description & activity steps" />
+      <DocOpenStrip docs={refs} onOpen={openDoc} tone="violet" label="Task description & activity steps" className="mb-4" />
       {openQ > 0 && (
         <div className="rounded-xl ring-1 ring-amber-200 bg-amber-50 px-4 py-2.5 mb-4 flex items-center gap-2 text-[12.5px] text-amber-800">
           <Icon name="alertTriangle" size={15} /> {openQ} open quer{openQ > 1 ? "ies" : "y"} — resolve to clear the Part D gate.
@@ -613,7 +585,7 @@ function Composer({ label, v, on, err, sim }: { label: string; v: string; on: (s
   );
 }
 
-function ConfirmPane({ task, taskCode, p, patch, goVerb, refs, openRef }: PaneProps) {
+function ConfirmPane({ task, taskCode, p, patch, goVerb, refs, openDoc }: PaneProps) {
   const cf = p.confirm;
   const items = useMemo(() => boundaryItems(task, taskCode), [task, taskCode]);
   const [produce, setProduce] = useState(cf?.produce ?? "");
@@ -646,7 +618,7 @@ function ConfirmPane({ task, taskCode, p, patch, goVerb, refs, openRef }: PanePr
     <div>
       <ScreenHead v="R5" name="Confirm" title="Lock the deliverable contract"
         subtitle="Restate the final deliverable and its acceptance standard in your own words, then sort the scope boundary. This becomes the reference point for grading your finished work." />
-      <RefStrip refs={refs} openRef={openRef} label="Deliverable acceptance specification" />
+      <DocOpenStrip docs={refs} onOpen={openDoc} tone="violet" label="Deliverable acceptance specification" className="mb-4" />
       <div className="space-y-4">
         <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white overflow-hidden">
           <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
@@ -715,7 +687,7 @@ function ConfirmPane({ task, taskCode, p, patch, goVerb, refs, openRef }: PanePr
 
 /* ================= R6 · Explain ================= */
 
-function ExplainPane({ task, p, patch, goVerb, refs, openRef }: PaneProps) {
+function ExplainPane({ task, p, patch, goVerb, refs, openDoc }: PaneProps) {
   const total = task.concepts.length;
   const passedCount = task.concepts.filter((_, i) => p.explain[i]?.passed).length;
   const [queue, setQueue] = useState<number[]>(() => task.concepts.map((_, i) => i).filter((i) => !p.explain[i]?.passed));
@@ -767,13 +739,15 @@ function ExplainPane({ task, p, patch, goVerb, refs, openRef }: PaneProps) {
               {(p.explain[idx]?.attempts ?? 0) > 0 && <span className="text-[11px] text-amber-600 font-medium">re-queued · attempt {(p.explain[idx]?.attempts ?? 0) + 1}</span>}
             </div>
             <h4 className="text-[15px] font-semibold text-slate-900 tracking-tight leading-snug" style={{ textWrap: "pretty" }}>{task.concepts[idx]}</h4>
-            {refs[idx] && (
-              <button onClick={() => openRef(refs[idx].id)}
-                className="mt-2 inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 cursor-pointer focus-ring transition-colors">
+          </div>
+          {refs[idx] && (
+            <div className="px-4 pt-3">
+              <button onClick={() => openDoc(refs[idx])}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 cursor-pointer focus-ring transition-colors">
                 <Icon name="book" size={12} /> Open the study primer for this concept
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {!result ? (
             <div className="px-4 py-3.5 space-y-3">
@@ -1105,7 +1079,7 @@ function GateOutcomePanel({ decision, ledger, onRerun }: { decision: GateDecisio
 
 /* ================= workspace shell ================= */
 
-export function RuaWorkspace({ taskCode, value, onChange, openRef }: WorkspaceProps) {
+export function RuaWorkspace({ taskCode, value, onChange }: WorkspaceProps) {
   const task = getRuaTask(taskCode);
   const allRefs = (taskCode ? RUA_REFS[taskCode] : undefined) ?? [];
   const [p, setP] = useState<RuaProgress>(() => {
@@ -1118,6 +1092,7 @@ export function RuaWorkspace({ taskCode, value, onChange, openRef }: WorkspacePr
     return base;
   });
   const [tab, setTab] = useState("study");
+  const fw = useFloatingDocs();
 
   const patch: Patch = (mut) => setP((prev) => { const n = JSON.parse(JSON.stringify(prev)) as RuaProgress; mut(n); return n; });
 
@@ -1155,7 +1130,7 @@ export function RuaWorkspace({ taskCode, value, onChange, openRef }: WorkspacePr
   const doneCount = tabs.filter((t) => t.done).length;
   const paneProps: PaneProps = {
     task, taskCode: taskCode ?? "", p, patch, goVerb: setTab,
-    refs: allRefs.filter((r) => r.tab === tab), openRef,
+    refs: allRefs.filter((r) => r.tab === tab), openDoc: fw.open,
   };
 
   return (
@@ -1183,6 +1158,9 @@ export function RuaWorkspace({ taskCode, value, onChange, openRef }: WorkspacePr
           <PaneNav tabs={tabs} active={tab} onSelect={setTab} />
         </div>
       </div>
+
+      {/* open reference documents float above the desk, draggable */}
+      <FloatingDocs docs={fw.docs} onClose={fw.close} onFocus={fw.focus} />
     </div>
   );
 }

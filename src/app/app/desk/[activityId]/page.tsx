@@ -9,7 +9,8 @@ import { DVerb } from "@/components/ui/dverb";
 import { Drawer } from "@/components/ui/drawer";
 import { DraggablePanel } from "@/components/ui/draggable-panel";
 import { RefBody } from "@/components/app/reference-material";
-import { VERBS, GATE_VERBS } from "@/lib/verbs";
+import { VERBS, GATE_VERBS, isGateVerb } from "@/lib/verbs";
+import { DocOpenStrip, FloatingDocs, useFloatingDocs } from "@/components/app/doc-windows";
 import { deskApi, type ActivityDetail, type ActivityPayload, type SubmitResponse, type Review, type SubmissionDetail, type Layer1Result } from "@/lib/desk";
 import { ApiError } from "@/lib/api";
 import { VerbWorkspace } from "@/components/app/workspaces";
@@ -257,6 +258,8 @@ export default function ActivityWorkspace() {
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [notesVal, setNotesVal] = useState("");
   const [focusRefId, setFocusRefId] = useState<string | null>(null);
+  // reference documents opened as draggable floating windows
+  const fw = useFloatingDocs();
   const [busy, setBusy] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResponse | null>(null);
@@ -430,10 +433,11 @@ export default function ActivityWorkspace() {
   const hasBrief = !!(content?.objective || (content?.whatToDo && content.whatToDo.length > 0));
   const hasChecklist = !!(verb?.layer1 && verb.layer1.length > 0);
   const formSpec = verb ? VERB_FORMS[verb.id] ?? GENERIC_FORM : GENERIC_FORM;
-  // Reference panel = the activity's required reading + the verb workspace's scripted artefacts
-  // (Scope Statement, Asset Register, …) opened via the workspace "Open" buttons. Deduped by id.
-  const references = [...(content?.references ?? []), ...(WORKSPACE_REFS[activity.verb.id] ?? [])]
-    .filter((r, i, a) => a.findIndex((x) => x.id === r.id) === i);
+  // Documents with their own Open button (floating windows) leave the drawer: the Reference-material
+  // panel keeps only the verb workspace's scripted artefacts (Scope Statement, Asset Register, …)
+  // opened via the in-workspace "Open" buttons.
+  const stripRefs = content?.references ?? [];
+  const references = (WORKSPACE_REFS[activity.verb.id] ?? []).filter((r) => !stripRefs.some((x) => x.id === r.id));
   const taskRefs = references.filter((r) => r.group === "task");
   const docRefs = references.filter((r) => r.group !== "task");
 
@@ -467,9 +471,9 @@ export default function ActivityWorkspace() {
     getEl: () => whatToDoRef.current,
     onEnter: () => setBriefShown(true),
   });
-  tourSteps.push({
+  if (references.length > 0) tourSteps.push({
     title: "Open the reference material",
-    body: `The facts, rules and artefacts you need to do this step correctly${references.length ? ` — ${references.length} document${references.length > 1 ? "s" : ""} here` : ""}. Click it any time to read alongside your work.`,
+    body: `The facts, rules and artefacts you need to do this step correctly — ${references.length} document${references.length > 1 ? "s" : ""} here. Click it any time to read alongside your work.`,
     icon: "book",
     getEl: () => referenceBtnRef.current,
   });
@@ -490,6 +494,7 @@ export default function ActivityWorkspace() {
   return (
     <div className="max-w-[920px] mx-auto px-6 py-6">
       <GuidedTour steps={tourSteps} step={tourStep} onStep={setTourStep} onClose={closeTour} />
+      <FloatingDocs docs={fw.docs} onClose={fw.close} onFocus={fw.focus} />
 
       {/* standard banner — ties the step back to the framework it belongs to */}
       <StandardBanner taskCode={activity.taskCode} activityId={activityId} />
@@ -593,17 +598,23 @@ export default function ActivityWorkspace() {
               {verb ? `${verb.label} — ${verb.when}` : "Capture your work for this step."}
             </p>
           </div>
-          <button
-            ref={referenceBtnRef}
-            onClick={() => setBriefOpen(true)}
-            className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200/70 text-slate-600 hover:bg-slate-100 text-[12px] font-medium tracking-tight transition-colors"
-          >
-            <Icon name="book" size={14} /> Reference material
-            {references.length > 0 && (
+          {references.length > 0 && (
+            <button
+              ref={referenceBtnRef}
+              onClick={() => setBriefOpen(true)}
+              className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200/70 text-slate-600 hover:bg-slate-100 text-[12px] font-medium tracking-tight transition-colors"
+            >
+              <Icon name="book" size={14} /> Reference material
               <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-semibold tabular-nums">{references.length}</span>
-            )}
-          </button>
+            </button>
+          )}
         </div>
+
+        {/* this step's materials, each openable as its own draggable window (the RUA gate renders
+            its own per-verb-step strips inside the workspace) */}
+        {!isGateVerb(activity.verb.id) && stripRefs.length > 0 && (
+          <DocOpenStrip docs={stripRefs} onOpen={fw.open} className="mb-5" />
+        )}
 
         <VerbWorkspace verbId={activity.verb.id} taskCode={activity.taskCode} activityCode={activity.code} value={values} onChange={setValues} openRef={openRef} />
 
