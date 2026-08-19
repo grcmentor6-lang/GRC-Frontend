@@ -388,6 +388,487 @@ export const FORM_TASKS: Record<string, FormTask> = {
       { id: 6, label: "CC7 System Monitoring" },
     ],
   },
+
+  // ── Draft steps ───────────────────────────────────────────────────────────────────────────
+  // `kind: "draft"` gives each item a section body plus an optional standards citation, so the
+  // items ARE the document's sections. Where a step revises rather than authors, the items are
+  // the things that must be shown to have changed — a revision with no diff is not a revision.
+  "GRM-002/5.6": {
+    kind: "draft", title: "Policy Revision — Review Feedback Incorporated",
+    standard: "ISO 27001 Cl 5.2; Cl 7.5.2 Creating and updating", itemLabel: "change",
+    feedsNext: "Feeds Step 5.7 (approval) and Step 5.8 (Policy Register entry).",
+    items: [
+      { id: 1, label: "Change 1 — what the reviewer said, and the wording now" },
+      { id: 2, label: "Change 2 — what the reviewer said, and the wording now" },
+      { id: 3, label: "Change 3 — what the reviewer said, and the wording now" },
+      { id: 4, label: "Feedback deliberately not adopted, and the reasoning" },
+      { id: 5, label: "Version history entry for this revision" },
+    ],
+  },
+  "GRM-003/6.2": {
+    kind: "draft", title: "Maturity Questionnaire — Departmental Adaptation",
+    standard: "NIST CSF 2.0 Functions; ISO 27001 Cl 4.1 Context", itemLabel: "function",
+    feedsNext: "Feeds Step 6.3 (assessment interviews) and Step 6.5 (scoring).",
+    items: [
+      { id: 1, label: "GOVERN — questions adapted to this department's decision rights" },
+      { id: 2, label: "IDENTIFY — questions adapted to the assets this department actually holds" },
+      { id: 3, label: "PROTECT — questions adapted to the controls in this department's hands" },
+      { id: 4, label: "DETECT — questions adapted to what this department would notice" },
+      { id: 5, label: "RESPOND & RECOVER — questions adapted to this department's role in an incident" },
+      { id: 6, label: "Generic questions removed, and why they did not apply here" },
+    ],
+  },
+  "GRM-003/6.7": {
+    kind: "draft", title: "Maturity Improvement Roadmap (one page)",
+    standard: "ISO 27001 Cl 6.2 Objectives and planning; Cl 10.2", itemLabel: "section",
+    feedsNext: "Feeds Step 6.8 (presentation) and SPA-001.",
+    items: [
+      { id: 1, label: "Current maturity position, in one sentence" },
+      { id: 2, label: "Gap 1 — action, owner, target maturity level, date" },
+      { id: 3, label: "Gap 2 — action, owner, target maturity level, date" },
+      { id: 4, label: "Gap 3 — action, owner, target maturity level, date" },
+      { id: 5, label: "Sequencing rationale — why this order and not by score" },
+      { id: 6, label: "What is deliberately NOT on the roadmap this cycle" },
+    ],
+  },
+  "TV-002/2": {
+    kind: "draft", title: "Testable Control Statements",
+    standard: "ISO 27001 A.5.35 Independent review; Cl 9.2 Internal audit", itemLabel: "policy",
+    feedsNext: "Feeds Step 3 (evidence request) and Step 5 (testing).",
+    items: [
+      { id: 1, label: "Policy 1 — two or three testable statements, and the evidence that confirms each" },
+      { id: 2, label: "Policy 2 — two or three testable statements, and the evidence that confirms each" },
+      { id: 3, label: "Policy 3 — two or three testable statements, and the evidence that confirms each" },
+      // A statement nobody could fail is not a test. Naming the disproof is what makes the
+      // spot-check a control test rather than a confirmation exercise.
+      { id: 4, label: "For each statement: what a FAIL would look like in the evidence" },
+    ],
+  },
+  "TV-002/7": {
+    kind: "draft", title: "Remediation Recommendations",
+    standard: "ISO 27001 Cl 10.1 Nonconformity and corrective action", itemLabel: "finding",
+    owners: ["IT Manager", "CISO", "Compliance Manager", "HR Manager", "Head of Platform"],
+    feedsNext: "Feeds Step 8 (report issue) and IE-001, MM-002.",
+    items: [
+      { id: 1, label: "Non-compliant finding 1 — recommendation, owner, evidence of closure" },
+      { id: 2, label: "Non-compliant finding 2 — recommendation, owner, evidence of closure" },
+      { id: 3, label: "Non-compliant finding 3 — recommendation, owner, evidence of closure" },
+      { id: 4, label: "Systemic cause common to the findings, if there is one" },
+      { id: 5, label: "Which recommendation to do first, and why" },
+    ],
+  },
+  "DD-001/4": {
+    kind: "draft", title: "Incident Reporting Quick Reference Card",
+    standard: "ISO 27001 A.6.8 Event reporting; A.5.26 Response to incidents", itemLabel: "panel",
+    feedsNext: "Feeds Step 5 (walkthrough) and Step 8 (staff communication).",
+    items: [
+      { id: 1, label: "What counts as an incident — in staff language, with two examples" },
+      { id: 2, label: "What to do in the first five minutes (and what NOT to do)" },
+      { id: 3, label: "Who to contact — route, and the out-of-hours route" },
+      { id: 4, label: "What information to have ready" },
+      { id: 5, label: "The reassurance line — reporting a false alarm is not a mistake" },
+    ],
+  },
+  "DD-001/7": {
+    kind: "draft", title: "Incident Procedure — Final Revision",
+    standard: "ISO 27001 A.5.26; Cl 7.5.2 Creating and updating", itemLabel: "change",
+    feedsNext: "Feeds Step 8 (registration and staff communication).",
+    items: [
+      { id: 1, label: "Change 1 — the feedback, and the revised wording" },
+      { id: 2, label: "Change 2 — the feedback, and the revised wording" },
+      { id: 3, label: "Change 3 — the feedback, and the revised wording" },
+      { id: 4, label: "Feedback not adopted, and why the procedure is better without it" },
+      { id: 5, label: "Final check — every role named in the procedure exists and is filled" },
+    ],
+  },
+  "MM-002/2": {
+    kind: "draft", title: "Risk Review Meeting Pack",
+    standard: "ISO 27001 Cl 9.1 Monitoring; Cl 9.3 Management review", itemLabel: "section",
+    feedsNext: "Feeds Steps 3–4 (the review meeting itself).",
+    items: [
+      { id: 1, label: "Agenda — items in the order they will be taken, with time boxes" },
+      { id: 2, label: "Pre-reading note — what attendees must have read, and the decisions being asked of them" },
+      { id: 3, label: "Risks scheduled for review this cycle, and why these ones" },
+      { id: 4, label: "Attendees — role, and what each is there to decide or inform" },
+      { id: 5, label: "Circulation record — sent to whom, when, and the reading deadline" },
+    ],
+  },
+  "MM-002/4": {
+    kind: "draft", title: "In-Meeting Risk Updates",
+    standard: "ISO 27001 Cl 6.1.3 Risk treatment; Cl 9.3", itemLabel: "update",
+    feedsNext: "Feeds Step 5 (new risks) and Step 7 (Register v2.0).",
+    items: [
+      { id: 1, label: "Score change 1 — risk ID, old score, new score, the evidence that moved it" },
+      { id: 2, label: "Score change 2 — risk ID, old score, new score, the evidence that moved it" },
+      { id: 3, label: "Treatment status change — risk ID, and what actually completed" },
+      { id: 4, label: "Risk proposed for closure — and the evidence that justifies closing it" },
+      // Disagreement in the room is data. Averaged away it disappears; recorded, it tells the
+      // next cycle where the organisation's risk appetite is genuinely unsettled.
+      { id: 5, label: "Any disagreement on a score, recorded rather than averaged away" },
+    ],
+  },
+  "DD-002/2": {
+    kind: "draft", title: "Training Module Learning Objectives",
+    standard: "ISO 27001 A.6.3 Awareness, education and training", itemLabel: "objective",
+    feedsNext: "Feeds Step 3 (content outline) and Step 5 (knowledge check).",
+    items: [
+      // Objectives written as observable behaviour, not "understand" — otherwise the knowledge
+      // check in step 5 has nothing it can actually test against.
+      { id: 1, label: "Phishing — what the learner will be able to DO afterwards" },
+      { id: 2, label: "Passwords — what the learner will be able to DO afterwards" },
+      { id: 3, label: "Data handling — what the learner will be able to DO afterwards" },
+      { id: 4, label: "How each objective will be evidenced as met" },
+    ],
+  },
+  "DD-002/3": {
+    kind: "draft", title: "Training Content Outline",
+    standard: "ISO 27001 A.6.3 Awareness, education and training", itemLabel: "segment",
+    feedsNext: "Feeds Step 4 (slides) and Step 5 (knowledge check).",
+    items: [
+      { id: 1, label: "Phishing — 10 minutes: hook, teaching points, exercise" },
+      { id: 2, label: "Passwords — 10 minutes: hook, teaching points, exercise" },
+      { id: 3, label: "Data handling — 10 minutes: hook, teaching points, exercise" },
+      { id: 4, label: "Organisation-specific examples used in place of generic ones" },
+      { id: 5, label: "Timing plan — what gets cut first if the session overruns" },
+    ],
+  },
+  "DD-002/4": {
+    kind: "draft", title: "Awareness Slide Deck (10–12 slides)",
+    standard: "ISO 27001 A.6.3 Awareness, education and training", itemLabel: "slide",
+    feedsNext: "Feeds Step 6 (mentor review) and Step 7 (pilot).",
+    items: [
+      { id: 1, label: "Title and why this matters here — one slide" },
+      { id: 2, label: "Phishing — teaching slides and the worked example" },
+      { id: 3, label: "Passwords — teaching slides and the worked example" },
+      { id: 4, label: "Data handling — teaching slides and the worked example" },
+      { id: 5, label: "What to do if you think something has gone wrong" },
+      { id: 6, label: "Slide count check, and what was cut to stay inside it" },
+    ],
+  },
+  "DD-002/5": {
+    kind: "draft", title: "Five-Question Knowledge Check",
+    standard: "ISO 27001 A.6.3; Cl 9.1 Monitoring", itemLabel: "question",
+    feedsNext: "Feeds Step 7 (pilot) and CA-001 (delivery and scoring).",
+    items: [
+      { id: 1, label: "Q1 — question, options, correct answer, objective it tests" },
+      { id: 2, label: "Q2 — question, options, correct answer, objective it tests" },
+      { id: 3, label: "Q3 — question, options, correct answer, objective it tests" },
+      { id: 4, label: "Q4 — question, options, correct answer, objective it tests" },
+      { id: 5, label: "Q5 — question, options, correct answer, objective it tests" },
+      // A distractor nobody picks teaches nothing; one that is plausibly right is where the
+      // learning happens.
+      { id: 6, label: "For each question: the plausible wrong answer, and why people pick it" },
+    ],
+  },
+  "SPA-002/6": {
+    kind: "draft", title: "Stakeholder Communication Plan",
+    standard: "ISO 27001 Cl 7.4 Communication; Cl 4.2 Interested parties", itemLabel: "audience",
+    feedsNext: "Feeds Step 7 (sponsor review) and Step 8 (sign-off).",
+    items: [
+      { id: 1, label: "Key players (high influence, high interest) — what, how often, which channel" },
+      { id: 2, label: "Keep satisfied (high influence, low interest) — what, how often, which channel" },
+      { id: 3, label: "Keep informed (low influence, high interest) — what, how often, which channel" },
+      { id: 4, label: "Monitor (low influence, low interest) — what, how often, which channel" },
+      { id: 5, label: "Escalation route when a communication is ignored" },
+    ],
+  },
+  "SPA-001/6": {
+    kind: "draft", title: "Management Briefing (one page)",
+    standard: "ISO 27001 Cl 6.2 Objectives and planning; Cl 9.3", itemLabel: "section",
+    feedsNext: "Feeds Step 7 (mentor review) and Step 8 (endorsement).",
+    items: [
+      { id: 1, label: "Context — why now, in two sentences" },
+      { id: 2, label: "Priorities — the phases and what each buys" },
+      { id: 3, label: "Investment summary — effort, owners, and what management is committing to" },
+      { id: 4, label: "Next steps — and precisely what endorsement is being sought on" },
+      { id: 5, label: "The one-page test — what was cut to hold it to a page" },
+    ],
+  },
+  "IE-001/2": {
+    kind: "draft", title: "Implementation Task Cards",
+    standard: "CIS Controls v8 IG1; ISO 27001 Cl 8.1 Operational planning", itemLabel: "card",
+    owners: ["IT Manager", "Head of Platform", "Security Eng. Lead", "Data Platform Lead"],
+    feedsNext: "Feeds Step 3 (weekly tracking) and Step 5 (acceptance testing).",
+    items: [
+      { id: 1, label: "Safeguard 1 — what must be done, IT owner, tools, acceptance criteria, evidence" },
+      { id: 2, label: "Safeguard 2 — what must be done, IT owner, tools, acceptance criteria, evidence" },
+      { id: 3, label: "Safeguard 3 — what must be done, IT owner, tools, acceptance criteria, evidence" },
+      { id: 4, label: "Safeguard 4 — what must be done, IT owner, tools, acceptance criteria, evidence" },
+      { id: 5, label: "Dependencies between cards, and the resulting order" },
+    ],
+  },
+  "IE-001/7": {
+    kind: "draft", title: "Gap Analysis Update After Remediation",
+    standard: "CIS Controls v8 IG1; ISO 27001 Cl 9.1", itemLabel: "update",
+    feedsNext: "Feeds Step 8 (progress report) and AA-002, PE-002.",
+    items: [
+      { id: 1, label: "Safeguards moved to Implemented — with the evidence reference for each" },
+      { id: 2, label: "Safeguards moved to Partial — and what still remains" },
+      { id: 3, label: "Safeguards unchanged — and why remediation did not reach them" },
+      { id: 4, label: "Score before and after, with the arithmetic shown" },
+      // The trap this column exists for: one control appearing to close several safeguards at
+      // once, which inflates the score without improving the position.
+      { id: 5, label: "Overlapping effects counted once, not once per safeguard" },
+    ],
+  },
+  "IE-001/8": {
+    kind: "draft", title: "Implementation Progress Report",
+    standard: "CIS Controls v8 IG1; ISO 27001 Cl 9.1 Monitoring", itemLabel: "section",
+    feedsNext: "Closes IE-001; feeds PE-002 and the next remediation cycle.",
+    items: [
+      { id: 1, label: "Position — what was implemented, against what was planned" },
+      { id: 2, label: "Evidence — what an auditor could sample today that they could not before" },
+      { id: 3, label: "Blockers — what stopped, who owns it, and by when" },
+      { id: 4, label: "Remaining exposure, stated plainly" },
+      { id: 5, label: "What the IT Manager is being asked to decide or resource next" },
+    ],
+  },
+  "TV-001/6": {
+    kind: "draft", title: "Access Control Testing Report",
+    standard: "ISO 27001 A.5.18 Access rights; A.8.2 Privileged access", itemLabel: "section",
+    feedsNext: "Feeds Step 7 (mentor review) and Step 8 (issue to the IT Manager).",
+    items: [
+      { id: 1, label: "Scope and method — accounts in scope, sources reconciled, and what was excluded" },
+      { id: 2, label: "Findings by type, with counts and the clean rate alongside the exception rate" },
+      { id: 3, label: "The most serious finding, and why it is the most serious" },
+      { id: 4, label: "Remediation recommendations — action, owner, deadline" },
+      { id: 5, label: "Systemic cause behind the individual findings" },
+      { id: 6, label: "Recommended review periodicity, and the reasoning for that interval" },
+    ],
+  },
+  "IE-002/2": {
+    kind: "draft", title: "Document Control Policy",
+    standard: "ISO 27001 Cl 7.5.2; Cl 7.5.3 Control of documented information", itemLabel: "section",
+    feedsNext: "Feeds Step 3 (Document Register) and Step 4 (folder structure).",
+    items: [
+      { id: 1, label: "Versioning scheme — and what makes a change major rather than minor" },
+      { id: 2, label: "Naming convention — with a worked example of a compliant filename" },
+      { id: 3, label: "Storage locations — approved versus working, and why they are separate" },
+      { id: 4, label: "Access rights — who may read, write and approve" },
+      { id: 5, label: "Review frequency, and who is accountable for triggering it" },
+      { id: 6, label: "What happens to superseded versions" },
+    ],
+  },
+  "IE-002/3": {
+    kind: "draft", title: "Document Register",
+    standard: "ISO 27001 Cl 7.5.3 Control of documented information", itemLabel: "section",
+    feedsNext: "Feeds Step 4 (folder structure) and Step 5 (migration).",
+    items: [
+      { id: 1, label: "Register fields — and why each one is needed for control, not decoration" },
+      { id: 2, label: "Policies indexed — count, and the coverage claim you can defend" },
+      { id: 3, label: "Procedures indexed — count, and the coverage claim you can defend" },
+      { id: 4, label: "Documents found that nobody owns, and how they were resolved" },
+      { id: 5, label: "How the register stays current once you hand it over" },
+    ],
+  },
+  "CA-002/3": {
+    kind: "draft", title: "Executive Compliance Status Report",
+    standard: "ISO 27001 Cl 9.3 Management review", itemLabel: "section",
+    feedsNext: "Feeds Step 4 (content assembly) and Step 5 (presentation).",
+    items: [
+      { id: 1, label: "Overall compliance RAG, and the single sentence that justifies the colour" },
+      { id: 2, label: "Top three risks — each with a number attached" },
+      { id: 3, label: "Top three achievements — each with a number attached" },
+      { id: 4, label: "Decisions required — what is needed, from whom, by when" },
+      { id: 5, label: "30-day outlook, written so it can be proved wrong in 30 days" },
+      { id: 6, label: "What was cut to hold one page" },
+    ],
+  },
+  "CA-002/7": {
+    kind: "draft", title: "Status Report — Final Revision",
+    standard: "ISO 27001 Cl 9.3 Management review", itemLabel: "change",
+    feedsNext: "Feeds Step 8 (issue to management) and MM-001, SPA-001.",
+    items: [
+      { id: 1, label: "Change 1 — the feedback, and what the report now says" },
+      { id: 2, label: "Change 2 — the feedback, and what the report now says" },
+      { id: 3, label: "Change 3 — the feedback, and what the report now says" },
+      { id: 4, label: "Feedback not adopted, and why the report is more useful without it" },
+      { id: 5, label: "Still one page after the changes — what gave way" },
+    ],
+  },
+  "KT-001/3": {
+    kind: "draft", title: "New Joiner GRC Checklist",
+    standard: "ISO 27001 A.6.1 Screening; A.6.3 Awareness; A.5.18 Access", itemLabel: "stage",
+    owners: ["HR Manager", "Line Manager", "IT Manager", "Compliance Manager"],
+    feedsNext: "Feeds Step 4 (Day-1 briefing) and Step 6 (pilot).",
+    items: [
+      { id: 1, label: "Day 1 — actions for the joiner, and actions for their manager" },
+      { id: 2, label: "Day 7 — actions for the joiner, and actions for their manager" },
+      { id: 3, label: "Day 30 — actions for the joiner, and actions for their manager" },
+      { id: 4, label: "Which items are blocking (access not granted until done) and which are not" },
+      { id: 5, label: "How completion is evidenced, and who checks" },
+    ],
+  },
+  "KT-001/4": {
+    kind: "draft", title: "Day-1 Security Briefing (five slides)",
+    standard: "ISO 27001 A.6.3 Awareness, education and training", itemLabel: "slide",
+    feedsNext: "Feeds Step 6 (pilot) and Step 8 (handover to HR).",
+    items: [
+      { id: 1, label: "Slide 1 — the three things that matter most on day one" },
+      { id: 2, label: "Slide 2 — how we handle information here, with one real example" },
+      { id: 3, label: "Slide 3 — accounts, access and what to do when you need more" },
+      { id: 4, label: "Slide 4 — how to report something that looks wrong, and the no-blame line" },
+      // A manager who is not a security specialist has to deliver this cold; if the slide
+      // needs them to improvise, it will not be delivered as intended.
+      { id: 5, label: "Slide 5 — where to find everything, plus manager speaker notes" },
+    ],
+  },
+  "KT-001/7": {
+    kind: "draft", title: "Onboarding Pack — Final Versions",
+    standard: "ISO 27001 A.6.3; Cl 7.5.2 Creating and updating", itemLabel: "change",
+    feedsNext: "Feeds Step 8 (handover to HR).",
+    items: [
+      { id: 1, label: "Checklist — what the pilot changed" },
+      { id: 2, label: "Day-1 briefing — what the pilot changed" },
+      { id: 3, label: "Reference guide — what the pilot changed" },
+      { id: 4, label: "Pilot feedback not adopted, and the reason" },
+      { id: 5, label: "Version and owner set on each final artefact" },
+    ],
+  },
+  "KT-002/5": {
+    kind: "draft", title: "Lessons Learned Report",
+    standard: "ISO 27001 Cl 10.2 Continual improvement; A.5.27", itemLabel: "section",
+    feedsNext: "Feeds Step 6 (peer review) and Step 8 (improvement backlog).",
+    items: [
+      { id: 1, label: "What this programme actually asks of you, in plain terms" },
+      { id: 2, label: "What I got wrong early, and what it cost" },
+      { id: 3, label: "What I would tell myself on day one" },
+      { id: 4, label: "Which lessons generalise, and which were specific to my organisations" },
+      { id: 5, label: "Knowledge gaps I still have, stated without hedging" },
+      { id: 6, label: "The one thing a future mentee should do differently" },
+    ],
+  },
+  "RR-001/5": {
+    kind: "draft", title: "Post-Exercise Lessons Learned Report",
+    standard: "ISO 27001 A.5.27 Learning from incidents; A.5.24", itemLabel: "section",
+    feedsNext: "Feeds Step 6 (procedure amendments) and Step 8 (filing).",
+    items: [
+      { id: 1, label: "Exercise summary — scenario, participants, duration" },
+      { id: 2, label: "Timeline of decisions, against what the procedure expected" },
+      { id: 3, label: "What worked — stated as prominently as what did not" },
+      { id: 4, label: "Deviations from procedure, each with the clause it breached" },
+      { id: 5, label: "Capability gaps (could not) separated from timing gaps (too slow)" },
+      { id: 6, label: "Proposed procedure amendments, each with an owner" },
+      // Written inside 48 hours because recall of who said what, and in what order,
+      // decays faster than anyone expects.
+      { id: 7, label: "Written within 48 hours — date and time of writing" },
+    ],
+  },
+  "MM-001/6": {
+    kind: "draft", title: "Management Commentary (three sentences)",
+    standard: "ISO 27001 Cl 9.1 Monitoring; Cl 9.3", itemLabel: "sentence",
+    feedsNext: "Feeds Step 7 (report issue) and CA-002.",
+    items: [
+      { id: 1, label: "Sentence 1 — what the RAG status actually means this month" },
+      { id: 2, label: "Sentence 2 — what changed, and what caused it" },
+      { id: 3, label: "Sentence 3 — what management should do or watch as a result" },
+      { id: 4, label: "The interpretation you rejected, and why the data does not support it" },
+    ],
+  },
+  "CA-003/1": {
+    kind: "draft", title: "Stakeholder Interview Guide",
+    standard: "ISO 27001 Cl 4.2 Interested parties; Cl 7.4", itemLabel: "section",
+    feedsNext: "Feeds Steps 2–5 (the interviews) and Step 8 (routing insights).",
+    items: [
+      { id: 1, label: "Opening — purpose, duration, and what you will do with what they say" },
+      // Open questions only: a closed question gets a yes and teaches nothing, which is the
+      // usual reason a discovery interview produces no discoveries.
+      { id: 2, label: "Questions on their objectives and pressures — open, not closed" },
+      { id: 3, label: "Questions on where GRC currently helps or hinders them" },
+      { id: 4, label: "Questions on risks they see that we may not" },
+      { id: 5, label: "Closing — what happens next, and what they can expect from you" },
+      { id: 6, label: "Adaptations by stakeholder type, and why each differs" },
+    ],
+  },
+  "BCRP-001/4": {
+    kind: "draft", title: "RTO and RPO Definition",
+    standard: "ISO 27001 A.5.30 ICT readiness for business continuity", itemLabel: "function",
+    feedsNext: "Feeds Step 6 (BIA summary) and BCRP-002 (DR checklist criteria).",
+    items: [
+      { id: 1, label: "Function 1 — RTO, RPO, and the business consequence that sets them" },
+      { id: 2, label: "Function 2 — RTO, RPO, and the business consequence that sets them" },
+      { id: 3, label: "Function 3 — RTO, RPO, and the business consequence that sets them" },
+      // The gap between what the business wants and what the estate can currently deliver IS
+      // the finding; an RTO agreed without testing feasibility is an aspiration.
+      { id: 4, label: "Where the stated RTO/RPO exceeds current capability, and by how much" },
+      { id: 5, label: "Who has to agree these targets for them to mean anything" },
+    ],
+  },
+  "BCRP-001/7": {
+    kind: "draft", title: "BIA Report",
+    standard: "ISO 27001 A.5.30; Cl 6.1.2 Risk assessment", itemLabel: "section",
+    feedsNext: "Feeds Step 8 (sign-off) and BCRP-002, SPA-001.",
+    items: [
+      { id: 1, label: "Methodology — how criticality was determined, and by whom" },
+      { id: 2, label: "Findings — critical functions ranked, with impact scores" },
+      { id: 3, label: "RTO / RPO table" },
+      { id: 4, label: "Single points of failure, including shared dependencies" },
+      { id: 5, label: "Recommended continuity measures, each with an owner" },
+      { id: 6, label: "Limitations — what this BIA did not cover, and why" },
+    ],
+  },
+  "BCRP-002/7": {
+    kind: "draft", title: "DR Checklist — Talk-Through Corrections",
+    standard: "ISO 27001 A.5.30 ICT readiness for business continuity", itemLabel: "correction",
+    feedsNext: "Feeds Step 8 (filing and live-test recommendation).",
+    items: [
+      { id: 1, label: "Correction 1 — what the walkthrough exposed, and the revised step" },
+      { id: 2, label: "Correction 2 — what the walkthrough exposed, and the revised step" },
+      { id: 3, label: "Correction 3 — what the walkthrough exposed, and the revised step" },
+      { id: 4, label: "A step nobody could actually perform, and what replaced it" },
+      { id: 5, label: "What the talk-through could NOT prove, and now needs a live test" },
+    ],
+  },
+  "PE-001/2": {
+    kind: "draft", title: "Project Objectives and Scope",
+    standard: "ISO 27001 Cl 6.2 Objectives; Cl 4.3 Scope", itemLabel: "section",
+    feedsNext: "Feeds Steps 3–5 (charter assembly) and Step 8 (sponsor sign-off).",
+    items: [
+      { id: 1, label: "Objectives — measurable, with the measure stated" },
+      { id: 2, label: "Success criteria — how anyone would know this succeeded" },
+      { id: 3, label: "Out of scope — named explicitly, with the reason for each exclusion" },
+      // "Out of scope" without a reason is the line every stakeholder later disputes.
+      { id: 4, label: "The exclusion most likely to be challenged, and your answer" },
+      { id: 5, label: "Assumptions the objectives rest on" },
+    ],
+  },
+  "QA-002/2": {
+    kind: "draft", title: "Control Test Design",
+    standard: "ISO 27001 Cl 9.2 Internal audit; A.5.35", itemLabel: "control",
+    feedsNext: "Feeds Step 4 (methodology sheets) and Step 5 (methodology overview).",
+    items: [
+      { id: 1, label: "Control 1 — objective, test approach, steps, evidence, pass/fail criteria" },
+      { id: 2, label: "Control 2 — objective, test approach, steps, evidence, pass/fail criteria" },
+      { id: 3, label: "Control 3 — objective, test approach, steps, evidence, pass/fail criteria" },
+      // Inquiry alone proves nothing; the choice between inquiry, observation, inspection and
+      // re-performance is the whole design decision, so it has to be argued.
+      { id: 4, label: "Why that test approach for each control, and what a weaker one would miss" },
+    ],
+  },
+  "QA-002/5": {
+    kind: "draft", title: "Testing Methodology Overview (one page)",
+    standard: "ISO 27001 Cl 9.2 Internal audit", itemLabel: "section",
+    feedsNext: "Feeds Step 6 (mentor review) and Step 7 (QA library).",
+    items: [
+      { id: 1, label: "Sampling approach — sample size, how selected, and why that is defensible" },
+      { id: 2, label: "Frequency — how often each control class is tested, and the basis" },
+      { id: 3, label: "Documentation standard — what every test record must contain" },
+      { id: 4, label: "How a failed test is escalated and tracked to closure" },
+      { id: 5, label: "How someone else could re-run a test and get the same answer" },
+    ],
+  },
+  "QA-002/7": {
+    kind: "draft", title: "Methodology — Final Revision and Library Entry",
+    standard: "ISO 27001 Cl 9.2; Cl 7.5.3 Documented information", itemLabel: "change",
+    feedsNext: "Closes QA-002; the methodology enters the GRC Quality Assurance Library.",
+    items: [
+      { id: 1, label: "Change 1 — the feedback, and the revised methodology" },
+      { id: 2, label: "Change 2 — the feedback, and the revised methodology" },
+      { id: 3, label: "Feedback not adopted, and the reasoning" },
+      { id: 4, label: "Library entry — ID, version, owner, review date" },
+      { id: 5, label: "How the next person will find and use this without asking you" },
+    ],
+  },
 };
 
 export function getFormTask(taskCode?: string, activityCode?: string): FormTask | undefined {
