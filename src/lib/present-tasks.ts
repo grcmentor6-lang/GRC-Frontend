@@ -8,6 +8,87 @@ const MET = "APPROVED - the senior signs off; the approved artefact proceeds to 
 const MISS = "Not approved (conditions or rejected). Strengthen your answer and re-present.";
 
 export const PRESENT_TASKS: Record<string, ConductTask> = {
+  "DD-001/6": {
+    roleAgent: "IT Manager and a sample end-user", interview: "Circulate the Incident Procedure for Review",
+    prep: { deck: "Incident Reporting Procedure v0.2 plus the one-page quick reference card — scope, what counts as an incident, the reporting route, and the out-of-hours path.", qa: ["Q1: How long will this take to review? Prepared A: Twenty minutes — the procedure plus the one-page card.", "Q2: What do you want from me specifically? Prepared A: From IT, whether the escalation path works; from the end-user, whether the card is understandable cold.", "Q3: What happens to my comments? Prepared A: Consolidated into v0.3, and I will tell you what I did with each."] },
+    openings: [
+      { id: "A", text: "Two different reviews: could you check the escalation path is right, and could you tell me whether the card makes sense to someone who has never reported an incident?", routesTo: "cooperative", correct: true, coaching: "Asks each reviewer for what only they can judge." },
+      { id: "B", text: "Could you both take a look and let me know what you think?", routesTo: "vague", correct: false, coaching: "Undirected review; you get proofreading, not the answers you need." },
+      { id: "C", text: "This needs to be approved this week, so please review it quickly.", routesTo: "defensive", correct: false, coaching: "Deadline first; the review becomes a formality." },
+    ],
+    threads: {
+      cooperative: { mood: "cooperative", speaker: "IT Manager", initials: "IT", opener: "Happy to. The escalation path — who is on it out of hours?", rounds: [{ options: [
+        { id: "A", text: "That is the gap I most want your view on. Today it is one person known by memory, which is exactly what I think we should fix.", correct: true, coaching: "Surfaces the known weakness instead of hoping the reviewer misses it." },
+        { id: "B", text: "It follows the existing process.", correct: false, coaching: "There is no documented existing process — this is not accurate." },
+        { id: "C", text: "I was hoping you could tell me.", correct: false, coaching: "Offloads the drafting decision rather than proposing something to react to." },
+      ] }] },
+      vague: { mood: "vague", speaker: "IT Manager", initials: "IT", opener: "It looks fine to me. Nothing jumps out.", rounds: [{ options: [
+        { id: "A", text: "Can I push once? Take a real ticket from last month and walk it through the procedure — does it survive?", correct: true, coaching: "Converts a general approval into a concrete test." },
+        { id: "B", text: "Great, I will treat that as approved.", correct: false, coaching: "A glance is not a review; the first real incident will find what it missed." },
+        { id: "C", text: "Are you sure there is nothing?", correct: false, coaching: "Invites reassurance rather than a test." },
+      ] }] },
+      defensive: { mood: "defensive", speaker: "IT Manager", initials: "IT", opener: "We already handle incidents. Writing it down will not change anything.", rounds: [{ options: [
+        { id: "A", text: "You do handle them — the procedure is so it still works when you are on leave. Does it capture how you actually do it, or have I got it wrong?", correct: true, coaching: "Validates the practice, names the real risk, and asks them to correct the draft." },
+        { id: "B", text: "It is required for the certification.", correct: false, coaching: "Compliance framing; the review becomes a signature." },
+        { id: "C", text: "Everyone writes these down.", correct: false, coaching: "Appeal to convention answers nothing." },
+      ] }] },
+    },
+    metEnd: MET, missEnd: MISS,
+  },
+  "CA-001/4": {
+    roleAgent: "Staff audience (non-technical)", interview: "Deliver the 30-Minute Awareness Module",
+    prep: { deck: "Three segments of ten minutes — phishing, passwords, data handling — each with a worked example from this organisation and a short exercise.", qa: ["Q1: Is this being recorded or scored? Prepared A: The knowledge check is anonymous at individual level; only the group result is reported.", "Q2: What if I have already clicked something? Prepared A: Tell us — reporting late is far better than not reporting.", "Q3: Why us, why now? Prepared A: Partners are asking how we protect their data, and most of that answer is what people here do daily."] },
+    openings: [
+      { id: "A", text: "Thirty minutes, three things that actually come up in your job here, and one real example of each from this organisation. No jargon, and stop me if I use any.", routesTo: "cooperative", correct: true, coaching: "Sets relevance and gives permission to interrupt." },
+      { id: "B", text: "Today we are covering the mandatory annual security awareness training.", routesTo: "vague", correct: false, coaching: "Compliance framing in the first sentence; the room switches off." },
+      { id: "C", text: "There have been some worrying behaviours recently, so we need to go over the basics.", routesTo: "defensive", correct: false, coaching: "Opens on blame; people stop volunteering anything." },
+    ],
+    threads: {
+      cooperative: { mood: "cooperative", speaker: "Staff audience", initials: "SA", opener: "Some of us barely touch the systems you are describing. Does this apply to us?", rounds: [{ options: [
+        { id: "A", text: "The phishing part does — that arrives by email regardless of what systems you use. Let us start there and I will tell you which parts you can ignore.", correct: true, coaching: "Segments the relevance honestly instead of insisting everything applies." },
+        { id: "B", text: "It applies to everyone equally.", correct: false, coaching: "Not true, and the room knows it; credibility gone." },
+        { id: "C", text: "Just sit through it and take what is useful.", correct: false, coaching: "Concedes the session is partly a waste of their time." },
+      ] }] },
+      vague: { mood: "vague", speaker: "Staff audience", initials: "SA", opener: "We did something like this last year. Is it the same content?", rounds: [{ options: [
+        { id: "A", text: "Mostly new — the examples are real attempts against this organisation in the last six months, which the generic version could not give you.", correct: true, coaching: "Differentiates concretely rather than asserting freshness." },
+        { id: "B", text: "It is refreshed annually.", correct: false, coaching: "Bureaucratic answer; confirms their suspicion it is a repeat." },
+        { id: "C", text: "Some of it will be familiar.", correct: false, coaching: "Hedged; no reason given to pay attention." },
+      ] }] },
+      defensive: { mood: "defensive", speaker: "Staff audience", initials: "SA", opener: "Is this because someone did something wrong?", rounds: [{ options: [
+        { id: "A", text: "No. It is scheduled, and nothing here is about any individual. If anything, I want it easier to tell us when something goes wrong, not harder.", correct: true, coaching: "Answers directly and reframes toward reporting." },
+        { id: "B", text: "I cannot really go into that.", correct: false, coaching: "Implies there was an incident and someone is in trouble." },
+        { id: "C", text: "There have been a few issues generally.", correct: false, coaching: "Vague accusation; the room becomes guarded for the whole session." },
+      ] }] },
+    },
+    metEnd: MET, missEnd: MISS,
+  },
+  "MM-001/7": {
+    roleAgent: "Compliance Manager", interview: "Present the Month 1 Metrics and Commentary",
+    prep: { deck: "Month 1 GRC metrics — five KPIs with RAG, three-sentence commentary, and the coverage limitations shown on the face of the report.", qa: ["Q1: Can we trust these numbers? Prepared A: Three are complete; two are partial and flagged as partial rather than estimated.", "Q2: What does the RAG actually mean? Prepared A: Thresholds are on each KPI card, agreed before the first collection.", "Q3: What do you need? Prepared A: Confirmation the thresholds are right before they become the baseline."] },
+    openings: [
+      { id: "A", text: "First month, so no trend yet. Three KPIs are complete, two are partial and shown as partial. I mainly want your view on whether the thresholds are set right before they become the baseline.", routesTo: "cooperative", correct: true, coaching: "States limitations first and asks for the decision that matters now." },
+      { id: "B", text: "Here are the first month metrics for you to look over.", routesTo: "vague", correct: false, coaching: "No ask; the review produces nothing actionable." },
+      { id: "C", text: "The numbers are worse than I expected, but the data is not great either.", routesTo: "defensive", correct: false, coaching: "Undermines your own report before anyone has read it." },
+    ],
+    threads: {
+      cooperative: { mood: "cooperative", speaker: "Compliance Manager", initials: "CM", opener: "Why are two partial? Could you not estimate the rest?", rounds: [{ options: [
+        { id: "A", text: "I could, but an estimate in month one becomes the baseline everything is measured against. I would rather show a gap than bake in a guess.", correct: true, coaching: "Defends the discipline with the consequence, not the principle." },
+        { id: "B", text: "I can go back and estimate them if you prefer.", correct: false, coaching: "Abandons the discipline at the first push." },
+        { id: "C", text: "The data owners did not respond in time.", correct: false, coaching: "Blames upstream rather than answering the question." },
+      ] }] },
+      vague: { mood: "vague", speaker: "Compliance Manager", initials: "CM", opener: "Fine. What am I supposed to do with this?", rounds: [{ options: [
+        { id: "A", text: "One decision: confirm the RAG thresholds. Once month two lands they become a trend, and moving them after that rewrites history.", correct: true, coaching: "Gives a single decision and explains why it is time-critical." },
+        { id: "B", text: "Just for your awareness really.", correct: false, coaching: "Wastes the review slot; nothing is decided." },
+        { id: "C", text: "Whatever you think is most useful.", correct: false, coaching: "Hands back the agenda you were meant to set." },
+      ] }] },
+      defensive: { mood: "defensive", speaker: "Compliance Manager", initials: "CM", opener: "Two amber and a red in month one. That is not a good look upward.", rounds: [{ options: [
+        { id: "A", text: "It is the honest baseline, and it is the only month where a red costs nothing to report. If we soften it now, every improvement afterwards looks smaller than it was.", correct: true, coaching: "Reframes the first month as the cheapest time to be accurate." },
+        { id: "B", text: "I can present them more positively.", correct: false, coaching: "Agrees to distort the baseline; every later trend is then wrong." },
+        { id: "C", text: "The thresholds might be too strict.", correct: false, coaching: "Moves the goalposts rather than defending the measurement." },
+      ] }] },
+    },
+    metEnd: MET, missEnd: MISS,
+  },
   "AA-001/1.8": {
     roleAgent: "Department Head", interview: "Present Asset Register for Sign-off",
     prep: { deck: "Information Asset Register — 185 assets classified Public/Internal/Confidential, owners assigned, 8 ownerless flagged.", qa: ["Q1: Are all assets owned? Prepared A: All but 8; those are flagged with proposed owners for your confirmation.", "Q2: How did you classify them? Prepared A: ISO 27001 A.5.12 three-tier; personal-data items are never Public.", "Q3: What do you need from me? Prepared A: Your sign-off, and confirmation of the 8 proposed owners."] },

@@ -13,6 +13,36 @@ export interface CalcTask {
 }
 
 export const CALC_TASKS: Record<string, CalcTask> = {
+  "TV-002/6": {
+    title: "Compliance Rate per Policy", standard: "ISO 27001 Cl 9.2 Internal audit; A.5.35",
+    metric: "Compliance % per policy tested",
+    formulaId: "F-POL-COMP", formula: "Compliance% = Compliant samples ÷ Samples tested × 100", unit: "%",
+    inputCols: ["Compliant samples", "Samples tested"],
+    feedsNext: "Feeds the workpaper and the remediation recommendations.",
+    rows: [
+      // Partially-compliant samples do not count as compliant: a control that half operates
+      // produces an exception, and rounding it up is how a spot-check overstates assurance.
+      { id: 1, instance: "Acceptable Use Policy", inputs: [{ label: "Compliant samples", value: "8" }, { label: "Samples tested", value: "10" }], expected: 80.0 },
+      { id: 2, instance: "Remote Working Policy", inputs: [{ label: "Compliant samples", value: "5" }, { label: "Samples tested", value: "12" }], expected: 41.7 },
+      { id: 3, instance: "Security Awareness Policy", inputs: [{ label: "Compliant samples", value: "11" }, { label: "Samples tested", value: "12" }], expected: 91.7 },
+    ],
+  },
+  "SPA-001/5": {
+    title: "Compliance Uplift at Roadmap Completion", standard: "CIS Controls v8 IG1; ISO 27001 Cl 9.1",
+    metric: "IG1 compliance % before and after the roadmap",
+    formulaId: "F-CIS-COMP", formula: "Compliance% = Implemented ÷ Applicable × 100", unit: "%",
+    inputCols: ["Implemented", "Applicable"],
+    feedsNext: "Feeds the management briefing's investment rationale.",
+    rows: [
+      // Baseline, then the position after each phase. The uplift is the difference between the
+      // first and last rows, and stating it this way forces the estimate to be built from
+      // counted safeguards rather than asserted as a round number.
+      { id: 1, instance: "Baseline today", inputs: [{ label: "Implemented", value: "22" }, { label: "Applicable", value: "56" }], expected: 39.3 },
+      { id: 2, instance: "After Foundation (month 3)", inputs: [{ label: "Implemented", value: "31" }, { label: "Applicable", value: "56" }], expected: 55.4 },
+      { id: 3, instance: "After Build (month 6)", inputs: [{ label: "Implemented", value: "36" }, { label: "Applicable", value: "56" }], expected: 64.3 },
+      { id: 4, instance: "After Optimise (month 12)", inputs: [{ label: "Implemented", value: "39" }, { label: "Applicable", value: "56" }], expected: 69.6 },
+    ],
+  },
   "AA-002/2.4": {
     title: "CIS Compliance % per Control Group", standard: "CIS Controls v8 IG1", metric: "CIS compliance % per Control group",
     formulaId: "F-CIS-COMP", formula: "Compliance% = Implemented ÷ Applicable × 100", unit: "%",

@@ -30,6 +30,25 @@ export interface ApplyTask {
 }
 
 export const APPLY_TASKS: Record<string, ApplyTask> = {
+  "SPA-002/5": {
+    title: "Quadrant → Engagement Strategy", standard: "ISO 27001 Cl 4.2; Cl 7.4 Communication",
+    columns: ["Stakeholder and their quadrant"],
+    outcomes: ["Manage Closely", "Keep Satisfied", "Keep Informed", "Monitor"],
+    clean: null, noteMode: "all", noteLabel: "What that strategy means in practice for this person",
+    feedsNext: "Feeds Step 6 (communication plan) and Step 7 (sponsor review).",
+    rows: [
+      // Strategy follows the quadrant mechanically; the judgement is in the note, which has to
+      // say what the strategy actually looks like for a named person rather than restate it.
+      { id: 1, cells: ["CISO — high influence, high interest"], outcome: "Manage Closely" },
+      { id: 2, cells: ["IT Manager — high influence, high interest"], outcome: "Manage Closely" },
+      { id: 3, cells: ["Finance Director — high influence, low interest"], outcome: "Keep Satisfied" },
+      { id: 4, cells: ["Legal — high influence, low interest"], outcome: "Keep Satisfied" },
+      { id: 5, cells: ["Newsroom editors — low influence, high interest"], outcome: "Keep Informed" },
+      { id: 6, cells: ["Service desk staff — low influence, high interest"], outcome: "Keep Informed" },
+      { id: 7, cells: ["Facilities — low influence, low interest"], outcome: "Monitor" },
+      { id: 8, cells: ["Marketing — low influence, low interest"], outcome: "Monitor" },
+    ],
+  },
   "AA-001/1.4": {
     title: "Information Asset Inventory & Classification",
     standard: "ISO/IEC 27001:2022 — A.5.12 Classification; A.5.9 Inventory; A.8.1 Endpoint devices",

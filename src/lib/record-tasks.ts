@@ -1023,6 +1023,43 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
       { key: "origin", label: "Where It Came From", type: "select", required: true, options: ["My own retrospective", "Peer input", "Challenge received", "Mentor feedback"] },
     ],
   },
+  "QA-002/3": {
+    title: "Audit-Firm Testing Practice Research",
+    standard: "ISO 27001 Cl 9.2 Internal audit; A.5.35 Independent review",
+    registerName: "Testing Practice Research Log",
+    requiredRows: 3,
+    source: "Provided audit-standard reference extracts",
+    feedsNext: "Feeds Step 4 (methodology sheets) and Step 5 (methodology overview).",
+    columns: [
+      { key: "control", label: "Control", type: "text", required: true, unique: true },
+      { key: "practice", label: "How Professional Firms Test It", type: "text", required: true },
+      { key: "approach", label: "Approach They Rely On", type: "select", required: true, options: ["Inquiry", "Observation", "Inspection", "Re-performance"] },
+      { key: "sourceRef", label: "Reference Extract It Came From", type: "text", required: true },
+      // Copying a Big Four sample size into a ten-person organisation is the standard error;
+      // the adaptation, and its reason, is the actual work of this step.
+      { key: "adaptation", label: "What Must Change For An Organisation Of This Size, And Why", type: "text", required: true },
+    ],
+  },
+  "QA-002/4": {
+    title: "Control Testing Methodology Sheets",
+    standard: "ISO 27001 Cl 9.2 Internal audit",
+    registerName: "Control Testing Methodology Sheet",
+    requiredRows: 3,
+    source: "Test designs from Step 2 and the practice research from Step 3",
+    feedsNext: "Feeds Step 5 (methodology overview) and Step 6 (mentor review).",
+    columns: [
+      { key: "control", label: "Control", type: "text", required: true, unique: true },
+      { key: "objective", label: "Control Objective", type: "text", required: true },
+      { key: "approach", label: "Test Approach", type: "select", required: true, options: ["Inquiry", "Observation", "Inspection", "Re-performance"] },
+      { key: "steps", label: "Test Steps (executable by someone who did not write them)", type: "text", required: true },
+      { key: "sample", label: "Sample Size And How Selected", type: "text", required: true },
+      { key: "evidence", label: "Evidence Required", type: "text", required: true },
+      // Two testers reaching different verdicts on the same evidence means the criteria are
+      // subjective, which is the failure this column is written to prevent.
+      { key: "passFail", label: "Pass / Fail Criteria (two testers must reach the same verdict)", type: "text", required: true },
+      { key: "tester", label: "Who May Perform It (role, independent of the control owner)", type: "text", required: true, notDepartment: true },
+    ],
+  },
 };
 
 export function getRecordTask(taskCode?: string, activityCode?: string): RecordTask | undefined {

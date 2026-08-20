@@ -21,6 +21,84 @@ const MET = "Objective met — you captured specific answers. The interview note
 const MISS = "Objective not met — the answers stayed thin or guarded. Review the coaching and re-run the interview.";
 
 export const CONDUCT_TASKS: Record<string, ConductTask> = {
+  "MM-002/3": {
+    roleAgent: "Risk Owners (review meeting)", interview: "Facilitate the Monthly Risk Review",
+    openings: [
+      { id: "A", text: "I have circulated the register — for each of your risks I want to know whether likelihood or impact has moved, whether treatment is on track, and anything new.", routesTo: "cooperative", correct: true, coaching: "States the three questions up front; owners can prepare answers." },
+      { id: "B", text: "Let us go through the register and see where we are.", routesTo: "vague", correct: false, coaching: "No stated questions — the meeting becomes a status ramble." },
+      { id: "C", text: "Several of your treatment actions are overdue, so let us start there.", routesTo: "defensive", correct: false, coaching: "Opens on blame; owners defend rather than disclose." },
+    ],
+    threads: {
+      cooperative: { mood: "cooperative", speaker: "Risk Owners", initials: "RO", opener: "Mine has not really changed. Still the same as last month.", rounds: [{ options: [
+        { id: "A", text: "Nothing changed in the environment either? No new systems, no staff moves, no incidents touching it?", correct: true, coaching: "Tests a claim of no change against events rather than accepting it." },
+        { id: "B", text: "Fine, I will mark it unchanged.", correct: false, coaching: "An unchallenged no-change is how a register goes stale." },
+        { id: "C", text: "Are you sure? It looks like it should have gone up.", correct: false, coaching: "Leads the owner to your answer instead of testing theirs." },
+      ] }] },
+      vague: { mood: "vague", speaker: "Risk Owners", initials: "RO", opener: "I am not really sure what you need from me here.", rounds: [{ options: [
+        { id: "A", text: "Three things per risk: has likelihood or impact moved, is treatment on track, and is there anything new. Let us take your first risk.", correct: true, coaching: "Re-anchors on the three questions and starts concretely." },
+        { id: "B", text: "Just whatever you think is relevant.", correct: false, coaching: "Leaves the owner guessing; you get nothing usable." },
+        { id: "C", text: "It is all in the pre-read I sent.", correct: false, coaching: "Dismissive; they did not read it and now will not ask." },
+      ] }] },
+      defensive: { mood: "defensive", speaker: "Risk Owners", initials: "RO", opener: "We have been flat out. I do not have time for this every month.", rounds: [{ options: [
+        { id: "A", text: "Understood — that is worth recording too. If the treatment is not resourced, the score should reflect that rather than assume the action is happening.", correct: true, coaching: "Turns the objection into register data instead of arguing with it." },
+        { id: "B", text: "It is only fifteen minutes.", correct: false, coaching: "Minimises their constraint; they disengage." },
+        { id: "C", text: "The register has to be updated regardless.", correct: false, coaching: "Process over substance; you get compliance, not information." },
+      ] }] },
+    },
+    metEnd: MET, missEnd: MISS,
+  },
+  "IE-002/6": {
+    roleAgent: "Document Owners", interview: "Train Document Owners on Version Control",
+    openings: [
+      { id: "A", text: "Fifteen minutes: where your documents now live, how to name a new version, and who approves. Then you try it once with your own document.", routesTo: "cooperative", correct: true, coaching: "Scoped, timed, and ends in them doing it rather than watching." },
+      { id: "B", text: "I will walk you through the new document control policy.", routesTo: "vague", correct: false, coaching: "Walking through a policy is not training; nothing is practised." },
+      { id: "C", text: "The old way of saving documents was causing problems, so we are changing it.", routesTo: "defensive", correct: false, coaching: "Opens on their fault; they hear criticism, not instruction." },
+    ],
+    threads: {
+      cooperative: { mood: "cooperative", speaker: "Document Owners", initials: "DO", opener: "That sounds fine. What happens to the copies I already have on my drive?", rounds: [{ options: [
+        { id: "A", text: "Delete them once yours is migrated — an old copy someone can still open is the problem we are fixing.", correct: true, coaching: "Names the actual failure mode: two versions, no way to tell which is current." },
+        { id: "B", text: "Keep them as a backup just in case.", correct: false, coaching: "Recreates the duplicate-version problem on day one." },
+        { id: "C", text: "That is up to you.", correct: false, coaching: "Leaves the control optional, so it will not hold." },
+      ] }] },
+      vague: { mood: "vague", speaker: "Document Owners", initials: "DO", opener: "Is this going to change how I actually work day to day?", rounds: [{ options: [
+        { id: "A", text: "Two things change: where you save, and adding a version number when you revise. Everything else stays as it is.", correct: true, coaching: "Bounds the change precisely, which is what defuses resistance." },
+        { id: "B", text: "There will be a few adjustments here and there.", correct: false, coaching: "Vagueness reads as more than they are being told." },
+        { id: "C", text: "It is mostly the same really.", correct: false, coaching: "Understating it means the change is discovered later, badly." },
+      ] }] },
+      defensive: { mood: "defensive", speaker: "Document Owners", initials: "DO", opener: "My documents were fine. This feels like bureaucracy for its own sake.", rounds: [{ options: [
+        { id: "A", text: "Fair challenge. The specific problem: we found the same policy in two versions and could not tell which was current. That is what this stops.", correct: true, coaching: "Answers with the evidenced failure rather than the principle." },
+        { id: "B", text: "It is an ISO requirement.", correct: false, coaching: "Compliance framing; they comply minimally and resent it." },
+        { id: "C", text: "Everyone has to do it, not just you.", correct: false, coaching: "Deflects instead of answering the objection." },
+      ] }] },
+    },
+    metEnd: MET, missEnd: MISS,
+  },
+  "PE-001/1": {
+    roleAgent: "Cybersecurity Program Manager", interview: "Agree the Initiative Scope",
+    openings: [
+      { id: "A", text: "I want to agree scope before I draft the charter: what is in, what is explicitly out, and what success looks like at the end.", routesTo: "cooperative", correct: true, coaching: "Puts exclusions on the table early, where they are cheap." },
+      { id: "B", text: "I was going to start drafting the charter and wanted your thoughts.", routesTo: "vague", correct: false, coaching: "No specific ask; you get general encouragement, not decisions." },
+      { id: "C", text: "There is a lot that needs fixing, so I think we should cover as much as possible.", routesTo: "defensive", correct: false, coaching: "Unbounded scope; the sponsor sees a project that cannot land." },
+    ],
+    threads: {
+      cooperative: { mood: "cooperative", speaker: "Cybersecurity Program Manager", initials: "PM", opener: "Good. What are you proposing to leave out?", rounds: [{ options: [
+        { id: "A", text: "Group-managed payroll and finance, because the parent programme covers them, and broadcast playout, because it holds no in-scope data. Both need your agreement.", correct: true, coaching: "Exclusions with reasons, offered for agreement rather than announced." },
+        { id: "B", text: "Nothing really — I would rather keep options open.", correct: false, coaching: "A charter with no exclusions has no boundary to defend later." },
+        { id: "C", text: "Whatever turns out to be too hard.", correct: false, coaching: "Scope by convenience; the first difficulty becomes an exclusion." },
+      ] }] },
+      vague: { mood: "vague", speaker: "Cybersecurity Program Manager", initials: "PM", opener: "Thoughts on what? Be specific about what you need from me.", rounds: [{ options: [
+        { id: "A", text: "Three decisions: the scope boundary, who the accountable sponsor is, and whether month six or month twelve is the success date.", correct: true, coaching: "Converts a vague ask into three answerable questions." },
+        { id: "B", text: "Just whether the general direction seems right.", correct: false, coaching: "You get a yes that commits nobody to anything." },
+        { id: "C", text: "I will send you the draft when it is ready.", correct: false, coaching: "Defers the decisions to a point where changing them is expensive." },
+      ] }] },
+      defensive: { mood: "defensive", speaker: "Cybersecurity Program Manager", initials: "PM", opener: "We have tried boiling the ocean before. It failed. Why is this different?", rounds: [{ options: [
+        { id: "A", text: "It is not everything — it is four workstreams with named owners and a stated exclusion list. If any of those looks undeliverable, I would rather cut it now than at month six.", correct: true, coaching: "Answers the real objection with bounded scope and an invitation to cut." },
+        { id: "B", text: "This time we have management support.", correct: false, coaching: "Asserts a difference without evidencing it." },
+        { id: "C", text: "The scope is smaller than it looks.", correct: false, coaching: "Reassurance with nothing behind it." },
+      ] }] },
+    },
+    metEnd: MET, missEnd: MISS,
+  },
   "AA-001/1.2": {
     roleAgent: "Operations Team Lead", interview: "Asset-Discovery Interview",
     openings: [

@@ -869,6 +869,271 @@ export const FORM_TASKS: Record<string, FormTask> = {
       { id: 5, label: "How the next person will find and use this without asking you" },
     ],
   },
+
+  // ── Compile steps ─────────────────────────────────────────────────────────────────────────
+  // `kind: "compile"` gives each item a source artefact plus its content, so the items are the
+  // sections of the assembled deliverable and every one has to name where it came from. That is
+  // the discipline the verb exists for: a compiled report whose figures have no traceable source
+  // is where inconsistencies between the detail and the summary get in.
+  "SPA-001/1": {
+    kind: "compile", title: "Consolidated Findings for the Roadmap",
+    standard: "ISO 27001 Cl 6.1.2; Cl 6.2 Objectives and planning", itemLabel: "section",
+    feedsNext: "Feeds Step 2 (banding) and Step 3 (action detail).",
+    items: [
+      { id: 1, label: "Gap analysis findings (AA-002) — what carries into the roadmap" },
+      { id: 2, label: "Risk register findings (GRM-001) — what carries into the roadmap" },
+      { id: 3, label: "Maturity findings (GRM-003) — what carries into the roadmap" },
+      // The merge rule has to be stated or the count is unauditable: the same root cause appears
+      // under three different names across three sources.
+      { id: 4, label: "Consolidation rule — when two findings become one action, and the count" },
+      { id: 5, label: "Where the sources disagree on severity, and which rating you carried" },
+      { id: 6, label: "Executive summary — verdict, shape of the year, and the governing clause" },
+    ],
+  },
+  "SPA-001/4": {
+    kind: "compile", title: "12-Month Gantt Layout",
+    standard: "ISO 27001 Cl 6.2 Objectives and planning", itemLabel: "phase",
+    feedsNext: "Feeds Step 5 (uplift estimate) and Step 6 (management briefing).",
+    items: [
+      { id: 1, label: "Foundation (months 1–3) — actions, owners, closing milestone" },
+      { id: 2, label: "Build (months 4–6) — actions, owners, closing milestone" },
+      { id: 3, label: "Optimise (months 7–12) — actions, owners, closing milestone" },
+      { id: 4, label: "Critical path — which action gates which, and what a slip costs" },
+      { id: 5, label: "Load per quarter, against the capacity the named owners actually have" },
+    ],
+  },
+  "CA-002/1": {
+    kind: "compile", title: "Task Outputs for the Status Report",
+    standard: "ISO 27001 Cl 9.3 Management review", itemLabel: "source",
+    feedsNext: "Feeds Step 2 (message selection) and Step 3 (report drafting).",
+    items: [
+      { id: 1, label: "Gap analysis — the figure that goes to management, and its date" },
+      { id: 2, label: "Risk register — the figure that goes to management, and its date" },
+      { id: 3, label: "Maturity assessment — the figure that goes to management, and its date" },
+      { id: 4, label: "KPI tracker — the figure that goes to management, and its date" },
+      // Figures gathered on different dates describe different organisations; saying so is what
+      // stops the report implying a single snapshot it does not have.
+      { id: 5, label: "As-at dates reconciled — what period this report actually describes" },
+    ],
+  },
+  "KT-001/2": {
+    kind: "compile", title: "New Joiner GRC Reference Guide",
+    standard: "ISO 27001 A.6.3 Awareness, education and training", itemLabel: "section",
+    feedsNext: "Feeds Step 5 (mentor review) and Step 6 (pilot).",
+    items: [
+      { id: 1, label: "Key policies and where to find them" },
+      { id: 2, label: "How to report a security incident" },
+      { id: 3, label: "Data classification rules, with an example of each level" },
+      { id: 4, label: "Acceptable use of systems" },
+      { id: 5, label: "Top phishing warning signs, drawn from real attempts here" },
+      { id: 6, label: "Who to contact for GRC questions" },
+      { id: 7, label: "Four-page limit — what was cut, and where it went instead" },
+    ],
+  },
+  "MM-001/3": {
+    kind: "compile", title: "Monthly GRC Metrics Tracker",
+    standard: "ISO 27001 Cl 9.1 Monitoring, measurement, analysis and evaluation", itemLabel: "component",
+    feedsNext: "Feeds Step 4 (first collection) and Step 5 (Month 1 report).",
+    items: [
+      { id: 1, label: "KPI rows — each pulling its definition from the Step 2 cards" },
+      { id: 2, label: "Data entry columns, and who fills each one" },
+      { id: 3, label: "Auto-RAG rules — the thresholds and how they are applied" },
+      { id: 4, label: "Trend view — how month-on-month direction is shown" },
+      // A tracker that silently colours a blank cell green is worse than no tracker.
+      { id: 5, label: "How a missing month is displayed, so it is not read as a good result" },
+    ],
+  },
+  "PE-001/5": {
+    kind: "compile", title: "Milestone Timeline",
+    standard: "ISO 27001 Cl 6.2 Objectives and planning", itemLabel: "milestone",
+    feedsNext: "Feeds Step 6 (project risks) and Step 7 (charter review).",
+    items: [
+      { id: 1, label: "Milestone 1 — what is verifiably complete, date, and who confirms it" },
+      { id: 2, label: "Milestone 2 — what is verifiably complete, date, and who confirms it" },
+      { id: 3, label: "Milestone 3 — what is verifiably complete, date, and who confirms it" },
+      { id: 4, label: "Milestone 4 — what is verifiably complete, date, and who confirms it" },
+      // Milestones only, not tasks: a milestone nobody can verify is a date, not a milestone.
+      { id: 5, label: "Why each is a milestone rather than a task, and what evidences it" },
+    ],
+  },
+  "DD-002/8": {
+    kind: "compile", title: "Final Training Materials",
+    standard: "ISO 27001 A.6.3 Awareness, education and training", itemLabel: "artefact",
+    feedsNext: "Closes DD-002; the pack feeds CA-001 delivery and KT-001.",
+    items: [
+      { id: 1, label: "Slide deck — final version, with what the pilot changed" },
+      { id: 2, label: "Knowledge check — final version, with what the pilot changed" },
+      { id: 3, label: "Facilitator guide — final version, with what the pilot changed" },
+      { id: 4, label: "Version, owner and review date set on each artefact" },
+      { id: 5, label: "Pilot feedback deliberately not adopted, and the reasoning" },
+    ],
+  },
+
+  // ── Document steps ────────────────────────────────────────────────────────────────────────
+  // `kind: "document"` requires a cross-reference on every section, so each piece of the record
+  // points back at the artefact it derives from rather than standing as an unsupported assertion.
+  "CRM-001/7.4": {
+    kind: "document", title: "Obligation Detail Records",
+    standard: "ISO 27001 A.5.31 Legal and contractual requirements", itemLabel: "obligation",
+    feedsNext: "Feeds Step 7.5 (control mapping) and Step 7.6 (gap identification).",
+    items: [
+      { id: 1, label: "Obligation 1 — source, requirement, applicability rationale, owner, status, review date" },
+      { id: 2, label: "Obligation 2 — source, requirement, applicability rationale, owner, status, review date" },
+      { id: 3, label: "Obligation 3 — source, requirement, applicability rationale, owner, status, review date" },
+      { id: 4, label: "Obligation 4 — source, requirement, applicability rationale, owner, status, review date" },
+      // Applicability is the field auditors probe hardest, because "it applies because it is a
+      // well-known regulation" is not a rationale.
+      { id: 5, label: "For each: why it applies to THIS organisation specifically" },
+    ],
+  },
+  "CRM-003/9.3": {
+    kind: "document", title: "Common Criteria Mapping",
+    standard: "SOC 2 Type II (AICPA TSC) CC1–CC9", itemLabel: "criterion cluster",
+    feedsNext: "Feeds Step 9.4 (gap list), 9.5 (ISO cross-reference) and 9.6 (RAG dashboard).",
+    items: [
+      { id: 1, label: "CC1–CC2 — description, example audit test, expected evidence, internal control or GAP" },
+      { id: 2, label: "CC3–CC4 — description, example audit test, expected evidence, internal control or GAP" },
+      { id: 3, label: "CC5–CC6 — description, example audit test, expected evidence, internal control or GAP" },
+      { id: 4, label: "CC7–CC8 — description, example audit test, expected evidence, internal control or GAP" },
+      { id: 5, label: "CC9 — description, example audit test, expected evidence, internal control or GAP" },
+      // A blank control column is indistinguishable from an unconsidered criterion, which is why
+      // the acceptance criteria require an explicit GAP marker rather than an empty cell.
+      { id: 6, label: "Completeness statement — every criterion carries a control or an explicit GAP" },
+    ],
+  },
+  "TV-002/5": {
+    kind: "document", title: "Control Testing Workpaper",
+    standard: "ISO 27001 Cl 9.2 Internal audit; A.5.35", itemLabel: "test",
+    feedsNext: "Feeds Step 6 (findings summary) and Step 7 (remediation recommendations).",
+    items: [
+      { id: 1, label: "Test 1 — statement tested, sample, what was found, verdict" },
+      { id: 2, label: "Test 2 — statement tested, sample, what was found, verdict" },
+      { id: 3, label: "Test 3 — statement tested, sample, what was found, verdict" },
+      // Reproducibility is what makes a workpaper a workpaper rather than a note.
+      { id: 4, label: "How the sample was selected, so someone else could repeat this test" },
+      { id: 5, label: "What you could NOT test, and why it is recorded rather than omitted" },
+    ],
+  },
+  "DD-002/6": {
+    kind: "document", title: "Facilitator Guide (one page)",
+    standard: "ISO 27001 A.6.3 Awareness, education and training", itemLabel: "section",
+    feedsNext: "Feeds Step 7 (pilot) and Step 8 (final materials).",
+    items: [
+      { id: 1, label: "Timings per segment, and what to cut if the session overruns" },
+      { id: 2, label: "The exercises — how to run each, and what a good answer sounds like" },
+      // The guide is delivered by a manager or HR person, not a security specialist, so the
+      // hardest questions have to be answered on the page rather than improvised.
+      { id: 3, label: "Three questions attendees are likely to ask, with answers to give" },
+      { id: 4, label: "What to do when someone discloses a live incident mid-session" },
+      { id: 5, label: "What to send afterwards, and who records completion" },
+    ],
+  },
+  "CA-003/4": {
+    kind: "document", title: "Stakeholder Interview Summary",
+    standard: "ISO 27001 Cl 4.2 Interested parties; Cl 7.4", itemLabel: "section",
+    feedsNext: "Feeds Step 5 (theme identification) and Step 8 (routing).",
+    items: [
+      { id: 1, label: "Who, when, and what they are accountable for" },
+      { id: 2, label: "Their objectives and pressures, in their words" },
+      { id: 3, label: "Where GRC currently helps or hinders them" },
+      { id: 4, label: "Risks they raised that we had not identified" },
+      { id: 5, label: "Anything you committed to do, and by when" },
+      // Written within 24 hours because attribution and nuance decay fastest, and a summary
+      // written a week later reconstructs what you now think they meant.
+      { id: 6, label: "Attribution basis — named or anonymous, and what they agreed to" },
+    ],
+  },
+  "LRC-001/3": {
+    kind: "document", title: "Clarity and Plain-Language Findings",
+    standard: "GDPR Art. 12 — concise, transparent, intelligible, plain language", itemLabel: "finding",
+    feedsNext: "Feeds Step 5 (gap assessment) and Step 6 (redraft).",
+    items: [
+      { id: 1, label: "Element present but unclear 1 — the wording, and why a reader would misread it" },
+      { id: 2, label: "Element present but unclear 2 — the wording, and why a reader would misread it" },
+      { id: 3, label: "Element present but unclear 3 — the wording, and why a reader would misread it" },
+      // Art. 12 is a standalone obligation: a notice can contain every Art. 13 element and still
+      // fail because nobody can understand it.
+      { id: 4, label: "Why unclear-but-present is an Art. 12 failure in its own right" },
+      { id: 5, label: "Where the audience includes children or vulnerable readers, and what changes" },
+    ],
+  },
+
+  // ── Validate steps ────────────────────────────────────────────────────────────────────────
+  // `kind: "validate"` marks each item Verified or Unverified and demands a follow-up action on
+  // anything unverified, so a check that fails cannot be recorded and then quietly abandoned.
+  "CA-001/5": {
+    kind: "validate", title: "Knowledge Check Administration",
+    standard: "ISO 27001 A.6.3; Cl 9.1 Monitoring", itemLabel: "question",
+    feedsNext: "Feeds Step 6 (scoring) and Step 8 (Training Completion Report).",
+    items: [
+      { id: 1, label: "Q1 result — pass rate across the group" },
+      { id: 2, label: "Q2 result — pass rate across the group" },
+      { id: 3, label: "Q3 result — pass rate across the group" },
+      { id: 4, label: "Q4 result — pass rate across the group" },
+      { id: 5, label: "Q5 result — pass rate across the group" },
+      // A question most of the room fails is usually a teaching failure, not a learner failure.
+      { id: 6, label: "Any question the group failed — is the question wrong, or the teaching?" },
+    ],
+  },
+  "LRC-001/6": {
+    kind: "validate", title: "Plain-Language Verification",
+    standard: "GDPR Art. 12 — intelligible and plain language", itemLabel: "check",
+    feedsNext: "Feeds Step 7 (mentor review) and Step 8 (approval and publication).",
+    items: [
+      { id: 1, label: "Readability score against the Grade 8 target" },
+      { id: 2, label: "Legal terms remaining — each justified or replaced" },
+      { id: 3, label: "Sentence length — longest sentence, and whether it survives" },
+      { id: 4, label: "Passive constructions hiding who acts on the data" },
+      // The measurable proxy and the actual obligation are not the same thing; a notice can hit
+      // Grade 8 and still be incomprehensible about what it actually does.
+      { id: 5, label: "Comprehension test with a real reader, beyond the readability score" },
+    ],
+  },
+  "BCRP-002/6": {
+    kind: "validate", title: "DR Checklist Talk-Through",
+    standard: "ISO 27001 A.5.30 ICT readiness for business continuity", itemLabel: "step",
+    feedsNext: "Feeds Step 7 (corrections) and Step 8 (filing and live-test recommendation).",
+    items: [
+      { id: 1, label: "Step 1 — could the named person actually perform it as written?" },
+      { id: 2, label: "Step 2 — could the named person actually perform it as written?" },
+      { id: 3, label: "Step 3 — could the named person actually perform it as written?" },
+      { id: 4, label: "Step 4 — could the named person actually perform it as written?" },
+      { id: 5, label: "Credentials and access assumed by the checklist — do they exist today?" },
+      // A talk-through proves the document, never the capability; saying so keeps the assurance
+      // claim honest when this is filed.
+      { id: 6, label: "What this exercise could NOT prove, and now needs a live restoration test" },
+    ],
+  },
+
+  // ── Schedule step ─────────────────────────────────────────────────────────────────────────
+  "IE-002/8": {
+    kind: "schedule", title: "Policy Review Reminders",
+    standard: "ISO 27001 Cl 7.5.3 Control of documented information", itemLabel: "reminder",
+    feedsNext: "Closes IE-002; the reminders sustain the document control cycle.",
+    items: [
+      { id: 1, label: "Overdue policies — review reminder", options: { time: ["Immediately", "Within 1 week", "Within 1 month"] } },
+      { id: 2, label: "Policies due this quarter — review reminder", options: { time: ["6 weeks before due", "1 month before due", "2 weeks before due"] } },
+      { id: 3, label: "Policies due next quarter — review reminder", options: { time: ["1 month before due", "2 weeks before due", "On the due date"] } },
+      // A reminder addressed to a person leaves with that person; addressed to a role it does not.
+      { id: 4, label: "Annual document-control health check", options: { time: ["Annually on the ISMS anniversary", "Each January", "Before the certification audit"] } },
+    ],
+  },
+
+  // ── Assess step ───────────────────────────────────────────────────────────────────────────
+  "TV-002/4": {
+    kind: "assess", title: "Evidence Sample Evaluation",
+    standard: "ISO 27001 Cl 9.2 Internal audit; A.5.35", itemLabel: "sample",
+    scale: [{ label: "Non-compliant", value: 1 }, { label: "Partially compliant", value: 2 }, { label: "Compliant", value: 3 }],
+    feedsNext: "Feeds Step 5 (workpaper) and Step 7 (remediation recommendations).",
+    items: [
+      { id: 1, label: "Policy 1, statement A — evidence sample" },
+      { id: 2, label: "Policy 1, statement B — evidence sample" },
+      { id: 3, label: "Policy 2, statement A — evidence sample" },
+      { id: 4, label: "Policy 2, statement B — evidence sample" },
+      { id: 5, label: "Policy 3, statement A — evidence sample" },
+      { id: 6, label: "Policy 3, statement B — evidence sample" },
+    ],
+  },
 };
 
 export function getFormTask(taskCode?: string, activityCode?: string): FormTask | undefined {

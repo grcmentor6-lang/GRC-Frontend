@@ -5,6 +5,30 @@
 export interface BriefTask { title: string; standard: string; format: string; audience: string; ask: string; messages: string[]; }
 
 export const BRIEF_TASKS: Record<string, BriefTask> = {
+  "CA-002/8": {
+    title: "Status Report Covering Note (management)", standard: "ISO 27001 Cl 9.3 Management review",
+    format: "email, <=200 words", audience: "Management team (non-technical)",
+    ask: "Read the one-page report before Thursday's meeting and come with a decision on the two items marked 'decision required'.",
+    messages: [
+      "The attached page is our compliance position this month - one page, no appendices.",
+      "Two items need a decision from you; the rest is for information only and needs nothing.",
+      "Overall status is Amber: the controls we have are working, the ones we lack are governance rather than technology.",
+      "The biggest single exposure is that leavers keep working access for an average of nine days.",
+      "What we need: read it before Thursday, and come ready to decide on the two flagged items.",
+    ],
+  },
+  "CA-003/2": {
+    title: "Interview Pre-Brief (stakeholder)", standard: "ISO 27001 Cl 4.2 Interested parties; Cl 7.4",
+    format: "email, <=150 words", audience: "Individual stakeholder before their interview",
+    ask: "Confirm a 30-minute slot this fortnight, and come with one thing about GRC that currently gets in your way.",
+    messages: [
+      "I am spending 30 minutes with each of a few people to understand what GRC should be doing for you.",
+      "This is not an audit and nothing you say is a finding against you or your team.",
+      "I want to hear where our processes get in your way, not whether you follow them.",
+      "I will send you my summary within a day so you can correct anything I have misheard.",
+      "What I need: a 30-minute slot this fortnight, and one example of GRC getting in your way.",
+    ],
+  },
   "CRM-003/9.8": {
     title: "SOC 2 Awareness (IT team)", standard: "SOC 2 Type II", format: "≤2 pages",
     audience: "IT team (non-audit)", ask: "Send your team's access-review and change-tickets evidence to the GRC inbox by 31 July.",
