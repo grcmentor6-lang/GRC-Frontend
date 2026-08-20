@@ -10,6 +10,8 @@ import {
   getRequestConversation, routeMood, shuffleOptions,
   type RequestConversation, type ConvOption, type MoodResult,
 } from "@/lib/request-conversations";
+import { learnerRowOrder } from "@/lib/rua-engine";
+import { userKey } from "@/lib/token";
 import { getIdentifyTask, type IdentifyTask } from "@/lib/identify-tasks";
 import { getXRefTask, type XRefTask } from "@/lib/xref-tasks";
 import { getApplyTask, type ApplyTask } from "@/lib/apply-tasks";
@@ -852,11 +854,13 @@ type ApplyItem = { name: string; contains: string; classification: string; ratio
 // add the required note. Submission is gated on every outcome matching the answer key.
 export function ApplyWorkspace({ value, onChange, openRef, taskCode, activityCode }: WorkspaceProps) {
   const task = useMemo(() => getApplyTask(taskCode, activityCode), [taskCode, activityCode]);
-  if (task) return <ScriptedApplyFlow task={task} value={value} onChange={onChange} />;
+  if (task) return <ScriptedApplyFlow task={task} value={value} onChange={onChange} taskCode={taskCode!} activityCode={activityCode!} />;
   return <LegacyApplyWorkspace value={value} onChange={onChange} openRef={openRef} />;
 }
 
-export function ScriptedApplyFlow({ task, value, onChange }: { task: ApplyTask } & Pick<WorkspaceProps, "value" | "onChange">) {
+export function ScriptedApplyFlow({ task, value, onChange, taskCode, activityCode }: { task: ApplyTask; taskCode: string; activityCode: string } & Pick<WorkspaceProps, "value" | "onChange">) {
+  // Shared by Apply and Map. Learner-specific row order; the outcome key rides on each row.
+  const rows = useMemo(() => learnerRowOrder(task.rows, userKey(), taskCode, activityCode), [task.rows, taskCode, activityCode]);
   const [outcomeByRow, setOutcomeByRow] = useState<Record<number, string>>(() => seed(value, "outcomes", {} as Record<number, string>));
   const [noteByRow, setNoteByRow] = useState<Record<number, string>>(() => seed(value, "notes", {} as Record<number, string>));
   const [checked, setChecked] = useState(() => seed<boolean>(value, "objectiveMet", false));
@@ -869,19 +873,19 @@ export function ScriptedApplyFlow({ task, value, onChange }: { task: ApplyTask }
   };
   const noteShown = (id: number) => task.noteMode === "all" || (task.noteMode === "nonClean" && !!outcomeByRow[id] && outcomeByRow[id] !== task.clean);
 
-  const unsetIds = task.rows.filter((r) => !outcomeByRow[r.id]).map((r) => r.id);
-  const wrongIds = task.rows.filter((r) => outcomeByRow[r.id] && outcomeByRow[r.id] !== r.outcome).map((r) => r.id);
-  const missingNoteIds = task.rows.filter((r) => noteRequired(r.id) && !(noteByRow[r.id] ?? "").trim()).map((r) => r.id);
-  const outcomesAllCorrect = task.rows.every((r) => outcomeByRow[r.id] === r.outcome);
+  const unsetIds = rows.filter((r) => !outcomeByRow[r.id]).map((r) => r.id);
+  const wrongIds = rows.filter((r) => outcomeByRow[r.id] && outcomeByRow[r.id] !== r.outcome).map((r) => r.id);
+  const missingNoteIds = rows.filter((r) => noteRequired(r.id) && !(noteByRow[r.id] ?? "").trim()).map((r) => r.id);
+  const outcomesAllCorrect = rows.every((r) => outcomeByRow[r.id] === r.outcome);
   const objectiveMet = outcomesAllCorrect && missingNoteIds.length === 0;
 
-  const results = task.rows.map((r) => ({ item: r.cells[0], outcome: outcomeByRow[r.id] ?? "", note: noteByRow[r.id] ?? "" }));
+  const results = rows.map((r) => ({ item: r.cells[0], outcome: outcomeByRow[r.id] ?? "", note: noteByRow[r.id] ?? "" }));
   useLift({ outcomes: outcomeByRow, notes: noteByRow, results, objectiveMet }, onChange);
 
   const setOutcome = (id: number, v: string) => setOutcomeByRow((o) => ({ ...o, [id]: v }));
   const setNote = (id: number, v: string) => setNoteByRow((n) => ({ ...n, [id]: v }));
-  const label = (id: number) => { const r = task.rows.find((x) => x.id === id); return r ? r.cells[r.cells.length > 1 ? 1 : 0] : `#${id}`; };
-  const correct = (id: number) => task.rows.find((r) => r.id === id)?.outcome ?? "";
+  const label = (id: number) => { const r = rows.find((x) => x.id === id); return r ? r.cells[r.cells.length > 1 ? 1 : 0] : `#${id}`; };
+  const correct = (id: number) => rows.find((r) => r.id === id)?.outcome ?? "";
 
   return (
     <div className="space-y-4">
@@ -899,7 +903,7 @@ export function ScriptedApplyFlow({ task, value, onChange }: { task: ApplyTask }
               </tr>
             </thead>
             <tbody>
-              {task.rows.map((r) => {
+              {rows.map((r) => {
                 const chosen = outcomeByRow[r.id] ?? "";
                 const wrong = checked && chosen && chosen !== r.outcome;
                 const unset = checked && !chosen;
@@ -952,7 +956,7 @@ export function ScriptedApplyFlow({ task, value, onChange }: { task: ApplyTask }
       {objectiveMet && (
         <div className="rounded-2xl bg-emerald-50 ring-1 ring-emerald-200 p-4">
           <div className="flex items-center gap-2 text-[12px] font-semibold text-emerald-800 mb-1"><Icon name="check" size={14} /> Scheme applied correctly</div>
-          <p className="text-[12.5px] text-emerald-900/80 leading-relaxed">All {task.rows.length} items match the scheme{showNoteCol ? `, each with ${task.noteMode === "all" ? "a" : "its"} ${task.noteLabel?.toLowerCase()}` : ""}. {task.feedsNext}</p>
+          <p className="text-[12.5px] text-emerald-900/80 leading-relaxed">All {rows.length} items match the scheme{showNoteCol ? `, each with ${task.noteMode === "all" ? "a" : "its"} ${task.noteLabel?.toLowerCase()}` : ""}. {task.feedsNext}</p>
         </div>
       )}
     </div>
@@ -1029,19 +1033,21 @@ function LegacyApplyWorkspace({ value, onChange, openRef }: WorkspaceProps) {
 // each discrepancy a corrective action. Submission is gated on matching the answer-key statuses.
 export function CrossRefWorkspace({ value, onChange, openRef, taskCode, activityCode }: WorkspaceProps) {
   const task = useMemo(() => getXRefTask(taskCode, activityCode), [taskCode, activityCode]);
-  if (task) return <ScriptedXRefFlow task={task} value={value} onChange={onChange} />;
+  if (task) return <ScriptedXRefFlow task={task} value={value} onChange={onChange} taskCode={taskCode!} activityCode={activityCode!} />;
   return <LegacyCrossRefWorkspace value={value} onChange={onChange} openRef={openRef} />;
 }
 
-function ScriptedXRefFlow({ task, value, onChange }: { task: XRefTask } & Pick<WorkspaceProps, "value" | "onChange">) {
+function ScriptedXRefFlow({ task, value, onChange, taskCode, activityCode }: { task: XRefTask; taskCode: string; activityCode: string } & Pick<WorkspaceProps, "value" | "onChange">) {
+  // Learner-specific row order — the status key rides on each row, so validation is unchanged.
+  const rows = useMemo(() => learnerRowOrder(task.rows, userKey(), taskCode, activityCode), [task.rows, taskCode, activityCode]);
   const [method, setMethod] = useState(() => seed(value, "method", ""));
   const [statusByRow, setStatusByRow] = useState<Record<number, string>>(() => seed(value, "statuses", {} as Record<number, string>));
   const [actionByRow, setActionByRow] = useState<Record<number, string>>(() => seed(value, "actions", {} as Record<number, string>));
   const [checked, setChecked] = useState(() => seed<boolean>(value, "objectiveMet", false));
 
   const statusOf = (id: number) => statusByRow[id] ?? task.clean;
-  const wrongIds = task.rows.filter((r) => statusOf(r.id) !== r.status).map((r) => r.id);
-  const discrepancyRows = task.rows.filter((r) => statusOf(r.id) !== task.clean);
+  const wrongIds = rows.filter((r) => statusOf(r.id) !== r.status).map((r) => r.id);
+  const discrepancyRows = rows.filter((r) => statusOf(r.id) !== task.clean);
   const missingActionIds = discrepancyRows.filter((r) => !(actionByRow[r.id] ?? "").trim()).map((r) => r.id);
   const methodOk = method.trim().length > 0;
   const objectiveMet = wrongIds.length === 0 && missingActionIds.length === 0 && methodOk && discrepancyRows.length > 0;
@@ -1051,8 +1057,8 @@ function ScriptedXRefFlow({ task, value, onChange }: { task: XRefTask } & Pick<W
 
   const setStatus = (id: number, v: string) => setStatusByRow((s) => ({ ...s, [id]: v }));
   const setAction = (id: number, v: string) => setActionByRow((a) => ({ ...a, [id]: v }));
-  const label = (id: number) => task.rows.find((r) => r.id === id)?.cells[0] ?? `#${id}`;
-  const correctStatus = (id: number) => task.rows.find((r) => r.id === id)?.status ?? "";
+  const label = (id: number) => rows.find((r) => r.id === id)?.cells[0] ?? `#${id}`;
+  const correctStatus = (id: number) => rows.find((r) => r.id === id)?.status ?? "";
 
   return (
     <div className="space-y-4">
@@ -1064,7 +1070,7 @@ function ScriptedXRefFlow({ task, value, onChange }: { task: XRefTask } & Pick<W
       </div>
 
       <div>
-        <SectionLabel hint={`${discrepancyRows.length} discrepancies of ${task.rows.length}`} action={
+        <SectionLabel hint={`${discrepancyRows.length} discrepancies of ${rows.length}`} action={
           <button onClick={() => setChecked(true)} className="h-7 px-2.5 rounded-md text-[11.5px] font-medium text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"><Icon name="check" size={12} />Check reconciliation</button>
         }>{task.title}</SectionLabel>
 
@@ -1078,7 +1084,7 @@ function ScriptedXRefFlow({ task, value, onChange }: { task: XRefTask } & Pick<W
               </tr>
             </thead>
             <tbody>
-              {task.rows.map((r) => {
+              {rows.map((r) => {
                 const st = statusOf(r.id);
                 const isDisc = st !== task.clean;
                 const wrong = checked && st !== r.status;
@@ -1121,7 +1127,7 @@ function ScriptedXRefFlow({ task, value, onChange }: { task: XRefTask } & Pick<W
       {objectiveMet && (
         <div className="rounded-2xl bg-emerald-50 ring-1 ring-emerald-200 p-4">
           <div className="flex items-center gap-2 text-[12px] font-semibold text-emerald-800 mb-1"><Icon name="check" size={14} /> Reconciliation matches</div>
-          <p className="text-[12.5px] text-emerald-900/80 leading-relaxed">You correctly classified all {task.rows.length} rows and gave every discrepancy a corrective action. {task.feedsNext}</p>
+          <p className="text-[12.5px] text-emerald-900/80 leading-relaxed">You correctly classified all {rows.length} rows and gave every discrepancy a corrective action. {task.feedsNext}</p>
         </div>
       )}
     </div>
@@ -1203,21 +1209,24 @@ type FlagRow = { id: number; asset: string; type: string; source: string; flagge
 // action + owner. Submission is gated on flagging exactly the answer-key rows (Check + gate).
 export function IdentifyWorkspace({ value, onChange, openRef, taskCode, activityCode }: WorkspaceProps) {
   const task = useMemo(() => getIdentifyTask(taskCode, activityCode), [taskCode, activityCode]);
-  if (task) return <ScriptedIdentifyFlow task={task} value={value} onChange={onChange} />;
+  if (task) return <ScriptedIdentifyFlow task={task} value={value} onChange={onChange} taskCode={taskCode!} activityCode={activityCode!} />;
   return <LegacyIdentifyWorkspace value={value} onChange={onChange} openRef={openRef} />;
 }
 
 type IdMark = { flagged: boolean; action: string; owner: string };
 
-function ScriptedIdentifyFlow({ task, value, onChange }: { task: IdentifyTask } & Pick<WorkspaceProps, "value" | "onChange">) {
+function ScriptedIdentifyFlow({ task, value, onChange, taskCode, activityCode }: { task: IdentifyTask; taskCode: string; activityCode: string } & Pick<WorkspaceProps, "value" | "onChange">) {
+  // Same rows, learner-specific order — see learnerRowOrder. Keeps a shared answer key from
+  // being shareable as "flag rows 5, 7, 11".
+  const rows = useMemo(() => learnerRowOrder(task.rows, userKey(), taskCode, activityCode), [task.rows, taskCode, activityCode]);
   const [criterion, setCriterion] = useState(() => seed(value, "criterion", "")); // the mentee states the rule, it isn't handed to them
   const [marks, setMarks] = useState<Record<number, IdMark>>(() => seed(value, "marks", {} as Record<number, IdMark>));
   const [checked, setChecked] = useState(() => seed<boolean>(value, "objectiveMet", false));
 
   const mark = (id: number): IdMark => marks[id] ?? { flagged: false, action: "", owner: "" };
-  const flaggedRows = task.rows.filter((r) => mark(r.id).flagged);
+  const flaggedRows = rows.filter((r) => mark(r.id).flagged);
   const flaggedIds = flaggedRows.map((r) => r.id);
-  const shouldIds = task.rows.filter((r) => r.shouldFlag).map((r) => r.id);
+  const shouldIds = rows.filter((r) => r.shouldFlag).map((r) => r.id);
   const wrongIds = flaggedIds.filter((id) => !shouldIds.includes(id));
   const missedIds = shouldIds.filter((id) => !flaggedIds.includes(id));
   const incompleteIds = flaggedRows.filter((r) => !mark(r.id).action.trim() || !mark(r.id).owner.trim()).map((r) => r.id);
@@ -1231,7 +1240,7 @@ function ScriptedIdentifyFlow({ task, value, onChange }: { task: IdentifyTask } 
 
   const toggle = (id: number) => { setMarks((m) => ({ ...m, [id]: { ...mark(id), flagged: !mark(id).flagged } })); };
   const setField = (id: number, k: "action" | "owner", v: string) => setMarks((m) => ({ ...m, [id]: { ...mark(id), [k]: v } }));
-  const label = (id: number) => task.rows.find((r) => r.id === id)?.cells[0] ?? `#${id}`;
+  const label = (id: number) => rows.find((r) => r.id === id)?.cells[0] ?? `#${id}`;
 
   return (
     <div className="space-y-4">
@@ -1243,7 +1252,7 @@ function ScriptedIdentifyFlow({ task, value, onChange }: { task: IdentifyTask } 
       </div>
 
       <div>
-        <SectionLabel hint={`${flaggedIds.length} flagged of ${task.rows.length}`} action={
+        <SectionLabel hint={`${flaggedIds.length} flagged of ${rows.length}`} action={
           <button onClick={() => setChecked(true)} className="h-7 px-2.5 rounded-md text-[11.5px] font-medium text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"><Icon name="check" size={12} />Check flags</button>
         }>Dataset</SectionLabel>
 
@@ -1258,7 +1267,7 @@ function ScriptedIdentifyFlow({ task, value, onChange }: { task: IdentifyTask } 
               </tr>
             </thead>
             <tbody>
-              {task.rows.map((r) => {
+              {rows.map((r) => {
                 const m = mark(r.id);
                 const wrong = checked && m.flagged && !r.shouldFlag;
                 const missed = checked && !m.flagged && r.shouldFlag;

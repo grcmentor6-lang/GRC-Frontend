@@ -46,6 +46,25 @@ export function seededShuffle<T>(arr: T[], seed: string): T[] {
   return a;
 }
 
+/** Per-learner row order for an answer-key dataset.
+ *
+ * The datasets are shared by every learner — the same rows in the same order — while the prose
+ * around them varies by organisation. So the narrative never transfers between learners but the
+ * ANSWER does: "flag the 5th, 7th and 11th rows" works verbatim for everyone, which is the one
+ * thing services/variant.py sets out to prevent.
+ *
+ * Re-ordering per learner closes that: the answer key rides on each row (shouldFlag / status /
+ * outcome are row properties), so shuffling carries it along and every validation that filters
+ * task.rows keeps working untouched. Row ids are never rendered — the learner sees cells — so
+ * position is the only shareable coordinate, and position is what this changes.
+ *
+ * Seeded, so a learner sees a stable order across visits and revisions; a moving table would
+ * make a revision harder than the first attempt.
+ */
+export function learnerRowOrder<T>(rows: T[], userKey: string, taskCode: string, activityCode: string): T[] {
+  return seededShuffle(rows, `${userKey}:${taskCode}/${activityCode}`);
+}
+
 /** Similarity above which text counts as "copied" from the source. */
 export const PARROT = 0.62;
 

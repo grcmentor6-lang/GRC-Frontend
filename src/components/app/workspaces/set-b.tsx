@@ -295,7 +295,7 @@ function LegacyDraftWorkspace({ value, onChange, openRef }: WorkspaceProps) {
 /* ============================ MAP ============================ */
 export function MapWorkspace(props: WorkspaceProps) {
   const t = getMapTask(props.taskCode, props.activityCode);
-  return t ? <ScriptedApplyFlow task={t} value={props.value} onChange={props.onChange} /> : <LegacyMapWorkspace {...props} />;
+  return t ? <ScriptedApplyFlow task={t} value={props.value} onChange={props.onChange} taskCode={props.taskCode!} activityCode={props.activityCode!} /> : <LegacyMapWorkspace {...props} />;
 }
 function LegacyMapWorkspace({ value, onChange, openRef }: WorkspaceProps) {
   const rowsA = ["EU GDPR", "UK GDPR", "PCI-DSS v4.0", "SOC 2 (existing)", "ISO 27701"];

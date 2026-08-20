@@ -82,7 +82,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 6.1.2 Risk assessment",
     registerName: "Risk Register v1.0",
     requiredRows: 6,
-    source: "Risk identification workshop output (GRM-001-S2-OUT)",
+    source: "Risk record fields",
     feedsNext: "Feeds Step 4 (scoring), Step 5 (treatment) and MM-002, SPA-001, BCRP-001.",
     columns: [
       { key: "riskId", label: "Risk ID", type: "text", required: true, idFormat: { pattern: "^[A-Z]{2,4}-R-\\d{2}$", example: "AMN-R-01" }, unique: true },
@@ -102,7 +102,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "CIS Controls v8 IG1",
     registerName: "IG1 Assessment Worksheet",
     requiredRows: 8,
-    source: "Evidence received from system owners (AA-002-S2-OUT)",
+    source: "GlobalConnect current state",
     feedsNext: "Feeds Step 4 (scoring), Step 5 (gap ranking) and IE-001, TV-001, SPA-001.",
     columns: [
       { key: "safeguard", label: "Safeguard (e.g. 1.1)", type: "text", required: true, unique: true },
@@ -120,7 +120,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "GDPR Art. 30 (and local equivalent)",
     registerName: "RoPA",
     requiredRows: 5,
-    source: "Data-flow map and processing inventory (AA-003-S2/S3-OUT)",
+    source: "RoPA (Article 30) fields",
     feedsNext: "Feeds Steps 5–8 and DD-003 (retention), LRC-001, TPRM-001.",
     columns: [
       { key: "activity", label: "Processing Activity", type: "text", required: true, unique: true },
@@ -155,7 +155,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Annex A · Cl. 6.1.3 Statement of Applicability",
     registerName: "Control Implementation Matrix",
     requiredRows: 6,
-    source: "Applicable-control list (CRM-002-S3-OUT)",
+    source: "CloudTech — Implementation Snapshot",
     feedsNext: "Feeds Step 5 (gap identification), Step 8 (matrix sign-off) and CRM-003, PE-002.",
     columns: [
       { key: "control", label: "Annex A Control", type: "text", required: true, unique: true },
@@ -173,7 +173,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "GDPR Art. 5(1)(e) Storage limitation · ISO 27001 A.5.33",
     registerName: "Data Retention Schedule",
     requiredRows: 6,
-    source: "Data element inventory for the selected category",
+    source: "Schedule fields",
     feedsNext: "Feeds Step 5 (triggers and disposal) and Step 7 (schedule approval).",
     columns: [
       { key: "element", label: "Data Element", type: "text", required: true, unique: true },
@@ -188,7 +188,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "GDPR Art. 5(1)(e) · ISO 27001 A.8.10 Information deletion",
     registerName: "Retention Schedule — disposal detail",
     requiredRows: 6,
-    source: "Data Retention Schedule (DD-003-S4-OUT)",
+    source: "Triggers & disposal",
     feedsNext: "Feeds Step 6 (legal review) and Step 7 (approval).",
     columns: [
       { key: "element", label: "Data Element", type: "text", required: true, unique: true },
@@ -236,7 +236,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "SOC 2 Type II (AICPA TSC) — CC1–CC9",
     registerName: "Common Criteria Listing",
     requiredRows: 9,
-    source: "COSO-derived Common Criteria for the Security category",
+    source: "Common Criteria CC1–CC9",
     feedsNext: "Feeds Step 9.3 (mapping), 9.4 (gaps) and 9.5 (ISO cross-reference).",
     columns: [
       { key: "cc", label: "CC Point", type: "text", required: true, unique: true },
@@ -281,7 +281,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 4.2 Interested parties · Cl. 7.4 Communication",
     registerName: "Stakeholder Register",
     requiredRows: 8,
-    source: "Stakeholder long-list (SPA-002-S2-OUT)",
+    source: "Register fields",
     feedsNext: "Feeds Step 4 (influence/interest mapping) and Step 6 (communication plan).",
     columns: [
       { key: "stakeholder", label: "Name / Group", type: "text", required: true, unique: true },
@@ -298,7 +298,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 6.2 Objectives and planning",
     registerName: "GRC Action Detail Sheet",
     requiredRows: 6,
-    source: "Banded gap list (SPA-001-S2-OUT)",
+    source: "Action record fields",
     feedsNext: "Feeds Step 4 (Gantt), Step 5 (uplift estimate) and Step 6 (management briefing).",
     columns: [
       { key: "actionId", label: "Action ID", type: "text", required: true, idFormat: { pattern: "^R-\\d{2}$", example: "R-01" }, unique: true },
@@ -318,7 +318,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 6.1.2 · Cl. 9.1 Monitoring",
     registerName: "Risk Register — new entries",
     requiredRows: 3,
-    source: "This month's findings: incidents, audit results, change records",
+    source: "Adding new risks",
     feedsNext: "Feeds Steps 6–8 and SPA-001, TPRM-001.",
     columns: [
       { key: "riskId", label: "Risk ID", type: "text", required: true, idFormat: { pattern: "^[A-Z]{2,4}-R-\\d{2}$", example: "AMN-R-13" }, unique: true },
@@ -371,7 +371,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "CIS Controls v8 IG1 · ISO 27001 Cl. 8.1",
     registerName: "Control Implementation Tracker",
     requiredRows: 6,
-    source: "Remediation plan (IE-001-S2-OUT)",
+    source: "Tracker",
     feedsNext: "Feeds Steps 4–6 and Step 8; blockers route back to DD-003, GRM-001.",
     columns: [
       { key: "safeguard", label: "Safeguard", type: "text", required: true },
@@ -406,7 +406,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 10.1 Nonconformity and corrective action",
     registerName: "Remediation Issue Log",
     requiredRows: 4,
-    source: "Acceptance-test results (IE-001-S5-OUT)",
+    source: "Remediation issue",
     feedsNext: "Feeds Steps 7–8 and DD-003, TV-001, MM-002.",
     columns: [
       { key: "issueId", label: "Issue ID", type: "text", required: true, idFormat: { pattern: "^REM-\\d{3}$", example: "REM-001" }, unique: true },
@@ -424,7 +424,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 A.5.35 · Cl. 9.2 Internal audit",
     registerName: "Evidence Collection Log",
     requiredRows: 6,
-    source: "Evidence request list (PE-002-S2-OUT)",
+    source: "Collection",
     feedsNext: "Feeds Steps 4–6 (labelling, indexing, self-review).",
     columns: [
       { key: "requirement", label: "Audit Requirement", type: "text", required: true, unique: true },
@@ -440,7 +440,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 A.5.13 Labelling · Cl. 7.5.3",
     registerName: "Evidence Index",
     requiredRows: 6,
-    source: "Collected evidence items (PE-002-S3-OUT)",
+    source: "Labelling convention",
     feedsNext: "Feeds Steps 5–7 (indexing, pack assembly, self-review).",
     columns: [
       { key: "evidenceId", label: "Evidence ID", type: "text", required: true, idFormat: { pattern: "^EV-[A-Z0-9.\\-]+$", example: "EV-A5.18-01" }, unique: true },
@@ -522,7 +522,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 A.6.3 Awareness, education and training",
     registerName: "Training Feedback Form",
     requiredRows: 2,
-    source: "Two pilot colleagues",
+    source: "Pilot feedback",
     feedsNext: "Feeds Step 8 (final module) and CA-001, KT-001.",
     columns: [
       { key: "reviewer", label: "Pilot Reviewer (role)", type: "text", required: true, notDepartment: true, unique: true },
@@ -540,7 +540,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 A.5.18 Access rights · A.8.2 Privileged access",
     registerName: "Access Review Worksheet",
     requiredRows: 8,
-    source: "Account extract reconciled to the HR active list (TV-001-S3-OUT)",
+    source: "Worksheet fields",
     feedsNext: "Feeds Steps 5, 6 and 8, and IE-001, MM-002.",
     columns: [
       { key: "account", label: "Account", type: "text", required: true, unique: true },
@@ -573,7 +573,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 7.5.2 Creating and updating · Cl. 10.1",
     registerName: "Correction Request Log",
     requiredRows: 6,
-    source: "Document review findings (QA-001-S2-OUT)",
+    source: "Correction request",
     feedsNext: "Feeds Steps 4–6 (author response, re-review, closure).",
     columns: [
       { key: "crId", label: "CR ID", type: "text", required: true, idFormat: { pattern: "^CR-\\d{2}$", example: "CR-01" }, unique: true },
@@ -614,7 +614,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 9.1 Monitoring",
     registerName: "Collection Log",
     requiredRows: 5,
-    source: "Inputs requested from IT and HR",
+    source: "Data collection",
     feedsNext: "Feeds Step 5 (Month 1 GRC Metrics Report).",
     columns: [
       { key: "kpi", label: "KPI", type: "text", required: true, unique: true },
@@ -680,7 +680,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 7.5.3 Control of documented information",
     registerName: "Migration Log",
     requiredRows: 6,
-    source: "Existing GRC documents across shared drives",
+    source: "Migration rules",
     feedsNext: "Feeds Step 6 (naming roll-out) and Step 8 (control handover).",
     columns: [
       { key: "oldName", label: "Original Name / Location (preserve it)", type: "text", required: true, unique: true },
@@ -697,7 +697,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 7.5.2 · Cl. 10.1 Corrective action",
     registerName: "Owner Discussion Log",
     requiredRows: 4,
-    source: "Major correction requests (QA-001-S3-OUT)",
+    source: "Owner discussion",
     feedsNext: "Feeds Step 6 (correction tracking) and Step 7 (re-review).",
     columns: [
       { key: "crId", label: "CR ID", type: "text", required: true, unique: true },
@@ -735,7 +735,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 A.5.30 ICT readiness for business continuity",
     registerName: "BIA Summary Table",
     requiredRows: 5,
-    source: "Function criticality interviews (BCRP-001-S3/S5-OUT)",
+    source: "BIA summary table",
     feedsNext: "Feeds Step 7 (BIA Report) and BCRP-002, SPA-001.",
     columns: [
       { key: "function", label: "Critical Function", type: "text", required: true, unique: true },
@@ -755,7 +755,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 A.5.30 ICT readiness for business continuity",
     registerName: "DR Checklist — success criteria",
     requiredRows: 5,
-    source: "BIA RTO/RPO table (BCRP-001-S6-OUT)",
+    source: "RTO/RPO as criteria",
     feedsNext: "Feeds Step 6 (walkthrough) and Step 8 (filing and test scheduling).",
     columns: [
       { key: "step", label: "Checklist Step", type: "text", required: true, unique: true },
@@ -822,7 +822,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 A.5.19 Supplier relationships",
     registerName: "Vendor Security Questionnaire",
     requiredRows: 6,
-    source: "Standard Vendor Security Questionnaire (20–25 questions)",
+    source: "Questionnaire areas",
     feedsNext: "Feeds Step 3 (issue to vendor) and Step 5 (response review).",
     columns: [
       { key: "questionId", label: "Question ID", type: "text", required: true, idFormat: { pattern: "^Q-\\d{2}$", example: "Q-01" }, unique: true },
@@ -868,7 +868,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 4.2 Interested parties",
     registerName: "Insight Routing Log",
     requiredRows: 5,
-    source: "Stakeholder interview findings (CA-003-S6-OUT)",
+    source: "Feeding insights forward",
     feedsNext: "Feeds SPA-002 (Stakeholder Register) and SPA-001 (Roadmap).",
     columns: [
       { key: "insight", label: "Insight From The Interview", type: "text", required: true, unique: true },
@@ -885,7 +885,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "GDPR Arts. 12–14 Transparency",
     registerName: "Benchmark Assessment",
     requiredRows: 5,
-    source: "Comparable sector privacy notice supplied by the mentor",
+    source: "Model notice features",
     feedsNext: "Feeds Step 5 (gap assessment) and Step 6 (redraft).",
     columns: [
       { key: "feature", label: "Feature Of The Benchmark Notice", type: "text", required: true, unique: true },
@@ -934,7 +934,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 A.5.27 Learning from information security incidents",
     registerName: "Debrief Contribution Record",
     requiredRows: 3,
-    source: "Your observation sheet (RR-001-S3-OUT)",
+    source: "Debrief contribution",
     feedsNext: "Feeds Steps 6–8 (report and procedure amendments).",
     columns: [
       { key: "candidate", label: "Candidate Point From Your Notes", type: "text", required: true, unique: true },
@@ -966,7 +966,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 A.6.3 Awareness, education and training",
     registerName: "Pilot Review Record",
     requiredRows: 5,
-    source: "One recent new joiner, chosen for comparative recall",
+    source: "Pilot feedback",
     feedsNext: "Feeds Step 7 (revision) and Step 8 (handover to HR).",
     columns: [
       { key: "item", label: "Pack Item Tested", type: "text", required: true, unique: true },
@@ -1012,7 +1012,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl. 10.2 Continual improvement",
     registerName: "Programme Improvement Backlog",
     requiredRows: 6,
-    source: "Retrospective output and peer challenge (KT-002-S2/S6-OUT)",
+    source: "Closing the loop",
     feedsNext: "Closes the rotation; items enter the programme improvement backlog.",
     columns: [
       { key: "itemId", label: "Backlog ID", type: "text", required: true, idFormat: { pattern: "^IMP-\\d{2}$", example: "IMP-01" }, unique: true },
@@ -1028,7 +1028,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl 9.2 Internal audit; A.5.35 Independent review",
     registerName: "Testing Practice Research Log",
     requiredRows: 3,
-    source: "Provided audit-standard reference extracts",
+    source: "Professional testing norms",
     feedsNext: "Feeds Step 4 (methodology sheets) and Step 5 (methodology overview).",
     columns: [
       { key: "control", label: "Control", type: "text", required: true, unique: true },
@@ -1045,7 +1045,7 @@ export const RECORD_TASKS: Record<string, RecordTask> = {
     standard: "ISO 27001 Cl 9.2 Internal audit",
     registerName: "Control Testing Methodology Sheet",
     requiredRows: 3,
-    source: "Test designs from Step 2 and the practice research from Step 3",
+    source: "Methodology sheet",
     feedsNext: "Feeds Step 5 (methodology overview) and Step 6 (mentor review).",
     columns: [
       { key: "control", label: "Control", type: "text", required: true, unique: true },
