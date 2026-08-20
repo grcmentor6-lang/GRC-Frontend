@@ -25,6 +25,8 @@ export interface ReviewDimension {
   label: string;
   score: number;
   justification: string;
+  /** The one concrete thing that would have scored higher. Empty at full marks. */
+  missing?: string;
 }
 export interface Review {
   id: number;
@@ -73,7 +75,11 @@ export interface ModelAnswer {
   artefact: string;
   acceptance: string;
   worked: string;
-  /** Escalated only: acknowledging this releases the step. Null when nothing is owed. */
+  /**
+   * Escalated only: acknowledging this decision releases the step. Null when nothing is owed —
+   * including for `attempts_exhausted`, which releases through `deskApi.releaseAfterAnswer`
+   * instead, there being no mentor decision to acknowledge.
+   */
   acknowledgeDecisionId: number | null;
 }
 
@@ -127,6 +133,8 @@ export const deskApi = {
   mentorFeedback: () => api.get<MentorFeedback[]>("/me/mentor-feedback"),
   acknowledgeMentorFeedback: (decisionId: number) =>
     api.post<{ ok: boolean }>(`/me/mentor-feedback/${decisionId}/acknowledge`),
+  /** Confirm the worked answer has been read on a step with no attempts left. Completes the step. */
+  releaseAfterAnswer: (id: string) => api.post<{ ok: boolean }>(`/me/activities/${id}/release`),
   saveDraft: (id: string, payload: ActivityPayload) =>
     api.put<{ ok: boolean }>(`/me/activities/${id}/draft`, { payload }),
   submit: (id: string, payload: ActivityPayload) =>

@@ -56,6 +56,14 @@ function ReviewPanel({ review }: { review: Review }) {
             </div>
             <Bar pct={(d.score / 5) * 100} tone={d.score >= 4.3 ? "emerald" : d.score >= 4 ? "indigo" : "amber"} />
             <p className="text-[11.5px] text-slate-500 mt-1 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>{d.justification}</p>
+            {/* The grader is required to name one concrete thing that would have scored higher.
+                Showing it is what makes a revision aimed: without it the learner reads Socratic
+                prose and guesses which change was meant. */}
+            {d.missing ? (
+              <p className="text-[11.5px] text-amber-800 bg-amber-50/60 ring-1 ring-amber-100 rounded-lg px-2.5 py-1.5 mt-1.5 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>
+                <span className="font-semibold">To score higher: </span>{d.missing}
+              </p>
+            ) : null}
           </div>
         ))}
       </div>
@@ -626,6 +634,7 @@ export default function ActivityWorkspace() {
         <div className="mb-5">
           <ModelAnswer
             answer={activity.modelAnswer}
+            activityId={activityId}
             onReleased={() => {
               invalidateQuery("mentor-feedback");
               deskApi.activity(activityId).then(setActivity);
