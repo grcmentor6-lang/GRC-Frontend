@@ -112,8 +112,3 @@ export function splitTerms(text: string, seen: Set<string> = new Set()): (string
   return out;
 }
 
-/** Every defined term appearing anywhere in `texts`, deduped, in source order — the "Terms used here" list. */
-export function termsIn(texts: string[]): TermHit[] {
-  const seen = new Set<string>();
-  return texts.flatMap((t) => splitTerms(t, seen).filter((p): p is TermHit => typeof p !== "string"));
-}

@@ -27,7 +27,8 @@ async function shrink(file: File): Promise<string> {
  * A note, optionally a screenshot (picked or pasted — Win+Shift+S then Ctrl+V is how people
  * actually do this), and the page they were on. Lands in the admin panel's Issues section.
  */
-export function FeedbackWidget() {
+/** `placement` moves it off whatever a page docks in the corner (the desk toolbar). */
+export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?: string } = {}) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [shot, setShot] = useState<string | null>(null);
@@ -75,13 +76,13 @@ export function FeedbackWidget() {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 print:hidden">
+    <div className={`fixed ${placement} z-50 flex flex-col items-end gap-3 print:hidden`}>
       {open && (
         <div
           onPaste={(e) => attach(Array.from(e.clipboardData.files)[0])}
-          className="w-[330px] rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-[0_18px_50px_-16px_rgba(15,23,42,0.28)] overflow-hidden"
+          className="w-[330px] rounded-2xl bg-white ring-1 ring-slate-200 shadow-[0_18px_50px_-16px_rgba(15,23,42,0.28)] overflow-hidden"
         >
-          <div className="flex items-center justify-between px-4 h-11 border-b border-slate-200/70">
+          <div className="flex items-center justify-between px-4 h-11 border-b border-slate-200">
             <span className="text-[13px] font-semibold tracking-tight text-slate-900">Report an issue</span>
             <button
               onClick={() => setOpen(false)}
@@ -106,13 +107,13 @@ export function FeedbackWidget() {
                 maxLength={4000}
                 rows={4}
                 placeholder="What went wrong, or what would you change?"
-                className="w-full p-3 rounded-lg bg-white ring-1 ring-slate-200/80 text-[13px] leading-[1.55] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 resize-none transition-shadow"
+                className="w-full p-3 rounded-lg bg-white ring-1 ring-slate-200 text-[13px] leading-[1.55] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 resize-none transition-shadow"
               />
 
               {shot ? (
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={shot} alt="Screenshot to send" className="w-full rounded-lg ring-1 ring-slate-200/80" />
+                  <img src={shot} alt="Screenshot to send" className="w-full rounded-lg ring-1 ring-slate-200" />
                   <button
                     onClick={() => setShot(null)}
                     aria-label="Remove screenshot"

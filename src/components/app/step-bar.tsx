@@ -21,7 +21,9 @@ function scrollParent(el: HTMLElement | null): HTMLElement | null {
  *
  * Rendered as the first child of the step's root. That root is a centred, max-width column, and a
  * bar only as wide as it looked like a strip floating in the middle of the screen, so the bar
- * bleeds out to the full width of the desk's scroll column — the `@container` in the desk layout —
+ * bleeds out to the full width of the desk's scroll column — the `@container` in the desk layout,
+ * which sits on the wrapper *inside* the scroller and not on the scroller itself, or `cqw` keeps
+ * the width the column had before its own scrollbar appeared and this bar overruns it —
  * while its contents stay lined up with the page's text. In both calc()s `50%` is half the root's
  * content box (what percentage margins and paddings resolve against) and `50cqw` half the column,
  * so their difference is exactly the gutter either side of the root's text. The `-mt-6` cancels
@@ -31,8 +33,10 @@ function scrollParent(el: HTMLElement | null): HTMLElement | null {
  * rather than under it — the reference strip and the gate step nav (`top-[60px]`), the floating
  * acceptance checklist (`--hdr-h` + 64px), and step-screen's "at the deliverable" band (-116px).
  */
-export function StepBar({ code, eyebrow, title, watch, done, score, onScore }: {
+export function StepBar({ code, eyebrow, title, watch, done, score, onScore, label = "Step" }: {
   code?: string;
+  /** What the code is a code of: "Step" on a step, "Task" on the GRC 101 task file. */
+  label?: string;
   eyebrow?: string;
   title: string;
   /** The page's own heading. While it is on screen the bar stays away — one title is enough. */
@@ -97,7 +101,7 @@ export function StepBar({ code, eyebrow, title, watch, done, score, onScore }: {
       <button onClick={toTop} tabIndex={tab} title={`${title} (back to top)`} className="group flex min-w-0 flex-1 flex-col gap-[3px] rounded-lg text-left">
         {eyebrow && (
           <span className="truncate font-mono text-[10px] font-semibold uppercase leading-none tracking-[0.12em] text-[#8a8ba3]">
-            {code ? `Step ${code} · ${eyebrow}` : eyebrow}
+            {code ? `${label} ${code} · ${eyebrow}` : eyebrow}
           </span>
         )}
         <b className="truncate text-[14px] font-semibold text-[#191a2c] group-hover:text-[#5b4fe9]">{title}</b>

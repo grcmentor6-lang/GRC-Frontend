@@ -37,7 +37,7 @@ function ScriptedPrioritiseFlow({ task, value, onChange }: { task: PrioTask } & 
     <div className="space-y-4">
       <GivenNote>Score each item from 1–{task.scaleMax} on every criterion. The aggregate ({task.aggregate}) and rank compute automatically — any tie needs a documented tiebreaker before you can submit.</GivenNote>
       <SectionLabel hint={task.standard}>{task.title} <CriterionMark guide="table" className="ml-1.5" /></SectionLabel>
-      <div data-guide="table" className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-x-auto">
+      <div data-guide="table" className="rounded-xl ring-1 ring-slate-200 bg-white overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/60 text-[10px] font-semibold tracking-[0.06em] uppercase text-slate-500">
@@ -63,7 +63,7 @@ function ScriptedPrioritiseFlow({ task, value, onChange }: { task: PrioTask } & 
                   {task.criteria.map((cr) => (
                     <td key={cr} className="px-3 py-2 text-center">
                       <input value={scoreOf(it.id, cr)} onChange={(e) => setScore(it.id, cr, e.target.value)} inputMode="numeric" placeholder="—"
-                        className="w-12 h-8 px-1 text-center rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px] tabular-nums" />
+                        className="w-12 h-8 px-1 text-center rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px] tabular-nums" />
                     </td>
                   ))}
                   <td className="px-3 py-2 text-center text-[13px] font-semibold text-slate-900 tabular-nums">{agg(it.id) ?? "—"}</td>
@@ -185,7 +185,7 @@ export function FormFlow({ task, value, onChange }: { task: FormTask } & Pick<Wo
           const bad = checked && !itemOk(it.id);
           const outlier = outlierSet.has(it.id);
           return (
-            <div key={it.id} data-guide="item" className={`rounded-2xl ring-1 p-4 ${bad ? "ring-rose-300 bg-rose-50/40" : outlier ? "ring-amber-300 bg-amber-50/30" : "ring-slate-200/70 bg-white focus-within:ring-[1.5px] focus-within:ring-slate-900"}`}>
+            <div key={it.id} data-guide="item" className={`rounded-2xl ring-1 p-4 ${bad ? "ring-rose-300 bg-rose-50/40" : outlier ? "ring-amber-300 bg-amber-50/30" : "ring-slate-200 bg-white focus-within:ring-[1.5px] focus-within:ring-slate-900"}`}>
               <div className="text-[12.5px] font-medium text-slate-900 mb-2.5 flex items-start gap-2"><span className="text-[11px] font-mono text-slate-400 mt-0.5">{it.id}.</span><span>{it.label}</span><CriterionMark rs={[1]} done={itemOk(it.id)} part={`${idx + 1} of ${task.items.length}`} className="shrink-0 mt-px" />{outlier && <span className="ml-auto text-[10px] font-semibold text-amber-700 bg-amber-100 rounded px-1.5 py-0.5">OUTLIER</span>}{task.kind === "score" && it.weight ? <span className="ml-auto text-[10px] text-slate-400">weight ×{it.weight}</span> : null}</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {fields.map((f) => {
@@ -197,15 +197,15 @@ export function FormFlow({ task, value, onChange }: { task: FormTask } & Pick<Wo
                       <div className="text-[10.5px] font-medium tracking-[0.06em] uppercase text-slate-500 mb-1">{f.label}{f.required ? <span className="text-rose-500"> *</span> : null}</div>
                       {f.type === "textarea" ? (
                         <textarea value={val(it.id, f.key)} onChange={(e) => set(it.id, f.key, e.target.value)} rows={2} placeholder={f.placeholder}
-                          className="w-full px-2.5 py-2 rounded-lg bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px] resize-none" />
+                          className="w-full px-2.5 py-2 rounded-lg bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px] resize-none" />
                       ) : f.type === "select" ? (
-                        <select value={val(it.id, f.key)} onChange={(e) => set(it.id, f.key, e.target.value)} className="w-full h-9 px-2 rounded-lg bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px]">
+                        <select value={val(it.id, f.key)} onChange={(e) => set(it.id, f.key, e.target.value)} className="w-full h-9 px-2 rounded-lg bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px]">
                           <option value="">— pick —</option>
                           {optionsFor(it, f).map((o) => <option key={o}>{o}</option>)}
                         </select>
                       ) : (
                         <input type={f.type} value={val(it.id, f.key)} onChange={(e) => set(it.id, f.key, e.target.value)} placeholder={f.placeholder}
-                          className="w-full h-9 px-2.5 rounded-lg bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px]" />
+                          className="w-full h-9 px-2.5 rounded-lg bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px]" />
                       )}
                     </div>
                   );
@@ -267,23 +267,23 @@ function LegacyDraftWorkspace({ value, onChange, openRef }: WorkspaceProps) {
     <div className="space-y-4">
       <GivenNote>Every required heading must be present and non-empty; cite the standard for each claim. <button onClick={() => openRef("ws-policy-scaffold")} className="text-indigo-600 hover:underline font-medium">Open the scaffold →</button></GivenNote>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden">
           <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/40 flex items-center gap-2"><Icon name="file" size={14} className="text-emerald-700" /><span className="text-[12.5px] font-medium text-slate-900 tracking-tight">{docTitle}</span><span className="ml-auto text-[10.5px] font-mono text-slate-500">{filled} / {sections.length} sections</span></div>
           <div className="px-5 py-4 space-y-4 max-h-[520px] overflow-y-auto">
             {sections.map((s) => (
               <div key={s.id}>
                 <div className="flex items-center gap-2 mb-1.5"><h3 className="text-[13.5px] font-semibold tracking-[-0.01em] text-slate-900">{s.title}</h3>{s.content.trim() ? <span className="text-[10px] font-medium text-emerald-700">complete</span> : <span className="text-[10px] font-medium text-amber-700">empty</span>}</div>
-                <textarea value={s.content} onChange={(e) => set(s.id, e.target.value)} rows={s.content ? 3 : 2} placeholder="Draft this section…" className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200/80 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] resize-none leading-relaxed" />
+                <textarea value={s.content} onChange={(e) => set(s.id, e.target.value)} rows={s.content ? 3 : 2} placeholder="Draft this section…" className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] resize-none leading-relaxed" />
               </div>
             ))}
           </div>
         </div>
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 self-start">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 self-start">
           <div className="flex items-center justify-between mb-2"><h4 className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500">Standards cited</h4><button onClick={() => setStandards([...standards, ""])} className="text-indigo-700 hover:bg-indigo-50 rounded w-6 h-6 flex items-center justify-center"><Icon name="plus" size={13} /></button></div>
           <div className="space-y-1.5">
             {standards.map((c, i) => (
               <div key={i} className="flex items-center gap-1.5">
-                <input value={c} onChange={(e) => { const n = [...standards]; n[i] = e.target.value; setStandards(n); }} placeholder="ISO 27001 §x.x" className="flex-1 h-8 px-2 rounded-md bg-slate-50 ring-1 ring-slate-200/80 outline-none text-[11.5px] font-mono focus:ring-2 focus:ring-indigo-500/30" />
+                <input value={c} onChange={(e) => { const n = [...standards]; n[i] = e.target.value; setStandards(n); }} placeholder="ISO 27001 §x.x" className="flex-1 h-8 px-2 rounded-md bg-slate-50 ring-1 ring-slate-200 outline-none text-[11.5px] font-mono focus:ring-2 focus:ring-indigo-500/30" />
                 {standards.length > 1 && <button onClick={() => setStandards(standards.filter((_, j) => j !== i))} className="text-slate-300 hover:text-rose-600"><Icon name="x" size={13} /></button>}
               </div>
             ))}
@@ -312,7 +312,7 @@ function LegacyMapWorkspace({ value, onChange, openRef }: WorkspaceProps) {
   return (
     <div className="space-y-4">
       <GivenNote>Map each regulatory driver to the assets it touches. A blank cell means no obligation (valid), but every driver needs at least one mapped asset. A populated link needs a one-line rationale. <button onClick={() => openRef("ws-driver-map")} className="text-indigo-600 hover:underline font-medium">Open drivers →</button></GivenNote>
-      <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-x-auto">
+      <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-x-auto">
         <div className="grid min-w-[720px]" style={{ gridTemplateColumns: `150px repeat(${colsB.length}, 1fr)` }}>
           <div className="bg-slate-50/60 border-b border-slate-100" />
           {colsB.map((c) => <div key={c} className="bg-slate-50/60 border-b border-l border-slate-100 px-2 py-2 text-[11px] font-medium text-slate-700 tracking-tight">{c}</div>)}
@@ -397,7 +397,7 @@ function ScriptedCalcFlow({ task, value, onChange }: { task: CalcTask } & Pick<W
         <SectionLabel hint={`${task.rows.filter(matchOf).length} / ${task.rows.length} correct`} action={
           <button onClick={check} className="h-7 px-2.5 rounded-md text-[11.5px] font-medium text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"><Icon name="check" size={12} />Check results</button>
         }>{task.title} <CriterionMark guide="table" className="ml-1.5" /></SectionLabel>
-        <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-x-auto">
+        <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/60 text-[10px] font-semibold tracking-[0.06em] uppercase text-slate-500">
@@ -416,7 +416,7 @@ function ScriptedCalcFlow({ task, value, onChange }: { task: CalcTask } & Pick<W
                     {r.inputs.map((inp, i) => <td key={i} className="px-3 py-2 text-[12px] text-slate-600 text-right tabular-nums">{inp.value}</td>)}
                     <td className="px-3 py-2">
                       <input value={results[r.id] ?? ""} onChange={(e) => setResult(r.id, e.target.value)} inputMode="decimal" placeholder="—"
-                        className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px] tabular-nums" />
+                        className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px] tabular-nums" />
                     </td>
                   </tr>
                 );
@@ -427,7 +427,7 @@ function ScriptedCalcFlow({ task, value, onChange }: { task: CalcTask } & Pick<W
       </div>
 
       {checked && !objectiveMet && (
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 text-[12px] space-y-2">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 text-[12px] space-y-2">
           {wrongIds.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 font-medium text-rose-700"><Icon name="x" size={13} /> Recompute these — they don&apos;t match the engine:</div>
@@ -469,15 +469,15 @@ function LegacyCalculateWorkspace({ value, onChange, openRef }: WorkspaceProps) 
     <div className="space-y-4">
       <GivenNote>Score each input on the 0–4 scale and cite its source. The result re-computes server-side; drift &gt; ±0 fails. <button onClick={() => openRef("ws-risk-formula")} className="text-indigo-600 hover:underline font-medium">Open formula →</button></GivenNote>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-50/60 border-b border-slate-100"><tr>{["Variable", "Value", "Source citation *"].map((h) => <th key={h} className="px-3 py-2.5 text-left text-[10.5px] font-medium tracking-[0.06em] uppercase text-slate-500">{h}</th>)}</tr></thead>
             <tbody>
               {rows.map((row) => (
                 <tr key={row.k} className="border-b border-slate-50 last:border-0">
                   <td className="px-3 py-3"><div className="text-[12.5px] font-medium text-slate-900 tracking-tight">{row.label}</div><div className="text-[10.5px] font-mono text-slate-500">{row.scale}</div></td>
-                  <td className="px-3 py-3"><input type="number" min={0} max={4} value={inputs[row.k]} onChange={(e) => setInputs({ ...inputs, [row.k]: Math.max(0, Math.min(4, parseInt(e.target.value) || 0)) })} className="w-16 h-9 px-2 rounded-md ring-1 ring-slate-200/80 outline-none text-[14px] font-semibold text-slate-900 text-center bg-white focus:ring-2 focus:ring-amber-400/40" /></td>
-                  <td className="px-3 py-3"><input value={citations[row.k]} onChange={(e) => setCitations({ ...citations, [row.k]: e.target.value })} placeholder="Where this number comes from…" className="w-full h-9 px-2 rounded-md bg-slate-50 ring-1 ring-slate-200/80 outline-none text-[12px] focus:ring-2 focus:ring-amber-400/40 placeholder:text-slate-400" /></td>
+                  <td className="px-3 py-3"><input type="number" min={0} max={4} value={inputs[row.k]} onChange={(e) => setInputs({ ...inputs, [row.k]: Math.max(0, Math.min(4, parseInt(e.target.value) || 0)) })} className="w-16 h-9 px-2 rounded-md ring-1 ring-slate-200 outline-none text-[14px] font-semibold text-slate-900 text-center bg-white focus:ring-2 focus:ring-amber-400/40" /></td>
+                  <td className="px-3 py-3"><input value={citations[row.k]} onChange={(e) => setCitations({ ...citations, [row.k]: e.target.value })} placeholder="Where this number comes from…" className="w-full h-9 px-2 rounded-md bg-slate-50 ring-1 ring-slate-200 outline-none text-[12px] focus:ring-2 focus:ring-amber-400/40 placeholder:text-slate-400" /></td>
                 </tr>
               ))}
             </tbody>
@@ -528,7 +528,7 @@ function LegacyPrioritiseWorkspace({ value, onChange }: WorkspaceProps) {
   return (
     <div className="space-y-4">
       <GivenNote>Score every item on all four criteria (1–4) — 0 counts as unscored. Ranking is by weighted criterion (L 30 · I 40 · Velocity 15 · Exposure 15); the aggregate re-computes server-side, and any tie needs a written rationale.</GivenNote>
-      <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-x-auto">
+      <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-x-auto">
         <table className="w-full min-w-[640px]">
           <thead className="bg-slate-50/60 border-b border-slate-100"><tr>
             <th className="px-3 py-2 text-left text-[10.5px] font-medium uppercase text-slate-500 w-10">#</th>
@@ -543,7 +543,7 @@ function LegacyPrioritiseWorkspace({ value, onChange }: WorkspaceProps) {
                 <tr key={r.id} className={`border-b border-slate-50 last:border-0 ${inTie ? "bg-rose-50/30" : ""}`}>
                   <td className="px-3 py-2.5 text-[14px] font-semibold tabular-nums text-slate-900">{i + 1}</td>
                   <td className="px-3 py-2.5"><div className="text-[12.5px] font-medium text-slate-900 tracking-tight">{r.name}</div>{inTie && <div className="text-[10px] text-rose-600 font-medium mt-0.5">⚠ tied — needs tiebreaker</div>}</td>
-                  {crit.map((c) => <td key={c.id} className="px-2 py-2.5 text-center"><input type="number" min={0} max={4} value={r[c.id]} onChange={(e) => setS(r.id, c.id, e.target.value)} className="w-11 h-8 rounded-md ring-1 ring-slate-200/80 outline-none text-center text-[12.5px] font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-rose-400/40" /></td>)}
+                  {crit.map((c) => <td key={c.id} className="px-2 py-2.5 text-center"><input type="number" min={0} max={4} value={r[c.id]} onChange={(e) => setS(r.id, c.id, e.target.value)} className="w-11 h-8 rounded-md ring-1 ring-slate-200 outline-none text-center text-[12.5px] font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-rose-400/40" /></td>)}
                   <td className="px-3 py-2.5 text-right text-[14px] font-semibold tabular-nums text-slate-900">{score(r).toFixed(2)}</td>
                 </tr>
               );
@@ -586,13 +586,13 @@ function LegacyRecommendWorkspace({ value, onChange }: WorkspaceProps) {
       {recs.map((r) => {
         const ok = valid(r);
         return (
-          <div key={r.id} className={`rounded-2xl bg-white ring-1 p-4 ${ok ? "ring-emerald-200/70" : "ring-slate-200/70"}`}>
+          <div key={r.id} className={`rounded-2xl bg-white ring-1 p-4 ${ok ? "ring-emerald-200/70" : "ring-slate-200"}`}>
             <div className="flex items-start gap-2.5 mb-3"><div className="shrink-0 w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 flex items-center justify-center text-[11px] font-mono font-semibold">G{r.id}</div><div><div className="text-[10.5px] font-medium tracking-[0.08em] uppercase text-slate-500">Gap</div><div className="text-[13px] font-semibold text-slate-900 tracking-tight">{r.gap}</div></div>{ok && <span className="ml-auto inline-flex items-center gap-1 text-[10.5px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full ring-1 ring-emerald-200/70"><Icon name="check" size={10} strokeWidth={3} />valid</span>}</div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2"><L>Action *</L><textarea value={r.action} onChange={(e) => set(r.id, "action", e.target.value)} rows={2} placeholder="Concrete, action-specific…" className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200/80 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] resize-none" /></div>
-              <div className="col-span-2"><L>Owner role *</L><select value={r.owner} onChange={(e) => set(r.id, "owner", e.target.value)} className="w-full h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200/80 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px]"><option value="">Pick a role…</option>{owners.map((o) => <option key={o}>{o}</option>)}</select></div>
-              <div className="col-span-2"><L>Control reference *</L><input value={r.control} onChange={(e) => set(r.id, "control", e.target.value)} placeholder="ISO 27001 A.x.x or NIST SP 800-…" className="w-full h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200/80 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] font-mono" /></div>
-              <div className="col-span-2"><div className="flex items-baseline justify-between"><L>Rationale *</L><span className={`text-[10.5px] tabular-nums ${r.rationale.length >= 30 ? "text-emerald-600" : "text-slate-400"}`}>{r.rationale.length} / 30</span></div><textarea value={r.rationale} onChange={(e) => set(r.id, "rationale", e.target.value)} rows={2} placeholder="Why this action closes the gap; reference the cited control." className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200/80 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] resize-none" /></div>
+              <div className="col-span-2"><L>Action *</L><textarea value={r.action} onChange={(e) => set(r.id, "action", e.target.value)} rows={2} placeholder="Concrete, action-specific…" className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] resize-none" /></div>
+              <div className="col-span-2"><L>Owner role *</L><select value={r.owner} onChange={(e) => set(r.id, "owner", e.target.value)} className="w-full h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px]"><option value="">Pick a role…</option>{owners.map((o) => <option key={o}>{o}</option>)}</select></div>
+              <div className="col-span-2"><L>Control reference *</L><input value={r.control} onChange={(e) => set(r.id, "control", e.target.value)} placeholder="ISO 27001 A.x.x or NIST SP 800-…" className="w-full h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] font-mono" /></div>
+              <div className="col-span-2"><div className="flex items-baseline justify-between"><L>Rationale *</L><span className={`text-[10.5px] tabular-nums ${r.rationale.length >= 30 ? "text-emerald-600" : "text-slate-400"}`}>{r.rationale.length} / 30</span></div><textarea value={r.rationale} onChange={(e) => set(r.id, "rationale", e.target.value)} rows={2} placeholder="Why this action closes the gap; reference the cited control." className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] resize-none" /></div>
             </div>
           </div>
         );
@@ -625,7 +625,7 @@ function LegacyValidateWorkspace({ value, onChange, openRef }: WorkspaceProps) {
   return (
     <div className="space-y-4">
       <GivenNote>Attach a control citation to each finding; toggle Verified / Unverified. No finding may sit indeterminate; unverified ones need a follow-up. <button onClick={() => openRef("ws-control-library")} className="text-indigo-600 hover:underline font-medium">Open controls →</button></GivenNote>
-      <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-hidden">
+      <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-hidden">
         {findings.map((f) => (
           <div key={f.id} className="px-4 py-3.5 border-b border-slate-100 last:border-0">
             <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -633,7 +633,7 @@ function LegacyValidateWorkspace({ value, onChange, openRef }: WorkspaceProps) {
                 <div className="shrink-0 w-7 h-7 rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-100 flex items-center justify-center text-[11px] font-mono font-semibold">F{f.id}</div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-medium text-slate-900 tracking-tight">{f.text}</div>
-                  <div className={`mt-2 inline-flex items-center gap-1.5 h-8 pl-2 pr-3 rounded-lg ring-1 ${f.citation ? "bg-indigo-50 ring-indigo-200 text-indigo-700" : "bg-slate-50 ring-slate-200/80 text-slate-500"}`}><Icon name="link" size={12} /><input value={f.citation} onChange={(e) => set(f.id, "citation", e.target.value)} placeholder="Cite a control…" className="bg-transparent outline-none text-[11.5px] font-mono w-44 placeholder:text-slate-400" /></div>
+                  <div className={`mt-2 inline-flex items-center gap-1.5 h-8 pl-2 pr-3 rounded-lg ring-1 ${f.citation ? "bg-indigo-50 ring-indigo-200 text-indigo-700" : "bg-slate-50 ring-slate-200 text-slate-500"}`}><Icon name="link" size={12} /><input value={f.citation} onChange={(e) => set(f.id, "citation", e.target.value)} placeholder="Cite a control…" className="bg-transparent outline-none text-[11.5px] font-mono w-44 placeholder:text-slate-400" /></div>
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1.5 shrink-0">
@@ -680,7 +680,7 @@ function LegacyScheduleWorkspace({ value, onChange }: WorkspaceProps) {
         <SectionLabel>Proposed time slots — tap the confirmed one</SectionLabel>
         <div className="space-y-2">
           {slots.map((s, i) => (
-            <button key={i} onClick={() => toggle(i)} className={`w-full flex items-center gap-3 rounded-xl bg-white ring-1 transition-all p-3 text-left ${s.agreed ? "ring-emerald-300 bg-emerald-50/20" : "ring-slate-200/80 hover:ring-slate-300"}`}>
+            <button key={i} onClick={() => toggle(i)} className={`w-full flex items-center gap-3 rounded-xl bg-white ring-1 transition-all p-3 text-left ${s.agreed ? "ring-emerald-300 bg-emerald-50/20" : "ring-slate-200 hover:ring-slate-300"}`}>
               <span className={`w-9 h-9 rounded-lg flex items-center justify-center ${s.agreed ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}><Icon name="calendar" size={14} /></span>
               <span className="flex-1 text-[13px] text-slate-900 font-medium tracking-tight">{s.time}</span>
               {s.agreed && <span className="text-[10.5px] font-semibold tracking-[0.08em] uppercase text-emerald-700">Confirmed</span>}

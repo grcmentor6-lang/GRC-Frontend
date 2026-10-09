@@ -5,6 +5,22 @@ import type { ReactNode } from "react";
  * surface uses identical glyphs). Server-safe: no hooks, no browser APIs.
  */
 const paths: Record<string, ReactNode> = {
+  // The eight task-card questions, from the GRC 101 v1.8.8 desk prototype's card bar.
+  qDo: (<><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.3" fill="currentColor" /></>),
+  qWhy: (<><circle cx="12" cy="12" r="9" /><path d="M9.6 9.3a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.6" /><circle cx="12" cy="17" r=".6" fill="currentColor" /></>),
+  qLearn: (<><path d="M2.5 9 12 4.5 21.5 9 12 13.5z" /><path d="M6.5 11v4.5c1.4 1.4 3.4 2.2 5.5 2.2s4.1-.8 5.5-2.2V11" /><path d="M21.5 9v5" /></>),
+  qHow: (<><path d="M10 6h10M10 12h10M10 18h10" /><path d="M4 5l1.2-.8V8M3.8 8h2.6" /><path d="M3.9 11.2a1.3 1.3 0 0 1 2.4.6c0 .9-2.4 1.9-2.4 2.8h2.5" /><path d="M3.9 16.6h2.3l-1.2 1.4a1.2 1.2 0 1 1-1.1 1.6" /></>),
+  qRead: (<><path d="M12 6.5C10.3 5.2 7.8 4.6 3.5 4.8v13.5c4.3-.2 6.8.4 8.5 1.7 1.7-1.3 4.2-1.9 8.5-1.7V4.8c-4.3-.2-6.8.4-8.5 1.7z" /><path d="M12 6.5V20" /></>),
+  qWhere: <path d="M3 7.5a2 2 0 0 1 2-2h4l2 2.2h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
+  qDeliver: (<><path d="M12 3 20.5 7.5v9L12 21l-8.5-4.5v-9z" /><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9" /><path d="m7.8 5.3 8.5 4.5" /></>),
+  qImpact: <path d="m12 3.2 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z" />,
+  // The desk rail's six drawer glyphs, taken from the GRC 101 v1.8.8 desk prototype.
+  railPlan: <path d="M4 5h16M4 12h16M4 19h10" />,
+  railOrgs: <path d="M3 21h18M5 21V7l7-4 7 4v14M9 10h2M13 10h2M9 14h2M13 14h2M9 18h2M13 18h2" />,
+  railLibrary: <path d="M4 4h5v16H4zM9 4h5v16H9zM15 5l4-1 1 15-4 1z" />,
+  railLinks: <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5" />,
+  railCert: (<><circle cx="12" cy="9" r="5" /><path d="M8.5 13.5L7 21l5-2 5 2-1.5-7.5" /></>),
+  railPeople: (<><circle cx="9" cy="8" r="3.5" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20a6 6 0 0 1 12 0M14 20a4.5 4.5 0 0 1 7 0" /></>),
   home: (<><path d="M3 10.5L12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /></>),
   desk: (<><rect x="3" y="5" width="18" height="11" rx="2" /><path d="M7 21l2-5" /><path d="M17 21l-2-5" /><path d="M3 12h18" /></>),
   calendar: (<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18" /><path d="M8 3v4" /><path d="M16 3v4" /></>),

@@ -121,7 +121,7 @@ function MethodEditor({ ctx, m, prog, patch, res }: {
       </div>
 
       <div className={dim ? "opacity-45 pointer-events-none select-none" : ""}>
-        <div data-guide="rs:prompts" className="rounded-2xl bg-white ring-1 ring-slate-200/80 p-4 mb-3.5">
+        <div data-guide="rs:prompts" className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 mb-3.5">
           <div className="text-[10.5px] font-semibold tracking-[0.1em] uppercase text-slate-500 mb-2.5">Guiding prompts — answer these in your findings</div>
           <ol className="space-y-2.5">
             {m.prompts.map((p, i) => (
@@ -133,7 +133,7 @@ function MethodEditor({ ctx, m, prog, patch, res }: {
           </ol>
         </div>
 
-        <div data-guide="rs:findings" className="rounded-2xl bg-white ring-1 ring-slate-200/80 p-4 mb-3.5">
+        <div data-guide="rs:findings" className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 mb-3.5">
           <div className="flex items-baseline justify-between mb-2">
             <div className="text-[10.5px] font-semibold tracking-[0.1em] uppercase text-slate-500">Research findings</div>
             <span className="text-[10.5px] font-mono text-slate-400 tabular-nums">{res.checks[0].ev}</span>
@@ -143,7 +143,7 @@ function MethodEditor({ ctx, m, prog, patch, res }: {
             className="w-full resize-y rounded-xl bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 px-3.5 py-3 text-[13px] leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none" />
         </div>
 
-        <div data-guide="rs:sowhat" className="rounded-2xl bg-white ring-1 ring-slate-200/80 p-4 mb-3.5">
+        <div data-guide="rs:sowhat" className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 mb-3.5">
           <div className="flex items-baseline justify-between mb-2">
             <div className="text-[10.5px] font-semibold tracking-[0.1em] uppercase text-slate-500">So what — implication for the deliverable</div>
             <span className="text-[10.5px] font-mono text-slate-400 tabular-nums">{res.checks[1].ev}</span>
@@ -153,12 +153,12 @@ function MethodEditor({ ctx, m, prog, patch, res }: {
             className="w-full resize-y rounded-xl bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 px-3.5 py-3 text-[13px] leading-relaxed text-slate-800 placeholder:text-slate-400 outline-none" />
         </div>
 
-        <div data-guide="rs:sources" className="rounded-2xl bg-white ring-1 ring-slate-200/80 p-4 mb-3.5">
+        <div data-guide="rs:sources" className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 mb-3.5">
           <div className="text-[10.5px] font-semibold tracking-[0.1em] uppercase text-slate-500 mb-2.5">Sources consulted <CriterionMark rs={[3]} done={(entry.sources ?? []).length > 0} className="ml-1.5" /></div>
           <SourcesEditor sources={entry.sources ?? []} onChange={(v) => set("sources", v)} hint={rsFill(m.sourceHint, ctx)} />
         </div>
 
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/80 p-4">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4">
           <div className="flex items-baseline justify-between mb-1">
             <div className="text-[10.5px] font-semibold tracking-[0.1em] uppercase text-slate-500">Quality bar — checked live</div>
             {res.pass
@@ -201,7 +201,7 @@ function ReviewPane({ ctx, prog, patch, gate, goMethod }: {
       </div>
 
       {/* what you're submitting */}
-      <div className="rounded-2xl bg-white ring-1 ring-slate-200/80 overflow-hidden mb-3.5">
+      <div className="rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden mb-3.5">
         <div className="px-4 pt-3.5 pb-1 text-[10.5px] font-semibold tracking-[0.1em] uppercase text-slate-500">What you&apos;re submitting</div>
         <div className="divide-y divide-slate-100">
           {gate.rows.map((r) => (
@@ -231,8 +231,8 @@ function ReviewPane({ ctx, prog, patch, gate, goMethod }: {
       </div>
 
       {/* declaration */}
-      <div className="rounded-2xl bg-white ring-1 ring-slate-200/80 p-4 mb-4">
-        <div className="text-[10.5px] font-semibold tracking-[0.1em] uppercase text-slate-500 mb-2.5">Declaration</div>
+      <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 mb-4">
+        <div className="text-[10.5px] font-semibold tracking-[0.1em] uppercase text-slate-500 mb-2.5">Declaration <CriterionMark rs={[4]} className="ml-1.5" /></div>
         <div className="space-y-2.5">
           {declItems.map((d) => (
             <label key={d.k} className={`flex items-start gap-3 p-3 rounded-xl ring-1 cursor-pointer transition-colors ${decl[d.k] ? "bg-indigo-50 ring-indigo-200" : "bg-slate-50 ring-slate-200 hover:bg-slate-100/70"}`}>

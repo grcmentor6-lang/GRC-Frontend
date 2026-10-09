@@ -78,3 +78,16 @@ export function OrgLogo({ org, className = "w-11 h-11", iconSize = 22 }: OrgLogo
     </div>
   );
 }
+
+/**
+ * The badge for an organisation known only by name (the GRC 101 desk content): its letterhead
+ * monogram, "GlobalConnect Customer Solutions" → GC, "Atlas Systems" → AS, and the sector colour
+ * of the brand that carries that monogram.
+ */
+export function logoFor(name: string): OrgLogoProps["org"] {
+  const words = name.split(/\s+/);
+  const caps = (words[0].match(/[A-Z]/g) ?? []).join("");
+  const initials = caps.length >= 2 ? caps.slice(0, 2) : words.slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
+  const id = Object.keys(BRAND).find((k) => BRAND[k].ini === initials) ?? `name-${initials}`;
+  return { id, initials, tone: "" };
+}

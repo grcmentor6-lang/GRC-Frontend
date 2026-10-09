@@ -89,7 +89,7 @@ function EventCard({ e, dateLabel, onClick, reduce }: { e: CalendarEvent; dateLa
       </div>
     </>
   );
-  const cls = "group relative flex gap-3 rounded-xl p-3 pl-4 ring-1 ring-slate-200/70 bg-white no-underline overflow-hidden";
+  const cls = "group relative flex gap-3 rounded-xl p-3 pl-4 ring-1 ring-slate-200 bg-white no-underline overflow-hidden";
   if (!linkable) {
     return <motion.div variants={itemV} className={cls}>{inner}</motion.div>;
   }
@@ -197,19 +197,19 @@ export default function CalendarPage() {
 
   if (loading && !data) {
     return (
-      <div className="max-w-[1180px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-6 animate-pulse">
+      <div className="page-shell animate-pulse">
         <div className="h-6 w-40 rounded bg-slate-200 mb-1.5" />
         <div className="h-3 w-72 rounded bg-slate-100 mb-5" />
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-          <div className="xl:col-span-2 rounded-2xl ring-1 ring-slate-200/70 overflow-hidden">
+          <div className="xl:col-span-2 rounded-2xl ring-1 ring-slate-200 overflow-hidden">
             <div className="h-14 bg-slate-100/70" />
             <div className="grid grid-cols-7 gap-px bg-slate-100">
               {Array.from({ length: 35 }).map((_, i) => <div key={i} className="h-[88px] bg-white" />)}
             </div>
           </div>
           <div className="space-y-5">
-            <div className="h-48 rounded-2xl bg-slate-100 ring-1 ring-slate-200/70" />
-            <div className="h-40 rounded-2xl bg-slate-100 ring-1 ring-slate-200/70" />
+            <div className="h-48 rounded-2xl bg-slate-100 ring-1 ring-slate-200" />
+            <div className="h-40 rounded-2xl bg-slate-100 ring-1 ring-slate-200" />
           </div>
         </div>
       </div>
@@ -221,7 +221,7 @@ export default function CalendarPage() {
       initial={reduce ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="max-w-[1180px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-6 space-y-5"
+      className="page-shell space-y-4"
     >
       {/* Page header */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
@@ -250,9 +250,9 @@ export default function CalendarPage() {
               <motion.h2 key={`${cursor.y}-${cursor.m}`} initial={reduce ? false : { opacity: 0, x: dir * 10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.25 }} className="text-[16px] font-semibold tracking-[-0.01em] text-slate-900 tabular-nums">{MONTHS[cursor.m]} {cursor.y}</motion.h2>
               {monthCount > 0 && <span className="text-[11.5px] font-medium text-slate-400">{monthCount} event{monthCount === 1 ? "" : "s"}</span>}
             </div>
-            <div className="inline-flex items-center rounded-lg ring-1 ring-slate-200/70 overflow-hidden">
-              <button onClick={() => shift(-1)} aria-label="Previous month" className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors border-r border-slate-200/70 active:scale-95"><Icon name="chevronLeft" size={16} /></button>
-              <button onClick={goToday} className="h-8 px-3 text-[12px] font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors border-r border-slate-200/70">Today</button>
+            <div className="inline-flex items-center rounded-lg ring-1 ring-slate-200 overflow-hidden">
+              <button onClick={() => shift(-1)} aria-label="Previous month" className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors border-r border-slate-200 active:scale-95"><Icon name="chevronLeft" size={16} /></button>
+              <button onClick={goToday} className="h-8 px-3 text-[12px] font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors border-r border-slate-200">Today</button>
               <button onClick={() => shift(1)} aria-label="Next month" className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors active:scale-95"><Icon name="chevronDown" size={16} className="-rotate-90" /></button>
             </div>
           </div>
@@ -338,7 +338,7 @@ export default function CalendarPage() {
             </div>
             {selectedEvents.length === 0 ? (
               <motion.div key={`empty-${selected}`} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }} className="flex flex-col items-center text-center py-6">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 ring-1 ring-slate-200/70 flex items-center justify-center text-slate-300 mb-2.5"><Icon name="calendar" size={18} /></div>
+                <div className="w-10 h-10 rounded-xl bg-slate-50 ring-1 ring-slate-200 flex items-center justify-center text-slate-300 mb-2.5"><Icon name="calendar" size={18} /></div>
                 <div className="text-[12.5px] font-medium text-slate-600">Nothing scheduled</div>
                 <div className="text-[11.5px] text-slate-400 mt-0.5">Pick another day to see its events.</div>
               </motion.div>
@@ -389,7 +389,7 @@ export default function CalendarPage() {
             {leave && leave.days.length > 0 && (
               <div className="mt-3 space-y-1.5">
                 {leave.days.map((d) => (
-                  <div key={d} className="flex items-center gap-2 px-2.5 h-8 rounded-lg bg-slate-50 ring-1 ring-slate-200/70">
+                  <div key={d} className="flex items-center gap-2 px-2.5 h-8 rounded-lg bg-slate-50 ring-1 ring-slate-200">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
                     <span className="text-[12px] text-slate-600">{parseISO(d).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}</span>
                     <button onClick={() => mutateLeave(() => leaveApi.remove(d, PROGRAM))} disabled={leaveBusy} aria-label="Remove leave day" className="ml-auto text-slate-400 hover:text-rose-600 transition-colors disabled:opacity-40">

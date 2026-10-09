@@ -1,7 +1,7 @@
 "use client";
 
 import { cloneElement, Fragment, isValidElement, useId, type ReactElement, type ReactNode } from "react";
-import { splitTerms, termsIn } from "@/lib/glossary";
+import { splitTerms } from "@/lib/glossary";
 
 /** Elements whose text must stay plain: nesting a <button> inside any of these is invalid HTML. */
 const SKIP = new Set(["button", "a", "input", "textarea", "select", "option", "label", "summary", "code"]);
@@ -70,7 +70,7 @@ export function gloss(text: string, seen: Set<string>, idPrefix: string): React.
           popover="auto"
           id={id}
           style={{ positionAnchor: anchor } as React.CSSProperties}
-          className="gloss-pop w-[min(20rem,calc(100vw-2rem))] rounded-xl bg-white p-3 text-[12.5px] leading-relaxed tracking-tight text-slate-700 shadow-[0_16px_44px_-12px_rgba(15,23,42,0.35)] ring-1 ring-slate-200/80"
+          className="gloss-pop w-[min(20rem,calc(100vw-2rem))] rounded-xl bg-white p-3 text-[12.5px] leading-relaxed tracking-tight text-slate-700 shadow-[0_16px_44px_-12px_rgba(15,23,42,0.35)] ring-1 ring-slate-200"
         >
           <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.12em] text-indigo-600">{part.text}</span>
           {part.definition}
@@ -80,29 +80,3 @@ export function gloss(text: string, seen: Set<string>, idPrefix: string): React.
   });
 }
 
-/**
- * "Terms used here" — every defined term appearing in `texts`, derived from the same map. Hover is
- * opt-in and unauditable; this list makes the guarantee mechanical: if a term is in the glossary and
- * in the deliverable, it is defined on the page.
- */
-export function TermsUsed({ texts, className = "" }: { texts: string[]; className?: string }) {
-  const hits = termsIn(texts);
-  if (!hits.length) return null;
-  return (
-    <details className={`group rounded-xl bg-slate-50/70 ring-1 ring-slate-200/70 ${className}`}>
-      <summary className="focus-ring flex cursor-pointer list-none items-center gap-2 rounded-xl px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 hover:text-slate-700">
-        Terms used here
-        <span className="inline-flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-slate-200 px-1 text-[10px] font-semibold tabular-nums tracking-normal text-slate-600">{hits.length}</span>
-        <span className="ml-auto text-slate-400 transition-transform group-open:rotate-180 motion-reduce:transition-none">▾</span>
-      </summary>
-      <dl className="space-y-2 border-t border-slate-200/70 px-3.5 py-3">
-        {hits.map((h) => (
-          <div key={h.key}>
-            <dt className="text-[12px] font-medium tracking-tight text-slate-900">{h.text}</dt>
-            <dd className="text-[12px] leading-relaxed tracking-tight text-slate-600" style={{ textWrap: "pretty" }}>{h.definition}</dd>
-          </div>
-        ))}
-      </dl>
-    </details>
-  );
-}

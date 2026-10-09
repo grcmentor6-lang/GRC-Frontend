@@ -91,7 +91,7 @@ function TaskNode({ task, state, activeId, activeTaskCode }: { task: LearningTas
       </div>
 
       {open && (
-        <div data-tour={onThisTask ? "desk-steps" : undefined} className="ml-6 pl-2 border-l border-slate-200/70 py-0.5">
+        <div data-tour={onThisTask ? "desk-steps" : undefined} className="ml-6 pl-2 border-l border-slate-200 py-0.5">
           {steps.map((s) => {
             const ss = stepState(s.status);
             const active = s.id === activeId;
@@ -151,7 +151,7 @@ function CategoryNode({ category, tasks, taskStates, activeId, activeTaskCode }:
         <span className="ml-auto text-[10px] text-slate-400 tabular-nums">{tasks.length}</span>
       </button>
       {open && (
-        <div className="ml-3 pl-1 border-l border-slate-200/70 space-y-0.5">
+        <div className="ml-3 pl-1 border-l border-slate-200 space-y-0.5">
           {tasks.map((t) => <TaskNode key={t.id} task={t} state={taskStates.get(t.code) ?? "locked"} activeId={activeId} activeTaskCode={activeTaskCode} />)}
         </div>
       )}
@@ -222,7 +222,7 @@ function OrgTree({ org, activeId, activeTaskCode }: {
 
 function SidebarShell({ children, footer, scrollRef }: { children: React.ReactNode; footer?: React.ReactNode; scrollRef?: React.Ref<HTMLDivElement> }) {
   return (
-    <aside data-tour="desk-tree" className="w-[288px] 2xl:w-[344px] 3xl:w-[380px] shrink-0 h-full border-r border-slate-200/70 bg-white/50 flex flex-col">
+    <aside data-tour="desk-tree" className="w-[288px] 2xl:w-[344px] 3xl:w-[380px] shrink-0 h-full border-r border-slate-200 bg-white/50 flex flex-col">
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">{children}</div>
       {footer}
     </aside>
@@ -267,7 +267,7 @@ export function DeskSidebar() {
   orgs.forEach((o) => o.projects.forEach((p) => p.tasks.forEach((t) => { done += t.done; total += t.total; })));
   const pct = total ? Math.round((done / total) * 100) : 0;
   const progressFooter = total > 0 ? (
-    <div data-tour="desk-progress" className="shrink-0 border-t border-slate-200/60 px-3.5 py-3 bg-white/40">
+    <div data-tour="desk-progress" className="shrink-0 border-t border-slate-200 px-3.5 py-3 bg-white/40">
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-[11px] font-semibold tracking-tight text-slate-700">GRC 101 · Foundations</span>
         <span className="text-[10.5px] text-slate-400 tabular-nums">{done}/{total}</span>

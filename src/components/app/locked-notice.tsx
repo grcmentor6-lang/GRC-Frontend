@@ -67,7 +67,7 @@ export function LockedNotice({ what }: { what: "step" | "task" }) {
       ) : (
         <Link
           href={base}
-          className="mt-4 inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200/80 text-slate-700 text-[13px] font-semibold tracking-tight no-underline hover:bg-slate-50"
+          className="mt-4 inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-semibold tracking-tight no-underline hover:bg-slate-50"
         >
           Back to Working Desk <Icon name="arrowRight" size={15} />
         </Link>

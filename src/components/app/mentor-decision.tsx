@@ -122,7 +122,7 @@ export function MentorDecision({
           )}
 
           {review.needsAcknowledgement && (
-            <div className="mt-3 border-t border-slate-200/70 pt-3">
+            <div className="mt-3 border-t border-slate-200 pt-3">
               <p className="text-[12.5px] text-slate-600 leading-relaxed">
                 This step stays open until you confirm you have read the note above. Nothing needs
                 resubmitting — your work was accepted.
@@ -146,14 +146,14 @@ export function MentorDecision({
           )}
 
           {review.advisory && (
-            <p className="mt-3 text-[11.5px] text-slate-500 leading-relaxed border-t border-slate-200/70 pt-2.5">
+            <p className="mt-3 text-[11.5px] text-slate-500 leading-relaxed border-t border-slate-200 pt-2.5">
               This is guidance from a practitioner reviewing your work. Your grade and your progress
               come from the AI assessment above and are not changed by it.
             </p>
           )}
 
           {!review.advisory && !review.needsAcknowledgement && !approved && !escalated && (
-            <p className="mt-3 text-[11.5px] text-slate-500 leading-relaxed border-t border-slate-200/70 pt-2.5">
+            <p className="mt-3 text-[11.5px] text-slate-500 leading-relaxed border-t border-slate-200 pt-2.5">
               This step has reopened and the work that followed it is on hold until you resubmit.
               You have been given an extra attempt for it.
             </p>
@@ -161,7 +161,7 @@ export function MentorDecision({
 
           {/* The signature rule. A person put their name to this, and the gate it was decided at
               is part of the record — both belong at the foot of the decision, not beside a heading. */}
-          <div className="mt-4 pt-2.5 border-t border-slate-200/70 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.06em] text-slate-500">
+          <div className="mt-4 pt-2.5 border-t border-slate-200 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.06em] text-slate-500">
             <span>
               {review.reviewerName} · {review.reviewerRole}
             </span>

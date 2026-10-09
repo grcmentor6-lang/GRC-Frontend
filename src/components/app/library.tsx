@@ -115,7 +115,7 @@ function PosterFrame({ w, h, name, children }: { w: number; h: number; name: str
   const ref = useRef<SVGSVGElement>(null);
   return (
     <figure className="m-0">
-      <div className="rounded-xl ring-1 ring-slate-200/70 overflow-hidden bg-white">
+      <div className="rounded-xl ring-1 ring-slate-200 overflow-hidden bg-white">
         <svg ref={ref} xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${w} ${h}`} width={w} height={h} fontFamily={FONT} className="block w-full h-auto">
           <rect width={w} height={h} fill="#ffffff" />
           {children}
@@ -291,7 +291,7 @@ function Card({ item, group }: { item: LibItem; group: LibGroup }) {
 /** Stated before any content, as on the Control references panel: which words are the standard's. */
 export function LibraryProvenance({ standard }: { standard?: LibStandard }) {
   return (
-    <p className="text-[11.5px] text-slate-600 bg-slate-50 ring-1 ring-slate-200/70 rounded-lg px-3 py-2 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>
+    <p className="text-[11.5px] text-slate-600 bg-slate-50 ring-1 ring-slate-200 rounded-lg px-3 py-2 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>
       {standard && !standard.publishedTitles
         ? "The AICPA criteria have no short published titles, so the titles here are ours too. "
         : "References and titles are the standard's own. "}

@@ -31,7 +31,7 @@ function SettingsCard({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl ring-1 ring-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.10)] overflow-hidden">
+    <div className="bg-white rounded-2xl ring-1 ring-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_-12px_rgba(15,23,42,0.10)] overflow-hidden">
       {(title || desc) && (
         <div className="px-6 pt-5 pb-4 border-b border-slate-100">
           {title && <h3 className="text-[15px] font-semibold tracking-tight text-slate-900">{title}</h3>}
@@ -281,7 +281,7 @@ function BillingPanel() {
       <SettingsCard title="Plans & upgrades" desc="Higher tracks unlock as you progress. Pricing is announced before launch.">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {UPCOMING_PLANS.map((p) => (
-            <div key={p.id} className="rounded-xl ring-1 ring-slate-200/70 p-4 flex flex-col">
+            <div key={p.id} className="rounded-xl ring-1 ring-slate-200 p-4 flex flex-col">
               <div className="flex items-center gap-2.5">
                 <span className="w-9 h-9 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
                   <Icon name={p.icon} size={17} />
@@ -305,7 +305,7 @@ function BillingPanel() {
               </ul>
               <button
                 disabled
-                className="mt-4 h-9 rounded-lg ring-1 ring-slate-200/70 bg-slate-50 text-slate-400 text-[12.5px] font-medium tracking-tight inline-flex items-center justify-center gap-1.5 cursor-not-allowed"
+                className="mt-4 h-9 rounded-lg ring-1 ring-slate-200 bg-slate-50 text-slate-400 text-[12.5px] font-medium tracking-tight inline-flex items-center justify-center gap-1.5 cursor-not-allowed"
               >
                 <Icon name="lock" size={13} />
                 {p.price}
@@ -317,8 +317,8 @@ function BillingPanel() {
 
       {/* Payment methods — empty (free plan) */}
       <SettingsCard title="Payment methods" desc="Cards on file for paid tracks.">
-        <div className="flex items-center gap-3 p-4 rounded-xl ring-1 ring-dashed ring-slate-200/80 bg-slate-50/40">
-          <span className="w-10 h-10 rounded-lg bg-white ring-1 ring-slate-200/70 text-slate-400 flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-3 p-4 rounded-xl ring-1 ring-dashed ring-slate-200 bg-slate-50/40">
+          <span className="w-10 h-10 rounded-lg bg-white ring-1 ring-slate-200 text-slate-400 flex items-center justify-center shrink-0">
             <Icon name="creditCard" size={18} />
           </span>
           <div className="min-w-0">
@@ -351,7 +351,7 @@ function BillingPanel() {
           </div>
         ) : (
           <div className="text-center py-8">
-            <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 ring-1 ring-slate-200/70 flex items-center justify-center text-slate-400 mb-3">
+            <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 ring-1 ring-slate-200 flex items-center justify-center text-slate-400 mb-3">
               <Icon name="download" size={20} />
             </div>
             <div className="text-[13px] font-medium text-slate-700">No invoices yet</div>
@@ -367,7 +367,7 @@ export default function SettingsPage() {
   const [tab, setTab] = useState("profile");
 
   return (
-    <div className="max-w-[1080px] 2xl:max-w-[1400px] 3xl:max-w-[1640px] mx-auto px-6 py-7">
+    <div className="page-shell">
       <div className="mb-6">
         <Link href="/app" className="inline-flex items-center gap-1.5 text-[12px] text-slate-500 hover:text-slate-700 no-underline mb-2">
           <Icon name="chevronLeft" size={14} />Back to dashboard
@@ -385,7 +385,7 @@ export default function SettingsPage() {
                 key={t.id}
                 onClick={() => setTab(t.id)}
                 className={`group text-left w-full px-3 py-2.5 rounded-xl flex items-start gap-3 transition-colors ${
-                  on ? "bg-white ring-1 ring-slate-200/80 shadow-[0_2px_8px_-4px_rgba(15,23,42,0.12)]" : "hover:bg-white/60"
+                  on ? "bg-white ring-1 ring-slate-200 shadow-[0_2px_8px_-4px_rgba(15,23,42,0.12)]" : "hover:bg-white/60"
                 }`}
               >
                 <span className={`mt-0.5 w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${on ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500 group-hover:text-slate-700"}`}>

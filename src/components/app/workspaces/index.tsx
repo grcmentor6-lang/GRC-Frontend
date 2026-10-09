@@ -58,7 +58,7 @@ function GenericWorkspace({ value, onChange }: WorkspaceProps) {
     <div>
       <div className="text-[12px] font-medium text-slate-700 tracking-tight mb-1.5">Deliverable</div>
       <textarea value={text} onChange={(e) => setText(e.target.value)} rows={8} placeholder="Capture your work for this step…"
-        className="w-full rounded-lg bg-white ring-1 ring-slate-200/80 p-3 text-[13px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 resize-y" />
+        className="w-full rounded-lg bg-white ring-1 ring-slate-200 p-3 text-[13px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 resize-y" />
     </div>
   );
 }

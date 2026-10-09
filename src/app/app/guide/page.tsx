@@ -113,7 +113,7 @@ export default function GuidePage() {
   }, []);
 
   return (
-    <div className="max-w-[1180px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-4 md:px-6 py-6 md:py-8">
+    <div className="page-shell">
       {/* Hero */}
       <div className="rounded-2xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white px-6 py-7 md:px-8 md:py-8 shadow-[0_20px_50px_-25px_rgba(99,102,241,0.8)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">User guide</p>
@@ -174,7 +174,7 @@ export default function GuidePage() {
                 { icon: "clipboard" as IconName, t: "You do the work", d: "Structured engagements broken into projects, tasks and activities — registers, policies, assessments, briefings, sign-offs." },
                 { icon: "trophy" as IconName, t: "You get credit", d: "Graded submissions compile automatically into a CV, badges, a verifiable certificate and matched jobs." },
               ].map((c) => (
-                <div key={c.t} className="rounded-xl bg-white ring-1 ring-slate-200/70 p-4">
+                <div key={c.t} className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
                   <Icon name={c.icon} size={17} className="text-indigo-500" />
                   <h4 className="text-[13px] font-semibold tracking-tight text-slate-900 mt-2.5">{c.t}</h4>
                   <p className="text-[12px] text-slate-600 leading-relaxed tracking-tight mt-1" style={{ textWrap: "pretty" }}>{c.d}</p>
@@ -195,7 +195,7 @@ export default function GuidePage() {
             icon="layers"
             lead="Five levels, nesting inwards. Learn these names — the whole app is organised by them."
           >
-            <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-5">
+            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               {[
                 { k: "Track", d: "GRC 101 → 301 → 501, taken in order. 101 is foundations; each track unlocks when the one before it is complete." },
                 { k: "Organisation", d: "The simulated company you are assigned to inside a track. You work its real context, not generic examples." },
@@ -237,7 +237,7 @@ export default function GuidePage() {
                 { t: "Information assets", d: "On-premises and cloud assets, and the client data handled. Your registers and classifications are built from these." },
                 { t: "Standards in scope", d: "Mandatory and optional standards plus regulatory requirements — what your work is assessed against." },
               ].map((c) => (
-                <div key={c.t} className="rounded-xl bg-white ring-1 ring-slate-200/70 p-4">
+                <div key={c.t} className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
                   <h4 className="text-[13px] font-semibold tracking-tight text-slate-900">{c.t}</h4>
                   <p className="text-[12px] text-slate-600 leading-relaxed tracking-tight mt-1" style={{ textWrap: "pretty" }}>{c.d}</p>
                 </div>
@@ -258,7 +258,7 @@ export default function GuidePage() {
             icon="clipboard"
             lead="Every task runs the same shape: a readiness gate to open it, the activities in the middle, and a research submission to close it."
           >
-            <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-5">
+            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               <Step n={1} title={`Readiness gate (${GATE_VERBS.rua.label})`}>
                 <p>{GATE_VERBS.rua.when}</p>
                 <p>
@@ -305,7 +305,7 @@ export default function GuidePage() {
             icon="desk"
             lead="The Working Desk is where you execute. Everything you need for the current activity is on that one screen — you should not need to hunt."
           >
-            <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-5">
+            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               <Step n={1} title="Pick up where you left off">
                 <p>
                   The dashboard&apos;s Continue card and the desk&apos;s step rail both point at your next open
@@ -334,10 +334,9 @@ export default function GuidePage() {
                   dismiss it. Nothing is hidden behind a hover, so it works on a touchscreen too.
                 </p>
                 <p>
-                  Below each brief, organisation profile and reference document there is a{" "}
-                  <strong>Terms used here</strong> panel listing every defined term on that screen with its
-                  definition, so you can read them all in one pass instead of hunting for underlines. Try it
-                  now: <Gloss>the asset owner signs the asset register, and a DPIA covers personal data.</Gloss>
+                  Every term is explained where you meet it, so you never have to break off and look
+                  one up. Try it now:{" "}
+                  <Gloss>the asset owner signs the asset register, and a DPIA covers personal data.</Gloss>
                 </p>
               </Step>
               <Step n={5} title="Fill in the workspace">
@@ -404,7 +403,7 @@ export default function GuidePage() {
               </p>
             </div>
 
-            <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-5 mt-3">
+            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5 mt-3">
               <Step n={1} title="Clear the readiness gate">
                 <p>
                   Before a single field opens you work through the controls in scope (A.5.9 asset inventory,
@@ -506,7 +505,7 @@ export default function GuidePage() {
               {VERB_LIST.map((v) => {
                 const tone = VERB_TONES[v.color] ?? VERB_TONES.indigo;
                 return (
-                  <div key={v.id} className="rounded-xl bg-white ring-1 ring-slate-200/70 p-3.5">
+                  <div key={v.id} className="rounded-xl bg-white ring-1 ring-slate-200 p-3.5">
                     <div className="flex items-center gap-2">
                       <span className={`inline-flex items-center justify-center w-6 h-6 rounded-lg ring-1 text-[10px] font-semibold ${tone.bg} ${tone.text} ${tone.ring}`}>
                         {v.code}
@@ -528,7 +527,7 @@ export default function GuidePage() {
             lead="Two layers, in order. Layer 1 is pass/fail and mechanical. Layer 2 is judgement, and it is where your score comes from."
           >
             <div className="grid md:grid-cols-2 gap-3">
-              <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-4">
+              <div className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
                 <div className="flex items-center gap-2">
                   <span className="grid place-items-center w-7 h-7 rounded-lg bg-slate-100 text-slate-600"><Icon name="checkSquare" size={15} /></span>
                   <h4 className="text-[13.5px] font-semibold tracking-tight text-slate-900">Layer 1 — deterministic checks</h4>
@@ -543,7 +542,7 @@ export default function GuidePage() {
                   Each verb card in the workspace lists its own Layer 1 checks. Read them before you submit.
                 </p>
               </div>
-              <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-4">
+              <div className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
                 <div className="flex items-center gap-2">
                   <span className="grid place-items-center w-7 h-7 rounded-lg bg-violet-50 text-violet-600"><Icon name="sliders" size={15} /></span>
                   <h4 className="text-[13.5px] font-semibold tracking-tight text-slate-900">Layer 2 — rubric scoring</h4>
@@ -599,7 +598,7 @@ export default function GuidePage() {
                   why: "Noticing the problem is half a mark. Naming what is wrong, who owns fixing it and what \"fixed\" means is the whole one — and it is exactly what the Identify verb's Layer 1 checks demand.",
                 },
               ].map((r) => (
-                <div key={r.q} className="rounded-xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
+                <div key={r.q} className="rounded-xl bg-white ring-1 ring-slate-200 overflow-hidden">
                   <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-500">{r.q}</p>
                   </div>
@@ -646,10 +645,8 @@ export default function GuidePage() {
                 { icon: "star" as IconName, t: "Badges", d: "Earned for milestones — verbs practised, standards covered, tasks and tracks completed.", href: "/app/badges" },
                 { icon: "ribbon" as IconName, t: "Certificate", d: "Issued on track completion and independently verifiable by a third party from its code.", href: "/app/certificate" },
                 { icon: "file" as IconName, t: "My CV", d: "Auto-compiled from graded work: engagements, deliverables, standards and the verbs you have practised.", href: "/app/cv" },
-                { icon: "chart" as IconName, t: "Reports", d: "Your scores over time, rubric dimension breakdown, and progress against the track.", href: "/app/reports" },
-                { icon: "briefcase" as IconName, t: "Matching Jobs", d: "Live roles matched against the skills your completed work actually evidences.", href: "/app/jobs" },
               ].map((c) => (
-                <Link key={c.t} href={c.href} className="group rounded-xl bg-white ring-1 ring-slate-200/70 p-4 no-underline hover:ring-indigo-300 hover:shadow-[0_10px_30px_-18px_rgba(15,23,42,0.4)] transition-all">
+                <Link key={c.t} href={c.href} className="group rounded-xl bg-white ring-1 ring-slate-200 p-4 no-underline hover:ring-indigo-300 hover:shadow-[0_10px_30px_-18px_rgba(15,23,42,0.4)] transition-all">
                   <div className="flex items-center gap-2">
                     <Icon name={c.icon} size={16} className="text-indigo-500" />
                     <h4 className="text-[13px] font-semibold tracking-tight text-slate-900">{c.t}</h4>
@@ -681,7 +678,7 @@ export default function GuidePage() {
           </Sec>
 
           <Sec id="around" title="Finding your way around" icon="home" lead="What each item in the left-hand menu is for.">
-            <div className="rounded-xl bg-white ring-1 ring-slate-200/70 divide-y divide-slate-100">
+            <div className="rounded-xl bg-white ring-1 ring-slate-200 divide-y divide-slate-100">
               {[
                 { icon: "home" as IconName, t: "Dashboard", d: "Your progress at a glance and the Continue card that jumps straight to your next activity." },
                 { icon: "desk" as IconName, t: "Working Desk", d: "Where you execute activities. You will spend most of your time here." },
@@ -712,7 +709,7 @@ export default function GuidePage() {
             icon="rocket"
             lead="Do these five things, in this order, and you will have your first graded deliverable behind you."
           >
-            <div className="rounded-xl bg-white ring-1 ring-slate-200/70 p-5">
+            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               <Step n={1} title="Open the Working Desk and read the task brief">
                 <p>
                   Do not start filling anything in. Read the objective, the deliverable description and the
@@ -776,7 +773,7 @@ export default function GuidePage() {
             />
           </Sec>
 
-          <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-6 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="min-w-0 flex-1">
               <h3 className="text-[15px] font-semibold tracking-tight text-slate-900">That is everything you need to start</h3>
               <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-1" style={{ textWrap: "pretty" }}>

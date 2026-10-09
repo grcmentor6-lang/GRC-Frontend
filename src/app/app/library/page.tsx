@@ -9,7 +9,7 @@ import { STANDARD_BY_ID } from "@/lib/standards";
 /** Every standard GRC 101 is graded against. Tasks link into it; this is the way in without one. */
 export default function LibraryPage() {
   return (
-    <div className="max-w-[1100px] 2xl:max-w-[1400px] mx-auto px-6 py-6 space-y-5">
+    <div className="page-shell space-y-4">
       <header>
         <h1 className="text-[22px] font-semibold tracking-tight text-slate-900">Standards library</h1>
         <p className="mt-1 text-[13px] text-slate-500 tracking-tight max-w-[72ch]" style={{ textWrap: "pretty" }}>
@@ -25,7 +25,7 @@ export default function LibraryPage() {
             <Link
               key={s.id}
               href={`/app/library/${s.id}`}
-              className="focus-ring group rounded-2xl bg-white ring-1 ring-slate-200/70 hover:ring-slate-300 p-4 flex flex-col transition-shadow"
+              className="focus-ring group rounded-2xl bg-white ring-1 ring-slate-200 hover:ring-slate-300 p-4 flex flex-col transition-shadow"
             >
               <span className="font-mono text-[10.5px] tracking-[0.08em] text-[#1f3564]">{meta?.fullName}</span>
               <span className="mt-1 flex items-center gap-2 text-[16px] font-semibold text-slate-900 tracking-tight">

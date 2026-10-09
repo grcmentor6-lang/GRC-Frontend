@@ -18,7 +18,7 @@ const CR_FW: Record<string, string> = {
 const SKILL_STATE = {
   acquired: { label: "Acquired", icon: "check" as IconName, cls: "bg-emerald-50 text-emerald-600 ring-emerald-100", txt: "text-emerald-600" },
   developing: { label: "Developing", icon: "play" as IconName, cls: "bg-indigo-50 text-indigo-600 ring-indigo-100", txt: "text-indigo-600" },
-  upcoming: { label: "Upcoming", icon: "minus" as IconName, cls: "bg-slate-50 text-slate-300 ring-slate-200/60", txt: "text-slate-400" },
+  upcoming: { label: "Upcoming", icon: "minus" as IconName, cls: "bg-slate-50 text-slate-300 ring-slate-200", txt: "text-slate-400" },
 };
 
 function Head({ icon, action, children }: { icon: IconName; action?: React.ReactNode; children: React.ReactNode }) {
@@ -170,7 +170,7 @@ function CareerFrameworks({ program }: { program: CareerProgram }) {
       <Head icon="shield" action={<span className="text-[11px] text-slate-400 font-medium">{program.frameworks.length}</span>}>Frameworks & standards</Head>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {program.frameworks.map((f) => (
-          <div key={f.label} className="rounded-xl ring-1 ring-slate-200/70 bg-white p-3 flex items-center gap-3">
+          <div key={f.label} className="rounded-xl ring-1 ring-slate-200 bg-white p-3 flex items-center gap-3">
             <span className={`w-9 h-9 rounded-lg flex items-center justify-center ring-1 ${CR_FW[f.tone] ?? CR_FW.indigo}`}><Icon name="shield" size={16} /></span>
             <div className="min-w-0">
               <div className="text-[12.5px] font-semibold tracking-tight text-slate-900 truncate">{f.label}</div>
@@ -189,8 +189,8 @@ function CareerExpertise({ program }: { program: CareerProgram }) {
       <Head icon="layers">Expertise developed</Head>
       <div className="space-y-2.5">
         {program.expertise.map((e) => (
-          <div key={e.title} className="flex gap-3 rounded-xl bg-slate-50/60 ring-1 ring-slate-200/50 p-3">
-            <span className="w-9 h-9 rounded-lg bg-white ring-1 ring-slate-200/70 flex items-center justify-center text-indigo-600 shrink-0">
+          <div key={e.title} className="flex gap-3 rounded-xl bg-slate-50/60 ring-1 ring-slate-200 p-3">
+            <span className="w-9 h-9 rounded-lg bg-white ring-1 ring-slate-200 flex items-center justify-center text-indigo-600 shrink-0">
               <Icon name={e.icon as IconName} size={17} />
             </span>
             <div className="min-w-0">
@@ -236,7 +236,7 @@ export default function CareerPage() {
   }, [programId, program.status]);
 
   return (
-    <div className="max-w-[1100px] 2xl:max-w-[1400px] 3xl:max-w-[1640px] mx-auto px-6 py-6 space-y-5">
+    <div className="page-shell space-y-4">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-3.5">
           <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(79,70,229,0.6)] shrink-0">
@@ -249,11 +249,11 @@ export default function CareerPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 ring-1 ring-slate-200/60 w-fit">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 ring-1 ring-slate-200 w-fit">
           {CAREER_PROGRAMS.map((p) => {
             const sel = p.id === programId;
             return (
-              <button key={p.id} onClick={() => setProgramId(p.id)} className={`inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-medium tracking-tight transition-all ${sel ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/70" : "text-slate-500 hover:text-slate-700"}`}>
+              <button key={p.id} onClick={() => setProgramId(p.id)} className={`inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-medium tracking-tight transition-all ${sel ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"}`}>
                 {p.status === "locked" && <Icon name="history" size={13} className={sel ? "text-slate-400" : "text-slate-300"} />}
                 {p.code}
               </button>

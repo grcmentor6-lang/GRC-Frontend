@@ -453,7 +453,7 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
           opacity: shown ? 1 : 0,
           transform: shown ? "translate(0) scale(1)" : `${ENTER_OFFSET[side]} scale(0.98)`,
         }}
-        className="absolute pointer-events-auto rounded-2xl bg-white ring-1 ring-slate-200/70 shadow-[0_24px_60px_-15px_rgba(15,23,42,0.45)] p-4 transition-[opacity,transform] duration-200 ease-out"
+        className="absolute pointer-events-auto rounded-2xl bg-white ring-1 ring-slate-200 shadow-[0_24px_60px_-15px_rgba(15,23,42,0.45)] p-4 transition-[opacity,transform] duration-200 ease-out"
         role="dialog"
         aria-modal="true"
         aria-label={`Guide: ${current.title}`}

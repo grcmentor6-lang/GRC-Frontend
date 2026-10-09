@@ -27,7 +27,7 @@ export default function LibraryItemPage({ params, searchParams }: {
   const tasks = tasksCovering(item.ref);
 
   return (
-    <div className="max-w-[1100px] 2xl:max-w-[1400px] mx-auto px-6 py-6 space-y-5">
+    <div className="page-shell space-y-4">
       <Link
         href={`/app/library/${standard.id}${task ? `?task=${encodeURIComponent(task)}` : ""}`}
         className="focus-ring inline-flex items-center gap-1.5 text-[12px] text-slate-500 hover:text-slate-800"

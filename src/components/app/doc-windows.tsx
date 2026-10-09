@@ -141,7 +141,7 @@ export function DocOpenStrip({ docs, onOpen, label = "Reference material for thi
     ? { chip: "bg-violet-50 text-violet-600", btn: "text-violet-700 bg-violet-50 hover:bg-violet-100", icon: "text-violet-600" }
     : { chip: "bg-indigo-50 text-indigo-600", btn: "text-indigo-700 bg-indigo-50 hover:bg-indigo-100", icon: "text-indigo-600" };
   return (
-    <div className={`rounded-xl bg-white ring-1 ring-slate-200/80 overflow-hidden ${className}`}>
+    <div className={`rounded-xl bg-white ring-1 ring-slate-200 overflow-hidden ${className}`}>
       <div className="px-3.5 py-2 border-b border-slate-100 flex items-center gap-1.5">
         <Icon name="book" size={12} className={t.icon} />
         <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-slate-400">{label}</span>

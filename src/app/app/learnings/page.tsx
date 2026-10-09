@@ -113,10 +113,10 @@ type Row = {
 };
 
 const STATUS_CHIP: Record<string, { label: string; cls: string }> = {
-  "not-started": { label: "Not started", cls: "bg-slate-100 text-slate-500 ring-slate-200/70" },
+  "not-started": { label: "Not started", cls: "bg-slate-100 text-slate-500 ring-slate-200" },
   "in-progress": { label: "In progress", cls: "bg-indigo-50 text-indigo-700 ring-indigo-100" },
   complete:      { label: "Complete",    cls: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
-  locked:        { label: "Locked",      cls: "bg-slate-100 text-slate-400 ring-slate-200/70" },
+  locked:        { label: "Locked",      cls: "bg-slate-100 text-slate-400 ring-slate-200" },
 };
 const statusChip = (s: string) => STATUS_CHIP[s] ?? STATUS_CHIP["not-started"];
 const isEngaged = (s: TaskStatus) => s === "in-progress" || s === "complete" || s === "active";
@@ -125,7 +125,7 @@ const isEngaged = (s: TaskStatus) => s === "in-progress" || s === "complete" || 
 function PillarMasteryCard({ p }: { p: PillarStat }) {
   const t = LRN_TONE[p.tone];
   return (
-    <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-5 flex flex-col">
+    <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-5 flex flex-col">
       <div className="flex items-center gap-3">
         <div className={`w-10 h-10 rounded-xl ${t.soft} ${t.text} ring-1 ${t.ring} flex items-center justify-center`}>
           <Icon name={p.icon} size={18} />
@@ -213,7 +213,7 @@ function DomainRailItem({ cat, count, active, onClick }: { cat: string; count: n
   const t = LRN_TONE[tone];
   return (
     <button onClick={onClick}
-      className={`w-full text-left rounded-xl p-2.5 ring-1 transition-all flex items-center gap-2.5 ${active ? "bg-white ring-indigo-300 shadow-[0_4px_14px_-6px_rgba(99,102,241,0.3)]" : "bg-white/50 ring-slate-200/60 hover:bg-white hover:ring-slate-300"}`}>
+      className={`w-full text-left rounded-xl p-2.5 ring-1 transition-all flex items-center gap-2.5 ${active ? "bg-white ring-indigo-300 shadow-[0_4px_14px_-6px_rgba(99,102,241,0.3)]" : "bg-white/50 ring-slate-200 hover:bg-white hover:ring-slate-300"}`}>
       <div className={`w-8 h-8 rounded-lg ${t.soft} ${t.text} ring-1 ${t.ring} flex items-center justify-center shrink-0`}>
         <Icon name={icon} size={14} />
       </div>
@@ -230,7 +230,7 @@ function TaskPill({ row, active, onClick }: { row: Row; active: boolean; onClick
   const dot = row.status === "complete" ? "bg-emerald-500" : row.status === "in-progress" || row.status === "active" ? "bg-indigo-500" : "bg-slate-300";
   return (
     <button onClick={onClick}
-      className={`text-left rounded-lg px-3 py-2 ring-1 transition-all ${active ? "bg-white ring-indigo-300 shadow-[0_4px_14px_-6px_rgba(99,102,241,0.3)]" : "bg-white/60 ring-slate-200/60 hover:bg-white hover:ring-slate-300"}`}>
+      className={`text-left rounded-lg px-3 py-2 ring-1 transition-all ${active ? "bg-white ring-indigo-300 shadow-[0_4px_14px_-6px_rgba(99,102,241,0.3)]" : "bg-white/60 ring-slate-200 hover:bg-white hover:ring-slate-300"}`}>
       <div className="flex items-center gap-1.5 mb-0.5">
         <span className={`w-1 h-1 rounded-full ${LRN_TONE[row.standardTone].bar}`} />
         <span className={`text-[10px] font-medium ${LRN_TONE[row.standardTone].text}`}>{row.standardLabel}</span>
@@ -279,7 +279,7 @@ function ControlDetail({ row }: { row: Row }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* LEFT — technical control */}
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-5 flex flex-col">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-5 flex flex-col">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-6 h-6 rounded-md bg-slate-900 text-white flex items-center justify-center"><Icon name="shield" size={12} /></div>
             <span className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500">Technical control</span>
@@ -305,14 +305,14 @@ function ControlDetail({ row }: { row: Row }) {
           </div>
           <p className="text-[13px] leading-relaxed text-slate-700 tracking-tight">{row.objective || row.description}</p>
           <div className="mt-4 space-y-2.5">
-            <div className="flex items-start gap-3 rounded-xl bg-white/70 ring-1 ring-slate-200/60 p-3">
+            <div className="flex items-start gap-3 rounded-xl bg-white/70 ring-1 ring-slate-200 p-3">
               <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200/70 flex items-center justify-center shrink-0"><Icon name="file" size={14} /></div>
               <div>
                 <div className="text-[10.5px] font-semibold tracking-[0.08em] uppercase text-slate-400">What you produce</div>
                 <p className="text-[12.5px] text-slate-700 tracking-tight leading-snug mt-0.5">{row.deliverable}</p>
               </div>
             </div>
-            <div className="flex items-start gap-3 rounded-xl bg-white/70 ring-1 ring-slate-200/60 p-3">
+            <div className="flex items-start gap-3 rounded-xl bg-white/70 ring-1 ring-slate-200 p-3">
               <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 ring-1 ring-amber-200/70 flex items-center justify-center shrink-0"><Icon name="ribbon" size={14} /></div>
               <div>
                 <div className="text-[10.5px] font-semibold tracking-[0.08em] uppercase text-slate-400">Credential earned</div>
@@ -367,7 +367,7 @@ function LearningsExplorer({ rows }: { rows: Row[] }) {
         {/* RIGHT — results for the selected domain */}
         <div className="space-y-4">
           {/* domain header + task selector */}
-          <div className="rounded-2xl bg-slate-50/50 ring-1 ring-slate-200/60 p-4">
+          <div className="rounded-2xl bg-slate-50/50 ring-1 ring-slate-200 p-4">
             <div className="flex items-center gap-2.5 mb-3">
               <div className={`w-9 h-9 rounded-xl ${dt.soft} ${dt.text} ring-1 ${dt.ring} flex items-center justify-center shrink-0`}>
                 <Icon name={icon} size={16} />
@@ -385,7 +385,7 @@ function LearningsExplorer({ rows }: { rows: Row[] }) {
           </div>
 
           {/* dual-pane detail */}
-          <div className="rounded-3xl bg-white ring-1 ring-slate-200/60 p-5">
+          <div className="rounded-3xl bg-white ring-1 ring-slate-200 p-5">
             {ctrl && <ControlDetail row={ctrl} />}
           </div>
         </div>
@@ -435,7 +435,7 @@ export default function LearningsPage() {
   const error = lErr ? (lErr instanceof ApiError ? lErr.message : "Couldn't load learnings.") : null;
 
   return (
-    <div className="max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-6 space-y-7">
+    <div className="page-shell space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2.5">

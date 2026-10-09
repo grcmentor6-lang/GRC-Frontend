@@ -47,7 +47,7 @@ export function CvSheet({ cv }: { cv: Cv }) {
   const skillTone = (v: number) => (v >= 4.3 ? "emerald" : v >= 4.0 ? "indigo" : "amber");
 
   return (
-    <div id="cv-sheet" className="bg-white rounded-2xl ring-1 ring-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_50px_-24px_rgba(15,23,42,0.18)] overflow-hidden">
+    <div id="cv-sheet" className="bg-white rounded-2xl ring-1 ring-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_50px_-24px_rgba(15,23,42,0.18)] overflow-hidden">
       {/* header band */}
       <div className="relative overflow-hidden text-white px-8 md:px-10 pt-9 pb-8" style={{ background: "linear-gradient(135deg, #4f46e5 0%, #5b53e8 45%, #7c3aed 100%)" }}>
         <div className="pointer-events-none absolute -top-20 -right-10 w-72 h-72 rounded-full bg-white/10 blur-2xl" />
@@ -96,7 +96,7 @@ export function CvSheet({ cv }: { cv: Cv }) {
           <Head icon="trophy" action={<span className="text-[11px] text-slate-400 font-medium">{earnedBadges.length} earned · {lockedBadges.length} in progress</span>}>Credentials &amp; badges</Head>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {earnedBadges.map((b) => (
-              <div key={b.id} className="relative rounded-xl bg-white ring-1 ring-slate-200/70 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+              <div key={b.id} className="relative rounded-xl bg-white ring-1 ring-slate-200 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
                 <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center z-10"><Icon name="check" size={10} strokeWidth={3.5} /></div>
                 <BadgeMedal badge={b} className="w-full mb-2.5" />
                 <div className="text-[12.5px] font-semibold tracking-tight text-slate-900 leading-tight">{b.name}</div>
@@ -133,7 +133,7 @@ export function CvSheet({ cv }: { cv: Cv }) {
                       </div>
                       <div className="text-[12px] text-slate-500 tracking-tight">{exp.industry} · {exp.phase}</div>
                       {exp.tasks.map((t) => (
-                        <div key={t.code} className="mt-3.5 rounded-xl bg-slate-50/60 ring-1 ring-slate-200/60 p-4">
+                        <div key={t.code} className="mt-3.5 rounded-xl bg-slate-50/60 ring-1 ring-slate-200 p-4">
                           <div className="flex items-center gap-2.5 mb-3">
                             <div className="min-w-0">
                               <div className="text-[13px] font-medium tracking-tight text-slate-900 truncate">{t.title}</div>
@@ -262,7 +262,7 @@ export function CvSheet({ cv }: { cv: Cv }) {
                   const base = "inline-flex items-center gap-1 h-[22px] px-2 rounded-md font-mono text-[10px] font-medium";
                   if (doneVerbs.has(v.id)) return <span key={v.id} className={`${base} bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100`}><Icon name="check" size={10} strokeWidth={3} /> {v.label.toUpperCase()}</span>;
                   if (activeVerbs.has(v.id)) return <span key={v.id} className={`${base} bg-indigo-50/60 text-indigo-500 ring-1 ring-dashed ring-indigo-200`}><span className="w-1.5 h-1.5 rounded-full bg-current" /> {v.label.toUpperCase()}</span>;
-                  return <span key={v.id} className={`${base} bg-slate-50 text-slate-300 ring-1 ring-slate-200/60`}>{v.label.toUpperCase()}</span>;
+                  return <span key={v.id} className={`${base} bg-slate-50 text-slate-300 ring-1 ring-slate-200`}>{v.label.toUpperCase()}</span>;
                 })}
               </div>
             </section>

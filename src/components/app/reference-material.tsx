@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Drawer } from "@/components/ui/drawer";
-import { gloss, TermsUsed } from "@/components/app/glossary";
+import { gloss } from "@/components/app/glossary";
 import type { TaskReference } from "@/lib/taskmeta";
 import { Plaque } from "@/components/app/plaque";
 import { standardForRef, purposeForRef, normaliseRef } from "@/lib/controls";
@@ -88,7 +88,7 @@ export function RefBody({ text, kind }: { text: string; kind?: string }) {
         }
       }
       out.push(
-        <div key={k} className="my-2 rounded-lg ring-1 ring-slate-200/70 overflow-hidden">
+        <div key={k} className="my-2 rounded-lg ring-1 ring-slate-200 overflow-hidden">
           {rows.map((r, ri) => (
             <div key={ri} className={`flex gap-3 px-3 py-1.5 text-[12px] ${ri === 0 ? "bg-slate-50 font-medium text-slate-600" : "text-slate-700"} ${ri ? "border-t border-slate-100" : ""}`}>
               {r.map((c, ci) => <span key={ci} className="flex-1 min-w-0 tracking-tight">{c}</span>)}
@@ -112,7 +112,7 @@ export function RefBody({ text, kind }: { text: string; kind?: string }) {
     else { flushBullets(`b${i}`); flushRows(`r${i}`); out.push(<p key={i} className="text-[13px] text-slate-700 leading-relaxed tracking-tight my-1.5" style={{ textWrap: "pretty" }}>{g(t, `p${i}`)}</p>); }
   });
   flushBullets("bend"); flushRows("rend");
-  return <>{out}<TermsUsed texts={[text]} className="mt-4" /></>;
+  return <>{out}</>;
 }
 
 /** A list of reference cards; each opens a right-side drawer with its body. */
@@ -123,7 +123,7 @@ export function ReferenceMaterial({ references }: { references: TaskReference[] 
     <>
       <div className="space-y-2">
         {references.map((r) => (
-          <button key={r.id} onClick={() => setOpenRef(r)} className="w-full flex items-center gap-3 text-left rounded-xl ring-1 ring-slate-200/70 bg-white hover:bg-slate-50 px-3.5 py-3 transition-colors group">
+          <button key={r.id} onClick={() => setOpenRef(r)} className="w-full flex items-center gap-3 text-left rounded-xl ring-1 ring-slate-200 bg-white hover:bg-slate-50 px-3.5 py-3 transition-colors group">
             <span className="w-9 h-9 rounded-lg bg-indigo-50 ring-1 ring-indigo-100 text-indigo-600 flex items-center justify-center shrink-0"><Icon name="book" size={16} /></span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2 flex-wrap">

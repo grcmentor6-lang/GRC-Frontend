@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react
 import { Icon, type IconName } from "./icon";
 
 export const inputCls =
-  "w-full h-10 px-3 rounded-lg bg-white ring-1 ring-slate-200/80 text-[13.5px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 transition-shadow";
+  "w-full h-10 px-3 rounded-lg bg-white ring-1 ring-slate-200 text-[13.5px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 transition-shadow";
 
 export function Field({
   label,
@@ -82,7 +82,7 @@ export function GhostBtn({ children, className = "", ...props }: BtnProps) {
   return (
     <button
       {...props}
-      className={`h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200/80 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-[13px] font-medium tracking-tight transition-colors ${className}`}
+      className={`h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-[13px] font-medium tracking-tight transition-colors ${className}`}
     >
       {children}
     </button>

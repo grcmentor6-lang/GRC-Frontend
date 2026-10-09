@@ -46,7 +46,7 @@ export function StartDateGate() {
 
   return (
     <div className="min-h-full flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white rounded-2xl ring-1 ring-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_50px_-24px_rgba(15,23,42,0.18)] p-7">
+      <div className="w-full max-w-md bg-white rounded-2xl ring-1 ring-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_50px_-24px_rgba(15,23,42,0.18)] p-7">
         <div className="w-10 h-10 rounded-xl bg-indigo-50 ring-1 ring-indigo-100 flex items-center justify-center text-indigo-600">
           <Icon name="calendar" size={20} />
         </div>

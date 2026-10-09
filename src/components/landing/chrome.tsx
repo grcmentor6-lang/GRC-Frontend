@@ -19,7 +19,7 @@ const NAV_LINKS: [string, string][] = [
 
 export function Nav({ active }: { active?: string }) {
   return (
-    <header className="sticky top-0 z-50 bg-[#FAFAF7]/80 backdrop-blur-xl border-b border-slate-200/60">
+    <header className="sticky top-0 z-50 bg-[#FAFAF7]/80 backdrop-blur-xl border-b border-slate-200">
       <div className="max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 h-16 flex items-center justify-between">
         <Logo />
         <nav className="hidden md:flex items-center gap-7">
@@ -46,7 +46,7 @@ export function Nav({ active }: { active?: string }) {
             <Link
               href="/mentor"
               aria-label="Mentor sign-in"
-              className="focus-ring inline-flex items-center justify-center gap-1.5 h-9 w-9 sm:w-auto sm:px-3 rounded-lg ring-1 ring-slate-200/70 bg-white text-[13px] font-medium text-slate-600 tracking-tight no-underline hover:text-slate-900 hover:ring-slate-300 transition-colors"
+              className="focus-ring inline-flex items-center justify-center gap-1.5 h-9 w-9 sm:w-auto sm:px-3 rounded-lg ring-1 ring-slate-200 bg-white text-[13px] font-medium text-slate-600 tracking-tight no-underline hover:text-slate-900 hover:ring-slate-300 transition-colors"
             >
               <Icon name="shield" size={13} className="text-indigo-500" />
               <span className="hidden sm:inline">Mentor sign-in</span>
@@ -78,7 +78,7 @@ export function SiteFooter() {
       : ["Account", [["Sign in", "/signin"], ["Create account", "/signup"], ["Mentor sign-in", "/mentor"]]],
   ];
   return (
-    <footer className="bg-[#FAFAF7] border-t border-slate-200/60">
+    <footer className="bg-[#FAFAF7] border-t border-slate-200">
       <div className="max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
         <div className="col-span-2 md:col-span-1">
           <Logo />
@@ -103,7 +103,7 @@ export function SiteFooter() {
           </div>
         ))}
       </div>
-      <div className="border-t border-slate-200/60">
+      <div className="border-t border-slate-200">
         <div className="max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-5 flex items-center justify-between flex-wrap gap-3">
           <span className="text-[12px] text-slate-500">© 2026 grcmentor · All rights reserved.</span>
           <div className="flex items-center gap-4 text-[12px] text-slate-500">

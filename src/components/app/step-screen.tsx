@@ -102,7 +102,7 @@ function AttemptsMeter({ used, max }: { used: number; max: number }) {
   const tone = left === 0 ? "rose" : left === 1 ? "amber" : "indigo";
   const text = { indigo: "text-slate-600", amber: "text-amber-700", rose: "text-rose-600" }[tone];
   const pip = { indigo: "bg-indigo-500", amber: "bg-amber-400", rose: "bg-rose-400" }[tone];
-  const ring = { indigo: "ring-slate-200/70 bg-slate-50", amber: "ring-amber-200/70 bg-amber-50/60", rose: "ring-rose-200/70 bg-rose-50/60" }[tone];
+  const ring = { indigo: "ring-slate-200 bg-slate-50", amber: "ring-amber-200/70 bg-amber-50/60", rose: "ring-rose-200/70 bg-rose-50/60" }[tone];
   return (
     <span className={`inline-flex items-center gap-2 h-8 pl-2.5 pr-3 rounded-full ring-1 ${ring}`} title={`${left} of ${max} submission attempts remaining`}>
       <span className="flex items-center gap-1" aria-hidden>
@@ -126,7 +126,7 @@ function RefAccordion({ references, focusId }: { references: TaskReference[]; fo
       {references.map((r) => {
         const isOpen = openId === r.id;
         return (
-          <div key={r.id} className="rounded-xl ring-1 ring-slate-200/70 overflow-hidden bg-white">
+          <div key={r.id} className="rounded-xl ring-1 ring-slate-200 overflow-hidden bg-white">
             <button
               onClick={() => setOpenId(isOpen ? null : r.id)}
               className="w-full flex items-center gap-3 text-left px-3.5 py-3 hover:bg-slate-50 transition-colors"
@@ -267,7 +267,7 @@ function AcceptanceChecklist({ verbId, values, layer1, onClose, paired = [] }: {
           return (
             <li
               key={i}
-              className={`grid grid-cols-[26px_1fr_52px] gap-2 items-baseline py-[7px] -mx-2 px-2 border-b border-dashed border-slate-200/70 last:border-b-0 transition-shadow motion-reduce:transition-none ${on ? "shadow-[inset_2px_0_0_#0369a1]" : ""}`}
+              className={`grid grid-cols-[26px_1fr_52px] gap-2 items-baseline py-[7px] -mx-2 px-2 border-b border-dashed border-slate-200 last:border-b-0 transition-shadow motion-reduce:transition-none ${on ? "shadow-[inset_2px_0_0_#0369a1]" : ""}`}
             >
               <span className={`font-mono text-[10.5px] tabular-nums ${on ? "text-sky-700 font-semibold" : "text-slate-400"}`}>R{i + 1}</span>
               <span className={`text-[13px] leading-snug tracking-tight ${on ? "text-slate-900" : "text-slate-700"}`}>
@@ -603,7 +603,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
 
   if (loading) {
     return (
-      <div className="max-w-[920px] 2xl:max-w-[1280px] 3xl:max-w-[1440px] mx-auto px-6 py-6 animate-pulse">
+      <div className="page-shell animate-pulse">
         {/* header */}
         <div className="mb-5">
           <div className="h-3 w-56 rounded bg-slate-200 mb-3" />
@@ -618,7 +618,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
           <div className="h-3 w-48 rounded bg-slate-200 mb-2.5" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[0, 1].map((i) => (
-              <div key={i} className="rounded-2xl ring-1 ring-slate-200/70 p-4 space-y-2.5">
+              <div key={i} className="rounded-2xl ring-1 ring-slate-200 p-4 space-y-2.5">
                 <div className="h-3 w-24 rounded bg-slate-200" />
                 <div className="h-2.5 w-full rounded bg-slate-100" />
                 <div className="h-2.5 w-[92%] rounded bg-slate-100" />
@@ -628,7 +628,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
           </div>
         </div>
         {/* deliverable card */}
-        <div className="rounded-2xl ring-1 ring-slate-200/70 p-5 space-y-4">
+        <div className="rounded-2xl ring-1 ring-slate-200 p-5 space-y-4">
           <div className="h-4 w-40 rounded bg-slate-200" />
           <div className="h-3 w-64 max-w-full rounded bg-slate-100" />
           <div className="h-28 w-full rounded-xl bg-slate-100" />
@@ -804,7 +804,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
 
   return (
     <div
-      className="max-w-[920px] 2xl:max-w-[1280px] 3xl:max-w-[1440px] mx-auto px-6 py-6"
+      className="page-shell"
       // Autosave only after the mentee actually touches the page — workspaces seed their scripted
       // defaults into `values` on mount, and that must not be mistaken for typed work.
       onPointerDownCapture={() => { touched.current = true; }}
@@ -866,7 +866,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
               belong in a floating layer — a popover here has to out-rank the desk's own panels to
               be seen, and inline help stays inline (form language, law 5). */}
           {guideBlocked ? (
-            <span className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200/70 text-slate-500 text-[12.5px] font-medium tracking-tight">
+            <span className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200 text-slate-500 text-[12.5px] font-medium tracking-tight">
               <Icon name="lock" size={14} className="text-slate-400 shrink-0" /> {guideNote}
             </span>
           ) : (
@@ -925,13 +925,6 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
           objectiveRef={objectiveRef}
           whatToDoRef={whatToDoRef}
           defaultOpen={briefShown}
-          glossTexts={[
-            verb?.when ?? "",
-            ...(verb?.layer1 ?? []),
-            activity.judgment?.situation ?? "",
-            activity.judgment?.question ?? "",
-            ...(activity.judgment?.options ?? []).map((o) => o.text),
-          ]}
         />
       )}
 
@@ -958,7 +951,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
             <button
               ref={referenceBtnRef}
               onClick={() => setBriefOpen(true)}
-              className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200/70 text-slate-600 hover:bg-slate-100 text-[12px] font-medium tracking-tight transition-colors"
+              className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200 text-slate-600 hover:bg-slate-100 text-[12px] font-medium tracking-tight transition-colors"
             >
               <Icon name="book" size={14} /> Reference material
               <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-1 rounded-full bg-indigo-600 text-white text-[10px] font-semibold tabular-nums">{references.length}</span>
@@ -984,7 +977,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
             the three ways a payload ends up unreadable. Resubmit leaves this branch, so a fresh
             attempt still gets the real workspace. */}
         {readback && !workspaceFits ? (
-          <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white p-4">
+          <div className="rounded-2xl ring-1 ring-slate-200 bg-white p-4">
             <div className="flex items-start gap-2 mb-3 text-[12px] text-slate-600 tracking-tight">
               <Icon name="info" size={13} className="text-slate-400 shrink-0 mt-px" />
               <span style={{ textWrap: "pretty" }}>
@@ -1042,7 +1035,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
         )}
 
         {noAttemptsLeft && (
-          <div className="mt-4 flex items-start gap-2 rounded-lg bg-slate-50 ring-1 ring-slate-200/70 px-3 py-2 text-[12px] text-slate-600 tracking-tight">
+          <div className="mt-4 flex items-start gap-2 rounded-lg bg-slate-50 ring-1 ring-slate-200 px-3 py-2 text-[12px] text-slate-600 tracking-tight">
             <Icon name="info" size={13} className="text-slate-400 shrink-0 mt-px" />
             <span>You&apos;ve used all {maxAttempts} attempts for this step — it&apos;s now read-only. Your submissions are in <button onClick={() => setFeedbackOpen(true)} className="underline underline-offset-2 hover:text-slate-900 cursor-pointer">Submission feedback</button>.</span>
           </div>
@@ -1061,12 +1054,12 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
                   {nextTaskCode && nextTaskCode !== activity.taskCode ? "Next task" : "Next step"} <Icon name="arrowRight" size={15} />
                 </Link>
               ) : (
-                <Link href={base} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200/80 text-slate-700 text-[13px] font-semibold tracking-tight no-underline hover:bg-slate-50">
+                <Link href={base} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-semibold tracking-tight no-underline hover:bg-slate-50">
                   Back to Working Desk <Icon name="arrowRight" size={15} />
                 </Link>
               )}
               {!noAttemptsLeft && (
-                <button onClick={startResubmit} className="focus-ring inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200/80 text-slate-700 text-[13px] font-medium tracking-tight hover:bg-slate-50">
+                <button onClick={startResubmit} className="focus-ring inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium tracking-tight hover:bg-slate-50">
                   <Icon name="refresh" size={14} /> Resubmit
                 </button>
               )}
@@ -1077,7 +1070,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
               <button onClick={submit} disabled={busy || !hasContent || objectiveBlocked || noAttemptsLeft} className="focus-ring h-10 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:shadow-none text-white text-[13px] font-medium tracking-tight inline-flex items-center gap-2 shadow-[0_4px_14px_-4px_rgba(79,70,229,0.6)] transition-all">
                 <Icon name="send" size={14} /> {busy ? "Grading…" : "Submit for review"}
               </button>
-              <button onClick={saveDraft} disabled={busy || locked} className="focus-ring h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200/80 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-[13px] font-medium tracking-tight">
+              <button onClick={saveDraft} disabled={busy || locked} className="focus-ring h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-[13px] font-medium tracking-tight">
 
                 Save draft
               </button>
@@ -1246,7 +1239,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
                   return (
                     <div key={h.submission.id} className="flex gap-3">
                       <div className="flex flex-col items-center shrink-0">
-                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold ring-1 ${r ? (pass ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-amber-100") : "bg-slate-50 text-slate-500 ring-slate-200/70"}`}>
+                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold ring-1 ${r ? (pass ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-amber-100") : "bg-slate-50 text-slate-500 ring-slate-200"}`}>
                           v{h.submission.revisionNo}
                         </span>
                       </div>
@@ -1260,7 +1253,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
                               <span className="text-[11px] font-semibold text-slate-700 tabular-nums">{r.overallScore.toFixed(1)} / 5</span>
                             </>
                           ) : (
-                            <span className="inline-flex items-center px-2 h-5 rounded-full text-[10.5px] font-medium ring-1 bg-slate-50 text-slate-500 ring-slate-200/70">{h.submission.layer1 && !h.submission.layer1.passed ? "Layer 1 not met" : "Submitted"}</span>
+                            <span className="inline-flex items-center px-2 h-5 rounded-full text-[10.5px] font-medium ring-1 bg-slate-50 text-slate-500 ring-slate-200">{h.submission.layer1 && !h.submission.layer1.passed ? "Layer 1 not met" : "Submitted"}</span>
                           )}
                           <span className="text-[10.5px] text-slate-400 ml-auto">{new Date(h.submission.createdAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                         </div>
@@ -1274,12 +1267,12 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
                         )}
                         {/* what was actually sent — newest attempt expanded, older ones collapsed */}
                         {Object.keys(h.submission.payload?.fields ?? {}).length > 0 && (
-                        <details open={hi === 0} className="mt-2 rounded-lg bg-slate-50/70 ring-1 ring-slate-200/70 group">
+                        <details open={hi === 0} className="mt-2 rounded-lg bg-slate-50/70 ring-1 ring-slate-200 group">
                           <summary className="cursor-pointer list-none select-none px-3 py-1.5 flex items-center gap-1.5 text-[11.5px] font-medium text-slate-600 hover:text-slate-900">
                             <Icon name="chevronDown" size={12} className="transition-transform group-open:rotate-0 -rotate-90" />
                             What you submitted
                           </summary>
-                          <div className="px-3 pb-3 pt-2 border-t border-slate-200/70 space-y-3">
+                          <div className="px-3 pb-3 pt-2 border-t border-slate-200 space-y-3">
                             {/* `decision` is a CONTROL_KEY, so SubmittedFields skips it — render
                                 the attempt's own answer here instead of losing it. */}
                             <JudgmentAnswer
@@ -1311,7 +1304,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
                   {nextTaskCode && nextTaskCode !== activity.taskCode ? "Next task" : "Next step"} <Icon name="arrowRight" size={15} />
                 </Link>
               ) : (
-                <Link href="/app/desk" onClick={() => setFeedbackOpen(false)} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200/80 text-slate-700 text-[13px] font-semibold tracking-tight no-underline hover:bg-slate-50">
+                <Link href="/app/desk" onClick={() => setFeedbackOpen(false)} className="inline-flex items-center gap-2 h-10 px-4 rounded-lg bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-semibold tracking-tight no-underline hover:bg-slate-50">
                   Back to Working Desk <Icon name="arrowRight" size={15} />
                 </Link>
               )}

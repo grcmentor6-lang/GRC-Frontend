@@ -20,16 +20,16 @@ interface ReportRow {
 const RPT_STD: Record<string, string> = {
   indigo: "bg-indigo-50 text-indigo-700 ring-indigo-100", violet: "bg-violet-50 text-violet-700 ring-violet-100",
   emerald: "bg-emerald-50 text-emerald-700 ring-emerald-100", amber: "bg-amber-50 text-amber-800 ring-amber-100",
-  rose: "bg-rose-50 text-rose-700 ring-rose-100", slate: "bg-slate-100 text-slate-600 ring-slate-200/70",
+  rose: "bg-rose-50 text-rose-700 ring-rose-100", slate: "bg-slate-100 text-slate-600 ring-slate-200",
 };
 const RPT_DOT: Record<string, string> = {
   indigo: "bg-indigo-500", violet: "bg-violet-500", emerald: "bg-emerald-500", amber: "bg-amber-500", rose: "bg-rose-500", slate: "bg-slate-400",
 };
 const RPT_STATUS: Record<string, { label: string; cls: string }> = {
   "in-progress": { label: "In progress", cls: "bg-indigo-50 text-indigo-700 ring-indigo-100" },
-  "not-started": { label: "Not started", cls: "bg-slate-100 text-slate-500 ring-slate-200/70" },
+  "not-started": { label: "Not started", cls: "bg-slate-100 text-slate-500 ring-slate-200" },
   complete: { label: "Complete", cls: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
-  locked: { label: "Locked", cls: "bg-slate-100 text-slate-500 ring-slate-200/70" },
+  locked: { label: "Locked", cls: "bg-slate-100 text-slate-500 ring-slate-200" },
 };
 const stat = (s: string) => RPT_STATUS[s] ?? RPT_STATUS["not-started"];
 
@@ -94,7 +94,7 @@ function ReportKpis({ rows }: { rows: ReportRow[] }) {
 
 function ControlsTable({ row }: { row: ReportRow }) {
   return (
-    <div className="overflow-x-auto rounded-xl ring-1 ring-slate-200/70">
+    <div className="overflow-x-auto rounded-xl ring-1 ring-slate-200">
       <table className="w-full text-left border-collapse min-w-[760px]">
         <thead>
           <tr className="bg-slate-50/80 text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-500">
@@ -106,7 +106,7 @@ function ControlsTable({ row }: { row: ReportRow }) {
             <tr key={i} className="hover:bg-slate-50/50 align-top">
               <td className="px-3 py-2.5"><span className={`inline-flex items-center gap-1.5 h-[20px] px-1.5 rounded-md text-[10.5px] font-medium ring-1 whitespace-nowrap ${RPT_STD[c.tone] ?? RPT_STD.slate}`}><span className={`w-1 h-1 rounded-full ${RPT_DOT[c.tone] ?? RPT_DOT.slate}`} />{c.standard}</span></td>
               <td className="px-3 py-2.5 text-[12px] text-slate-600 tracking-tight whitespace-nowrap">{c.domain}</td>
-              <td className="px-3 py-2.5"><span className="font-mono text-[11px] text-slate-700 bg-slate-100 ring-1 ring-slate-200/70 rounded px-1.5 py-0.5 whitespace-nowrap">{c.num}</span></td>
+              <td className="px-3 py-2.5"><span className="font-mono text-[11px] text-slate-700 bg-slate-100 ring-1 ring-slate-200 rounded px-1.5 py-0.5 whitespace-nowrap">{c.num}</span></td>
               <td className="px-3 py-2.5 text-[12px] font-medium text-slate-900 tracking-tight">{c.name}</td>
               <td className="px-3 py-2.5 text-[11.5px] text-slate-500 tracking-tight max-w-[280px]" style={{ textWrap: "pretty" }}>{c.purpose}</td>
             </tr>
@@ -124,7 +124,7 @@ function ActivitiesTable({ row }: { row: ReportRow }) {
     pending: { dot: "bg-slate-300", txt: "text-slate-500", label: "Pending" },
   };
   return (
-    <div className="overflow-x-auto rounded-xl ring-1 ring-slate-200/70">
+    <div className="overflow-x-auto rounded-xl ring-1 ring-slate-200">
       <table className="w-full text-left border-collapse min-w-[620px]">
         <thead>
           <tr className="bg-slate-50/80 text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-500">
@@ -161,7 +161,7 @@ function ReportTask({ row, defaultOpen }: { row: ReportRow; defaultOpen?: boolea
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[14px] font-semibold tracking-tight text-slate-900">{row.title}</span>
-            <span className="inline-flex items-center gap-1 h-[19px] px-1.5 rounded-md bg-slate-100 ring-1 ring-slate-200/70 text-[10px] font-medium text-slate-500">{row.category}</span>
+            <span className="inline-flex items-center gap-1 h-[19px] px-1.5 rounded-md bg-slate-100 ring-1 ring-slate-200 text-[10px] font-medium text-slate-500">{row.category}</span>
           </div>
           <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 tracking-tight flex-wrap">
             <span className="inline-flex items-center gap-1"><Icon name="briefcase" size={11} /> {row.industry}</span>
@@ -178,7 +178,7 @@ function ReportTask({ row, defaultOpen }: { row: ReportRow; defaultOpen?: boolea
       </button>
       {open && (
         <div className="px-4 pb-4 -mt-1">
-          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-slate-100/80 ring-1 ring-slate-200/60 w-fit mb-3">
+          <div className="flex items-center gap-1 p-0.5 rounded-lg bg-slate-100/80 ring-1 ring-slate-200 w-fit mb-3">
             {([["controls", `Controls · ${row.controls.length}`], ["activities", `Activities · ${row.activities.length}`]] as const).map(([k, label]) => (
               <button key={k} onClick={() => setView(k)} className={`px-3 h-7 rounded-md text-[11.5px] font-medium tracking-tight transition-all ${view === k ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>{label}</button>
             ))}
@@ -241,7 +241,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="max-w-[1180px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-6 space-y-5">
+    <div className="page-shell space-y-4">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-3.5">
           <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(79,70,229,0.6)] shrink-0">
@@ -255,11 +255,11 @@ export default function ReportsPage() {
           </div>
         </div>
         {programs.length > 0 && (
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 ring-1 ring-slate-200/60 w-fit">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 ring-1 ring-slate-200 w-fit">
             {programs.map((p) => {
               const sel = p.id === programId;
               return (
-                <button key={p.id} onClick={() => setProgramId(p.id)} className={`inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-medium tracking-tight transition-all ${sel ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/70" : "text-slate-500 hover:text-slate-700"}`}>
+                <button key={p.id} onClick={() => setProgramId(p.id)} className={`inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-medium tracking-tight transition-all ${sel ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"}`}>
                   {p.status === "locked" && <Icon name="history" size={13} className={sel ? "text-slate-400" : "text-slate-300"} />}
                   {p.code}
                 </button>
@@ -277,25 +277,25 @@ export default function ReportsPage() {
         <>
           <ReportKpis rows={allRows} />
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 px-3 h-9 rounded-lg bg-white ring-1 ring-slate-200/70 flex-1 min-w-[200px]">
+            <div className="flex items-center gap-2 px-3 h-9 rounded-lg bg-white ring-1 ring-slate-200 flex-1 min-w-[200px]">
               <Icon name="search" size={15} className="text-slate-400" />
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search controls, activities, domains…" className="flex-1 bg-transparent outline-none text-[12.5px] text-slate-700 placeholder:text-slate-400" />
               {q && <button onClick={() => setQ("")} className="text-slate-400 hover:text-slate-700"><Icon name="x" size={14} /></button>}
             </div>
             <div className="relative">
-              <select value={std} onChange={(e) => setStd(e.target.value)} className="appearance-none h-9 pl-3 pr-8 rounded-lg bg-white ring-1 ring-slate-200/70 text-[12.5px] text-slate-700 outline-none cursor-pointer">
+              <select value={std} onChange={(e) => setStd(e.target.value)} className="appearance-none h-9 pl-3 pr-8 rounded-lg bg-white ring-1 ring-slate-200 text-[12.5px] text-slate-700 outline-none cursor-pointer">
                 {standards.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
               <Icon name="chevronDown" size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
-            <button onClick={() => window.print()} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-white ring-1 ring-slate-200/70 text-slate-600 text-[12.5px] font-medium tracking-tight hover:bg-slate-50 transition-colors"><Icon name="download" size={14} /> Print</button>
+            <button onClick={() => window.print()} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-white ring-1 ring-slate-200 text-slate-600 text-[12.5px] font-medium tracking-tight hover:bg-slate-50 transition-colors"><Icon name="download" size={14} /> Print</button>
             <button onClick={exportCsv} className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-indigo-600 text-white text-[12.5px] font-medium tracking-tight hover:bg-indigo-700 transition-colors shadow-[0_4px_14px_-4px_rgba(79,70,229,0.6)]"><Icon name="table" size={14} /> Export CSV</button>
           </div>
 
           <div className="space-y-3">
             {rows.length === 0 ? (
               <Card className="text-center py-12">
-                <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 ring-1 ring-slate-200/70 flex items-center justify-center text-slate-400 mb-3"><Icon name="search" size={20} /></div>
+                <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 ring-1 ring-slate-200 flex items-center justify-center text-slate-400 mb-3"><Icon name="search" size={20} /></div>
                 <div className="text-[13px] font-medium text-slate-700">No results</div>
                 <div className="text-[12px] text-slate-500 mt-0.5">Try a different search or standard filter.</div>
               </Card>

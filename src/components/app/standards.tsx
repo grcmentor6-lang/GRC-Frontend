@@ -3,7 +3,7 @@ import { VERB_TONES } from "@/lib/tones";
 import { TASK_META } from "@/lib/taskmeta";
 import { CONTROLS_BY_TASK } from "@/lib/controls";
 import { STANDARD_BY_ID, standardForTaskCode } from "@/lib/standards";
-import { Gloss, TermsUsed } from "@/components/app/glossary";
+import { Gloss } from "@/components/app/glossary";
 
 // Static tone maps (Tailwind v4 purges dynamic `bg-${tone}` classes). Each framework carries its
 // own colour identity — the banner wears it so the mentee reads the standard at a glance.
@@ -37,9 +37,9 @@ export function StandardBanner({ taskCode, onControls }: { taskCode: string; onC
   return (
     // Dossier layout: a colour-coded identity panel (left) beside the content panel (right). The
     // tinted panel is a fixed width filled with seal + identity + meta, so no half is left empty.
-    <div className="mb-4 rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden shadow-[0_1px_0_rgba(15,23,42,0.02),0_8px_28px_-16px_rgba(15,23,42,0.14)] flex flex-col sm:flex-row">
+    <div className="mb-4 rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden shadow-[0_1px_0_rgba(15,23,42,0.02),0_8px_28px_-16px_rgba(15,23,42,0.14)] flex flex-col sm:flex-row">
       {/* Identity panel — the framework's colour, monogram, name, and what it's assessed against. */}
-      <div className={`sm:w-[268px] shrink-0 bg-gradient-to-b ${BAND[standard.tone]} to-white/30 border-b sm:border-b-0 sm:border-r border-slate-200/60 p-4 sm:p-5 flex flex-col gap-3.5`}>
+      <div className={`sm:w-[268px] shrink-0 bg-gradient-to-b ${BAND[standard.tone]} to-white/30 border-b sm:border-b-0 sm:border-r border-slate-200 p-4 sm:p-5 flex flex-col gap-3.5`}>
         <div className="flex items-center gap-3">
           <span aria-hidden className={`shrink-0 w-12 h-12 rounded-xl ${SOLID[standard.tone]} text-white flex flex-col items-center justify-center leading-none ring-4 ${SEAL_RING[standard.tone]} shadow-sm`}>
             <span className="text-[12px] font-mono font-semibold tracking-[0.04em]">{standard.short}</span>
@@ -65,14 +65,14 @@ export function StandardBanner({ taskCode, onControls }: { taskCode: string; onC
               type="button"
               onClick={onControls}
               aria-label={`View the ${controlCount} controls this task is assessed against`}
-              className="focus-ring group inline-flex items-center gap-1.5 h-6 pl-1.5 pr-1.5 rounded-md bg-white/80 ring-1 ring-slate-200/70 hover:ring-slate-300 hover:bg-white text-[11px] tracking-tight text-slate-600 transition-colors cursor-pointer"
+              className="focus-ring group inline-flex items-center gap-1.5 h-6 pl-1.5 pr-1.5 rounded-md bg-white/80 ring-1 ring-slate-200 hover:ring-slate-300 hover:bg-white text-[11px] tracking-tight text-slate-600 transition-colors cursor-pointer"
             >
               <span className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />
               <b className="font-semibold text-slate-900 tabular-nums">{controlCount}</b> controls assessed
               <Icon name="arrowRight" size={11} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
             </button>
           ) : (
-            <span className="inline-flex items-center gap-1.5 h-6 pl-1.5 pr-2 rounded-md bg-white/80 ring-1 ring-slate-200/70 text-[11px] tracking-tight text-slate-600">
+            <span className="inline-flex items-center gap-1.5 h-6 pl-1.5 pr-2 rounded-md bg-white/80 ring-1 ring-slate-200 text-[11px] tracking-tight text-slate-600">
               <span className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />
               <b className="font-semibold text-slate-900 tabular-nums">{controlCount}</b> controls assessed
             </span>
@@ -98,7 +98,6 @@ export function StandardBanner({ taskCode, onControls }: { taskCode: string; onC
           <div className="pt-3 border-t border-slate-100">
             <span className="block text-[9.5px] font-semibold tracking-[0.14em] uppercase text-slate-400 mb-1.5">Your task in context</span>
             <p className="text-[12.5px] leading-relaxed text-slate-600 tracking-tight" style={{ textWrap: "pretty" }}><Gloss>{desc}</Gloss></p>
-            <TermsUsed texts={[standard.description, standard.tagline ?? "", desc]} className="mt-3" />
           </div>
         )}
       </div>

@@ -190,7 +190,7 @@ export function JudgmentCall({
                 className={`w-full min-w-0 text-left flex items-start gap-3 rounded-xl p-3 transition-all ring-1 ${
                   picked
                     ? "bg-white ring-sky-600 shadow-[0_2px_10px_-4px_rgba(3,105,161,0.45)]"
-                    : "bg-white/70 ring-slate-200/80 hover:bg-white hover:ring-slate-300"
+                    : "bg-white/70 ring-slate-200 hover:bg-white hover:ring-slate-300"
                 } ${locked ? "cursor-default" : "cursor-pointer"}`}
               >
                 <span
@@ -205,8 +205,7 @@ export function JudgmentCall({
                     popover, and glossary.tsx keeps "button" and "label" in its SKIP set for
                     exactly this reason: nesting one inside a clickable option is invalid HTML,
                     and clicking the row toggled the popover, which the browser then scrolled
-                    into view. Terms in the dilemma are still defined on the page — the desk
-                    feeds this prose into <TermsUsed>. */}
+                    into view. */}
                 <span className="min-w-0 text-[12.5px] text-slate-800 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>
                   {o.text}
                 </span>
@@ -222,7 +221,7 @@ export function JudgmentCall({
           >
             Why this one
           </label>
-          <div className="rounded-xl bg-white ring-1 ring-slate-200/80 focus-within:ring-2 focus-within:ring-sky-600/40 transition-all">
+          <div className="rounded-xl bg-white ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-sky-600/40 transition-all">
             <textarea
               id={`why-${prompt.slot}`}
               disabled={locked}

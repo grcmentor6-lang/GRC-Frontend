@@ -9,8 +9,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
 }
 
 /* ============================================================================
@@ -58,6 +58,14 @@
     zoom: 0.9;
   }
 }
+/* 2026-10-08: from 1280px wide, one more notch (81% — what the app looked right at under 90%
+   browser zoom on a 1536px laptop). Small laptops keep 90%, where 81% would put body text near 10px. */
+@media screen and (min-width: 80rem) {
+  :root {
+    --app-zoom: 0.81;
+    zoom: 0.81;
+  }
+}
 
 /* Viewport units are the one thing `zoom` leaves alone: `100vh` stays the real viewport and is
    then painted 10% smaller, so anything sized *to* the viewport lands short — a dead strip down
@@ -71,9 +79,10 @@
 .min-h-screen {
   min-height: calc(100vh / var(--app-zoom));
 }
-.w-screen {
-  width: calc(100vw / var(--app-zoom));
-}
+/* No `.w-screen` correction, and don't put `w-screen` on a full-height container: `100vw`
+   counts the vertical scrollbar, so `100vw / 0.9` paints ~15px past the available width and the
+   page grows a horizontal scrollbar — which then costs 15px of height and brings a vertical one
+   back. A block element already fills its parent; width:auto is both the fix and less code. */
 .h-dvh {
   height: calc(100dvh / var(--app-zoom));
 }
@@ -90,6 +99,19 @@
   height: calc(100dvh / var(--app-zoom) - var(--hdr-h, 64px));
 }
 
+/* Page shell (2026-10-09). Every app page sits in this one container: full width up to 1760px,
+   tight gutters. The pages used to cap at 1100–1500px per breakpoint, which at the desktop zoom
+   left a dead margin either side of the content. One class, so the gutter is the same everywhere. */
+@utility page-shell {
+  width: 100%;
+  max-width: 1760px;
+  margin-inline: auto;
+  padding: 1.25rem 1rem 1.5rem;
+  @media (width >= 40rem) {
+    padding-inline: 1.5rem;
+  }
+}
+
 /* Signature brand gradient — hero / CTA / dashboard banner. */
 @utility bg-brand-gradient {
   background-image: linear-gradient(135deg, #4f46e5 0%, #5b53e8 45%, #7c3aed 100%);
@@ -98,8 +120,8 @@
 /* Standard surface-card elevation (matches the original Card shadow). */
 @utility shadow-card {
   box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 8px 24px -12px rgba(15, 23, 42, 0.1);
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 6px 18px -10px rgba(15, 23, 42, 0.14);
 }
 
 /* Shared keyboard focus ring. `outline` follows border-radius and never shifts
@@ -120,6 +142,16 @@ body {
 body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* The register voice (2026-10-09): every small uppercase, letter-spaced label — eyebrows, section
+   labels, column heads, the key-results strip — is set in IBM Plex Mono, as the key results always
+   were. One rule instead of ~190 class edits; a label opts out with `font-sans`. In the base layer, so a
+   font utility on the element itself (`font-sans`, `font-mono`) still wins. */
+@layer base {
+  .uppercase[class*="tracking-"]:not(.font-sans) {
+    font-family: var(--font-mono), ui-monospace, monospace;
+  }
 }
 
 /* Smooth in-page anchor scrolling (e.g. landing-page header nav), with a scroll offset so

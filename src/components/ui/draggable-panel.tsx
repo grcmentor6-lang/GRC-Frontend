@@ -88,7 +88,7 @@ export function DraggablePanel({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
         style={!isMobile && side === "left" ? { left: treeLeft ?? 16 } : undefined}
-        className={`pointer-events-auto absolute flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.5)] ${panelSize}`}
+        className={`pointer-events-auto absolute flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-slate-200 shadow-[0_28px_80px_-24px_rgba(15,23,42,0.5)] ${panelSize}`}
       >
         {/* header = drag handle. ponytail: framer-motion moves this with a transform in the page's
             own pixels while the pointer is measured in the viewport's, so under the desktop zoom
@@ -97,7 +97,7 @@ export function DraggablePanel({
             animation with it) only if anyone complains. */}
         <div
           onPointerDown={(e) => controls.start(e)}
-          className="shrink-0 flex items-center justify-between gap-3 pl-4 pr-2.5 py-2.5 border-b border-slate-200/70 bg-slate-50/70 cursor-grab active:cursor-grabbing touch-none select-none"
+          className="shrink-0 flex items-center justify-between gap-3 pl-4 pr-2.5 py-2.5 border-b border-slate-200 bg-slate-50/70 cursor-grab active:cursor-grabbing touch-none select-none"
         >
           <div className="min-w-0 flex items-center gap-2.5">
             <Icon name="move" size={15} className="text-slate-400 shrink-0" />

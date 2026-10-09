@@ -19,7 +19,7 @@ export default function LibraryStandardPage({ params, searchParams }: {
   const meta = STANDARD_BY_ID[standardId];
 
   return (
-    <div className="max-w-[1100px] 2xl:max-w-[1400px] mx-auto px-6 py-6 space-y-5">
+    <div className="page-shell space-y-4">
       <Link href="/app/library" className="focus-ring inline-flex items-center gap-1.5 text-[12px] text-slate-500 hover:text-slate-800">
         <Icon name="arrowLeft" size={13} /> Standards library
       </Link>
@@ -44,7 +44,7 @@ export default function LibraryStandardPage({ params, searchParams }: {
             <span className="font-mono text-[10.5px] text-slate-400">{group.items.length} {group.unit}</span>
             <span className="h-px flex-1 bg-slate-200/70" />
           </div>
-          <ul className="list-none p-0 m-0 rounded-xl ring-1 ring-slate-200/70 bg-white divide-y divide-slate-100 overflow-hidden">
+          <ul className="list-none p-0 m-0 rounded-xl ring-1 ring-slate-200 bg-white divide-y divide-slate-100 overflow-hidden">
             {group.items.map((item) => {
               const inTask = !!task && taskCovers(task, item.ref);
               return (

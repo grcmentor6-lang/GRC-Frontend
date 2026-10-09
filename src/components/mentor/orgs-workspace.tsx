@@ -27,7 +27,7 @@ export function OrgsWorkspace({ orgs }: { orgs: OrgSummary[] | null }) {
   const active = selected ?? orgs?.[0]?.id ?? null;
 
   return (
-    <div className="grid min-h-0 overflow-hidden rounded-2xl ring-1 ring-slate-200/70 md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[268px_minmax(0,1fr)]">
+    <div className="grid min-h-0 overflow-hidden rounded-2xl ring-1 ring-slate-200 md:grid-cols-[240px_minmax(0,1fr)] lg:grid-cols-[268px_minmax(0,1fr)]">
       <OrgSidebar
         orgs={orgs}
         activeId={active}
@@ -114,7 +114,7 @@ function OrgSidebar({
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search…"
             aria-label="Search organisations"
-            className="h-8 w-full rounded-lg bg-white pl-8 pr-2.5 text-[12px] text-slate-700 ring-1 ring-slate-200/70 outline-none transition-all placeholder:text-slate-400 focus:ring-indigo-300"
+            className="h-8 w-full rounded-lg bg-white pl-8 pr-2.5 text-[12px] text-slate-700 ring-1 ring-slate-200 outline-none transition-all placeholder:text-slate-400 focus:ring-indigo-300"
           />
         </div>
         <button
@@ -124,7 +124,7 @@ function OrgSidebar({
           className={`h-7 rounded-lg text-[11px] font-medium transition-colors ${
             waitingOnly
               ? "bg-indigo-600 text-white"
-              : "bg-white text-slate-600 ring-1 ring-slate-200/70 hover:ring-slate-300 disabled:text-slate-400"
+              : "bg-white text-slate-600 ring-1 ring-slate-200 hover:ring-slate-300 disabled:text-slate-400"
           }`}
         >
           {waitingOnly
@@ -279,7 +279,7 @@ function OrgPane({ orgId }: { orgId: string }) {
         </div>
       </div>
 
-      <div className="mt-3.5 flex shrink-0 items-end gap-3 border-b border-slate-200/70">
+      <div className="mt-3.5 flex shrink-0 items-end gap-3 border-b border-slate-200">
         {/* Wraps rather than scrolls. `overflow-x-auto` makes the browser compute `overflow-y`
             as auto too, so this row — whose buttons sit 1px proud of it via `-mb-px` — grew a
             *vertical* scrollbar on a 36px-tall strip. Six short labels wrap onto a second line on
@@ -344,7 +344,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col rounded-2xl bg-white p-4 ring-1 ring-slate-200/70">
+    <div className="flex flex-col rounded-2xl bg-white p-4 ring-1 ring-slate-200">
       <div className="mb-3 flex shrink-0 items-center gap-2">
         {icon && <Icon name={icon} size={14} className="text-indigo-500" />}
         <h4 className="text-[12.5px] font-semibold tracking-tight text-slate-900">{title}</h4>
@@ -384,7 +384,7 @@ export function PaneOverview({ o }: { o: OrgDetail }) {
       className={`grid gap-3.5 ${aside ? "@md:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]" : ""}`}
     >
       <div className="flex flex-col gap-3.5">
-        <div className="rounded-2xl bg-gradient-to-br from-indigo-50/70 via-white to-white p-4 ring-1 ring-slate-200/70">
+        <div className="rounded-2xl bg-gradient-to-br from-indigo-50/70 via-white to-white p-4 ring-1 ring-slate-200">
           <p className="text-[12.5px] leading-relaxed text-slate-600">{o.context || "—"}</p>
           {o.regulator && (
             <div className="mt-3 flex items-start gap-2 rounded-xl bg-indigo-50/70 px-3 py-2.5 ring-1 ring-indigo-100">
@@ -448,7 +448,7 @@ export const PaneData = ({ o }: { o: OrgDetail }) => (
         {o.clientData.map((d) => (
           <span
             key={d}
-            className="rounded-lg bg-slate-50 px-2 py-1 text-[11px] leading-tight text-slate-700 ring-1 ring-slate-200/70"
+            className="rounded-lg bg-slate-50 px-2 py-1 text-[11px] leading-tight text-slate-700 ring-1 ring-slate-200"
           >
             {d}
           </span>
@@ -520,7 +520,7 @@ export const PaneInfra = ({ o }: { o: OrgDetail }) => (
 export const PaneMentees = ({ o }: { o: OrgDetail }) => (
   <div className="grid items-start gap-3 @md:grid-cols-2 @4xl:grid-cols-3">
     {o.mentees.map((m) => (
-      <div key={m.userId} className="rounded-2xl bg-white p-4 ring-1 ring-slate-200/70">
+      <div key={m.userId} className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
         <div className="flex items-start gap-2.5">
           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-[11px] font-semibold text-white">
             {m.name

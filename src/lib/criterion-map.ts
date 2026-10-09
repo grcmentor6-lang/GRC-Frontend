@@ -23,6 +23,13 @@
  *  - Research's `rs:findings` / `rs:sowhat`: they belong to R1 on a required method and to R2 on an
  *    optional one, which only the pane knows — it marks the method as a whole instead.
  *  - RUA's Acquire and Confirm tabs: required by the gate, read by no criterion.
+ *
+ * The `tab:` entries are **pairing only** — the rail wears no chips. RUA has numbered its eight
+ * screens R1–R8 since long before these marks existed (`ScreenHead v="R1" name="Study"` …
+ * `v="R8" name="Attest"`), so a criterion chip in the rail put two different R-numberings on one
+ * screen: R2 could mean "the Inspect screen" or "templates inspected". The rail is back to its
+ * own numbering, and these entries only light the checklist row when a tab takes focus.
+ * `criterion-map.test.ts` fails if a chip returns to the rail.
  */
 export const CRITERION_OF: Record<string, Record<string, number[]>> = {
   request: { to: [1], items: [2], subject: [3], purpose: [] },

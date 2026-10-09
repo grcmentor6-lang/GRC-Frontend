@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
-import { Gloss, TermsUsed } from "@/components/app/glossary";
+import { Gloss } from "@/components/app/glossary";
 
 /**
  * The two pieces that make a step read as *the deliverable screen*, shared by the learner who
@@ -69,7 +69,6 @@ export function WhatToCheck({
 export function StepBrief({
   objective,
   whatToDo,
-  glossTexts = [],
   objectiveRef,
   whatToDoRef,
   defaultOpen = true,
@@ -80,8 +79,6 @@ export function StepBrief({
 }: {
   objective?: string;
   whatToDo?: string[];
-  /** Extra prose whose glossary terms must also be defined on the page. */
-  glossTexts?: string[];
   objectiveRef?: React.Ref<HTMLDivElement>;
   whatToDoRef?: React.Ref<HTMLDivElement>;
   defaultOpen?: boolean;
@@ -147,11 +144,6 @@ export function StepBrief({
               <WhatToCheck items={whatToDo} title={listTitle} panelRef={whatToDoRef} />
             )}
           </div>
-          {/* Every term this step's brief uses, defined in full — hover is opt-in, this isn't. */}
-          <TermsUsed
-            texts={[objective ?? "", ...(whatToDo ?? []), ...glossTexts]}
-            className="mt-4"
-          />
         </div>
       </div>
     </div>

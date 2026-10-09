@@ -62,7 +62,7 @@ function ShareMenu({ cert }: { cert: Certificate }) {
           <div className="px-2.5 pt-2 pb-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase text-slate-400">Share certificate</div>
           {items.map((it) => (
             <button key={it.id} onClick={it.onClick} className="w-full flex items-center gap-3 px-2.5 h-12 rounded-lg hover:bg-slate-50 transition-colors text-left">
-              <span className={`w-8 h-8 rounded-lg flex items-center justify-center ring-1 ${it.hl ? "bg-indigo-50 text-indigo-600 ring-indigo-100" : it.ok ? "bg-emerald-50 text-emerald-600 ring-emerald-100" : "bg-slate-50 text-slate-500 ring-slate-200/70"}`}><Icon name={it.icon} size={15} strokeWidth={it.icon === "check" ? 3 : 1.8} /></span>
+              <span className={`w-8 h-8 rounded-lg flex items-center justify-center ring-1 ${it.hl ? "bg-indigo-50 text-indigo-600 ring-indigo-100" : it.ok ? "bg-emerald-50 text-emerald-600 ring-emerald-100" : "bg-slate-50 text-slate-500 ring-slate-200"}`}><Icon name={it.icon} size={15} strokeWidth={it.icon === "check" ? 3 : 1.8} /></span>
               <span className="min-w-0">
                 <span className={`block text-[12.5px] font-medium tracking-tight ${it.ok ? "text-emerald-600" : "text-slate-800"}`}>{it.label}</span>
                 <span className="block text-[11px] text-slate-400 tracking-tight truncate">{it.sub}</span>
@@ -71,7 +71,7 @@ function ShareMenu({ cert }: { cert: Certificate }) {
           ))}
           <div className="my-1 h-px bg-slate-100" />
           <button onClick={() => { window.print(); setOpen(false); }} className="w-full flex items-center gap-3 px-2.5 h-12 rounded-lg hover:bg-slate-50 transition-colors text-left">
-            <span className="w-8 h-8 rounded-lg flex items-center justify-center ring-1 bg-slate-50 text-slate-500 ring-slate-200/70"><Icon name="download" size={15} /></span>
+            <span className="w-8 h-8 rounded-lg flex items-center justify-center ring-1 bg-slate-50 text-slate-500 ring-slate-200"><Icon name="download" size={15} /></span>
             <span className="min-w-0">
               <span className="block text-[12.5px] font-medium tracking-tight text-slate-800">Download as PDF</span>
               <span className="block text-[11px] text-slate-400 tracking-tight">A4 landscape, print-ready</span>
@@ -149,7 +149,7 @@ export default function CertificatePage() {
   const recipient = cert?.recipient ?? "—";
   const statusNote = isLocked ? locked!.statusNote : cert?.statusNote ?? "";
   const chipTone = isLocked
-    ? "bg-slate-100 ring-slate-200/70 text-slate-500"
+    ? "bg-slate-100 ring-slate-200 text-slate-500"
     : cert?.status === "issued"
       ? "bg-emerald-50 ring-emerald-100 text-emerald-700"
       : cert?.status === "expired"
@@ -170,11 +170,11 @@ export default function CertificatePage() {
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 ring-1 ring-slate-200/60 w-fit">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 ring-1 ring-slate-200 w-fit">
             {tabs.map((t) => {
               const sel = t.id === tab;
               return (
-                <button key={t.id} onClick={() => setTab(t.id)} className={`inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-medium tracking-tight transition-all ${sel ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/70" : "text-slate-500 hover:text-slate-700"}`}>
+                <button key={t.id} onClick={() => setTab(t.id)} className={`inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-[13px] font-medium tracking-tight transition-all ${sel ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"}`}>
                   {t.locked && <Icon name="lock" size={12} className={sel ? "text-slate-400" : "text-slate-300"} />}
                   {t.code}
                 </button>

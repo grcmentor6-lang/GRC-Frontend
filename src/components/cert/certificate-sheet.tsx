@@ -4,7 +4,7 @@ import QRCode from "qrcode";
 import type { Certificate } from "@/lib/certificate";
 
 const SERIF = "var(--font-cormorant), 'Cormorant Garamond', Georgia, serif";
-const MONO = "var(--font-geist-mono), ui-monospace, monospace";
+const MONO = "var(--font-plex-mono), ui-monospace, monospace";
 
 /** Wax-style gold seal. */
 function Seal() {
@@ -81,7 +81,7 @@ export function CertificateSheet({
   const credentialId = cert.credentialId ?? "— pending completion —";
   const verifyLabel = cert.verifyUrl?.replace(/^https?:\/\//, "") ?? "issued at 100% completion";
   return (
-    <div id="cert-sheet" className="relative" style={{ width: 1000, background: "#FCFBF6", fontFamily: "var(--font-geist-sans), sans-serif" }}>
+    <div id="cert-sheet" className="relative" style={{ width: 1000, background: "#FCFBF6", fontFamily: "var(--font-plex-sans), sans-serif" }}>
       <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(1200px 500px at 50% -10%, rgba(79,70,229,0.05), transparent 60%), radial-gradient(800px 500px at 50% 120%, rgba(201,154,63,0.06), transparent 60%)" }} />
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center select-none" style={{ opacity: 0.035 }}>
         <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 460, color: "#312e81", lineHeight: 1 }}>G</span>

@@ -307,13 +307,18 @@ function DockItem({ row, current, href, onBrief, onList, onTip, onTipEnd }: {
   );
 }
 
-/** The logo, inside a thin ring of that organisation's task progress. 2πr with r=14.5 is 91.1. */
+/** The logo, inside a thin ring of that organisation's task progress. 2πr with r=14.5 is 91.1.
+ *
+ *  The ring's outer edge sits half a unit inside its 32-unit box, and at the app's `zoom: 0.9`
+ *  (lg and up) rounding shaved that half-unit off the SVG viewport — a finished organisation's
+ *  full green circle came out sliced flat top and bottom. `overflow-visible` lets the stroke draw
+ *  past the box instead of being cut by it. */
 function Ring({ row }: { row: Row }) {
   const C = 2 * Math.PI * 14.5;
   const f = row.total ? row.done / row.total : 0;
   return (
     <span className="relative h-8 w-8 shrink-0">
-      <svg className="absolute inset-0" width="32" height="32" viewBox="0 0 32 32" aria-hidden>
+      <svg className="absolute inset-0 overflow-visible" width="32" height="32" viewBox="0 0 32 32" aria-hidden>
         <circle cx="16" cy="16" r="14.5" fill="none" stroke="#dedee9" strokeWidth="2" />
         {f > 0 && (
           <circle

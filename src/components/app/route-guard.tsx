@@ -25,7 +25,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
 
   if (loading || !user || !user.isProfileComplete || !entitled) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#FAFAF7]">
+      <div className="h-screen flex items-center justify-center bg-[#FAFAF7]">
         <div className="flex flex-col items-center gap-3 text-slate-400">
           <div className="w-6 h-6 rounded-full border-2 border-slate-200 border-t-indigo-500 animate-spin" />
           <span className="text-[12.5px]">Loading…</span>

@@ -9,7 +9,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DVerb } from "@/components/ui/dverb";
-import { learningsApi, type Learnings, type LearningOrg } from "@/lib/learnings";
+import { learningsApi, type Learnings } from "@/lib/learnings";
 import { catalog, type Program, type RubricDimension, type Standard } from "@/lib/catalog";
 import { useCachedQuery } from "@/lib/use-query";
 import { BADGES } from "@/lib/badges";
@@ -20,22 +20,8 @@ import { STANDARDS, buildTaskIndex, tasksForStandard, nistCrossRefTaskCodes } fr
 import { TRACK_PREVIEWS, type TrackPreview } from "@/lib/track-previews";
 import { startWelcomeTour } from "@/components/app/welcome-tour";
 import { AccessChip } from "@/components/app/access-chip";
+import { DashboardOrgs } from "@/components/desk/org-drawer";
 
-/** Next openable step in an org — drives the card "Next up" line and the panel "Continue" CTA. */
-function nextStepOf(o: LearningOrg): { id: string; taskCode: string; stepCode: string; verb: string; title: string } | null {
-  for (const proj of o.projects) {
-    const ip = proj.tasks.find((t) => t.status === "in-progress");
-    const target = ip ?? proj.tasks.find((t) => t.status === "not-started") ?? proj.tasks[0];
-    if (target) {
-      const step =
-        target.steps.find((s) => s.status === "current" || s.status === "in-progress") ??
-        target.steps.find((s) => s.status !== "complete" && s.status !== "locked") ??
-        target.steps[0];
-      if (step) return { id: step.id, taskCode: target.code, stepCode: step.code, verb: step.verb, title: step.title };
-    }
-  }
-  return null;
-}
 
 interface Continue { activityId: string; taskCode: string; taskTitle: string; stepCode: string; verb: string; stepTitle: string }
 
@@ -66,12 +52,6 @@ function hasStarted(l: Learnings): boolean {
   return l.orgs.some((o) => o.projects.some((p) => p.tasks.some((t) => t.done > 0)));
 }
 
-/** Roll up per-org engagement stats for the dashboard cards. */
-function orgStats(o: LearningOrg): { total: number; done: number; pct: number } {
-  let total = 0, done = 0;
-  o.projects.forEach((p) => p.tasks.forEach((t) => { total++; if (t.status === "complete") done++; }));
-  return { total, done, pct: total ? Math.round((done / total) * 100) : 0 };
-}
 
 /** Counts a number up from 0 on mount (respects reduced motion). */
 function CountUp({ value, decimals = 0 }: { value: number; decimals?: number }) {
@@ -170,7 +150,7 @@ function HeroStandards({ standards, engaged }: { standards: Standard[]; engaged:
   const covered = standards.filter((s) => engagedSet.has(s.label)).length;
   const pct = total ? Math.round((covered / total) * 100) : 0;
   return (
-    <div className="relative mt-6 pt-5 border-t border-white/15">
+    <div className="relative mt-4 pt-4 border-t border-white/15">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <Icon name="shield" size={14} className="text-indigo-100 shrink-0" />
@@ -239,15 +219,15 @@ function StandardsSection({ learnings }: { learnings: Learnings | null | undefin
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-2.5">
           <h2 className="text-[14px] font-semibold tracking-tight text-slate-900">Standards</h2>
-          <span className="px-1.5 h-5 rounded-md bg-slate-100 ring-1 ring-slate-200/70 text-[10.5px] font-medium text-slate-600 flex items-center">{STANDARDS.length}</span>
+          <span className="px-1.5 h-5 rounded-md bg-slate-100 ring-1 ring-slate-200 text-[10.5px] font-medium text-slate-600 flex items-center">{STANDARDS.length}</span>
         </div>
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 ring-1 ring-slate-200/60 flex-wrap">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 ring-1 ring-slate-200 flex-wrap">
           {STANDARDS.map((s) => {
             const sel = s.id === active.id;
             const st = VERB_TONES[s.tone] ?? VERB_TONES.indigo;
             return (
               <button key={s.id} onClick={() => setActiveId(s.id)}
-                className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-lg text-[12px] font-medium tracking-tight transition-all ${sel ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/70" : "text-slate-500 hover:text-slate-700"}`}>
+                className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-lg text-[12px] font-medium tracking-tight transition-all ${sel ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200" : "text-slate-500 hover:text-slate-700"}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${sel ? st.dot : "bg-slate-300"}`} />
                 {s.code}
               </button>
@@ -256,7 +236,7 @@ function StandardsSection({ learnings }: { learnings: Learnings | null | undefin
         </div>
       </div>
 
-      <div className={`rounded-2xl ring-1 ring-slate-200/70 overflow-hidden bg-gradient-to-br ${STD_GRAD[active.tone] ?? STD_GRAD.indigo} via-white to-white`}>
+      <div className={`rounded-2xl ring-1 ring-slate-200 overflow-hidden bg-gradient-to-br ${STD_GRAD[active.tone] ?? STD_GRAD.indigo} via-white to-white`}>
         <div className="p-6 md:p-7">
           <div className="flex items-start gap-5">
             <div className={`shrink-0 w-20 h-20 rounded-2xl ${STD_SOLID[active.tone] ?? STD_SOLID.indigo} text-white flex flex-col items-center justify-center leading-none shadow-lg`}>
@@ -276,7 +256,7 @@ function StandardsSection({ learnings }: { learnings: Learnings | null | undefin
           </div>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
             {stats.map((m) => (
-              <div key={m.label} className="rounded-xl bg-white/70 ring-1 ring-slate-200/70 px-4 py-3">
+              <div key={m.label} className="rounded-xl bg-white/70 ring-1 ring-slate-200 px-4 py-3">
                 <div className="text-[10.5px] font-semibold tracking-[0.1em] uppercase text-slate-500">{m.label}</div>
                 <div className="mt-1 text-[26px] font-semibold tabular-nums tracking-[-0.02em] text-slate-900 leading-none">{m.value}</div>
                 <div className="mt-1.5 text-[10.5px] font-mono text-slate-400">{m.hint}</div>
@@ -309,7 +289,7 @@ function TrackPreviewSection({ preview, code }: { preview: TrackPreview; code?: 
         <p className="text-[12.5px] text-slate-500 tracking-tight leading-relaxed mb-3.5 max-w-2xl" style={{ textWrap: "pretty" }}>{preview.summary}</p>
         <div className="flex flex-wrap gap-1.5">
           {preview.frameworks.map((f) => (
-            <span key={f} className="inline-flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-[11.5px] font-medium tracking-tight bg-slate-50 text-slate-700 ring-1 ring-slate-200/70">
+            <span key={f} className="inline-flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-[11.5px] font-medium tracking-tight bg-slate-50 text-slate-700 ring-1 ring-slate-200">
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />{f}
             </span>
           ))}
@@ -325,7 +305,7 @@ function TrackPreviewSection({ preview, code }: { preview: TrackPreview; code?: 
         <Stagger className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {preview.orgs.map((o) => (
             <StaggerItem key={o.id} className="h-full">
-              <div className="group flex h-full flex-col gap-3 rounded-xl p-4 ring-1 bg-slate-50/60 ring-slate-200/60">
+              <div className="group flex h-full flex-col gap-3 rounded-xl p-4 ring-1 bg-slate-50/60 ring-slate-200">
                 <div className="flex items-center gap-3">
                   <OrgLogo org={o} className="w-11 h-11 rounded-xl text-[13px]" />
                   <div className="flex-1 min-w-0">
@@ -345,9 +325,9 @@ function TrackPreviewSection({ preview, code }: { preview: TrackPreview; code?: 
                   </span>
                 </div>
                 <p className="text-[12px] text-slate-500 tracking-tight leading-relaxed line-clamp-2" style={{ textWrap: "pretty" }}>{o.blurb}</p>
-                <div className="flex flex-wrap gap-1 pt-3 mt-auto border-t border-slate-200/60">
+                <div className="flex flex-wrap gap-1 pt-3 mt-auto border-t border-slate-200">
                   {o.standards.map((s) => (
-                    <span key={s} className="inline-flex items-center px-1.5 h-[18px] rounded text-[10px] font-mono tracking-tight bg-white text-slate-600 ring-1 ring-slate-200/70">{s}</span>
+                    <span key={s} className="inline-flex items-center px-1.5 h-[18px] rounded text-[10px] font-mono tracking-tight bg-white text-slate-600 ring-1 ring-slate-200">{s}</span>
                   ))}
                 </div>
               </div>
@@ -380,7 +360,6 @@ export default function DashboardPage() {
   const first = user?.firstName || "there";
   const cont = !locked && learnings ? deriveContinue(learnings) : null;
   const started = !!learnings && hasStarted(learnings);
-  const orgs = learnings?.orgs ?? [];
 
   const rubricScoreMap = new Map<string, number>();
   progress?.rubricScores.forEach((s) => { rubricScoreMap.set(s.id, s.value); rubricScoreMap.set(s.label.toLowerCase(), s.value); });
@@ -398,7 +377,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="max-w-[1180px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-6 space-y-5 animate-pulse">
+      <div className="page-shell space-y-4 animate-pulse">
         <div className="h-[290px] rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Skeleton className="h-[76px] rounded-2xl" />
@@ -415,15 +394,15 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-[1180px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-6 space-y-5">
+    <div className="page-shell space-y-4">
       {/* Hero / continue — the track switcher lives in the header strip so there's no empty band up top */}
       <Reveal>
-      <div data-tour="dash-hero" className="bg-brand-gradient relative overflow-hidden rounded-2xl text-white p-6 md:p-7 shadow-[0_12px_40px_-16px_rgba(79,70,229,0.55)]">
+      <div data-tour="dash-hero" className="bg-brand-gradient relative overflow-hidden rounded-2xl text-white p-5 shadow-[0_12px_40px_-16px_rgba(79,70,229,0.55)]">
         <div className="pointer-events-none absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.9) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.9) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
         <div className="pointer-events-none absolute -top-16 -right-10 w-64 h-64 rounded-full bg-white/10 blur-2xl" />
 
         {/* Header strip: status eyebrow (left) + track switcher (right) */}
-        <div className="relative flex items-center justify-between gap-3 mb-6 flex-wrap">
+        <div className="relative flex items-center justify-between gap-3 mb-4 flex-wrap">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="flex items-center gap-2">
               <span className={`w-1.5 h-1.5 rounded-full ${locked ? "bg-amber-300" : "bg-emerald-300 animate-pulse"}`} />
@@ -446,7 +425,7 @@ export default function DashboardPage() {
         <div className="relative flex flex-col md:flex-row md:items-center gap-6">
           <div className="flex-1 min-w-0">
             <h1 className="text-[24px] md:text-[27px] font-semibold tracking-[-0.02em] leading-tight">Good to see you, {first}.</h1>
-            <p className="text-[13.5px] text-indigo-100/90 mt-1 mb-4 tracking-tight max-w-xl">
+            <p className="text-[13.5px] text-indigo-100/90 mt-1 mb-3 tracking-tight max-w-xl">
               {locked ? <>{program?.code} unlocks after you finish the previous track. Preview its engagements below.</> : cont ? <>{started ? "Your next move is" : "Your first task is"} <span className="font-medium text-white">{cont.taskCode}</span> — step {cont.stepCode}.</> : <>You&apos;re enrolled in {program?.code ?? "GRC 101"}. Open your first engagement to begin.</>}
             </p>
             {!locked && (
@@ -487,7 +466,7 @@ export default function DashboardPage() {
       {/* Stat strip */}
       {!locked && progress && (
         <Reveal delay={0.08}>
-        <div data-tour="dash-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div data-tour="dash-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <Stat icon="checkSquare" tone="indigo" value={progress.activitiesDone} sub={`/ ${progress.activitiesTotal}`} label="Activities completed" />
           <Stat icon="star" tone="amber" value={progress.reviewsCount ? progress.avgScore : "—"} decimals={1} sub={progress.reviewsCount ? `/ ${progress.scoreOutOf}` : undefined} label={`Avg mentor score · ${progress.reviewsCount} reviews`} />
           <Stat icon="calendar" tone="violet" value="None" label="Due soon · self-paced" />
@@ -512,84 +491,9 @@ export default function DashboardPage() {
                 <Icon name="chevronDown" size={14} className="text-slate-400 transition-transform duration-200 -rotate-90 group-open/orgs:rotate-0" />
                 Your organisations
               </h2>
-              <span className="text-[11.5px] text-slate-500 font-medium">{orgs.length} engagement{orgs.length === 1 ? "" : "s"}</span>
+              <span className="text-[11.5px] text-slate-500 font-medium">Click one for its full profile</span>
             </summary>
-          {orgs.length === 0 ? (
-            <p className="text-[13px] text-slate-500">No organisations assigned yet.</p>
-          ) : (
-            <Stagger className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {orgs.map((o) => {
-                const s = orgStats(o);
-                const locked = o.status === "locked";
-                const done = s.total > 0 && s.done === s.total;
-                const next = locked ? null : nextStepOf(o);
-                return (
-                  <StaggerItem key={o.id} className="h-full">
-                    <Link
-                      href={locked ? "#" : `/app/desk/org/${o.id}`}
-                      aria-disabled={locked}
-                      tabIndex={locked ? -1 : undefined}
-                      aria-label={`Open ${o.name} in the Working Desk`}
-                      className={`focus-ring group flex h-full w-full flex-col gap-3 text-left rounded-xl p-4 ring-1 bg-slate-50/60 ring-slate-200/60 no-underline transition-all duration-300 ${locked ? "opacity-60 pointer-events-none cursor-not-allowed" : "cursor-pointer hover:-translate-y-0.5 hover:bg-white hover:shadow-card hover:ring-indigo-200/70"}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <OrgLogo org={o} className="w-11 h-11 rounded-xl text-[14px]" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[13.5px] font-semibold tracking-tight text-slate-900 truncate">{o.name}</div>
-                          <div className="text-[11px] text-slate-500 tracking-tight truncate">{o.industry}</div>
-                        </div>
-                        <span className={`shrink-0 inline-flex items-center gap-1 px-2 h-5 rounded-full text-[10px] font-semibold tracking-tight ring-1 ${
-                          locked ? "bg-slate-100 text-slate-500 ring-slate-200" : done ? "bg-emerald-50 text-emerald-700 ring-emerald-100" : "bg-indigo-50 text-indigo-700 ring-indigo-100"
-                        }`}>
-                          {locked && <Icon name="lock" size={9} />}
-                          {locked ? "Locked" : done ? "Complete" : "Active"}
-                        </span>
-                      </div>
-
-                      {o.context && (
-                        <p className="text-[12px] text-slate-500 tracking-tight leading-relaxed line-clamp-2" style={{ textWrap: "pretty" }}>{o.context}</p>
-                      )}
-
-                      <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { label: "Projects", value: o.projects.length },
-                          { label: "Tasks", value: s.total },
-                          { label: "Done", value: s.done },
-                        ].map((m) => (
-                          <div key={m.label} className="rounded-lg bg-white ring-1 ring-slate-200/60 px-2 py-1.5 text-center">
-                            <div className="text-[15px] font-semibold tracking-[-0.02em] text-slate-900 tabular-nums">{m.value}</div>
-                            <div className="text-[10px] text-slate-500 tracking-tight">{m.label}</div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <Bar pct={s.pct || (locked ? 0 : 2)} tone={done ? "emerald" : locked ? "slate" : "indigo"} className="flex-1" />
-                        <span className="text-[11px] font-medium text-slate-500 tabular-nums shrink-0">{s.pct}%</span>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-3 mt-auto border-t border-slate-200/60">
-                        {locked ? (
-                          <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400"><Icon name="lock" size={11} /> Unlocks later in the track</span>
-                        ) : done ? (
-                          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600"><Icon name="check" size={12} strokeWidth={3} /> Engagement complete</span>
-                        ) : next ? (
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-slate-400 shrink-0">Next</span>
-                            <DVerb verbId={next.verb} />
-                            <span className="text-[11.5px] text-slate-600 tracking-tight truncate">{next.title}</span>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-slate-400">No open steps</span>
-                        )}
-                        <Icon name="arrowRight" size={14} className="text-slate-300 shrink-0 ml-auto transition-colors group-hover:text-indigo-500" />
-                      </div>
-                    </Link>
-                  </StaggerItem>
-                );
-              })}
-            </Stagger>
-          )}
+          <DashboardOrgs />
           </details>
         </Card>
         </div>

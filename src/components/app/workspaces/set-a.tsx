@@ -100,7 +100,7 @@ function TypingBubble({ initials, text, delay = 1400, onDone }: { initials: stri
   return (
     <div className="flex items-start gap-2.5">
       <Avatar who="stakeholder" label={initials} />
-      <div className="rounded-2xl px-3.5 py-3 bg-white ring-1 ring-slate-200/70 flex items-center gap-1">
+      <div className="rounded-2xl px-3.5 py-3 bg-white ring-1 ring-slate-200 flex items-center gap-1">
         {[0, 1, 2].map((i) => <span key={i} className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
       </div>
     </div>
@@ -206,7 +206,7 @@ function ScriptedRequestFlow({ conv, value, onChange }: { conv: RequestConversat
 
     return (
       <div className="space-y-5">
-        <div className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 ring-1 ring-slate-200/70 px-3 py-2">
+        <div className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 ring-1 ring-slate-200 px-3 py-2">
           <div className="flex items-start gap-2 text-[11.5px] text-slate-600 min-w-0">
             <Icon name="info" size={13} className="text-slate-400 shrink-0 mt-px" />
             <span><strong className="font-medium text-slate-700">Stakeholder mood:</strong> {routed.reason}</span>
@@ -224,7 +224,7 @@ function ScriptedRequestFlow({ conv, value, onChange }: { conv: RequestConversat
             <Bubble who="you" initials="ME" text={`${subject}\n\n${purpose}\n\nRequested:\n${items.filter((i) => i.trim()).map((i) => `• ${i}`).join("\n")}`} />
 
             {/* Item-selection check on the request you just sent */}
-            <div className={`rounded-xl ring-1 p-3 text-[12px] space-y-2 ${cleanRequest ? "bg-emerald-50/60 ring-emerald-200" : "bg-white ring-slate-200/70"}`}>
+            <div className={`rounded-xl ring-1 p-3 text-[12px] space-y-2 ${cleanRequest ? "bg-emerald-50/60 ring-emerald-200" : "bg-white ring-slate-200"}`}>
               {cleanRequest && (
                 <div className="flex items-center gap-1.5 font-medium text-emerald-800"><Icon name="check" size={13} /> You requested all the key items, and nothing out of scope.</div>
               )}
@@ -271,7 +271,7 @@ function ScriptedRequestFlow({ conv, value, onChange }: { conv: RequestConversat
                 <div className="space-y-2">
                   {shuffleOptions(thread.rounds[activeRound].options).map((o, i) => (
                     <button key={o.id} onClick={() => pick(o, activeRound)}
-                      className="w-full text-left rounded-xl bg-white ring-1 ring-slate-200/80 hover:ring-indigo-400 hover:bg-indigo-50/40 px-3.5 py-2.5 text-[12.5px] text-slate-800 leading-relaxed tracking-tight transition-colors flex gap-2.5">
+                      className="w-full text-left rounded-xl bg-white ring-1 ring-slate-200 hover:ring-indigo-400 hover:bg-indigo-50/40 px-3.5 py-2.5 text-[12.5px] text-slate-800 leading-relaxed tracking-tight transition-colors flex gap-2.5">
                       <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-500 text-[11px] font-semibold flex items-center justify-center shrink-0 mt-px">{"ABC"[i]}</span>
                       <span>{o.text}</span>
                     </button>
@@ -287,7 +287,7 @@ function ScriptedRequestFlow({ conv, value, onChange }: { conv: RequestConversat
           <>
             <div>
               <SectionLabel hint="captured to this step">Information gathered</SectionLabel>
-              <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
+              <div className="rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"><Icon name="file" size={13} /></span>
                   <div className="text-[12px] font-medium text-slate-800 tracking-tight">Reply captured from {to}</div>
@@ -324,7 +324,7 @@ function ScriptedRequestFlow({ conv, value, onChange }: { conv: RequestConversat
 
       <div data-guide="subject">
         <SectionLabel hint={`${subject.length} / 80`}>Subject <CriterionMark guide="subject" className="ml-1.5" /></SectionLabel>
-        <div className={`flex items-center gap-2 h-10 px-3 rounded-lg bg-white ring-1 ${subjectBad ? "ring-rose-300" : "ring-slate-200/80 focus-within:ring-2 focus-within:ring-indigo-500/30"}`}>
+        <div className={`flex items-center gap-2 h-10 px-3 rounded-lg bg-white ring-1 ${subjectBad ? "ring-rose-300" : "ring-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/30"}`}>
           <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="A specific, scoped subject line…" className="flex-1 bg-transparent outline-none text-[13px] text-slate-900 placeholder:text-slate-400" />
           <span className={`text-[11px] tabular-nums ${subject.length > 80 ? "text-rose-600 font-medium" : "text-slate-400"}`}>{80 - subject.length}</span>
         </div>
@@ -344,7 +344,7 @@ function ScriptedRequestFlow({ conv, value, onChange }: { conv: RequestConversat
             const sel = selected(s);
             return (
               <button key={s} onClick={() => toggle(s)}
-                className={`w-full text-left rounded-lg px-3 py-2 text-[12.5px] leading-relaxed flex items-start gap-2.5 ring-1 transition-colors ${sel ? "bg-indigo-50 ring-indigo-300 text-slate-900" : "bg-white ring-slate-200/80 text-slate-700 hover:ring-indigo-300 hover:bg-indigo-50/30"}`}>
+                className={`w-full text-left rounded-lg px-3 py-2 text-[12.5px] leading-relaxed flex items-start gap-2.5 ring-1 transition-colors ${sel ? "bg-indigo-50 ring-indigo-300 text-slate-900" : "bg-white ring-slate-200 text-slate-700 hover:ring-indigo-300 hover:bg-indigo-50/30"}`}>
                 <span className={`w-4 h-4 rounded mt-0.5 shrink-0 flex items-center justify-center ring-1 ${sel ? "bg-indigo-600 ring-indigo-600 text-white" : "bg-white ring-slate-300"}`}>{sel && <Icon name="check" size={11} />}</span>
                 <span>{s}</span>
               </button>
@@ -409,7 +409,7 @@ function LegacyRequestWorkspace({ value, onChange }: Pick<WorkspaceProps, "value
 
       <div data-guide="subject">
         <SectionLabel hint={`${subject.length} / 80`}>Subject <span className="text-rose-500">*</span> <CriterionMark guide="subject" className="ml-1.5" /></SectionLabel>
-        <div className={`flex items-center gap-2 h-10 px-3 rounded-lg bg-white ring-1 ${subjectBad ? "ring-rose-300" : "ring-slate-200/80 focus-within:ring-2 focus-within:ring-indigo-500/30"}`}>
+        <div className={`flex items-center gap-2 h-10 px-3 rounded-lg bg-white ring-1 ${subjectBad ? "ring-rose-300" : "ring-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/30"}`}>
           <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="A specific, scoped subject line…" className="flex-1 bg-transparent outline-none text-[13px] text-slate-900 placeholder:text-slate-400" />
           <span className={`text-[11px] tabular-nums ${subject.length > 80 ? "text-rose-600 font-medium" : "text-slate-400"}`}>{80 - subject.length}</span>
         </div>
@@ -429,7 +429,7 @@ function LegacyRequestWorkspace({ value, onChange }: Pick<WorkspaceProps, "value
             <div key={i} className="flex items-start gap-2">
               <span className="w-6 h-9 flex items-center justify-center text-[11.5px] font-mono text-slate-400">{i + 1}.</span>
               <input value={it} onChange={(e) => { const n = [...items]; n[i] = e.target.value; setItems(n); }} placeholder="An item you need from them…"
-                className="flex-1 h-9 px-3 rounded-lg bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[13px] text-slate-900 placeholder:text-slate-400" />
+                className="flex-1 h-9 px-3 rounded-lg bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[13px] text-slate-900 placeholder:text-slate-400" />
               {items.length > 3 && (
                 <button onClick={() => setItems(items.filter((_, j) => j !== i))} className="w-9 h-9 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center"><Icon name="x" size={14} /></button>
               )}
@@ -508,7 +508,7 @@ export function ScriptedConductFlow({ task, value, onChange }: { task: ConductTa
         {task.prep ? (
           <>
             <GivenNote>Presenting <strong>{task.interview}</strong> to the <strong>{task.roleAgent}</strong> for sign-off. Your deck and anticipated Q&A are prepared below — choose how to open the pitch; your framing sets the senior&apos;s disposition.</GivenNote>
-            <div data-guide="prep" className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 space-y-3">
+            <div data-guide="prep" className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 space-y-3">
               <div>
                 <div className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-1">Deck summary</div>
                 <p className="text-[12.5px] text-slate-700 leading-relaxed">{task.prep.deck}</p>
@@ -527,7 +527,7 @@ export function ScriptedConductFlow({ task, value, onChange }: { task: ConductTa
           <div className="space-y-2">
             {shuffleOptions(task.openings).map((o, i) => (
               <button key={o.id} onClick={() => pickOpening(o)}
-                className="w-full text-left rounded-xl bg-white ring-1 ring-slate-200/80 hover:ring-indigo-400 hover:bg-indigo-50/40 px-3.5 py-2.5 text-[12.5px] text-slate-800 leading-relaxed tracking-tight transition-colors flex gap-2.5">
+                className="w-full text-left rounded-xl bg-white ring-1 ring-slate-200 hover:ring-indigo-400 hover:bg-indigo-50/40 px-3.5 py-2.5 text-[12.5px] text-slate-800 leading-relaxed tracking-tight transition-colors flex gap-2.5">
                 <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-500 text-[11px] font-semibold flex items-center justify-center shrink-0 mt-px">{"ABC"[i]}</span>
                 <span>{o.text}</span>
               </button>
@@ -542,7 +542,7 @@ export function ScriptedConductFlow({ task, value, onChange }: { task: ConductTa
   const activeRound = terminal ? -1 : correctPicks.length;
   return (
     <div className="space-y-5">
-      <div className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 ring-1 ring-slate-200/70 px-3 py-2">
+      <div className="flex items-start justify-between gap-3 rounded-lg bg-slate-50 ring-1 ring-slate-200 px-3 py-2">
         <div className="flex items-start gap-2 text-[11.5px] text-slate-600 min-w-0">
           <Icon name="info" size={13} className="text-slate-400 shrink-0 mt-px" />
           <span><strong className="font-medium text-slate-700">Interviewee disposition:</strong> your opening set a {opening.routesTo} interviewee.{!opening.correct && opening.coaching ? ` ${opening.coaching}` : ""}</span>
@@ -578,7 +578,7 @@ export function ScriptedConductFlow({ task, value, onChange }: { task: ConductTa
               <div className="space-y-2">
                 {shuffleOptions(thread!.rounds[activeRound].options).map((o, i) => (
                   <button key={o.id} onClick={() => pick(o, activeRound)}
-                    className="w-full text-left rounded-xl bg-white ring-1 ring-slate-200/80 hover:ring-indigo-400 hover:bg-indigo-50/40 px-3.5 py-2.5 text-[12.5px] text-slate-800 leading-relaxed tracking-tight transition-colors flex gap-2.5">
+                    className="w-full text-left rounded-xl bg-white ring-1 ring-slate-200 hover:ring-indigo-400 hover:bg-indigo-50/40 px-3.5 py-2.5 text-[12.5px] text-slate-800 leading-relaxed tracking-tight transition-colors flex gap-2.5">
                     <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-500 text-[11px] font-semibold flex items-center justify-center shrink-0 mt-px">{"ABC"[i]}</span>
                     <span>{o.text}</span>
                   </button>
@@ -593,7 +593,7 @@ export function ScriptedConductFlow({ task, value, onChange }: { task: ConductTa
         <>
           <div>
             <SectionLabel hint="captured to this step">Interview notes</SectionLabel>
-            <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 space-y-3 text-[12.5px] text-slate-800 leading-relaxed">
+            <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 space-y-3 text-[12.5px] text-slate-800 leading-relaxed">
               {captured.map((para, i) => <p key={i} className="whitespace-pre-line">{para}</p>)}
             </div>
           </div>
@@ -628,7 +628,7 @@ function LegacyConductWorkspace({ value, onChange }: Pick<WorkspaceProps, "value
 
       <div>
         <SectionLabel hint={`${script.length} / ${script.length} answered`}>Walkthrough · {stakeholder}</SectionLabel>
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden grid grid-cols-1 sm:grid-cols-[240px_1fr]">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden grid grid-cols-1 sm:grid-cols-[240px_1fr]">
           {/* Interview guide */}
           <div className="border-b sm:border-b-0 sm:border-r border-slate-100 bg-slate-50/40">
             <div className="px-4 py-2.5 border-b border-slate-100 text-[10.5px] font-medium tracking-[0.08em] uppercase text-slate-500">Interview Guide</div>
@@ -655,7 +655,7 @@ function LegacyConductWorkspace({ value, onChange }: Pick<WorkspaceProps, "value
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10.5px] font-semibold mt-0.5 shrink-0">CL</div>
-                <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 px-3.5 py-2 text-[12.5px] text-slate-800 tracking-tight max-w-[85%] leading-relaxed">{script[activeQ].a}</div>
+                <div className="rounded-2xl bg-white ring-1 ring-slate-200 px-3.5 py-2 text-[12.5px] text-slate-800 tracking-tight max-w-[85%] leading-relaxed">{script[activeQ].a}</div>
               </div>
             </div>
           </div>
@@ -786,7 +786,7 @@ function ScriptedRecordFlow({ task, value, onChange }: { task: RecordTask } & Pi
         <button onClick={addRow} className="h-7 px-2.5 rounded-md text-[11.5px] font-medium text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"><Icon name="plus" size={12} />Add row</button>
       }>{task.title} · {startedRows.filter(rowOk).length}/{task.requiredRows} valid <CriterionMark guide="register" className="ml-1.5" /></SectionLabel>
 
-      <div data-guide="register" className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-x-auto">
+      <div data-guide="register" className="rounded-xl ring-1 ring-slate-200 bg-white overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/60 text-[10px] font-semibold tracking-[0.06em] uppercase text-slate-500">
@@ -822,10 +822,10 @@ function ScriptedRecordFlow({ task, value, onChange }: { task: RecordTask } & Pi
                             {c.condReq!.equals} only
                           </span>
                         ) : c.type === "select" ? (
-                          <select value={r[c.key] ?? ""} onChange={(e) => set(i, c.key, e.target.value)} className="w-full h-8 px-1.5 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[11.5px]"><option value="">—</option>{c.options!.map((o) => <option key={o}>{o}</option>)}</select>
+                          <select value={r[c.key] ?? ""} onChange={(e) => set(i, c.key, e.target.value)} className="w-full h-8 px-1.5 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[11.5px]"><option value="">—</option>{c.options!.map((o) => <option key={o}>{o}</option>)}</select>
                         ) : (
                           <input type={c.type === "number" ? "number" : c.type === "date" ? "date" : "text"} value={r[c.key] ?? ""} onChange={(e) => set(i, c.key, e.target.value)} placeholder={c.idFormat?.example ?? ""}
-                            className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[11.5px] min-w-[90px]" />
+                            className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[11.5px] min-w-[90px]" />
                         )}
                       </td>
                     );
@@ -849,7 +849,7 @@ function ScriptedRecordFlow({ task, value, onChange }: { task: RecordTask } & Pi
       </div>
 
       {checked && !objectiveMet && (
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 text-[12px] space-y-1.5">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 text-[12px] space-y-1.5">
           {startedRows.length < task.requiredRows && <div className="text-amber-700 font-medium flex items-center gap-1.5"><Icon name="info" size={13} /> Record at least {task.requiredRows} rows ({startedRows.length} so far).</div>}
           {rows.map((r, i) => { if (!started(r) || rowOk(r)) return null; const errs = [...rowErrors(r), ...(rowDup(r) ? ["duplicate value"] : [])]; return (
             <div key={i} className="flex items-start gap-1.5 text-rose-700"><Icon name="x" size={12} className="mt-0.5 shrink-0" /><span>Row {i + 1}: {errs.join(" · ")}</span></div>
@@ -886,7 +886,7 @@ function LegacyRecordWorkspace({ value, onChange }: Pick<WorkspaceProps, "value"
   return (
     <div className="space-y-4">
       <GivenNote>The register is pre-populated from intake. Every row needs an owner and all three C-I-A values; the owner must be a <strong>role</strong> (not a department), and High/Confidential assets need a rationale.</GivenNote>
-      <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-x-auto">
+      <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-x-auto">
         <table className="w-full border-collapse min-w-[760px]">
           <thead className="bg-slate-50/60 border-b border-slate-100">
             <tr className="text-[10.5px] font-medium tracking-[0.06em] uppercase text-slate-500">
@@ -899,14 +899,14 @@ function LegacyRecordWorkspace({ value, onChange }: Pick<WorkspaceProps, "value"
                 <td className="px-3 py-2.5 text-[12.5px] font-medium text-slate-900">{r.name}</td>
                 <td className="px-3 py-2.5 text-[12px] text-slate-600">{r.type}</td>
                 <td className="px-3 py-2.5">
-                  <select value={r.owner} onChange={(e) => set(ri, "owner", e.target.value)} className="h-8 px-2 rounded-md text-[12px] outline-none ring-1 ring-slate-200/80 bg-white focus:ring-2 focus:ring-indigo-500/40">
+                  <select value={r.owner} onChange={(e) => set(ri, "owner", e.target.value)} className="h-8 px-2 rounded-md text-[12px] outline-none ring-1 ring-slate-200 bg-white focus:ring-2 focus:ring-indigo-500/40">
                     <option value="">Required…</option>
                     {owners.map((o) => <option key={o}>{o}</option>)}
                   </select>
                 </td>
                 {(["c", "i", "a"] as const).map((k) => (
                   <td key={k} className="px-2 py-2.5">
-                    <select value={r[k]} onChange={(e) => set(ri, k, e.target.value)} className={`h-8 px-1.5 rounded-md text-[11px] font-medium outline-none ring-1 ring-inset focus:ring-2 focus:ring-indigo-500/40 ${CLASS_TONE[r[k]] ?? "bg-white ring-slate-200/80"}`}>
+                    <select value={r[k]} onChange={(e) => set(ri, k, e.target.value)} className={`h-8 px-1.5 rounded-md text-[11px] font-medium outline-none ring-1 ring-inset focus:ring-2 focus:ring-indigo-500/40 ${CLASS_TONE[r[k]] ?? "bg-white ring-slate-200"}`}>
                       <option value="">—</option>
                       {["Low", "Medium", "High", "Confidential"].map((o) => <option key={o}>{o}</option>)}
                     </select>
@@ -916,7 +916,7 @@ function LegacyRecordWorkspace({ value, onChange }: Pick<WorkspaceProps, "value"
                 <td className="px-2 py-2.5 max-w-[220px]">
                   {needsRationale(r) ? (
                     <input value={r.rationale} onChange={(e) => set(ri, "rationale", e.target.value)} placeholder={`Required for ${r.c}`}
-                      className={`w-full h-8 px-2 rounded-md text-[12px] outline-none ring-1 ${r.rationale ? "ring-slate-200/80 bg-white" : "ring-rose-300 bg-rose-50/40 placeholder:text-rose-400"} focus:ring-2 focus:ring-indigo-500/40`} />
+                      className={`w-full h-8 px-2 rounded-md text-[12px] outline-none ring-1 ${r.rationale ? "ring-slate-200 bg-white" : "ring-rose-300 bg-rose-50/40 placeholder:text-rose-400"} focus:ring-2 focus:ring-indigo-500/40`} />
                   ) : <span className="text-[12px] text-slate-400">—</span>}
                 </td>
               </tr>
@@ -973,7 +973,7 @@ export function ScriptedApplyFlow({ task, value, onChange, taskCode, activityCod
 
       <div data-guide="table">
         <SectionLabel hint={task.standard}>{task.title} <CriterionMark guide="table" className="ml-1.5" /></SectionLabel>
-        <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-x-auto">
+        <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/60 text-[10px] font-semibold tracking-[0.06em] uppercase text-slate-500">
@@ -992,14 +992,14 @@ export function ScriptedApplyFlow({ task, value, onChange, taskCode, activityCod
                   <tr key={r.id} className={`border-t border-slate-100 align-top ${rowTone}`}>
                     {r.cells.map((c, ci) => <td key={ci} className={`px-3 py-2 text-[12px] ${ci === 0 ? "font-medium text-slate-900" : "text-slate-600"}`}>{c || <span className="text-slate-300 italic">—</span>}</td>)}
                     <td className="px-3 py-2">
-                      <select value={chosen} onChange={(e) => setOutcome(r.id, e.target.value)} className="w-full h-8 px-1.5 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[11.5px]">
+                      <select value={chosen} onChange={(e) => setOutcome(r.id, e.target.value)} className="w-full h-8 px-1.5 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[11.5px]">
                         <option value="">— pick —</option>
                         {task.outcomes.map((o) => <option key={o}>{o}</option>)}
                       </select>
                     </td>
                     {showNoteCol && (
                       <td className="px-3 py-2">
-                        {noteShown(r.id) ? <input value={noteByRow[r.id] ?? ""} onChange={(e) => setNote(r.id, e.target.value)} placeholder={`${task.noteLabel}…`} className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]" /> : <span className="text-[11px] text-slate-300 italic">—</span>}
+                        {noteShown(r.id) ? <input value={noteByRow[r.id] ?? ""} onChange={(e) => setNote(r.id, e.target.value)} placeholder={`${task.noteLabel}…`} className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]" /> : <span className="text-[11px] text-slate-300 italic">—</span>}
                       </td>
                     )}
                   </tr>
@@ -1014,7 +1014,7 @@ export function ScriptedApplyFlow({ task, value, onChange, taskCode, activityCod
       </div>
 
       {checked && !objectiveMet && (
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 text-[12px] space-y-2">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 text-[12px] space-y-2">
           {wrongIds.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 font-medium text-rose-700"><Icon name="x" size={13} /> Wrong outcome on these — reconsider:</div>
@@ -1063,7 +1063,7 @@ function LegacyApplyWorkspace({ value, onChange, openRef }: WorkspaceProps) {
     <div className="space-y-4">
       <GivenNote>Apply the three-tier scheme to <strong>every</strong> asset — use the list on the right to move between them. Each needs a classification and a rationale. Personal-data items must never be Public. <button onClick={() => openRef("ws-classification-scheme")} className="text-indigo-600 hover:underline font-medium">Open the scheme →</button></GivenNote>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden">
           <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between">
             <div className="text-[11px] font-medium tracking-[0.08em] uppercase text-slate-500">Item {step + 1} of {items.length}</div>
             <div className="flex items-center gap-1">
@@ -1081,18 +1081,18 @@ function LegacyApplyWorkspace({ value, onChange, openRef }: WorkspaceProps) {
                 {CLASS.map((o) => {
                   const active = cur.classification === o;
                   return (
-                    <button key={o} onClick={() => set("classification", o)} className={`flex-1 h-11 rounded-xl text-[13px] font-medium tracking-tight transition-all ring-1 ${active ? `${SOFT[tone(o)]} ring-inset` : "bg-white ring-slate-200/80 text-slate-600 hover:ring-slate-300"}`}>{o}</button>
+                    <button key={o} onClick={() => set("classification", o)} className={`flex-1 h-11 rounded-xl text-[13px] font-medium tracking-tight transition-all ring-1 ${active ? `${SOFT[tone(o)]} ring-inset` : "bg-white ring-slate-200 text-slate-600 hover:ring-slate-300"}`}>{o}</button>
                   );
                 })}
               </div>
             </div>
             <div className="mt-4">
               <div className="text-[10.5px] font-medium tracking-[0.08em] uppercase text-slate-500 mb-1.5">Rationale <span className="text-rose-500">*</span></div>
-              <textarea value={cur.rationale} onChange={(e) => set("rationale", e.target.value)} rows={2} placeholder="Why this tier, for this asset…" className="w-full px-3 py-2 rounded-lg bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px] resize-none placeholder:text-slate-400" />
+              <textarea value={cur.rationale} onChange={(e) => set("rationale", e.target.value)} rows={2} placeholder="Why this tier, for this asset…" className="w-full px-3 py-2 rounded-lg bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px] resize-none placeholder:text-slate-400" />
             </div>
           </div>
         </div>
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4">
           <h4 className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-3">Items</h4>
           <div className="space-y-1.5">
             {items.map((it, i) => (
@@ -1154,7 +1154,7 @@ function ScriptedXRefFlow({ task, value, onChange, taskCode, activityCode }: { t
           <button onClick={() => setChecked(true)} className="h-7 px-2.5 rounded-md text-[11.5px] font-medium text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"><Icon name="check" size={12} />Check reconciliation</button>
         }>{task.title} <CriterionMark guide="table" className="ml-1.5" /></SectionLabel>
 
-        <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-x-auto">
+        <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/60 text-[10px] font-semibold tracking-[0.06em] uppercase text-slate-500">
@@ -1173,10 +1173,10 @@ function ScriptedXRefFlow({ task, value, onChange, taskCode, activityCode }: { t
                   <tr key={r.id} className={`border-t border-slate-100 align-top ${rowTone}`}>
                     {r.cells.map((c, ci) => <td key={ci} className={`px-3 py-2 text-[12px] ${ci === 0 ? "font-medium text-slate-900" : "text-slate-600"}`}>{c || <span className="text-slate-300 italic">—</span>}</td>)}
                     <td className="px-3 py-2">
-                      <select value={st} onChange={(e) => setStatus(r.id, e.target.value)} className="w-full h-8 px-1.5 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[11.5px]">{task.statuses.map((s) => <option key={s}>{s}</option>)}</select>
+                      <select value={st} onChange={(e) => setStatus(r.id, e.target.value)} className="w-full h-8 px-1.5 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[11.5px]">{task.statuses.map((s) => <option key={s}>{s}</option>)}</select>
                     </td>
                     <td className="px-3 py-2">
-                      {isDisc ? <input value={actionByRow[r.id] ?? ""} onChange={(e) => setAction(r.id, e.target.value)} placeholder="Corrective action…" className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]" /> : <span className="text-[11px] text-slate-300 italic">— no action needed —</span>}
+                      {isDisc ? <input value={actionByRow[r.id] ?? ""} onChange={(e) => setAction(r.id, e.target.value)} placeholder="Corrective action…" className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]" /> : <span className="text-[11px] text-slate-300 italic">— no action needed —</span>}
                     </td>
                   </tr>
                 );
@@ -1187,7 +1187,7 @@ function ScriptedXRefFlow({ task, value, onChange, taskCode, activityCode }: { t
       </div>
 
       {checked && !objectiveMet && (
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 text-[12px] space-y-2">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 text-[12px] space-y-2">
           {wrongIds.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 font-medium text-rose-700"><Icon name="x" size={13} /> These rows have the wrong status:</div>
@@ -1244,7 +1244,7 @@ function LegacyCrossRefWorkspace({ value, onChange, openRef }: WorkspaceProps) {
       <GivenNote>Reconcile the two registers. Tag <strong>every</strong> row on both sides Match / Miss / Dup, then write the gap note, pick a discrepancy class, and state your method. <button onClick={() => openRef("ws-cmdb-export")} className="text-indigo-600 hover:underline font-medium">Open sources →</button></GivenNote>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {[{ title: "A · IT asset CMDB", rows: sourceA }, { title: "B · Vendor register", rows: sourceB }].map((src) => (
-          <div key={src.title} className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-hidden">
+          <div key={src.title} className="rounded-xl ring-1 ring-slate-200 bg-white overflow-hidden">
             <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/60 text-[12px] font-semibold text-slate-800 tracking-tight flex items-center justify-between">{src.title}<span className="text-[10.5px] text-slate-400 font-mono">read-only</span></div>
             {src.rows.map((r) => (
               <div key={r.id} className={`px-4 py-2.5 border-b border-slate-50 last:border-0 flex items-center gap-3 ${bgFor(decisions[r.id])}`}>
@@ -1269,7 +1269,7 @@ function LegacyCrossRefWorkspace({ value, onChange, openRef }: WorkspaceProps) {
         </div>
         <div>
           <SectionLabel>Discrepancy class <span className="text-rose-500">*</span></SectionLabel>
-          <select value={discrepancyClass} onChange={(e) => setDiscrepancyClass(e.target.value)} className="w-full h-10 px-3 rounded-lg bg-white ring-1 ring-slate-200/80 text-[13px] text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/30">
+          <select value={discrepancyClass} onChange={(e) => setDiscrepancyClass(e.target.value)} className="w-full h-10 px-3 rounded-lg bg-white ring-1 ring-slate-200 text-[13px] text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500/30">
             <option value="">Pick a class…</option>
             {["Owner-data mismatch", "Missing item in B", "Missing item in A", "Duplicate entry", "Schema drift"].map((o) => <option key={o}>{o}</option>)}
           </select>
@@ -1336,7 +1336,7 @@ function ScriptedIdentifyFlow({ task, value, onChange, taskCode, activityCode }:
           <button onClick={() => setChecked(true)} className="h-7 px-2.5 rounded-md text-[11.5px] font-medium text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"><Icon name="check" size={12} />Check flags</button>
         }>Dataset <CriterionMark guide="table" className="ml-1.5" /></SectionLabel>
 
-        <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-x-auto">
+        <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/60 text-[10px] font-semibold tracking-[0.06em] uppercase text-slate-500">
@@ -1359,11 +1359,11 @@ function ScriptedIdentifyFlow({ task, value, onChange, taskCode, activityCode }:
                     </td>
                     {r.cells.map((c, ci) => <td key={ci} className={`px-3 py-2 text-[12px] ${ci === 0 ? "font-medium text-slate-900" : "text-slate-600"}`}>{c || <span className="text-slate-300 italic">(blank)</span>}</td>)}
                     <td className="px-3 py-2">
-                      {m.flagged ? <input value={m.action} onChange={(e) => setField(r.id, "action", e.target.value)} placeholder="One-line action…" className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]" /> : <span className="text-[11px] text-slate-300 italic">— not flagged —</span>}
+                      {m.flagged ? <input value={m.action} onChange={(e) => setField(r.id, "action", e.target.value)} placeholder="One-line action…" className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]" /> : <span className="text-[11px] text-slate-300 italic">— not flagged —</span>}
                     </td>
                     <td className="px-3 py-2">
                       {m.flagged ? (
-                        <select value={m.owner} onChange={(e) => setField(r.id, "owner", e.target.value)} className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]"><option value="">Pick a role…</option>{task.owners.map((o) => <option key={o}>{o}</option>)}</select>
+                        <select value={m.owner} onChange={(e) => setField(r.id, "owner", e.target.value)} className="w-full h-8 px-2 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]"><option value="">Pick a role…</option>{task.owners.map((o) => <option key={o}>{o}</option>)}</select>
                       ) : null}
                     </td>
                   </tr>
@@ -1376,7 +1376,7 @@ function ScriptedIdentifyFlow({ task, value, onChange, taskCode, activityCode }:
 
       {/* Answer-key check */}
       {checked && !objectiveMet && (
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 text-[12px] space-y-2">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 text-[12px] space-y-2">
           {wrongIds.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 font-medium text-rose-700"><Icon name="x" size={13} /> These don&apos;t meet the criterion — unflag them:</div>
@@ -1430,7 +1430,7 @@ function LegacyIdentifyWorkspace({ value, onChange, openRef }: WorkspaceProps) {
   return (
     <div className="space-y-4">
       <GivenNote>Tick the assets the SOC 2 description names as in-scope, then give each flag an action and a named owner. <button onClick={() => openRef("ws-soc2-sysdesc")} className="text-indigo-600 hover:underline font-medium">Open the System Description →</button></GivenNote>
-      <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-hidden">
+      <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-hidden">
         <div className="grid grid-cols-[36px_1fr_110px_1.4fr_170px] gap-2 px-4 py-2.5 border-b border-slate-100 text-[10.5px] font-medium tracking-[0.06em] uppercase text-slate-500 bg-slate-50/60">
           <div /><div>Asset</div><div>Source</div><div>Proposed action</div><div>Accountable role</div>
         </div>
@@ -1439,9 +1439,9 @@ function LegacyIdentifyWorkspace({ value, onChange, openRef }: WorkspaceProps) {
             <button onClick={() => toggle(r.id)} className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${r.flagged ? "bg-indigo-600 text-white" : "ring-1 ring-slate-300 hover:ring-indigo-400"}`}>{r.flagged && <Icon name="check" size={13} strokeWidth={3} />}</button>
             <div className="min-w-0"><div className="text-[12.5px] text-slate-900 tracking-tight font-medium truncate">{r.asset}</div><div className="text-[10.5px] text-slate-500">{r.type}</div></div>
             <div className="text-[11px] font-mono text-slate-500">{r.source}</div>
-            {r.flagged ? <input value={r.action} onChange={(e) => set(r.id, "action", e.target.value)} placeholder="One-line action…" className="h-8 px-2 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]" /> : <div className="text-[11px] text-slate-300 italic">— not flagged —</div>}
+            {r.flagged ? <input value={r.action} onChange={(e) => set(r.id, "action", e.target.value)} placeholder="One-line action…" className="h-8 px-2 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]" /> : <div className="text-[11px] text-slate-300 italic">— not flagged —</div>}
             {r.flagged ? (
-              <select value={r.owner} onChange={(e) => set(r.id, "owner", e.target.value)} className="h-8 px-2 rounded-md bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]"><option value="">Pick a role…</option>{owners.map((o) => <option key={o}>{o}</option>)}</select>
+              <select value={r.owner} onChange={(e) => set(r.id, "owner", e.target.value)} className="h-8 px-2 rounded-md bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/40 outline-none text-[12px]"><option value="">Pick a role…</option>{owners.map((o) => <option key={o}>{o}</option>)}</select>
             ) : <div />}
           </div>
         ))}
@@ -1475,7 +1475,7 @@ function ScriptedReviewFlow({ task, value, onChange }: { task: ReviewTask } & Pi
     <div className="space-y-4">
       <GivenNote>Submit the near-final artefact to your mentor for review. Confirm every prior-feedback item is addressed and write a cover note summarising your changes — then submit for review.</GivenNote>
 
-      <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+      <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4">
         <div className="flex items-center gap-2.5">
           <span className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0"><Icon name="file" size={14} /></span>
           <div className="min-w-0">
@@ -1515,7 +1515,7 @@ function ScriptedReviewFlow({ task, value, onChange }: { task: ReviewTask } & Pi
         <div className="space-y-3">
           <div>
             <SectionLabel hint={`avg ${task.aggregate} · lowest ${task.lowest}`}>Mentor rubric — all five dimensions</SectionLabel>
-            <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-hidden">
+            <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-hidden">
               {task.rubric.map((d) => (
                 <div key={d.dim} className="px-4 py-2.5 border-b border-slate-50 last:border-0 flex items-start gap-3">
                   <span className={`mt-0.5 w-6 h-6 rounded-md text-[11px] font-semibold flex items-center justify-center shrink-0 ring-1 ${SOFT[dimTone(d.score)]}`}>{d.score}</span>
@@ -1568,7 +1568,7 @@ function LegacyReviewWorkspace({ value, onChange, openRef }: WorkspaceProps) {
           <SectionLabel hint={`${cover.length} chars · min 30`}>Cover note <span className="text-rose-500">*</span></SectionLabel>
           <WTextArea value={cover} onChange={setCover} rows={5} placeholder="Summarise what changed since the last revision and any open questions for the mentor." />
         </div>
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 self-start">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 self-start">
           <div className="flex items-center justify-between mb-3"><h4 className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500">Prior feedback</h4><span className="text-[10.5px] font-mono text-slate-500">{addressed} / {fb.length}</span></div>
           <div className="space-y-2">
             {fb.map((f) => (
@@ -1580,7 +1580,7 @@ function LegacyReviewWorkspace({ value, onChange, openRef }: WorkspaceProps) {
           </div>
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
             <span>Revision</span>
-            <select value={revisionNo} onChange={(e) => setRevisionNo(e.target.value)} className="h-7 px-2 rounded-md ring-1 ring-slate-200/80 text-[11.5px] outline-none">{["1", "2", "3"].map((n) => <option key={n}>{n}</option>)}</select>
+            <select value={revisionNo} onChange={(e) => setRevisionNo(e.target.value)} className="h-7 px-2 rounded-md ring-1 ring-slate-200 text-[11.5px] outline-none">{["1", "2", "3"].map((n) => <option key={n}>{n}</option>)}</select>
           </div>
         </div>
       </div>
@@ -1615,18 +1615,18 @@ function LegacyPresentWorkspace({ value, onChange, openRef }: WorkspaceProps) {
           <SectionLabel hint={`${qa.filter((x) => x.q.trim() && x.a.trim()).length} / 3 prepared`} action={<button onClick={() => setQa([...qa, { q: "", a: "" }])} className="h-7 px-2.5 rounded-md text-[11.5px] font-medium text-indigo-700 hover:bg-indigo-50 flex items-center gap-1"><Icon name="plus" size={12} />Add</button>}>Anticipated Q&amp;A</SectionLabel>
           <div className="space-y-2">
             {qa.map((x, i) => (
-              <div key={i} className="rounded-xl bg-white ring-1 ring-slate-200/70 p-3">
-                <div className="flex items-start gap-2"><span className="mt-2 w-6 text-[11px] font-mono text-slate-400">Q{i + 1}</span><input value={x.q} onChange={(e) => setQ(i, "q", e.target.value)} placeholder="Expected question…" className="flex-1 h-9 px-2 rounded-md bg-slate-50 ring-1 ring-slate-200/60 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px]" /></div>
-                <div className="mt-1.5 flex items-start gap-2"><span className="mt-2 w-6 text-[11px] font-mono text-slate-400">A</span><textarea value={x.a} onChange={(e) => setQ(i, "a", e.target.value)} placeholder="Prepared answer…" rows={2} className="flex-1 px-2 py-1.5 rounded-md bg-slate-50 ring-1 ring-slate-200/60 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px] resize-none leading-relaxed" /></div>
+              <div key={i} className="rounded-xl bg-white ring-1 ring-slate-200 p-3">
+                <div className="flex items-start gap-2"><span className="mt-2 w-6 text-[11px] font-mono text-slate-400">Q{i + 1}</span><input value={x.q} onChange={(e) => setQ(i, "q", e.target.value)} placeholder="Expected question…" className="flex-1 h-9 px-2 rounded-md bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px]" /></div>
+                <div className="mt-1.5 flex items-start gap-2"><span className="mt-2 w-6 text-[11px] font-mono text-slate-400">A</span><textarea value={x.a} onChange={(e) => setQ(i, "a", e.target.value)} placeholder="Prepared answer…" rows={2} className="flex-1 px-2 py-1.5 rounded-md bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[12.5px] resize-none leading-relaxed" /></div>
               </div>
             ))}
           </div>
         </div>
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 self-start">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 self-start">
           <h4 className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-3">Sign-off decision</h4>
           <div className="space-y-2">
             {decisions.map((d) => (
-              <button key={d.id} onClick={() => setDecision(d.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ring-1 ${decision === d.id ? `${SOFT[d.tone]} ring-inset` : "ring-slate-200/70 hover:bg-slate-50"}`}>
+              <button key={d.id} onClick={() => setDecision(d.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ring-1 ${decision === d.id ? `${SOFT[d.tone]} ring-inset` : "ring-slate-200 hover:bg-slate-50"}`}>
                 <span className={`w-4 h-4 rounded-full flex items-center justify-center ${decision === d.id ? DOT[d.tone] : "ring-2 ring-slate-300"}`}>{decision === d.id && <span className="w-1.5 h-1.5 rounded-full bg-white" />}</span>
                 <span className="text-[12.5px] font-medium tracking-tight text-slate-700">{d.label}</span>
               </button>

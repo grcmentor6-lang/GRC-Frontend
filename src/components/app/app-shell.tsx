@@ -10,8 +10,8 @@ import { WelcomeTour, startWelcomeTour } from "./welcome-tour";
 import { markTourSeen } from "./guided-tour";
 import { UpNext } from "./up-next";
 import { FeedbackWidget } from "./feedback-widget";
+import { OrgInfoButton } from "@/components/desk/org-drawer";
 import { DropdownPanel } from "@/components/ui/motion";
-import { BrandMark } from "@/components/ui/primitives";
 import { learningsApi } from "@/lib/learnings";
 import { useCachedQuery } from "@/lib/use-query";
 
@@ -36,7 +36,7 @@ function DashSidebar({
     <aside
       aria-label="Sidebar"
       className={[
-        "bg-white/60 backdrop-blur-xl border-r border-slate-200/70 flex flex-col print:hidden",
+        "bg-white border-r border-slate-200 flex flex-col print:hidden",
         // Mobile: fixed off-canvas drawer that slides in over the content.
         "fixed inset-y-0 left-0 z-50 w-[244px] transition-transform duration-300",
         mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full",
@@ -127,7 +127,7 @@ function UserMenu() {
   const onSignOut = () => signOut("/");
 
   return (
-    <div className="relative pl-3 ml-1 border-l border-slate-200/70" ref={ref}>
+    <div className="relative pl-3 ml-1 border-l border-slate-200" ref={ref}>
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Account menu"
@@ -413,12 +413,15 @@ function DashTopBar({ openMobile }: { openMobile: () => void }) {
         </button>
 
         <Link href="/app" aria-label="GRC 101 Foundations, home" className="hidden shrink-0 items-center gap-2.5 no-underline md:flex">
-          <BrandMark size={36} />
           <span className="hidden leading-tight min-[1140px]:block">
             <b className="block text-[14.5px] font-semibold tracking-[-0.005em] text-[#191a2c]">GRC 101</b>
             <small className="block text-[12px] text-[#8a8ba3]">Foundations</small>
           </span>
         </Link>
+
+        {/* The mentee's two organisations, next to the programme they belong to. */}
+        <span aria-hidden className="hidden h-7 w-px shrink-0 bg-[#e7e7f0] min-[1140px]:block" />
+        <OrgInfoButton />
 
         {/* The desk's organisation dock, behind a rule. Off the desk the slot is empty, and the rule
             goes with it — a hairline fencing off nothing. */}
@@ -534,10 +537,10 @@ function CollapseMenuHint({ collapsed }: { collapsed: boolean }) {
 
       <div
         role="status"
-        className="fixed top-[74px] left-4 z-40 w-[268px] rounded-xl bg-white ring-1 ring-slate-200/70 shadow-2xl shadow-black/40 motion-safe:animate-[popIn_.35s_ease-out]"
+        className="fixed top-[74px] left-4 z-40 w-[268px] rounded-xl bg-white ring-1 ring-slate-200 shadow-2xl shadow-black/40 motion-safe:animate-[popIn_.35s_ease-out]"
       >
         {/* Caret aimed up at the toggle, centred on it. */}
-        <span className="absolute left-[26px] -top-[5px] w-2.5 h-2.5 rotate-45 bg-white ring-1 ring-slate-200/70 [clip-path:polygon(0_0,100%_0,0_100%)]" />
+        <span className="absolute left-[26px] -top-[5px] w-2.5 h-2.5 rotate-45 bg-white ring-1 ring-slate-200 [clip-path:polygon(0_0,100%_0,0_100%)]" />
         <div className="flex items-start gap-2.5 px-3.5 pt-3">
           <Icon name="sparkle" size={15} className="shrink-0 mt-px text-indigo-500" />
           <p className="text-[12.5px] leading-[1.55] text-slate-600">
@@ -592,7 +595,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [mobileOpen]);
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-[#FAFAF7] print:h-auto print:w-auto print:overflow-visible print:block">
+    <div className="h-screen flex overflow-hidden bg-[#FAFAF7] print:h-auto print:overflow-visible print:block">
       {/* Mobile drawer backdrop. */}
       {mobileOpen && (
         <div
@@ -612,7 +615,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden print:overflow-visible print:h-auto">{children}</main>
       </div>
       <CollapseMenuHint collapsed={collapsed} />
-      <FeedbackWidget />
+      {/* On the desk the corner belongs to its toolbar, so the button sits above it. */}
+      <FeedbackWidget placement={pathname.startsWith("/app/desk") ? "bottom-[22px] right-5 max-lg:bottom-[84px] max-lg:right-4" : undefined} />
       <div className="print:hidden"><WelcomeTour openNav={() => setMobileOpen(true)} /></div>
     </div>
   );

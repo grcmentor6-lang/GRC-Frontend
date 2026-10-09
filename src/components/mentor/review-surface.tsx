@@ -787,8 +787,6 @@ function Delivery({
           // screen at the thirtieth row of a register. Printing it in both places would make the
           // reviewer wonder which one they had already worked through.
           objectiveTitle="What they were asked for"
-          // Its terms still have to be defined on the page, and TermsUsed reads this.
-          glossTexts={checks}
           // Open. It is what the delivery is being judged against, and a reviewer who has to press
           // "Show" before they can check anything will sometimes not press it.
           defaultOpen
@@ -1062,7 +1060,7 @@ function RefPane({ references }: { references: TaskReference[] }) {
         <button
           key={r.id}
           onClick={() => setOpen(r)}
-          className="group flex w-full items-center gap-3 rounded-xl bg-white px-3.5 py-3 text-left ring-1 ring-slate-200/70 transition-colors hover:bg-slate-50"
+          className="group flex w-full items-center gap-3 rounded-xl bg-white px-3.5 py-3 text-left ring-1 ring-slate-200 transition-colors hover:bg-slate-50"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
             <Icon name="book" size={16} />

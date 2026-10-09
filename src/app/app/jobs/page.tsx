@@ -33,12 +33,12 @@ const AVA: Record<string, string> = {
 const RESP: Record<RespState, { icon: IconName; cls: string; sw: number; tag: string; tagcls: string }> = {
   matched: { icon: "check", cls: "bg-emerald-50 text-emerald-600 ring-emerald-100", sw: 3, tag: "Matched", tagcls: "text-emerald-600" },
   partial: { icon: "play", cls: "bg-indigo-50 text-indigo-600 ring-indigo-100", sw: 1.8, tag: "Developing", tagcls: "text-indigo-600" },
-  gap: { icon: "plus", cls: "bg-slate-50 text-slate-300 ring-slate-200/60", sw: 2, tag: "Growth area", tagcls: "text-slate-500" },
+  gap: { icon: "plus", cls: "bg-slate-50 text-slate-300 ring-slate-200", sw: 2, tag: "Growth area", tagcls: "text-slate-500" },
 };
 const STD_STATE: Record<RespState, string> = {
   matched: "bg-emerald-50 text-emerald-700 ring-emerald-100",
   partial: "bg-indigo-50 text-indigo-700 ring-indigo-100",
-  gap: "bg-slate-50 text-slate-500 ring-slate-200/60",
+  gap: "bg-slate-50 text-slate-500 ring-slate-200",
 };
 
 // ---- saved jobs (local, per-browser; backend persistence is a later phase) ----
@@ -183,7 +183,7 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
   const matchedCount = job.derivedResponsibilities.filter((r) => r.state !== "gap").length;
   return (
     <Card pad={false} className="transition-all duration-300 hover:-translate-y-0.5 hover:ring-indigo-200/70">
-      <div className="p-5">
+      <div className="p-4">
         <div className="flex items-start gap-4">
           <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${AVA[job.tone]} flex items-center justify-center text-white text-[15px] font-semibold shrink-0`}>
             {job.initials}
@@ -214,7 +214,7 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
 
         {/* function match + standards */}
         <div className="mt-4 flex items-center gap-2.5 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 text-[11.5px] text-slate-600 tracking-tight bg-slate-50 ring-1 ring-slate-200/60 rounded-lg px-2.5 h-7">
+          <span className="inline-flex items-center gap-1.5 text-[11.5px] text-slate-600 tracking-tight bg-slate-50 ring-1 ring-slate-200 rounded-lg px-2.5 h-7">
             <Icon name="layers" size={12} className="text-slate-400" />
             <span className="font-medium text-slate-700">{job.jobFunction}</span>
             <Icon name="arrowRight" size={11} className="text-slate-300" />
@@ -243,7 +243,7 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
           </a>
           <button
             onClick={onToggleSave}
-            className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-lg ring-1 text-[12.5px] font-medium tracking-tight transition-colors ${saved ? "bg-amber-50 ring-amber-200 text-amber-700" : "bg-white ring-slate-200/70 text-slate-600 hover:bg-slate-50"}`}
+            className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-lg ring-1 text-[12.5px] font-medium tracking-tight transition-colors ${saved ? "bg-amber-50 ring-amber-200 text-amber-700" : "bg-white ring-slate-200 text-slate-600 hover:bg-slate-50"}`}
           >
             <Icon name="star" size={13} fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save"}
           </button>
@@ -259,9 +259,9 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
 
       {open && (
         <div className="px-5 pb-5 -mt-1">
-          <div className="rounded-xl bg-slate-50/60 ring-1 ring-slate-200/60 p-4">
-            <div className="flex items-center gap-2.5 pb-3 mb-3 border-b border-slate-200/60">
-              <span className="w-8 h-8 rounded-lg bg-white ring-1 ring-slate-200/70 flex items-center justify-center text-indigo-600 shrink-0">
+          <div className="rounded-xl bg-slate-50/60 ring-1 ring-slate-200 p-4">
+            <div className="flex items-center gap-2.5 pb-3 mb-3 border-b border-slate-200">
+              <span className="w-8 h-8 rounded-lg bg-white ring-1 ring-slate-200 flex items-center justify-center text-indigo-600 shrink-0">
                 <Icon name="layers" size={15} />
               </span>
               <div className="min-w-0">
@@ -296,7 +296,7 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
                 );
               })}
             </div>
-            <div className="mt-3 pt-3 border-t border-slate-200/60 flex items-center gap-2 text-[11.5px] text-slate-500">
+            <div className="mt-3 pt-3 border-t border-slate-200 flex items-center gap-2 text-[11.5px] text-slate-500">
               <Icon name="info" size={13} className="text-slate-400" />
               {matchedCount} of {job.derivedResponsibilities.length} responsibilities backed by work you&apos;ve executed.
             </div>
@@ -335,7 +335,7 @@ export default function JobsPage() {
   }, [allJobs, q, source, sort, saved]);
 
   return (
-    <div className="max-w-[1000px] 2xl:max-w-[1400px] 3xl:max-w-[1640px] mx-auto px-6 py-6 space-y-5">
+    <div className="page-shell space-y-4">
       <div className="flex items-start gap-3.5">
         <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(79,70,229,0.6)] shrink-0">
           <Icon name="briefcase" size={20} />
@@ -357,7 +357,7 @@ export default function JobsPage() {
 
           {/* filter / sort bar */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 px-3 h-9 rounded-lg bg-white ring-1 ring-slate-200/70 flex-1 min-w-[200px]">
+            <div className="flex items-center gap-2 px-3 h-9 rounded-lg bg-white ring-1 ring-slate-200 flex-1 min-w-[200px]">
               <Icon name="search" size={15} className="text-slate-400" />
               <input
                 value={q}
@@ -375,7 +375,7 @@ export default function JobsPage() {
               <select
                 value={source}
                 onChange={(e) => setSource(e.target.value as (typeof JOB_SOURCES)[number])}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg bg-white ring-1 ring-slate-200/70 text-[12.5px] text-slate-700 outline-none cursor-pointer"
+                className="appearance-none h-9 pl-3 pr-8 rounded-lg bg-white ring-1 ring-slate-200 text-[12.5px] text-slate-700 outline-none cursor-pointer"
               >
                 {JOB_SOURCES.map((s) => (
                   <option key={s} value={s}>
@@ -385,7 +385,7 @@ export default function JobsPage() {
               </select>
               <Icon name="chevronDown" size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
-            <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100/80 ring-1 ring-slate-200/60">
+            <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100/80 ring-1 ring-slate-200">
               {(
                 [
                   ["match", "Best match"],
@@ -404,11 +404,11 @@ export default function JobsPage() {
             </div>
           </div>
 
-          {/* listing */}
-          <div className="space-y-3">
+          {/* listing: two columns once a card has room for its chips and match ring */}
+          <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
             {jobs.length === 0 ? (
-              <Card className="text-center py-12">
-                <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 ring-1 ring-slate-200/70 flex items-center justify-center text-slate-400 mb-3">
+              <Card className="text-center py-12 xl:col-span-2">
+                <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 ring-1 ring-slate-200 flex items-center justify-center text-slate-400 mb-3">
                   <Icon name={sort === "saved" ? "star" : "search"} size={20} />
                 </div>
                 <div className="text-[13px] font-medium text-slate-700">

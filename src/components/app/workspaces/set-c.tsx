@@ -43,7 +43,7 @@ function BriefFlow({ task, value, onChange }: { task: BriefTask } & Pick<Workspa
             <div key={i} className="flex items-start gap-2">
               <span className="w-6 h-9 flex items-center justify-center text-[11.5px] font-mono text-slate-400">{i + 1}.</span>
               <input value={m} onChange={(e) => setMsg(i, e.target.value)} placeholder="A short, plain-language point…"
-                className="flex-1 h-9 px-3 rounded-lg bg-white ring-1 ring-slate-200/80 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[13px]" />
+                className="flex-1 h-9 px-3 rounded-lg bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-indigo-500/30 outline-none text-[13px]" />
               {messages.length > 3 && <button onClick={() => setMessages(messages.filter((_, j) => j !== i))} className="w-9 h-9 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center"><Icon name="x" size={14} /></button>}
             </div>
           ))}
@@ -107,18 +107,18 @@ function LegacyAssessWorkspace({ value, onChange }: WorkspaceProps) {
     <div className="space-y-4">
       <GivenNote>Assess maturity against the CMMI 1–5 scale across 8 domains. Every level needs cited evidence; outliers (flagged ⚠) need explanation.</GivenNote>
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
-        <div className="rounded-xl ring-1 ring-slate-200/80 bg-white overflow-hidden">
+        <div className="rounded-xl ring-1 ring-slate-200 bg-white overflow-hidden">
           {items.map((i) => (
             <div key={i.id} className="px-4 py-3 border-b border-slate-50 last:border-0">
               <div className="flex items-center justify-between mb-2"><div className="text-[12.5px] font-medium text-slate-900 tracking-tight">{i.name}{i.outlier && <span className="ml-2 text-[10px] text-amber-700 font-medium">⚠ outlier</span>}</div></div>
               <div className="flex items-center gap-1 mb-2">
                 {scale.map((s, si) => { const active = i.score === si + 1; return <button key={s} onClick={() => set(i.id, "score", si + 1)} className={`flex-1 h-8 rounded-md text-[10px] font-medium transition-all ${active ? "bg-amber-500 text-white" : "bg-slate-50 text-slate-500 hover:bg-amber-50"}`}>{si + 1}<span className="hidden sm:inline"> {s}</span></button>; })}
               </div>
-              <input value={i.evidence} onChange={(e) => set(i.id, "evidence", e.target.value)} placeholder="Cite the evidence…" className={`w-full h-9 px-3 rounded-md text-[12px] outline-none ring-1 ${i.evidence.trim().length > 10 ? "bg-emerald-50/20 ring-emerald-200/70" : "bg-slate-50 ring-slate-200/80"} focus:ring-2 focus:ring-amber-400/40`} />
+              <input value={i.evidence} onChange={(e) => set(i.id, "evidence", e.target.value)} placeholder="Cite the evidence…" className={`w-full h-9 px-3 rounded-md text-[12px] outline-none ring-1 ${i.evidence.trim().length > 10 ? "bg-emerald-50/20 ring-emerald-200/70" : "bg-slate-50 ring-slate-200"} focus:ring-2 focus:ring-amber-400/40`} />
             </div>
           ))}
         </div>
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 self-start"><h4 className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-2">Maturity profile</h4><RadarChart values={items.map((i) => i.score)} labels={items.map((i) => i.id.toUpperCase())} max={5} tone="#f59e0b" /></div>
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 self-start"><h4 className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-2">Maturity profile</h4><RadarChart values={items.map((i) => i.score)} labels={items.map((i) => i.id.toUpperCase())} max={5} tone="#f59e0b" /></div>
       </div>
     </div>
   );
@@ -153,18 +153,18 @@ function LegacyScoreWorkspace({ value, onChange, openRef }: WorkspaceProps) {
           {dims.map((d) => {
             const v = scores[d.id]; const len = (notes[d.id] || "").length;
             return (
-              <div key={d.id} className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+              <div key={d.id} className="rounded-2xl bg-white ring-1 ring-slate-200 p-4">
                 <div className="flex items-baseline justify-between"><div><h4 className="text-[13.5px] font-semibold text-slate-900 tracking-tight">{d.label}</h4><p className="text-[11px] text-slate-500 mt-0.5">Weight {Math.round(d.weight * 100)}%</p></div><div className="text-[22px] font-semibold text-slate-900 tabular-nums leading-none">{v}<span className="text-slate-300 text-[13px]"> / 4</span></div></div>
                 <input type="range" min={0} max={4} step={1} value={v} onChange={(e) => setScores({ ...scores, [d.id]: parseInt(e.target.value) })} className="w-full accent-indigo-600 cursor-pointer mt-3" />
                 <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-1"><span>0 · {d.anchor0}</span><span>{d.anchor4} · 4</span></div>
-                <div className="mt-3 flex items-center gap-2"><input value={notes[d.id] || ""} onChange={(e) => setNotes({ ...notes, [d.id]: e.target.value })} placeholder="One-line justification…" className={`flex-1 h-9 px-3 rounded-lg bg-slate-50 ring-1 outline-none text-[12.5px] focus:ring-2 focus:ring-indigo-500/30 ${len === 0 ? "ring-slate-200/80" : len >= 15 ? "ring-emerald-200/80" : "ring-amber-200"}`} /><span className={`text-[10.5px] tabular-nums w-12 text-right ${len >= 15 ? "text-emerald-600" : "text-slate-400"}`}>{len} / 15</span></div>
+                <div className="mt-3 flex items-center gap-2"><input value={notes[d.id] || ""} onChange={(e) => setNotes({ ...notes, [d.id]: e.target.value })} placeholder="One-line justification…" className={`flex-1 h-9 px-3 rounded-lg bg-slate-50 ring-1 outline-none text-[12.5px] focus:ring-2 focus:ring-indigo-500/30 ${len === 0 ? "ring-slate-200" : len >= 15 ? "ring-emerald-200/80" : "ring-amber-200"}`} /><span className={`text-[10.5px] tabular-nums w-12 text-right ${len >= 15 ? "text-emerald-600" : "text-slate-400"}`}>{len} / 15</span></div>
               </div>
             );
           })}
         </div>
         <div className="space-y-3 self-start">
           <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 p-4 text-white"><div className="text-[10.5px] font-medium tracking-[0.12em] uppercase text-indigo-100">Weighted aggregate</div><div className="mt-1 flex items-baseline gap-1"><div className="text-[34px] font-semibold tabular-nums leading-none">{aggregate.toFixed(2)}</div><div className="text-[16px] text-indigo-200">/ 4.00</div></div><div className="mt-3 h-1.5 rounded-full bg-indigo-700/40 overflow-hidden"><div className="h-full bg-white rounded-full" style={{ width: `${(aggregate / 4) * 100}%` }} /></div></div>
-          <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4"><RadarChart values={dims.map((d) => scores[d.id])} labels={dims.map((d) => d.label.split(" ")[0])} max={4} tone="#6366f1" /></div>
+          <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4"><RadarChart values={dims.map((d) => scores[d.id])} labels={dims.map((d) => d.label.split(" ")[0])} max={4} tone="#6366f1" /></div>
         </div>
       </div>
     </div>
@@ -203,10 +203,10 @@ function LegacyCompileWorkspace({ value, onChange, openRef }: WorkspaceProps) {
       <div><SectionLabel>1 · Executive summary <span className="text-rose-500">*</span></SectionLabel><WTextArea value={exec} onChange={setExec} rows={4} placeholder="Scope, drivers, and the highest residual risk — in a few sentences…" hint={`${exec.length} chars`} /></div>
       <div className="space-y-2">
         {secs.map((s) => (
-          <div key={s.id} className="rounded-xl bg-white ring-1 ring-slate-200/70 p-3">
+          <div key={s.id} className="rounded-xl bg-white ring-1 ring-slate-200 p-3">
             <div className="flex items-center justify-between mb-2"><h3 className="text-[12.5px] font-semibold tracking-tight text-slate-900">{s.title}<span className="text-rose-500">*</span></h3><span className={`text-[10px] font-medium ${s.refs.length ? "text-emerald-700" : "text-slate-400"}`}>{s.refs.length ? "✓ linked" : "link a source"}</span></div>
             <div className="flex flex-wrap gap-1.5">
-              {sources.map((src) => { const on = s.refs.includes(src.id); return <button key={src.id} onClick={() => toggle(s.id, src.id)} className={`inline-flex items-center gap-1 text-[10.5px] font-medium px-2 py-1 rounded ring-1 transition-all ${on ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-50 text-slate-500 ring-slate-200/70 hover:ring-slate-300"}`}><Icon name="link" size={10} />{src.title}</button>; })}
+              {sources.map((src) => { const on = s.refs.includes(src.id); return <button key={src.id} onClick={() => toggle(s.id, src.id)} className={`inline-flex items-center gap-1 text-[10.5px] font-medium px-2 py-1 rounded ring-1 transition-all ${on ? "bg-emerald-50 text-emerald-700 ring-emerald-200" : "bg-slate-50 text-slate-500 ring-slate-200 hover:ring-slate-300"}`}><Icon name="link" size={10} />{src.title}</button>; })}
             </div>
           </div>
         ))}
@@ -241,7 +241,7 @@ function LegacyBriefWorkspace({ value, onChange }: WorkspaceProps) {
             <SectionLabel>Format</SectionLabel>
             <div className="grid grid-cols-2 gap-2">
               {[{ id: "page", label: "One-page document", hint: "≤ 1 page", icon: "file" as const }, { id: "deck", label: "Short slide deck", hint: "≤ 5 slides", icon: "layers" as const }].map((f) => (
-                <button key={f.id} onClick={() => setFormat(f.id)} className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ring-1 ${format === f.id ? "bg-indigo-50 ring-indigo-300" : "bg-white ring-slate-200/80 hover:ring-slate-300"}`}><span className={`w-8 h-8 rounded-lg flex items-center justify-center ${format === f.id ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600"}`}><Icon name={f.icon} size={14} /></span><div><div className="text-[12.5px] font-medium tracking-tight text-slate-900">{f.label}</div><div className="text-[10.5px] font-mono text-slate-500">{f.hint}</div></div></button>
+                <button key={f.id} onClick={() => setFormat(f.id)} className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all ring-1 ${format === f.id ? "bg-indigo-50 ring-indigo-300" : "bg-white ring-slate-200 hover:ring-slate-300"}`}><span className={`w-8 h-8 rounded-lg flex items-center justify-center ${format === f.id ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600"}`}><Icon name={f.icon} size={14} /></span><div><div className="text-[12.5px] font-medium tracking-tight text-slate-900">{f.label}</div><div className="text-[10.5px] font-mono text-slate-500">{f.hint}</div></div></button>
               ))}
             </div>
           </div>
@@ -249,10 +249,10 @@ function LegacyBriefWorkspace({ value, onChange }: WorkspaceProps) {
           <div><SectionLabel hint={`${keyMessage.split(/\s+/).filter(Boolean).length} words`}>Brief body (plain language) <span className="text-rose-500">*</span></SectionLabel><WTextArea value={keyMessage} onChange={setKeyMessage} rows={7} placeholder="What changes, from when, and why — no jargon…" /></div>
           <div><SectionLabel>Ask of audience <span className="text-rose-500">*</span></SectionLabel><WTextArea value={ask} onChange={setAsk} rows={2} placeholder="The one concrete thing they must do, and by when…" /></div>
         </div>
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 self-start">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 self-start">
           <h4 className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-2">Comprehension check</h4>
           <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">Auto-generated from the brief — a reader should answer all three.</p>
-          <div className="space-y-2">{mcq.map((m, i) => <div key={i} className="rounded-lg ring-1 ring-slate-200/70 p-2.5 bg-slate-50/40"><div className="text-[11.5px] font-medium text-slate-800 tracking-tight">{i + 1}. {m.q}</div><span className="mt-1.5 inline-flex items-center gap-1 text-[10.5px] font-mono bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 px-2 py-0.5 rounded"><Icon name="check" size={10} strokeWidth={3} />{m.a}</span></div>)}</div>
+          <div className="space-y-2">{mcq.map((m, i) => <div key={i} className="rounded-lg ring-1 ring-slate-200 p-2.5 bg-slate-50/40"><div className="text-[11.5px] font-medium text-slate-800 tracking-tight">{i + 1}. {m.q}</div><span className="mt-1.5 inline-flex items-center gap-1 text-[10.5px] font-mono bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 px-2 py-0.5 rounded"><Icon name="check" size={10} strokeWidth={3} />{m.a}</span></div>)}</div>
         </div>
       </div>
     </div>
@@ -286,20 +286,20 @@ function LegacySignoffWorkspace({ value, onChange, openRef }: WorkspaceProps) {
         { who: "stakeholder", initials: "HE", text: "Good. What's missing — and what would block me from signing today?" },
       ]} />
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-4">
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4">
           <h4 className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-3">Decision</h4>
           <div className="space-y-2">
             {opts.map((o) => (
-              <button key={o.id} onClick={() => setDecision(o.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ring-1 ${decision === o.id ? `${SOFT[o.tone]} ring-inset` : "ring-slate-200/70 hover:bg-slate-50"}`}>
+              <button key={o.id} onClick={() => setDecision(o.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ring-1 ${decision === o.id ? `${SOFT[o.tone]} ring-inset` : "ring-slate-200 hover:bg-slate-50"}`}>
                 <span className={`w-4 h-4 rounded-full flex items-center justify-center ${decision === o.id ? DOT[o.tone] : "ring-2 ring-slate-300"}`}>{decision === o.id && <span className="w-1.5 h-1.5 rounded-full bg-white" />}</span>
                 <span className="text-[12.5px] font-medium tracking-tight text-slate-700">{o.id}</span>
               </button>
             ))}
           </div>
-          {decision === "Approved with conditions" && <div className="mt-4"><div className="text-[10.5px] font-medium tracking-[0.08em] uppercase text-slate-500 mb-1.5">Conditions <span className="text-rose-500">*</span></div><textarea value={conditions} onChange={(e) => setConditions(e.target.value)} rows={3} placeholder="What must happen before this is fully approved?" className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200/80 focus:ring-2 focus:ring-amber-400/40 outline-none text-[12.5px] resize-none" /></div>}
-          {decision === "Rejected" && <div className="mt-4"><div className="text-[10.5px] font-medium tracking-[0.08em] uppercase text-slate-500 mb-1.5">Revision plan <span className="text-rose-500">*</span></div><textarea value={revisionPlan} onChange={(e) => setRevisionPlan(e.target.value)} rows={3} placeholder="What changes before resubmission?" className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200/80 focus:ring-2 focus:ring-rose-400/40 outline-none text-[12.5px] resize-none" /></div>}
+          {decision === "Approved with conditions" && <div className="mt-4"><div className="text-[10.5px] font-medium tracking-[0.08em] uppercase text-slate-500 mb-1.5">Conditions <span className="text-rose-500">*</span></div><textarea value={conditions} onChange={(e) => setConditions(e.target.value)} rows={3} placeholder="What must happen before this is fully approved?" className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-amber-400/40 outline-none text-[12.5px] resize-none" /></div>}
+          {decision === "Rejected" && <div className="mt-4"><div className="text-[10.5px] font-medium tracking-[0.08em] uppercase text-slate-500 mb-1.5">Revision plan <span className="text-rose-500">*</span></div><textarea value={revisionPlan} onChange={(e) => setRevisionPlan(e.target.value)} rows={3} placeholder="What changes before resubmission?" className="w-full px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-rose-400/40 outline-none text-[12.5px] resize-none" /></div>}
         </div>
-        <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 self-start space-y-3">
+        <div className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 self-start space-y-3">
           <div><div className="text-[10.5px] font-medium tracking-[0.08em] uppercase text-slate-500 mb-1.5">Decision date <span className="text-rose-500">*</span></div><WTextInput type="date" value={date} onChange={setDate} /></div>
           <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-500 space-y-1"><div className="flex justify-between"><span>Decided by</span><span className="text-slate-800 font-medium">Head of Engineering</span></div><div className="flex justify-between"><span>Audit record</span><span className="text-slate-800 font-mono">SO-2026-0142</span></div></div>
         </div>
@@ -320,11 +320,11 @@ export function InterviewWorkspace({ value, onChange }: WorkspaceProps) {
     <div className="space-y-4">
       <GivenNote>Prepare ≥ 5 open questions, then read the pre-scripted DPO dialogue and write a closing summary. There is no live chat — the exchange is fixed.</GivenNote>
       <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4">
-        <div data-guide="questions" className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-4 self-start">
+        <div data-guide="questions" className="rounded-2xl bg-white ring-1 ring-slate-200 p-4 self-start">
           <div className="flex items-center justify-between mb-3"><h4 className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500">Prepared questions <CriterionMark guide="questions" className="ml-1.5" /></h4><span className={`text-[10.5px] font-mono ${prepared >= 5 ? "text-emerald-600" : "text-amber-700"}`}>{prepared} / 5</span></div>
           <div className="space-y-1.5">
             {questions.map((q, i) => (
-              <div key={i} className="flex items-start gap-2"><span className="mt-2 text-[10.5px] font-mono text-slate-400 w-4">{i + 1}</span><textarea value={q} onChange={(e) => { const n = [...questions]; n[i] = e.target.value; setQuestions(n); }} rows={2} placeholder="Open-ended question…" className="flex-1 px-2 py-1.5 rounded-md bg-slate-50 ring-1 ring-slate-200/60 focus:ring-2 focus:ring-violet-400/40 outline-none text-[11.5px] resize-none leading-snug" /></div>
+              <div key={i} className="flex items-start gap-2"><span className="mt-2 text-[10.5px] font-mono text-slate-400 w-4">{i + 1}</span><textarea value={q} onChange={(e) => { const n = [...questions]; n[i] = e.target.value; setQuestions(n); }} rows={2} placeholder="Open-ended question…" className="flex-1 px-2 py-1.5 rounded-md bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-violet-400/40 outline-none text-[11.5px] resize-none leading-snug" /></div>
             ))}
             <button onClick={() => setQuestions([...questions, ""])} className="w-full mt-1 h-8 rounded-md text-[11px] font-medium text-violet-700 hover:bg-violet-50 flex items-center justify-center gap-1"><Icon name="plus" size={11} />Add question</button>
           </div>
@@ -373,18 +373,18 @@ function LegacyDocumentWorkspace({ value, onChange }: WorkspaceProps) {
   return (
     <div className="space-y-4">
       <GivenNote>Write up <strong>every</strong> section, then link at least one upstream artefact. Broken cross-references (unresolved artefacts) block submission.</GivenNote>
-      <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 overflow-hidden">
+      <div className="rounded-2xl bg-white ring-1 ring-slate-200 overflow-hidden">
         <div className="px-4 py-4 space-y-4">
           {secs.map((s) => (
             <div key={s.id}>
               <div className="flex items-center gap-2 mb-1.5"><button onClick={() => set(s.id, "done", !s.done)} className={`w-4 h-4 rounded flex items-center justify-center transition-all ${s.done ? "bg-emerald-500 text-white" : "ring-2 ring-slate-300 hover:ring-emerald-400"}`}>{s.done && <Icon name="check" size={11} strokeWidth={3} />}</button><h3 className="text-[13.5px] font-semibold tracking-[-0.01em] text-slate-900">{s.title}</h3></div>
               {s.id === "links" ? (
-                <div className="ml-6 rounded-lg ring-1 ring-slate-200/70 p-3 bg-slate-50/30">
+                <div className="ml-6 rounded-lg ring-1 ring-slate-200 p-3 bg-slate-50/30">
                   <div className="text-[11px] text-slate-600 mb-2">Tap to link an artefact (greyed = broken, blocks submission)</div>
-                  <div className="space-y-1.5">{xrefs.map((x) => { const on = crossRefs.includes(x.artefact); return <button key={x.artefact} disabled={!x.resolved} onClick={() => toggleRef(x.artefact)} className={`w-full flex items-center gap-2 text-[12px] px-2 py-1.5 rounded ring-1 transition-all ${!x.resolved ? "bg-rose-50/40 ring-rose-200 text-rose-700 cursor-not-allowed" : on ? "bg-emerald-50/40 ring-emerald-200 text-slate-700" : "bg-white ring-slate-200/70 text-slate-500 hover:ring-slate-300"}`}><Icon name="link" size={11} /><span className="flex-1 text-left tracking-tight">{x.artefact}</span>{!x.resolved && <span className="text-[10px] font-medium">broken</span>}{on && x.resolved && <Icon name="check" size={11} strokeWidth={3} className="text-emerald-600" />}</button>; })}</div>
+                  <div className="space-y-1.5">{xrefs.map((x) => { const on = crossRefs.includes(x.artefact); return <button key={x.artefact} disabled={!x.resolved} onClick={() => toggleRef(x.artefact)} className={`w-full flex items-center gap-2 text-[12px] px-2 py-1.5 rounded ring-1 transition-all ${!x.resolved ? "bg-rose-50/40 ring-rose-200 text-rose-700 cursor-not-allowed" : on ? "bg-emerald-50/40 ring-emerald-200 text-slate-700" : "bg-white ring-slate-200 text-slate-500 hover:ring-slate-300"}`}><Icon name="link" size={11} /><span className="flex-1 text-left tracking-tight">{x.artefact}</span>{!x.resolved && <span className="text-[10px] font-medium">broken</span>}{on && x.resolved && <Icon name="check" size={11} strokeWidth={3} className="text-emerald-600" />}</button>; })}</div>
                 </div>
               ) : (
-                <textarea value={s.content} onChange={(e) => set(s.id, "content", e.target.value)} rows={2} placeholder="Write this section…" className="ml-6 w-[calc(100%-1.5rem)] px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200/80 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] resize-none leading-relaxed" />
+                <textarea value={s.content} onChange={(e) => set(s.id, "content", e.target.value)} rows={2} placeholder="Write this section…" className="ml-6 w-[calc(100%-1.5rem)] px-3 py-2 rounded-lg bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-400/40 outline-none text-[12.5px] resize-none leading-relaxed" />
               )}
             </div>
           ))}

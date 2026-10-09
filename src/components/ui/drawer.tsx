@@ -71,7 +71,7 @@ export function Drawer({
         style={{ width }}
         className={`absolute right-0 top-0 h-full bg-white shadow-[0_0_60px_-12px_rgba(15,23,42,0.4)] flex flex-col transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-200/70">
+        <div className="shrink-0 flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-200">
           <div className="min-w-0">
             {eyebrow && <div className="text-[10px] font-semibold tracking-[0.13em] uppercase text-indigo-600">{eyebrow}</div>}
             {title && <h2 className="text-[15px] font-semibold tracking-tight text-slate-900 mt-0.5">{title}</h2>}

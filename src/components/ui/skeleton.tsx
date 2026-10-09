@@ -11,7 +11,7 @@ export function Skeleton({ className = "" }: { className?: string }) {
 /** A single card-shaped placeholder (icon + two text lines + a bar). */
 export function SkeletonCard({ className = "" }: { className?: string }) {
   return (
-    <div className={`rounded-2xl ring-1 ring-slate-200/70 bg-white p-5 space-y-3 ${className}`}>
+    <div className={`rounded-2xl ring-1 ring-slate-200 bg-white p-5 space-y-3 ${className}`}>
       <div className="flex items-center gap-3">
         <Skeleton className="w-10 h-10 rounded-xl" />
         <div className="flex-1 space-y-2">
@@ -46,7 +46,7 @@ export function SkeletonCardGrid({
 /** A form-card placeholder (title + labelled inputs + button) — for auth / checkout screens. */
 export function SkeletonForm({ fields = 3 }: { fields?: number }) {
   return (
-    <div className="animate-pulse bg-white rounded-2xl ring-1 ring-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_50px_-24px_rgba(15,23,42,0.18)] p-7 space-y-5">
+    <div className="animate-pulse bg-white rounded-2xl ring-1 ring-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_18px_50px_-24px_rgba(15,23,42,0.18)] p-7 space-y-5">
       <div className="space-y-2">
         <Skeleton className="h-5 w-1/2" />
         <Skeleton className="h-3 w-3/4 opacity-70" />
@@ -67,7 +67,7 @@ export function SkeletonForm({ fields = 3 }: { fields?: number }) {
 /** Generic content-page skeleton: heading + a responsive grid of card placeholders. */
 export function PageSkeleton({ cards = 6 }: { cards?: number }) {
   return (
-    <div className="max-w-[1180px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-6 animate-pulse">
+    <div className="page-shell animate-pulse">
       <Skeleton className="h-7 w-48 mb-2" />
       <Skeleton className="h-3.5 w-80 max-w-full mb-6 opacity-70" />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

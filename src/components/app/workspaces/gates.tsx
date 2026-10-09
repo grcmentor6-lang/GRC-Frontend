@@ -5,7 +5,6 @@
 // (./research-gate.tsx).
 
 import { Icon, type IconName } from "@/components/ui/icon";
-import { CriterionMark } from "@/components/app/criterion-mark";
 
 export interface TabDef {
   key: string;
@@ -61,7 +60,7 @@ export function TabRail({ tabs, active, onSelect, progressLabel }: {
                 <Icon name={t.done ? "check" : t.locked ? "lock" : t.icon} size={13} strokeWidth={t.done ? 3 : 2} />
               </span>
               <span className="min-w-0">
-                <span className="block text-[12px] font-medium tracking-tight whitespace-nowrap md:whitespace-normal">{t.label}<CriterionMark guide={`tab:${t.key}`} done={t.done} className="ml-1.5" /></span>
+                <span className="block text-[12px] font-medium tracking-tight whitespace-nowrap md:whitespace-normal">{t.label}</span>
                 <span className="hidden md:block text-[10px] text-slate-400 tracking-tight leading-tight">{t.blurb}</span>
               </span>
             </button>

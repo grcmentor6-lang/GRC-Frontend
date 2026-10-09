@@ -94,7 +94,7 @@ export function ControlReferences({ taskCode, linkToLibrary = false }: {
         <p className="text-[12.5px] text-slate-500 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>
           The clauses and controls this task is graded against. Your deliverable should trace back to each one.
         </p>
-        <p className="mt-2 mb-4 text-[11.5px] text-slate-600 bg-slate-50 ring-1 ring-slate-200/70 rounded-lg px-3 py-2 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>
+        <p className="mt-2 mb-4 text-[11.5px] text-slate-600 bg-slate-50 ring-1 ring-slate-200 rounded-lg px-3 py-2 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>
           Each control is identified by its reference and published title, then explained
           in <span className="font-semibold">our own words</span>. These explanations are written for
           the programme — they are not the wording of the standard, so quote the standard itself when

@@ -51,7 +51,7 @@ function ShareMenu({ cv }: { cv: Cv }) {
           <div className="px-2.5 pt-2 pb-1.5"><div className="text-[10px] font-semibold tracking-[0.12em] uppercase text-slate-400">Share your CV</div></div>
           {items.map((it) => (
             <button key={it.id} onClick={it.onClick} className="w-full flex items-center gap-3 px-2.5 h-12 rounded-lg hover:bg-slate-50 transition-colors text-left">
-              <span className={`w-8 h-8 rounded-lg flex items-center justify-center ring-1 ${it.accent ? "bg-emerald-50 text-emerald-600 ring-emerald-100" : "bg-slate-50 text-slate-500 ring-slate-200/70"}`}><Icon name={it.icon} size={15} strokeWidth={it.icon === "check" ? 3 : 1.8} /></span>
+              <span className={`w-8 h-8 rounded-lg flex items-center justify-center ring-1 ${it.accent ? "bg-emerald-50 text-emerald-600 ring-emerald-100" : "bg-slate-50 text-slate-500 ring-slate-200"}`}><Icon name={it.icon} size={15} strokeWidth={it.icon === "check" ? 3 : 1.8} /></span>
               <span className="min-w-0">
                 <span className={`block text-[12.5px] font-medium tracking-tight ${it.accent ? "text-emerald-600" : "text-slate-800"}`}>{it.label}</span>
                 <span className="block text-[11px] text-slate-400 tracking-tight truncate">{it.sub}</span>
@@ -60,7 +60,7 @@ function ShareMenu({ cv }: { cv: Cv }) {
           ))}
           <div className="my-1 h-px bg-slate-100" />
           <button onClick={() => { window.print(); setOpen(false); }} className="w-full flex items-center gap-3 px-2.5 h-12 rounded-lg hover:bg-slate-50 transition-colors text-left">
-            <span className="w-8 h-8 rounded-lg flex items-center justify-center ring-1 bg-slate-50 text-slate-500 ring-slate-200/70"><Icon name="download" size={15} /></span>
+            <span className="w-8 h-8 rounded-lg flex items-center justify-center ring-1 bg-slate-50 text-slate-500 ring-slate-200"><Icon name="download" size={15} /></span>
             <span className="min-w-0">
               <span className="block text-[12.5px] font-medium tracking-tight text-slate-800">Download as PDF</span>
               <span className="block text-[11px] text-slate-400 tracking-tight">Print-ready document</span>
@@ -93,7 +93,7 @@ export default function CvPage() {
         </div>
         {cv && (
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => window.print()} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-white ring-1 ring-slate-200/70 text-slate-600 text-[12.5px] font-medium tracking-tight hover:bg-slate-50 transition-colors">
+            <button onClick={() => window.print()} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-white ring-1 ring-slate-200 text-slate-600 text-[12.5px] font-medium tracking-tight hover:bg-slate-50 transition-colors">
               <Icon name="download" size={14} /> Download
             </button>
             <ShareMenu cv={cv} />

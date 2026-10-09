@@ -91,7 +91,7 @@ export function UpNext() {
         </div>
         {items.length === 0 ? (
           <div className="flex flex-col items-center text-center py-8 px-4">
-            <div className="w-10 h-10 rounded-xl bg-slate-50 ring-1 ring-slate-200/70 flex items-center justify-center text-slate-300 mb-2.5">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 ring-1 ring-slate-200 flex items-center justify-center text-slate-300 mb-2.5">
               <Icon name="checkCircle" size={18} />
             </div>
             <div className="text-[12.5px] font-medium text-slate-600">Nothing due</div>

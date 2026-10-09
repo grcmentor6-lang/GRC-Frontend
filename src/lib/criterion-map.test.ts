@@ -21,19 +21,35 @@ const source = readdirSync(dir)
 const anchors = new Set([...source.matchAll(/data-guide="([^"]+)"/g)].map((m) => m[1]));
 const marked = new Set([...source.matchAll(/<CriterionMark guide="([^"]+)"/g)].map((m) => m[1]));
 
-// Tabs are anchored by the shared rail (`data-guide={`tab:${t.key}`}`) and marked by it too, so a
-// tab key is real when the gate defines a tab by that name.
+// Tabs are anchored by the shared rail (`data-guide={`tab:${t.key}`}`) but never marked in it: RUA
+// already numbers its eight screens R1–R8, and a criterion chip there is a second, different R.
+// A tab key is real when the gate defines a tab by that name.
 const tabKeys = new Set([
   ...[...readFileSync(join(dir, "rua-gate.tsx"), "utf8").matchAll(/\{ key: "([a-z]+)", label:/g)].map((m) => m[1]),
   ...RESEARCH_METHODS.map((m) => m.key),
   "review",
 ]);
 assert.ok(source.includes("data-guide={`tab:${t.key}`}"), "the tab rail no longer anchors its tabs");
-assert.ok(source.includes("<CriterionMark guide={`tab:${t.key}`}"), "the tab rail no longer marks its tabs");
+assert.ok(
+  !readFileSync(join(dir, "gates.tsx"), "utf8").includes("CriterionMark"),
+  "the gate tab rail carries a criterion chip again — RUA's panes already number themselves R1–R8, "
+    + "so a chip there is a second R-numbering on the same screen",
+);
 
 // Parts that carry a share mark with an explicit criterion, because the map alone cannot say how
 // much of the criterion they are: a form entry is one of n, a method's sources are one method's.
 const MARKED_EXPLICITLY = new Set(["item", "rs:sources"]);
+// Criteria whose chip is placed by hand, away from the part the map names, because the map cannot
+// express it: R1 and R2 of the research gate are mapped to the method tabs (pairing) and marked on
+// the method's own header, since a method is cleared by its whole quality bar; R4 is mapped to the
+// Review tab and marked on the declaration, which is what the criterion actually reads. Each one
+// is verified to exist below, so this is a pointer, not a licence.
+const MARKED_ELSEWHERE: Record<string, number[]> = { research: [1, 2, 4] };
+for (const [id, list] of Object.entries(MARKED_ELSEWHERE)) {
+  const file = readFileSync(join(dir, `${id}-gate.tsx`), "utf8");
+  for (const r of list)
+    assert.ok(file.includes(`rs={[${r}]}`), `verb "${id}": R${r} is listed as marked by hand, but no <CriterionMark rs={[${r}]}> is there`);
+}
 
 for (const [id, verb] of Object.entries(ALL)) {
   const table = CRITERION_OF[id];
@@ -44,6 +60,14 @@ for (const [id, verb] of Object.entries(ALL)) {
   for (const [key, rs] of Object.entries(table)) {
     if (key.startsWith("tab:")) {
       assert.ok(tabKeys.has(key.slice(4)), `verb "${id}": no gate defines a tab "${key.slice(4)}"`);
+      // Pairing-only, so the chip for these criteria has to be somewhere else — or nowhere, which
+      // is the deliberate answer for RUA.
+      if (id !== "rua")
+        for (const r of rs)
+          assert.ok(
+            (MARKED_ELSEWHERE[id] ?? []).includes(r) || Object.entries(table).some(([k, v]) => !k.startsWith("tab:") && v.includes(r)),
+            `verb "${id}": R${r} is only on a tab, and tabs carry no chip — nothing on screen names it`,
+          );
     } else {
       assert.ok(anchors.has(key), `verb "${id}": no data-guide="${key}" in any workspace`);
       assert.ok(

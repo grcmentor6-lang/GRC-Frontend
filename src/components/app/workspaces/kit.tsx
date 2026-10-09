@@ -61,7 +61,7 @@ export function WTextInput({ value, onChange, placeholder, type = "text", classN
   value: string; onChange: (v: string) => void; placeholder?: string; type?: string; className?: string;
 }) {
   return (
-    <div className={`flex items-center gap-2 h-10 px-3 rounded-lg bg-white ring-1 ring-slate-200/80 focus-within:ring-2 focus-within:ring-indigo-500/30 transition-all ${className}`}>
+    <div className={`flex items-center gap-2 h-10 px-3 rounded-lg bg-white ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/30 transition-all ${className}`}>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="flex-1 bg-transparent outline-none text-[13px] text-slate-900 placeholder:text-slate-400" />
     </div>
@@ -72,7 +72,7 @@ export function WTextArea({ value, onChange, placeholder, rows = 4, hint }: {
   value: string; onChange: (v: string) => void; placeholder?: string; rows?: number; hint?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-white ring-1 ring-slate-200/80 focus-within:ring-2 focus-within:ring-indigo-500/30 transition-all">
+    <div className="rounded-xl bg-white ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/30 transition-all">
       <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows}
         className="w-full px-4 py-3 bg-transparent outline-none resize-none text-[13.5px] text-slate-900 placeholder:text-slate-400 leading-relaxed tracking-tight" />
       {hint && (
@@ -151,7 +151,7 @@ export function ScriptedExchange({ title, turns }: {
   return (
     <div>
       <SectionLabel>{title}</SectionLabel>
-      <div className="relative rounded-[16px_4px_4px_16px] bg-white ring-1 ring-slate-200/70 px-4 py-3">
+      <div className="relative rounded-[16px_4px_4px_16px] bg-white ring-1 ring-slate-200 px-4 py-3">
         <span aria-hidden className="absolute left-[110px] top-2.5 bottom-2.5 border-l border-dotted border-slate-200" />
         {turns.map((t, i) => {
           const mine = t.who === "you";

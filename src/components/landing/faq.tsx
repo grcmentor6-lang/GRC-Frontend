@@ -15,7 +15,7 @@ export function Faq({ items }: { items: FaqEntry[] }) {
       {items.map((item, i) => {
         const isOpen = open === i;
         return (
-          <div key={item.q} className="bg-white rounded-2xl ring-1 ring-slate-200/70 overflow-hidden">
+          <div key={item.q} className="bg-white rounded-2xl ring-1 ring-slate-200 overflow-hidden">
             <button
               onClick={() => setOpen(isOpen ? -1 : i)}
               className="w-full px-5 py-4 flex items-center gap-3 text-left"

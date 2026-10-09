@@ -27,7 +27,7 @@ export function AccessChip({ variant = "light" }: { variant?: "light" | "dark" }
       : "bg-rose-50 text-rose-700 ring-rose-100"
     : dark
       ? "bg-white/10 text-indigo-50 ring-white/20"
-      : "bg-slate-50 text-slate-600 ring-slate-200/70";
+      : "bg-slate-50 text-slate-600 ring-slate-200";
 
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-[11.5px] font-medium tracking-tight ring-1 ${cls}`}>

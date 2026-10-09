@@ -2,7 +2,7 @@
 // The glossary must not silently drop or duplicate deliverable text: splitting a paragraph and
 // re-joining it has to reproduce the original exactly, or the mentee reads a mangled brief.
 import assert from "node:assert/strict";
-import { GLOSSARY, splitTerms, termsIn } from "./glossary";
+import { GLOSSARY, splitTerms } from "./glossary";
 
 const join = (parts: (string | { text: string })[]) => parts.map((p) => (typeof p === "string" ? p : p.text)).join("");
 
@@ -24,7 +24,7 @@ const twice = splitTerms("A custodian is not an asset owner; a custodian holds i
 assert.equal(twice.filter((p) => typeof p !== "string").length, 2, "custodian + asset owner, once each");
 
 // Casing preserved on the way out, canonical key on the way in.
-const hits = termsIn(["Confidentiality and CONFIDENTIALITY"]);
+const hits = splitTerms("Confidentiality and CONFIDENTIALITY").filter((p) => typeof p !== "string");
 assert.equal(hits.length, 1);
 assert.equal(hits[0].text, "Confidentiality");
 assert.equal(hits[0].key, "confidentiality");
@@ -34,6 +34,7 @@ assert.equal(splitTerms("a scoped telescope").filter((p) => typeof p !== "string
 assert.equal(splitTerms("the scope of work").filter((p) => typeof p !== "string").length, 1);
 
 // Every hit resolves to a real definition (guards a key/lookup drift).
-for (const h of termsIn([Object.keys(GLOSSARY).join(". ")])) assert.ok(h.definition, `no definition for ${h.key}`);
+for (const h of splitTerms(Object.keys(GLOSSARY).join(". ")))
+  if (typeof h !== "string") assert.ok(h.definition, `no definition for ${h.key}`);
 
 console.log("glossary: ok");

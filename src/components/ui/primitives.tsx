@@ -36,7 +36,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`bg-white rounded-2xl ring-1 ring-slate-200/70 shadow-card ${pad ? "p-5" : ""} ${className}`}
+      className={`bg-white rounded-2xl ring-1 ring-slate-200 shadow-card ${pad ? "p-4" : ""} ${className}`}
     >
       {children}
     </div>

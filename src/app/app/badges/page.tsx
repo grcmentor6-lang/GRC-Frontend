@@ -22,7 +22,7 @@ function compute(badge: BadgeDef, status: Record<string, string>): BadgeProgress
 const STATE_CHIP: Record<MedalState, { label: string; cls: string }> = {
   earned: { label: "Earned", cls: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
   "in-progress": { label: "In progress", cls: "bg-indigo-50 text-indigo-700 ring-indigo-100" },
-  locked: { label: "Locked", cls: "bg-slate-100 text-slate-500 ring-slate-200/70" },
+  locked: { label: "Locked", cls: "bg-slate-100 text-slate-500 ring-slate-200" },
 };
 
 export default function BadgesPage() {
@@ -56,7 +56,7 @@ export default function BadgesPage() {
   ];
 
   return (
-    <div className="max-w-[1100px] 2xl:max-w-[1400px] 3xl:max-w-[1640px] mx-auto px-6 py-6 space-y-5">
+    <div className="page-shell space-y-4">
       <div className="flex items-start gap-3.5">
         <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(245,158,11,0.6)] shrink-0">
           <Icon name="ribbon" size={20} />
@@ -85,10 +85,10 @@ export default function BadgesPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-3">
             {badges.map((b) => (
               <Card key={b.id} className="flex flex-col items-center gap-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:ring-indigo-200/70">
-                <BadgeMedal badge={b} state={b.state} className="w-full max-w-[212px]" />
+                <BadgeMedal badge={b} state={b.state} className="w-full max-w-[148px]" />
                 <div className="text-center w-full">
                   <div className="flex items-center justify-center gap-2 flex-wrap">
                     <h3 className={`text-[13.5px] font-semibold tracking-tight ${b.state === "locked" ? "text-slate-500" : "text-slate-900"}`}>{b.name}</h3>

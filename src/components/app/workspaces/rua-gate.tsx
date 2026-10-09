@@ -184,7 +184,7 @@ function ItemDoc({ refs, idx, openDoc }: { refs: RuaRef[]; idx: number; openDoc:
   const r = itemRef(refs, idx);
   if (!r) return null;
   return (
-    <div className="rounded-xl bg-white ring-1 ring-slate-200/80 flex items-center gap-2.5 px-3.5 py-2">
+    <div className="rounded-xl bg-white ring-1 ring-slate-200 flex items-center gap-2.5 px-3.5 py-2">
       <span className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 bg-violet-50 text-violet-600"><Icon name="file" size={12} /></span>
       <span className="min-w-0 flex-1">
         <span className="block text-[12px] font-medium text-slate-800 tracking-tight truncate">{r.title}</span>
@@ -221,7 +221,7 @@ function StudyPane({ task, taskCode, p, patch, goVerb, refs, openDoc }: PaneProp
           const locked = firstUnlocked !== -1 && i > firstUnlocked;
           const isOpen = open === i && !locked;
           return (
-            <div key={i} className={`rounded-2xl ring-1 overflow-hidden transition-all ${done ? "ring-emerald-200 bg-emerald-50/30" : "ring-slate-200/80 bg-white"} ${locked ? "opacity-55" : ""}`}>
+            <div key={i} className={`rounded-2xl ring-1 overflow-hidden transition-all ${done ? "ring-emerald-200 bg-emerald-50/30" : "ring-slate-200 bg-white"} ${locked ? "opacity-55" : ""}`}>
               <button disabled={locked} onClick={() => setOpen(isOpen ? -1 : i)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer focus-ring disabled:cursor-not-allowed">
                 <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${done ? "bg-emerald-500 text-white" : locked ? "bg-slate-100 text-slate-300" : "bg-violet-50 text-violet-600"}`}>
@@ -343,7 +343,7 @@ function InspectPane({ task, taskCode, p, patch, goVerb, refs, openDoc }: PanePr
           const done = !!p.inspect[i];
           const isOpen = open === i;
           return (
-            <div key={i} className={`rounded-2xl ring-1 overflow-hidden ${done ? "ring-emerald-200 bg-emerald-50/30" : "ring-slate-200/80 bg-white"}`}>
+            <div key={i} className={`rounded-2xl ring-1 overflow-hidden ${done ? "ring-emerald-200 bg-emerald-50/30" : "ring-slate-200 bg-white"}`}>
               <button onClick={() => setOpen(isOpen ? null : i)} className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer focus-ring">
                 <span className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${done ? "bg-emerald-500 text-white" : "bg-violet-50 text-violet-600"}`}><Icon name={FMT_ICON[tpl.fmt] ?? "file"} size={16} /></span>
                 <span className="flex-1 min-w-0">
@@ -536,7 +536,7 @@ function AcquirePane({ task, p, patch, goVerb, refs, openDoc }: PaneProps) {
       </div>
 
       {/* organisation context brief */}
-      <div className="mt-4 rounded-2xl ring-1 ring-slate-200/80 bg-white p-4">
+      <div className="mt-4 rounded-2xl ring-1 ring-slate-200 bg-white p-4">
         <div className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-2.5">Organisation context</div>
         <div className="flex items-center gap-2.5 mb-3">
           <span className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center"><Icon name="globe" size={18} /></span>
@@ -637,7 +637,7 @@ function StepRow({ step, idx, rec, patch, prevDone, refs, openDoc, taskCode }: {
   const wellCls = "w-full resize-none rounded-xl bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-violet-500/40 px-3 py-2.5 text-[12.5px] text-slate-800 outline-none placeholder:text-slate-400";
 
   return (
-    <div className={`rounded-2xl ring-1 overflow-hidden ${done ? "ring-emerald-200 bg-emerald-50/30" : state === "query" ? "ring-amber-200 bg-amber-50/30" : "ring-slate-200/80 bg-white"} ${!prevDone && !done ? "opacity-70" : ""}`}>
+    <div className={`rounded-2xl ring-1 overflow-hidden ${done ? "ring-emerald-200 bg-emerald-50/30" : state === "query" ? "ring-amber-200 bg-amber-50/30" : "ring-slate-200 bg-white"} ${!prevDone && !done ? "opacity-70" : ""}`}>
       <div className="flex items-start gap-3 px-4 py-3">
         <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-semibold ${done ? "bg-emerald-500 text-white" : state === "query" ? "bg-amber-400 text-white" : "bg-slate-100 text-slate-500"}`}>
           {done ? <Icon name="check" size={15} strokeWidth={2.5} /> : idx + 1}
@@ -785,7 +785,7 @@ function ConfirmPane({ task, taskCode, p, patch, goVerb, refs, openDoc }: PanePr
       <ScreenHead v="R5" name="Confirm" title="Lock the deliverable contract"
         subtitle="Restate the final deliverable and its acceptance standard in your own words, then sort the scope boundary. This becomes the reference point for grading your finished work." />
       <div className="space-y-4">
-        <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white overflow-hidden">
+        <div className="rounded-2xl ring-1 ring-slate-200 bg-white overflow-hidden">
           <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
             <Icon name="file" size={14} className="text-violet-600" />
             <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-slate-400">Task-defined deliverable · read-only</span>
@@ -799,14 +799,14 @@ function ConfirmPane({ task, taskCode, p, patch, goVerb, refs, openDoc }: PanePr
           </div>
         </div>
 
-        <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white p-4 space-y-3.5">
+        <div className="rounded-2xl ring-1 ring-slate-200 bg-white p-4 space-y-3.5">
           <div className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500">Restate it in your own words</div>
           <Composer label="In my own words, I will produce…" v={produce} on={setProduce} err={pErr} sim={simP} />
           <Composer label="It will be accepted when…" v={acceptWhen} on={setAcceptWhen} err={aErr} sim={simA} />
           <p className="text-[10.5px] text-slate-400">The similarity meter warns when your restatement copies the source. Say it your way — that&apos;s the point of the gate.</p>
         </div>
 
-        <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white p-4">
+        <div className="rounded-2xl ring-1 ring-slate-200 bg-white p-4">
           <div className="flex items-baseline justify-between mb-2.5">
             <div className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500">Scope boundary — sort each item</div>
             <span className="text-[11px] text-slate-400 tabular-nums">{items.filter((_, i) => bnd[i]).length}/{items.length} sorted</span>
@@ -816,7 +816,7 @@ function ConfirmPane({ task, taskCode, p, patch, goVerb, refs, openDoc }: PanePr
               const choice = bnd[i];
               const reveal = graded?.ok;
               return (
-                <div key={i} className="flex items-center gap-3 rounded-xl ring-1 ring-slate-200/70 bg-slate-50/60 px-3 py-2.5">
+                <div key={i} className="flex items-center gap-3 rounded-xl ring-1 ring-slate-200 bg-slate-50/60 px-3 py-2.5">
                   <span className="flex-1 text-[12px] text-slate-700 tracking-tight leading-snug" style={{ textWrap: "pretty" }}><Gloss>{it.text}</Gloss></span>
                   <div className="shrink-0 flex gap-1">
                     {([["in", "In scope"], ["out", "Out"]] as const).map(([val, lab]) => {
@@ -916,13 +916,13 @@ function ExplainPane({ task, taskCode, p, patch, goVerb, refs, openDoc }: PanePr
       </div>
 
       {allDone ? (
-        <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white text-center py-9 px-5">
+        <div className="rounded-2xl ring-1 ring-slate-200 bg-white text-center py-9 px-5">
           <div className="mx-auto w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3"><Icon name="lightbulb" size={22} /></div>
           <h4 className="text-[15px] font-semibold text-slate-900 tracking-tight">All {total} concepts mastered</h4>
           <p className="mt-1 text-[12.5px] text-slate-500" style={{ textWrap: "pretty" }}>Part B is complete. Your explanations are stored for the readiness ledger.</p>
         </div>
       ) : (
-        <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white overflow-hidden">
+        <div className="rounded-2xl ring-1 ring-slate-200 bg-white overflow-hidden">
           <div className="px-4 pt-4 pb-3.5 border-b border-slate-100">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="inline-flex items-center h-[17px] px-1.5 rounded-full bg-violet-50 text-violet-700 ring-1 ring-violet-200 text-[10px] font-semibold">Concept {idx + 1} of {total}</span>
@@ -1023,7 +1023,7 @@ function AnswerPane({ task, taskCode, p, patch, goVerb }: PaneProps) {
     return (
       <div>
         <ScreenHead v="R7" name="Answer" title="Readiness verification — session complete" />
-        <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white p-4">
+        <div className="rounded-2xl ring-1 ring-slate-200 bg-white p-4">
           <div className="flex items-center gap-3.5 mb-4">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${fails ? "bg-rose-50 text-rose-600" : "bg-emerald-50 text-emerald-600"}`}><Icon name={fails ? "refresh" : "checkCircle"} size={24} /></div>
             <div>
@@ -1035,7 +1035,7 @@ function AnswerPane({ task, taskCode, p, patch, goVerb }: PaneProps) {
             {task.questions.map((q, i) => {
               const o = p.answer[i]?.outcome;
               return (
-                <div key={i} className="flex items-start gap-3 rounded-xl ring-1 ring-slate-200/70 px-3 py-2.5">
+                <div key={i} className="flex items-start gap-3 rounded-xl ring-1 ring-slate-200 px-3 py-2.5">
                   <span className={`shrink-0 mt-0.5 w-6 h-6 rounded-md flex items-center justify-center ${o === "pass" ? "bg-emerald-50 text-emerald-600" : o === "partial" ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"}`}>
                     <Icon name={o === "pass" ? "check" : o === "partial" ? "minus" : "x"} size={13} strokeWidth={2.5} />
                   </span>
@@ -1060,7 +1060,7 @@ function AnswerPane({ task, taskCode, p, patch, goVerb }: PaneProps) {
       <div>
         <ScreenHead v="R7" name="Answer" title="Understanding verification session"
           subtitle="The system administers the verification questions as an adaptive, oral-style examination with follow-up probes. One question at a time · no back-navigation." />
-        <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white p-4">
+        <div className="rounded-2xl ring-1 ring-slate-200 bg-white p-4">
           <div className="flex items-start gap-3.5">
             <div className="shrink-0 w-11 h-11 rounded-xl bg-violet-600 text-white flex items-center justify-center"><Icon name="bot" size={20} /></div>
             <div className="flex-1">
@@ -1093,7 +1093,7 @@ function AnswerPane({ task, taskCode, p, patch, goVerb }: PaneProps) {
         </div>
         <div className="flex items-center gap-1.5">{task.questions.map((_, i) => (<span key={i} className={`w-2 h-2 rounded-full ${i < qi ? "bg-emerald-400" : i === qi ? "bg-violet-500" : "bg-slate-200"}`} />))}</div>
       </div>
-      <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white p-4">
+      <div className="rounded-2xl ring-1 ring-slate-200 bg-white p-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="inline-flex items-center h-[17px] px-1.5 rounded-full bg-violet-50 text-violet-700 ring-1 ring-violet-200 text-[10px] font-semibold">Question {qi + 1} / {N}</span>
           <span className="text-[11px] text-slate-400">no back-navigation</span>
@@ -1164,7 +1164,7 @@ function AttestPane({ task, p, patch, ledger }: PaneProps & { ledger: Ledger }) 
 
       <div className="space-y-4">
         {/* readiness ledger */}
-        <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white overflow-hidden">
+        <div className="rounded-2xl ring-1 ring-slate-200 bg-white overflow-hidden">
           <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between">
             <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-slate-400">Readiness ledger · five criteria</span>
             <span className="text-[11px] font-semibold text-slate-500 tabular-nums">{ledger.criteria.filter((c) => c.state === "green").length}/5 green</span>
@@ -1190,7 +1190,7 @@ function AttestPane({ task, p, patch, ledger }: PaneProps & { ledger: Ledger }) 
         </div>
 
         {!decided ? (
-          <div className="rounded-2xl ring-1 ring-slate-200/80 bg-white p-4">
+          <div className="rounded-2xl ring-1 ring-slate-200 bg-white p-4">
             <div className="text-[10.5px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-2">Attestation</div>
             <p className="text-[12.5px] text-slate-700 tracking-tight leading-relaxed mb-3" style={{ textWrap: "pretty" }}>
               I have completed the requirement and understanding analysis for <span className="font-semibold">{task.deliverable}</span> at {task.org} and am ready to begin.
@@ -1218,7 +1218,7 @@ function GateOutcomePanel({ decision, ledger, onRerun }: { decision: GateDecisio
   const d = DECISION_META[decision];
   const col = RAG_CLS[d.tone];
   return (
-    <div className="rounded-2xl overflow-hidden ring-1 ring-slate-200/80">
+    <div className="rounded-2xl overflow-hidden ring-1 ring-slate-200">
       <div className={`px-4 py-4 flex items-start gap-3.5 ${col.chip}`}>
         <div className={`shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-white ${col.dot}`}><Icon name={d.icon} size={22} /></div>
         <div className="flex-1">

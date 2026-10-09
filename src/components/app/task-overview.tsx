@@ -17,7 +17,7 @@ import { LockedNotice } from "@/components/app/locked-notice";
 import { useTaskBundle } from "@/lib/task-bundle";
 import { StandardBanner } from "@/components/app/standards";
 import { ControlReferences } from "@/components/app/control-references";
-import { gloss, TermsUsed } from "@/components/app/glossary";
+import { gloss } from "@/components/app/glossary";
 import { dueChip, fmtDue, type ScheduleItem } from "@/lib/schedule";
 
 /**
@@ -72,8 +72,8 @@ export function TaskOverview() {
 
   const nextStep = task?.steps.find((s) => s.status !== "complete") ?? task?.steps[0];
 
-  // Glossary: objective + final deliverable share one "seen" set, so each term is underlined once
-  // on the card and every term either way is listed in full underneath.
+  // Glossary: objective + final deliverable share one "seen" set, so each term is underlined
+  // once on the card rather than at every mention.
   const uid = useId();
   const seen = new Set<string>();
 
@@ -143,7 +143,6 @@ export function TaskOverview() {
               <p className="text-[12.5px] text-slate-700 tracking-tight" style={{ textWrap: "pretty" }}>{gloss(meta.deliverable, seen, `${uid}d`)}</p>
             </div>
           )}
-          <TermsUsed texts={[objective ?? "", meta?.deliverable ?? ""]} className="mt-4" />
         </Card>
         </div>
       )}
@@ -153,7 +152,7 @@ export function TaskOverview() {
         <button
           data-tour="task-controls"
           onClick={() => setControlsOpen(true)}
-          className="focus-ring w-full flex items-center gap-3 text-left rounded-xl ring-1 ring-slate-200/70 bg-white hover:bg-slate-50 px-3.5 py-3 transition-colors group"
+          className="focus-ring w-full flex items-center gap-3 text-left rounded-xl ring-1 ring-slate-200 bg-white hover:bg-slate-50 px-3.5 py-3 transition-colors group"
         >
           <span className="w-9 h-9 rounded-lg bg-indigo-50 ring-1 ring-indigo-100 text-indigo-600 flex items-center justify-center shrink-0"><Icon name="shield" size={16} /></span>
           <span className="min-w-0 flex-1">
@@ -201,8 +200,8 @@ export function TaskOverview() {
                   current
                     ? "border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_6px_18px_-6px_rgba(15,23,42,0.25)]"
                     : done
-                      ? "border-slate-200/60 bg-white opacity-[0.66] hover:opacity-100"
-                      : "border-slate-200/60 bg-white hover:bg-slate-50"
+                      ? "border-slate-200 bg-white opacity-[0.66] hover:opacity-100"
+                      : "border-slate-200 bg-white hover:bg-slate-50"
                 }`}
               >
                 <span
