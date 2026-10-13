@@ -36,7 +36,9 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
   const next = locked ? 0 : (task.steps.find((x) => !isStepComplete(progress, task, x))?.n ?? 0);
   // Grid of the redesign: # · step · type · KR · where · chevron. Below 760px of sheet the three
   // middle columns fold into the step cell rather than scrolling sideways.
-  const cols = "grid grid-cols-[44px_minmax(0,1fr)_40px] @[760px]:grid-cols-[52px_minmax(0,1fr)_96px_64px_minmax(160px,240px)_44px]";
+  // Step and key result share the room (step a little more); where it happens is capped. Long text
+  // stays on one line and the full wording is on hover.
+  const cols = "grid grid-cols-[44px_minmax(0,1fr)_40px] @[760px]:grid-cols-[52px_minmax(0,1.25fr)_96px_minmax(0,1fr)_minmax(140px,200px)_44px]";
   const cell = "border-r border-[#E9ECF1]";
   return (
     <div className="min-w-0">
@@ -53,7 +55,7 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
         <span className={`${cell} py-2 text-center`}>#</span>
         <span className={`${cell} px-3.5 py-2 @[760px]:border-r`}>Step</span>
         <span className={`${cell} hidden px-3 py-2 @[760px]:block`}>Type</span>
-        <span className={`${cell} hidden px-3 py-2 @[760px]:block`}>KR</span>
+        <span className={`${cell} hidden px-3 py-2 @[760px]:block`}>Key result</span>
         <span className={`${cell} hidden px-3 py-2 @[760px]:block`}>Where</span>
         <span className="py-2" />
       </div>
@@ -65,6 +67,7 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
           const kr = krFor(task, s.n);
           const tag = kr ? splitKr(kr.kr).tag.replace(" KR", "") : "";
           const decision = s.kind !== "do";
+          const copy = stepCopy(s);
           return (
             <li key={s.n} id={`act-${s.n}`} className="min-w-0 scroll-mt-16 border-b border-[#E9ECF1] last:border-b-[#DDE1E8]">
               <button
@@ -77,7 +80,11 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
               >
                 <span className={`${cell} flex items-center justify-center`}>
                   {done ? (
-                    <span className="grid h-6 w-6 place-items-center rounded-full bg-[#16A34A] text-white"><Icon name="check" size={13} strokeWidth={3} /></span>
+                    // Done keeps its number, so the step is still findable by it: a green pill, tick and number.
+                    <span className="inline-flex h-6 items-center gap-0.5 rounded-full bg-[#16A34A] pl-1.5 pr-2 text-[12px] font-bold text-white tabular-nums" aria-label={`Step ${s.n}, done`}>
+                      <Icon name="check" size={11} strokeWidth={3.5} />
+                      {s.n}
+                    </span>
                   ) : locked ? (
                     <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EEF0F4] text-[#8A91A3]"><Icon name="lock" size={12} /></span>
                   ) : isNext || open ? (
@@ -86,13 +93,15 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                     <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EEF0F4] text-[12px] font-semibold text-[#5B6474] tabular-nums">{s.n}</span>
                   )}
                 </span>
-                <span className={`${cell} flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-3.5 py-3 ${locked ? "text-[#6B7280]" : "text-[#111827]"}`}>
-                  <span className="min-w-0 text-[14px] leading-snug">
-                    <span className="mr-2 font-mono text-[12px] text-[#5B6474]">{String(s.n).padStart(2, "0")}</span>
-                    {s.t}
+                <span className={`${cell} flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-3.5 py-3 ${open ? "" : "@[760px]:flex-nowrap"} ${locked ? "text-[#6B7280]" : "text-[#111827]"}`}>
+                  {/* Closed: one line, full wording on hover. Open: the step in full — the whole question
+                      for a decision, and whatever the instruction adds beyond the title, in small type. */}
+                  <span className={`min-w-0 text-[14px] leading-snug ${open ? "" : "@[760px]:truncate"}`} title={open ? undefined : copy.title === s.t ? (copy.detail ? `${s.t}. ${copy.detail}` : s.t) : copy.title}>
+                    {open ? copy.title : s.t}
                   </span>
-                  {isNext && <span className="rounded-[3px] bg-[#4338CA] px-1.5 py-0.5 text-[11px] font-semibold text-white">UP NEXT</span>}
-                  {s.li && <span className="rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#3730A3]">{s.li}</span>}
+                  {isNext && <span className="shrink-0 rounded-[3px] bg-[#4338CA] px-1.5 py-0.5 text-[11px] font-semibold text-white">UP NEXT</span>}
+                  {s.li && <span className="shrink-0 rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#3730A3]">{s.li}</span>}
+                  {open && copy.detail && <span className="block w-full text-[13px] leading-snug text-[#5B6474]">{copy.detail}</span>}
                   {/* Narrow sheet: the folded columns ride along under the step. */}
                   <span className="flex w-full flex-wrap items-center gap-2 text-[12px] text-[#5B6474] @[760px]:hidden">
                     {decision && <TypeChip each={s.kind === "each"} />}
@@ -101,8 +110,19 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                   </span>
                 </span>
                 <span className={`${cell} hidden items-center px-3 text-[13px] text-[#3F4757] @[760px]:flex`}>{decision ? <TypeChip each={s.kind === "each"} /> : "Activity"}</span>
-                <span className={`${cell} hidden items-center px-3 font-mono text-[12px] font-semibold @[760px]:flex ${tag ? "text-[#3730A3]" : "text-[#8A91A3]"}`}>{tag || "—"}</span>
-                <span className={`${cell} hidden items-center px-3 text-[13px] text-[#3F4757] @[760px]:flex`}>{s.tool}</span>
+                <span className={`${cell} hidden min-w-0 items-center gap-2 px-3 @[760px]:flex`} title={kr ? `${splitKr(kr.kr).tag}: ${splitKr(kr.kr).text}` : undefined}>
+                  {kr ? (
+                    <>
+                      <span className="shrink-0 font-mono text-[12px] font-semibold text-[#3730A3]">{tag}</span>
+                      <span className="truncate text-[13px] text-[#3F4757]">{splitKr(kr.kr).text}</span>
+                    </>
+                  ) : (
+                    <span className="font-mono text-[12px] text-[#8A91A3]">—</span>
+                  )}
+                </span>
+                <span className={`${cell} hidden min-w-0 items-center px-3 text-[13px] text-[#3F4757] @[760px]:flex`} title={s.tool}>
+                  <span className="truncate">{s.tool}</span>
+                </span>
                 <span className={`flex items-center justify-center ${isNext && !open ? "text-[#4338CA]" : "text-[#8A91A3]"}`}>
                   <Icon name={isNext && !open ? "chevronRight" : "chevronDown"} size={16} className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
                 </span>
@@ -114,6 +134,21 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
       </ol>
     </div>
   );
+}
+
+/**
+ * A step's full wording, split for the open row. The pack writes a title (sometimes cut with "…")
+ * and an instruction that repeats the title, then adds detail and, for decisions, the options. The
+ * options are shown as the answer choices, so they are dropped here; what is left is either the
+ * whole question (when the title was cut) or the detail after the title.
+ */
+function stepCopy(s: Step): { title: string; detail: string } {
+  const body = s.w.split(/\s*Options:/)[0].replace(/^DECIDE:\s*/i, "").trim();
+  const cut = /(…|\.\.\.)$/.test(s.t);
+  if (cut) return { title: s.kind === "do" ? body : `Decide: ${body}`, detail: "" };
+  const core = s.t.replace(/^Decide:\s*/i, "").trim();
+  const rest = body.startsWith(core) ? body.slice(core.length).replace(/^[\s.?:]+/, "").trim() : body === core ? "" : body;
+  return { title: s.t, detail: rest };
 }
 
 /** "Decision" in the redesign's amber chip; a per-row decision says so. */

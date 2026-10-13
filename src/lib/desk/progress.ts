@@ -24,12 +24,12 @@ export interface Progress {
 const EMPTY: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs: {} };
 
 export function useProgress(who: string) {
-  // v2 (2026-10-09): a fresh start for everyone after the message rework.
-  const key = `grc101.desk.v2.${who}`;
+  // v3 (2026-10-13): progress reset for testing the toolbar-first flow; bump again for a fresh start.
+  const key = `grc101.desk.v3.${who}`;
   // Lazy read: the desk mounts only in the browser, after its content has loaded.
   const [progress, setProgress] = useState<Progress>(() => {
     try {
-      localStorage.removeItem(`grc101.desk.${who}`); // the v1 save, no longer read
+      for (const old of [`grc101.desk.${who}`, `grc101.desk.v2.${who}`]) localStorage.removeItem(old); // earlier saves, no longer read
       const raw = localStorage.getItem(key);
       return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY;
     } catch {

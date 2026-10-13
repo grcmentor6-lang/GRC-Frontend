@@ -29,6 +29,14 @@ export function Toolbar() {
   const [left, setLeft] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const dock = useRef<HTMLElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  // A menu opens on the tool the step in hand sends you to, not on whatever happens to be first:
+  // "Open Home › My Organisation" should find My Organisation in view, without a scroll hunt.
+  useEffect(() => {
+    const ul = list.current;
+    const row = ul?.querySelector<HTMLElement>("[data-target]");
+    if (ul && row) ul.scrollTop = row.offsetTop - (ul.clientHeight - row.offsetHeight) / 2;
+  }, [pop]);
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setPop(null);
@@ -40,6 +48,26 @@ export function Toolbar() {
       document.removeEventListener("keydown", onKey);
     };
   }, []);
+
+  // When the dock is wider than the screen it scrolls; fade whichever edge has more tools behind it.
+  const [more, setMore] = useState({ left: false, right: false });
+  const edges = () => {
+    const el = dock.current;
+    if (!el) return;
+    const next = { left: el.scrollLeft > 2, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 };
+    setMore((m) => (m.left === next.left && m.right === next.right ? m : next));
+  };
+  useEffect(() => {
+    const el = dock.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => edges());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const fadeMask =
+    more.left || more.right
+      ? `linear-gradient(to right, ${more.left ? "transparent, black 32px" : "black"}, ${more.right ? "black calc(100% - 32px), transparent" : "black"})`
+      : undefined;
 
   const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
   const target = step?.key ?? ""; // the tool the step in hand is done in
@@ -73,7 +101,7 @@ export function Toolbar() {
           } else toggle(k, e.currentTarget);
         }}
         title={unlocked ? (due ? `${l} · your current step is done here` : l) : `${l} opens when a step sends you here`}
-        className={`relative flex h-[54px] min-w-[60px] shrink-0 flex-col items-center justify-center gap-[3px] px-2 text-[11px] focus-ring ${
+        className={`relative flex h-[50px] min-w-[52px] shrink-0 flex-col items-center justify-center gap-[3px] px-1.5 text-[10.5px] focus-ring lg:h-[54px] lg:min-w-[60px] lg:px-2 lg:text-[11px] ${
           opts.end ? "border-r border-[#2A2E3B]" : ""
         } ${on ? "bg-white text-[#111827]" : unlocked ? "text-[#F1F2F6] hover:bg-[#1F2330]" : "cursor-not-allowed text-[#7C8399]"}`}
       >
@@ -94,7 +122,7 @@ export function Toolbar() {
   const ends = new Set(desk.secs.map((s, i) => (s && (desk.secs[i + 1] === null || i === desk.secs.length - 1) ? s.k : null)).filter(Boolean) as string[]);
 
   return (
-    <div ref={ref} className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex justify-center sm:inset-x-4" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+    <div ref={ref} className="pointer-events-none absolute bottom-3 left-3 right-[72px] z-20 flex justify-center sm:left-4" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <div className="pointer-events-auto relative min-w-0 max-w-full">
         {pop && sec && (
           <div
@@ -105,13 +133,13 @@ export function Toolbar() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">{sec.t}</p>
               <p className="text-[13px] text-[#5B6474]">{sec.sub}</p>
             </div>
-            <ul className="max-h-[320px] overflow-y-auto">
+            <ul ref={list} className="relative max-h-[320px] overflow-y-auto">
               {sec.tools.map((t, i) => {
                 const key = `${pop}|${t.n}`;
                 const unlocked = open(key);
                 const isTarget = key === target;
                 return (
-                  <li key={`${t.n}-${i}`}>
+                  <li key={`${t.n}-${i}`} data-target={isTarget || undefined}>
                     <button
                       type="button"
                       disabled={!unlocked}
@@ -146,6 +174,8 @@ export function Toolbar() {
         <nav
           ref={dock}
           aria-label="Platform tools"
+          onScroll={edges}
+          style={{ maskImage: fadeMask, WebkitMaskImage: fadeMask }}
           className="flex max-w-full items-stretch overflow-x-auto rounded-lg border border-[#12141C] bg-[#12141C] shadow-[0_10px_28px_rgba(17,24,39,0.25)] [scrollbar-width:none]"
         >
           {desk.secs.map((s) => (s === null ? null : cell(s.k, s.l, SEC_ICON[s.k] ?? "grid", sectionOpen(desk, progress, isOpen, here, s.k), { end: ends.has(s.k) })))}

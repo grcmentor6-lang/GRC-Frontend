@@ -98,8 +98,9 @@ function RubricRadar({ dims }: { dims: { label: string; value?: number }[] }) {
   const pt = (i: number, radius: number): [number, number] => [cx + radius * Math.cos(angle(i)), cy + radius * Math.sin(angle(i))];
   const poly = (radius: (i: number) => number) => dims.map((_, i) => pt(i, radius(i)).join(",")).join(" ");
   const reduce = useReducedMotion();
+  // 44 units of margin either side: the axis labels sit outside the radar and "Communication" is long.
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[240px] mx-auto">
+    <svg viewBox={`-44 0 ${size + 88} ${size}`} className="w-full max-w-[300px] mx-auto">
       {[1, 2, 3, 4, 5].map((lvl) => (
         <polygon key={lvl} points={poly(() => (R * lvl) / MAX)} fill="none" stroke="#EEF2F7" strokeWidth={1} />
       ))}

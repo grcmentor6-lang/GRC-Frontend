@@ -178,7 +178,7 @@ function DeskLoaded({ desk, who, startIso }: { desk: Desk; who: string; startIso
             <div className="border-b border-[#DDE1E8] bg-white px-3 py-2 lg:hidden">
               <TaskPills week={week} taskId={weekView ? "" : task.id} desk={desk} progress={progress} openTask={openTask} />
             </div>
-            <main className="desk-panel min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#F7F8FA] px-3 pb-28 sm:px-4">
+            <main className="desk-panel min-h-0 min-w-0 flex-1 overflow-y-auto bg-white pb-28">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   // @container: the task file's step bar bleeds to the column's width (see StepBar).

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { currentWeek, dayIndex, dueDate, fmtDay, type Desk, type Task } from "@/lib/desk/model";
@@ -62,8 +63,15 @@ const ON_LIGHT: Record<Urgency, string> = {
 export function WeekTimeline({ week, onWeek }: { week: number; onWeek: (n: number) => void }) {
   const { desk, progress, isOpen, start } = useDesk();
   const today = currentWeek(start);
+  // On a screen too narrow for twelve cells the strip scrolls; keep the week on screen in view.
+  const nav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = nav.current;
+    const cell = el?.querySelector<HTMLElement>("[aria-selected=true]");
+    if (el && cell && el.scrollWidth > el.clientWidth) el.scrollTo({ left: cell.offsetLeft - (el.clientWidth - cell.offsetWidth) / 2 });
+  }, [week]);
   return (
-    <nav role="tablist" aria-label="Weeks" className="flex h-full min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
+    <nav ref={nav} role="tablist" aria-label="Weeks" className="flex h-full min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
       {desk.weeks.map((w) => {
         const ts = weekTasks(desk, w.n);
         const total = ts.reduce((n, t) => n + t.steps.length, 0);

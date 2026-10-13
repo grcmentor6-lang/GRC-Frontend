@@ -7,7 +7,6 @@ import { Icon } from "@/components/ui/icon";
 import { useAuth } from "@/components/auth/auth-provider";
 import { DASH_NAV, initialsOf } from "./nav";
 import { WelcomeTour, startWelcomeTour } from "./welcome-tour";
-import { markTourSeen } from "./guided-tour";
 import { UpNext } from "./up-next";
 import { FeedbackWidget } from "./feedback-widget";
 import { OrgInfoButton } from "@/components/desk/org-drawer";
@@ -440,150 +439,28 @@ function DashTopBar({ openMobile }: { openMobile: () => void }) {
   );
 }
 
-/** Desk is a focus surface — the workspace column wants the width. Nudge (don't force) the mentee
- *  to collapse the main menu the first time they land there. Lives in AppShell because AppShell
- *  owns `collapsed`; the desk layout can't reach it. Desktop only: on mobile the menu is a drawer
- *  and already out of the way. */
-// Shown once per mentee, then never again. Keyed per user like the tours (localStorage is per
-// browser — an unsuffixed flag would hide the hint from the next account on the same machine).
-const COLLAPSE_HINT_KEY = "grcmentor.collapseHint";
-// Separate flag from the hint's: someone who has collapsed the menu by hand (so the hint is
-// retired) has still never had the desk do it for them.
-const DESK_AUTOCOLLAPSE_KEY = "grcmentor.deskAutoCollapse";
-// Decided once per page load (see AppShell) — module-level so a remount can't re-read the flag it
-// just wrote and conclude the collapse already happened.
-let autoCollapse: boolean | null = null;
-
-const seen = (key: string, who: string | null | undefined) => {
-  if (!who) return true; // no identity yet — don't act, and don't burn the flag on nobody
-  try {
-    return !!localStorage.getItem(`${key}:${who}`);
-  } catch {
-    return false; // storage unavailable — repeating beats broken
-  }
-};
-
-function CollapseMenuHint({ collapsed }: { collapsed: boolean }) {
-  const pathname = usePathname();
-  const { user } = useAuth();
-  const who = user?.email;
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
-    // Collapsing *is* taking the hint — never coach them again, not even if they reopen the menu
-    // while still on the desk.
-    if (collapsed) markTourSeen(COLLAPSE_HINT_KEY, who);
-    if (seen(COLLAPSE_HINT_KEY, who) || !pathname.startsWith("/app/desk")) {
-      setShow(false);
-      return;
-    }
-    const t = setTimeout(() => setShow(true), 700);
-    return () => clearTimeout(t);
-  }, [pathname, collapsed, who]);
-
-  const close = () => {
-    markTourSeen(COLLAPSE_HINT_KEY, who);
-    setShow(false);
-  };
-
-  // Escape waves it off, same as the X.
-  useEffect(() => {
-    if (!show) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [show]);
-
-  if (!show) return null;
-  // Geometry of the real toggle in DashSidebar's header: px-4 (16px) inset, w-9/h-9 (36px), inside
-  // a h-16 (64px) row → top (64-36)/2 = 14px. ponytail: hardcoded; measure the node if the header
-  // ever stops being a fixed height.
-  return (
-    <div className="hidden md:block print:hidden">
-      {/* Spotlight. The 9999px shadow spread *is* the dim — everything outside this 36px box goes
-          dark, the box itself stays clear. pointer-events-none throughout so the toggle beneath
-          (and the rest of the app) stays clickable; this coaches, it doesn't trap. */}
-      <div
-        aria-hidden="true"
-        className="fixed top-3.5 left-4 w-9 h-9 z-40 rounded-lg pointer-events-none outline outline-2 outline-offset-[3px] outline-white/70 shadow-[0_0_0_9999px_rgba(2,6,23,0.62)] motion-safe:animate-[spotlight_2s_ease-out_infinite]"
-      />
-
-      {/* Cursor tapping the toggle. Anchored off the toggle's bottom-right corner; the keyframes
-          walk it in, press, and drift back out. */}
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 24 24"
-        className="fixed top-[22px] left-6 z-40 w-7 h-7 pointer-events-none drop-shadow-[0_3px_8px_rgba(0,0,0,0.55)] motion-safe:animate-[cursorTap_2s_ease-in-out_infinite]"
-      >
-        {/* Lucide mouse-pointer-click — the arrow-plus-click-rays icon these tours converge on.
-            Its tip sits at ~9,9 in the viewBox (≈11px at 28px), so top/left 24 lands the tip on the
-            toggle's centre at the press keyframe and just off its corner at rest. Rays are indigo
-            so they read on the white toggle; the arrow is white-on-slate so it reads on both the
-            toggle and the dimmed backdrop. */}
-        <g stroke="#6366f1" strokeWidth="2" strokeLinecap="round" fill="none">
-          <path d="M14 4.1 12 6" />
-          <path d="m5.1 8-2.9-.8" />
-          <path d="m6 12-1.9 2" />
-          <path d="M7.2 2.2 8 5.1" />
-        </g>
-        <path
-          d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"
-          fill="#fff"
-          stroke="#0f172a"
-          strokeWidth="1.35"
-          strokeLinejoin="round"
-        />
-      </svg>
-
-      <div
-        role="status"
-        className="fixed top-[74px] left-4 z-40 w-[268px] rounded-xl bg-white ring-1 ring-slate-200 shadow-2xl shadow-black/40 motion-safe:animate-[popIn_.35s_ease-out]"
-      >
-        {/* Caret aimed up at the toggle, centred on it. */}
-        <span className="absolute left-[26px] -top-[5px] w-2.5 h-2.5 rotate-45 bg-white ring-1 ring-slate-200 [clip-path:polygon(0_0,100%_0,0_100%)]" />
-        <div className="flex items-start gap-2.5 px-3.5 pt-3">
-          <Icon name="sparkle" size={15} className="shrink-0 mt-px text-indigo-500" />
-          <p className="text-[12.5px] leading-[1.55] text-slate-600">
-            Collapse the menu here. The Working Desk gives you more room to think.
-          </p>
-        </div>
-        <div className="flex justify-end px-2 pb-2 pt-1.5">
-          <button
-            onClick={close}
-            className="focus-ring cursor-pointer h-7 px-2.5 rounded-lg text-[12px] font-medium tracking-tight text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-          >
-            Got it
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const { user } = useAuth();
-  const autoCollapsed = useRef(false);
 
-  // First time a mentee reaches the desk, collapse the menu for them rather than asking — the desk
-  // wants the width. CollapseMenuHint then has nobody left to coach.
-  //
-  // The verdict is read from storage once per page load and cached in a module variable, NOT
-  // re-read here: Strict Mode mounts, unmounts and remounts this in dev, so an effect that both
-  // stamped the flag and set state spent the one shot on the throwaway mount — the flag stuck, the
-  // collapse was discarded with the state, and it never fired again for that account. The ref
-  // keeps it to once per mount so re-expanding the menu and moving between desk pages sticks.
+  // The desk is a focus surface and wants the width: entering it folds the main menu to its icon
+  // rail every time, and leaving it puts the menu back as it was. Opening the menu while on the desk
+  // sticks until you leave. Desktop only in effect: on mobile the menu is a drawer anyway.
+  const onDesk = pathname.startsWith("/app/desk");
+  const beforeDesk = useRef<boolean | null>(null);
   useEffect(() => {
-    if (autoCollapsed.current || !pathname.startsWith("/app/desk") || !user?.email) return;
-    if (autoCollapse === null) {
-      autoCollapse = !seen(DESK_AUTOCOLLAPSE_KEY, user.email);
-      if (autoCollapse) markTourSeen(DESK_AUTOCOLLAPSE_KEY, user.email);
+    if (onDesk && beforeDesk.current === null) {
+      beforeDesk.current = collapsed;
+      setCollapsed(true);
+    } else if (!onDesk && beforeDesk.current !== null) {
+      setCollapsed(beforeDesk.current);
+      beforeDesk.current = null;
     }
-    autoCollapsed.current = true;
-    if (autoCollapse) setCollapsed(true);
-  }, [pathname, user?.email]);
+    // Only crossing the desk boundary acts; toggling the menu by hand must not re-trigger it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onDesk]);
 
   // Close the mobile drawer on navigation and on Escape.
   useEffect(() => setMobileOpen(false), [pathname]);
@@ -614,7 +491,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <DashTopBar openMobile={() => setMobileOpen(true)} />
         <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden print:overflow-visible print:h-auto">{children}</main>
       </div>
-      <CollapseMenuHint collapsed={collapsed} />
       {/* On the desk the corner belongs to its toolbar, so the button sits above it. */}
       <FeedbackWidget placement={pathname.startsWith("/app/desk") ? "bottom-[22px] right-5 max-lg:bottom-[84px] max-lg:right-4" : undefined} />
       <div className="print:hidden"><WelcomeTour openNav={() => setMobileOpen(true)} /></div>

@@ -54,16 +54,23 @@
 }
 @media screen and (min-width: 64rem) {
   :root {
-    --app-zoom: 0.9;
-    zoom: 0.9;
-  }
-}
-/* 2026-10-08: from 1280px wide, one more notch (81% — what the app looked right at under 90%
-   browser zoom on a 1536px laptop). Small laptops keep 90%, where 81% would put body text near 10px. */
-@media screen and (min-width: 80rem) {
-  :root {
     --app-zoom: 0.81;
     zoom: 0.81;
+  }
+}
+/* 2026-10-13: a step smaller again on desktop, graded by width so a small laptop never drops
+   body text below legibility: 1024–1279 → 81%, 1280–1535 → 76%, 1536+ → 73% (90% of the 81% the
+   app was judged at on a 1536px screen). Below 1024px nothing is scaled. */
+@media screen and (min-width: 80rem) {
+  :root {
+    --app-zoom: 0.76;
+    zoom: 0.76;
+  }
+}
+@media screen and (min-width: 96rem) {
+  :root {
+    --app-zoom: 0.73;
+    zoom: 0.73;
   }
 }
 

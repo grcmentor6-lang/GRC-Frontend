@@ -19,7 +19,7 @@ export function WeekOverview({ week }: { week: number }) {
   }, [week]);
 
   return (
-    <div ref={root} className="desk-rise mx-auto grid w-full max-w-[1200px] gap-6 pt-6">
+    <div ref={root} className="desk-rise grid w-full max-w-[1200px] gap-6 px-4 pt-6 sm:px-6">
       <header className="grid gap-3">
         <p className="text-[12.5px] text-slate-500">
           Week {week} of {desk.weeks.length} · {w.ph} · {isOpen(week) ? "opened" : "opens"} {fmtDay(dueDate(start, (week - 1) * 7))}

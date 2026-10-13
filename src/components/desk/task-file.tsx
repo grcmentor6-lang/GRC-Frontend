@@ -33,13 +33,16 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
   }, [focus, tab]);
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] py-4">
+    // Full bleed: the task fills the work area edge to edge, no card around it, so a wider screen
+    // gives the table more room instead of more margin. 10px top = StepBar's -24px top and -28px
+    // bottom margins over its 42px, so the sheet starts flush with the column.
+    <div className="w-full pt-[10px]">
       <StepBar label="Task" code={task.id} eyebrow={task.title} title={task.obj} watch={headingRef} done={st === "submitted"} />
       <FloatingChecklist task={task} focus={focus} onFocus={onFocus} watch={stepsRef} />
 
       {/* One task sheet, as the redesign draws it: the heading, a strip of facts, the objective row,
           then the steps as a table, all cells of one object divided by 1px rules. */}
-      <article className="rounded-md border border-[#DDE1E8] bg-white">
+      <article className="border-b border-[#DDE1E8] bg-white">
         <header ref={headingRef} className="flex items-center gap-3 border-b border-[#DDE1E8] px-4 py-3.5">
           <span className="shrink-0 rounded bg-[#111827] px-2 py-[5px] font-mono text-[13px] font-semibold leading-none text-white">{task.id}</span>
           <h1 className="min-w-0 text-[22px] font-bold leading-[1.25] tracking-[-0.01em] text-[#111827] text-balance max-md:text-[19px]">{task.title}</h1>
@@ -270,7 +273,7 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
   const submitted = progress.submitted[task.id];
   const left = task.steps.filter((s) => !progress.done[stepKey(task.id, s.n)]).length;
   return (
-    <footer aria-label="Submit" className="flex flex-wrap items-stretch justify-between gap-4 rounded-b-md bg-[#F7F8FA] pl-4">
+    <footer aria-label="Submit" className="flex flex-wrap items-stretch justify-between gap-4 bg-[#F7F8FA] pl-4">
       <div className="grid gap-1.5 py-3">
         <p className="text-[13.5px] font-semibold text-[#111827]">
           {submitted
@@ -294,7 +297,7 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
           type="button"
           disabled={locked || left > 0}
           onClick={() => update((p) => ({ ...p, submitted: { ...p.submitted, [task.id]: new Date().toISOString() } }))}
-          className="min-h-12 rounded-br-md border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] disabled:hover:brightness-100"
+          className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] disabled:hover:brightness-100"
         >
           Submit task
         </button>
