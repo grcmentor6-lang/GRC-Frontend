@@ -19,8 +19,11 @@ export interface DeskCtx {
   view: (item: ViewItem) => void;
   /** The step in hand (task file open on a step), or null on a week overview. */
   here: Here | null;
-  /** Opens a platform tool in the tool modal; the step in hand is worked there when it names that tool. */
-  openTool: (key: string) => void;
+  /**
+   * Opens a platform tool. The step in hand, not yet done, is worked in the tool modal (as is any
+   * step opened with mode "work", to change it); every other opening is a floating read-only window.
+   */
+  openTool: (key: string, mode?: "work") => void;
 }
 
 export const Ctx = createContext<DeskCtx | null>(null);

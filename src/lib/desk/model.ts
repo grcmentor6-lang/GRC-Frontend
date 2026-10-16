@@ -23,7 +23,7 @@ export interface Step {
   did: string | null;
   help: string;
   li: string | null;
-  refs: { rules: string[]; docs: string[]; pages: string[]; tpls: string[]; ds: string[]; clauses: string[] };
+  refs: { rules: string[]; /** [document, sections cited] */ docs: [string, string[]][]; pages: string[]; tpls: string[]; ds: string[]; clauses: string[] };
 }
 
 export interface Task {
@@ -123,15 +123,15 @@ export function loadDesk(): Promise<Desk> {
 
 /** The eight questions, in the order the mentee meets them: what, how, why, then the rest.
  *  `card` is the task-card key in the content; `title`, where set, is what the screen says instead. */
+/**
+ * The help on a step, behind its "Help with this step" button. Trimmed 2026-10-15 to what the row
+ * does not already say: How's plain-English note now sits inside Do, Where and Deliver are the
+ * "Do this step in … / Done when" bar, Learn's rules are under Reference, Impact repeated Why.
+ */
 export const QUESTIONS = [
   { key: "do", label: "Do", icon: "qDo", card: "What will I do" },
-  { key: "how", label: "How", icon: "qHow", card: "How to do it" },
   { key: "why", label: "Why", icon: "qWhy", card: "Why am I doing this" },
-  { key: "where", label: "Where", icon: "qWhere", card: "Where to add" },
   { key: "read", label: "Reference", icon: "qRead", card: "What to read or refer", title: "References" },
-  { key: "deliver", label: "Deliver", icon: "qDeliver", card: "What to deliver" },
-  { key: "learn", label: "Learn", icon: "qLearn", card: "What will I learn" },
-  { key: "impact", label: "Impact", icon: "qImpact", card: "Why is this important" },
 ] as const;
 export type QuestionKey = (typeof QUESTIONS)[number]["key"];
 /** The heading a question shows on screen. */
@@ -163,6 +163,13 @@ const DAY = 86_400_000;
 export function dayIndex(start: Date, now = new Date()): number {
   return Math.floor((now.getTime() - start.getTime()) / DAY);
 }
+/** The mentee's start date ("2026-10-08") as local midnight; today when none is set. */
+export function startOf(iso: string | null | undefined): Date {
+  const d = iso ? new Date(`${iso.slice(0, 10)}T00:00:00`) : new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 export function weekOpen(week: number, start: Date, now = new Date()): boolean {
   return dayIndex(start, now) >= (week - 1) * 7;
 }
@@ -173,6 +180,55 @@ export function dueDate(start: Date, dueDay: number): Date {
   return new Date(start.getTime() + dueDay * DAY);
 }
 export const fmtDay = (d: Date) => d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+/** A week's test (KC-01, FGE…) is due on the last day of its week: Sun 11 Oct for a Mon 05 Oct start. */
+export const testDue = (start: Date, week: number) => dueDate(start, week * 7 - 1);
+const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+/** 05-OCT-2026: the date format the pack asks the mentee to write. */
+export const dmy = (d: Date) => `${String(d.getDate()).padStart(2, "0")}-${MON[d.getMonth()]}-${d.getFullYear()}`;
+
+/**
+ * A reading step ("Nothing to produce — you read …") is worked by reading the screen and confirming
+ * it. Returns the parts to confirm, or null for a step that produces something. (v1.8.9 turned the
+ * one step that read both organisations into copying from them, READ-ME-FIRST table 1.)
+ */
+export function readingParts(s: Step): string[] | null {
+  return /^nothing to produce/i.test(s.o) ? ["read"] : null;
+}
+
+/** "READ-ME-FIRST table 2 filled (4 folder paths)" → 1: the READ-ME-FIRST table a step fills. */
+export function rmfTable(s: Step): number | null {
+  const m = s.o.match(/READ-ME-FIRST table (\d)/);
+  return m ? Number(m[1]) - 1 : null;
+}
+
+/** A register cell the pack leaves for the mentee: "copy", "copy from …", "calc", or blank. */
+export const isFillCell = (c: unknown) => /^(copy\b.*|calc)$/i.test(String(c ?? "").trim()) || String(c ?? "").trim() === "";
+/** A register cell a decision step fills: "◆" or "◆ Decide". */
+export const isDecideCell = (c: unknown) => String(c ?? "").trim().startsWith("◆");
+
+/**
+ * How a "do" step is worked, from what the pack says it produces:
+ *   read — "Nothing to produce — you read …": read it and confirm (readingParts);
+ *   grid — "Values copied …" in a register with cells left to fill: fill them in the register;
+ *   copy — "Values copied …" anywhere else: the value(s) plus where they came from;
+ *   form — "READ-ME-FIRST table n filled": fill that table (lib/desk/forms);
+ *   submit — "… submitted with manifest": name each file by the convention, submit, get a receipt;
+ *   log  — "Step ticked in the work log": tick it, time-stamped;
+ *   note — anything else: a short note of what was done.
+ */
+export type WorkKind = "read" | "grid" | "copy" | "log" | "form" | "submit" | "note";
+export function workKind(s: Step, desk: Desk): WorkKind {
+  if (s.kind === "do" && rmfTable(s) !== null) return "form";
+  if (readingParts(s)) return "read";
+  // "Values copied …", "Four organisation labels copied with source", "Section 2 copied with source"
+  if (/\bcopied\b/i.test(s.o)) {
+    const pl = desk.tp[s.key]?.pl as { h?: unknown[]; r?: unknown[][] } | undefined;
+    return pl?.h && pl.r?.some((r) => r.some(isFillCell)) ? "grid" : "copy";
+  }
+  if (/\bsubmitted\b/.test(s.o)) return "submit";
+  if (/^step ticked in the work log/i.test(s.o)) return "log";
+  return "note";
+}
 
 /** Reference ids an activity cites, flattened for the "Read" view. */
 export type RefKind = "rule" | "page" | "tpl" | "ds" | "doc" | "clause";
@@ -183,7 +239,8 @@ export function stepRefs(s: Step): { kind: RefKind; id: string }[] {
     ...r.pages.map((id) => ({ kind: "page" as const, id })),
     ...r.tpls.map((id) => ({ kind: "tpl" as const, id })),
     ...r.ds.map((id) => ({ kind: "ds" as const, id })),
-    ...r.docs.map((id) => ({ kind: "doc" as const, id })),
+    // A document citation carries its sections: "BKB-ADD-16#7", "BKB-ERM-001#6.2–6.4".
+    ...r.docs.map(([id, secs]) => ({ kind: "doc" as const, id: secs.length ? `${id}#${secs.join(",")}` : id })),
     ...r.clauses.map((id) => ({ kind: "clause" as const, id })),
   ];
 }

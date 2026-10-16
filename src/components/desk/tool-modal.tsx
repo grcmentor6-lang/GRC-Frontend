@@ -1,21 +1,28 @@
 "use client";
 
-import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
-import { decided, Work } from "./how-to";
+import { Work } from "./how-to";
+import { BriefProgress, BriefWork, CopyWork, GridProgress, GridWork, LogWork, RegisterProgress, RegisterWork, RmfForm, SubmitWork } from "./work-kinds";
+import { BRIEFS, REGISTERS, deliverableFor, stepSources } from "@/lib/desk/registers";
+import { gridKey, stepAnswered } from "@/lib/desk/work";
 import { Inbox } from "./chat";
 import { ToolScreen } from "./viewer";
-import { dueDate, fmtDay } from "@/lib/desk/model";
+import { FloatWindow } from "./float-window";
+import { DocCitation } from "./doc-text";
+import { DOC_TEXT } from "@/lib/desk/docs";
+import { OrgDetails, type OrgFull } from "./org-drawer";
+import { dmy, dueDate, fmtDay, rmfTable, testDue, workKind, type Step, type Task } from "@/lib/desk/model";
+import { folders } from "@/lib/desk/forms";
 import { stepKey } from "@/lib/desk/progress";
 
 /**
- * A platform tool, opened from the toolbar or from a step, as a centred modal: the work happens in
- * the tool, not in a drawer beside the task. The screen is the pack's mock-up of the tool. When the
- * step in hand is done in this tool, its work sits beside the screen — the instruction, the inputs,
- * "Done when" and Mark complete — and completing it walks on to the next step, staying in the tool
- * when the next step is done here too. Opened at any other time the tool is for reading.
+ * The step being worked, as a centred modal: the tool's screen on the left, the step's work on the
+ * right. The toolbar stays above it (see Toolbar's z-index), so the mentee can open any other tool
+ * mid-step; those open as floating windows, never as a second modal. Completing walks on to the next
+ * step, staying in the tool when the next step is done here too.
  */
 export function ToolModal({ toolKey, onClose }: { toolKey: string | null; onClose: () => void }) {
   useEffect(() => {
@@ -28,18 +35,66 @@ export function ToolModal({ toolKey, onClose }: { toolKey: string | null; onClos
   return <AnimatePresence>{toolKey && <Dialog key="tool" toolKey={toolKey} onClose={onClose} />}</AnimatePresence>;
 }
 
+/** A tool opened for reading: a floating, resizable window with just its screen. */
+export function ToolWindow({ toolKey, index, onClose }: { toolKey: string; index: number; onClose: () => void }) {
+  const { desk, progress, here } = useDesk();
+  // A register this task has started is shown with the mentee's entries, read-only.
+  const mine = here && progress.grids?.[gridKey(here.task, toolKey)] ? here.task : null;
+  // The step in hand works on the task's register or brief: the window shows that, as filled.
+  const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
+  const deliverable = here && step?.key === toolKey ? deliverableFor(desk.tasks[here.task], here.n) : null;
+  const sec = toolKey.split("|")[0];
+  const mock = desk.tp[toolKey] ?? desk.tp[`${sec}|*`];
+  return (
+    <FloatWindow
+      title={mock?.tool ?? toolKey.replace("|", " › ")}
+      eyebrow={`${desk.sections[sec]?.t ?? sec}${mock?.stamp ? ` · ${mock.stamp}` : ""}`}
+      leading={<span className="grid h-7 w-7 place-items-center rounded bg-[#111827] text-white"><Icon name="grid" size={14} /></span>}
+      onClose={onClose}
+      index={index}
+      width={720}
+    >
+      <div className="flex min-h-full flex-col bg-[#F7F8FA]">
+        {toolKey === "home|My Organisation" ? <BothOrgs /> : deliverable === "register" ? <RegisterWork task={desk.tasks[here!.task]} readOnly /> : deliverable === "brief" ? <BriefWork task={desk.tasks[here!.task]} readOnly /> : mine ? <GridWork taskId={mine} toolKey={toolKey} readOnly /> : <Screen toolKey={toolKey} />}
+        {desk.guard[sec] && <Guard text={desk.guard[sec]} />}
+      </div>
+    </FloatWindow>
+  );
+}
+
+function Guard({ text }: { text: string }) {
+  return (
+    <p className="flex items-start gap-2 px-3.5 py-2.5 text-[12px] leading-relaxed text-[#5B6474]">
+      <Icon name="shield" size={13} className="mt-0.5 shrink-0 text-[#8A91A3]" />
+      {text}
+    </p>
+  );
+}
+
 function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) {
-  const { desk, here, isOpen, progress } = useDesk();
+  const { desk, here, progress } = useDesk();
   const sec = toolKey.split("|")[0];
   const mock = desk.tp[toolKey] ?? desk.tp[`${sec}|*`];
   const section = desk.sections[sec];
   const task = here ? desk.tasks[here.task] : null;
   const s = task && here ? task.steps[here.n - 1] : undefined;
-  const working = !!task && !!s && s.key === toolKey && isOpen(task.week) && !progress.submitted[task.id];
   const title = mock?.tool ?? toolKey.replace("|", " › ");
+  // The documents the step says to copy from, when their text is on the platform. The step opens on
+  // its source, beside the work, so the mentee reads the value where it is written.
+  const sources = (task && s ? stepSources(task, s.n, s.refs.docs) : []).filter(([id]) => DOC_TEXT.has(id));
+  const deliverable = task && s ? deliverableFor(task, s.n) : null;
+  // While the modal fades out, completing a step has already moved on: opening that step's sources
+  // then would leave windows behind and hold the exit open.
+  const present = useIsPresent();
+  // A step's first source opens beside the work by itself; the others, and a closed one, from the
+  // "Read from" strip. Kept per step, since the modal walks on to the next step in place.
+  const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  const sid = (i: number) => `${here?.task}-${here?.n}:${i}`;
+  const isShown = (i: number) => toggled[sid(i)] ?? i === 0;
+  const show = (i: number, on: boolean) => setToggled((t) => ({ ...t, [sid(i)]: on }));
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-[60] flex items-start justify-center p-3 pb-[88px] sm:p-6 sm:pb-[92px]" role="dialog" aria-modal="true" aria-label={title}>
       <motion.button
         type="button"
         aria-label="Close"
@@ -55,9 +110,8 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 4, transition: { duration: 0.12 } }}
         transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-        className={`relative flex max-h-[calc(100dvh/var(--app-zoom)-48px)] w-full flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_rgba(17,24,39,0.35)] ${working ? "max-w-[1240px]" : "max-w-[960px]"}`}
+        className="relative flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_rgba(17,24,39,0.35)]"
       >
-        {/* Header: a dark tool block, where it sits and what it is, and a close cell. */}
         <header className="flex shrink-0 items-stretch border-b border-[#DDE1E8]">
           <span className="grid w-14 shrink-0 place-items-center bg-[#111827] text-white">
             <Icon name="grid" size={18} />
@@ -76,17 +130,87 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
 
         <div className="flex min-h-0 flex-1 flex-wrap overflow-y-auto">
           <div className="flex min-w-0 flex-[999_1_560px] flex-col bg-[#F7F8FA]">
-            <Screen toolKey={toolKey} />
-            {desk.guard[sec] && (
-              <p className="flex items-start gap-2 px-3.5 py-2.5 text-[12px] leading-relaxed text-[#5B6474]">
-                <Icon name="shield" size={13} className="mt-0.5 shrink-0 text-[#8A91A3]" />
-                {desk.guard[sec]}
-              </p>
+            {sources.length > 0 && (
+              // Where to read: the step's source opens in its own window beside the work, so the
+              // mentee copies across without switching away from the tool.
+              <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2 text-[12.5px] text-[#78350F]">
+                <Icon name="book" size={14} className="shrink-0" />
+                <span className="font-semibold">Read from</span>
+                {sources.map(([id, secs], i) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => show(i, true)}
+                    className="inline-flex items-center gap-1 rounded border border-[#FCD34D] bg-white px-2 py-0.5 font-mono text-[12px] font-semibold text-[#92400E] hover:bg-[#FEF3C7] focus-ring"
+                  >
+                    {id}{secs.length ? ` §${secs.join(", §")}` : ""} <Icon name="arrowUpRight" size={12} />
+                  </button>
+                ))}
+                <span className="text-[#92400E]">opens in a window you can drag beside this one.</span>
+              </div>
             )}
+            {sources.map(([id, secs], i) =>
+              present && isShown(i) ? (
+                <FloatWindow
+                  key={sid(i)}
+                  title={`${id}${secs.length ? ` §${secs.join(", §")}` : ""}`}
+                  eyebrow="Source · read and copy from here"
+                  leading={<span className="grid h-7 w-7 place-items-center rounded bg-[#92400E] text-white"><Icon name="book" size={14} /></span>}
+                  onClose={() => show(i, false)}
+                  index={i}
+                  width={420}
+                  left={`${12 + i * 28}px`}
+                >
+                  <div className="px-4 py-3"><DocCitation id={id} cites={secs} /></div>
+                </FloatWindow>
+              ) : null,
+            )}
+            {task && deliverable === "register" ? (
+              <RegisterWork task={task} s={s} readOnly={!!progress.submitted[task.id]} />
+            ) : task && deliverable === "brief" ? (
+              <BriefWork task={task} s={s} readOnly={!!progress.submitted[task.id]} />
+            ) : toolKey === "home|My Organisation" ? (
+              <BothOrgs />
+            ) : task && s && (workKind(s, desk) === "grid" || progress.grids?.[gridKey(task.id, toolKey)]) ? (
+              // The task's register as filled so far; only a fill-in step may edit it.
+              <GridWork taskId={task.id} toolKey={toolKey} readOnly={!!progress.submitted[task.id] || workKind(s, desk) !== "grid"} />
+            ) : (
+              <Screen toolKey={toolKey} />
+            )}
+            {desk.guard[sec] && <Guard text={desk.guard[sec]} />}
           </div>
-          {working && task && s && <WorkPanel taskId={task.id} n={s.n} toolKey={toolKey} onClose={onClose} />}
+          {task && s && <WorkPanel task={task} s={s} toolKey={toolKey} onClose={onClose} />}
         </div>
       </motion.div>
+    </div>
+  );
+}
+
+/** Both organisations, one at a time, each in the same tabbed record the header windows show. */
+function BothOrgs() {
+  const { desk } = useDesk();
+  const [k, setK] = useState<"A" | "B">("A");
+  const org = desk.orgs[k] as OrgFull;
+  return (
+    <div className="flex min-h-[420px] flex-1 flex-col bg-white">
+      <Assignment />
+      <div className="flex shrink-0 border-b border-[#DDE1E8]">
+        {(["A", "B"] as const).map((x) => (
+          <button
+            key={x}
+            type="button"
+            onClick={() => setK(x)}
+            className={`relative flex-1 border-r border-[#DDE1E8] px-4 py-2.5 text-left last:border-r-0 focus-ring ${k === x ? "bg-white" : "bg-[#F7F8FA] hover:bg-[#F3F4F7]"}`}
+          >
+            <span className="block text-[11.5px] text-[#5B6474]">Org {x} · {x === "A" ? "your main organisation" : "your second organisation"}</span>
+            <span className={`block truncate text-[14px] ${k === x ? "font-bold text-[#111827]" : "font-semibold text-[#3F4757]"}`}>{desk.orgs[x].name}</span>
+            {k === x && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-[#4338CA]" aria-hidden />}
+          </button>
+        ))}
+      </div>
+      <div className="min-h-0 flex-1">
+        <OrgDetails key={k} org={org} />
+      </div>
     </div>
   );
 }
@@ -101,7 +225,7 @@ function Screen({ toolKey }: { toolKey: string }) {
     return (
       <dl className="grid gap-3 p-4">
         {desk.help.map(([t, d]) => (
-          <div key={t} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+          <div key={t} className="rounded border border-[#DDE1E8] bg-white px-4 py-3">
             <dt className="text-[13.5px] font-semibold text-slate-900">{t}</dt>
             <dd className="mt-0.5 text-[13px] leading-relaxed text-slate-600">{d}</dd>
           </div>
@@ -109,6 +233,7 @@ function Screen({ toolKey }: { toolKey: string }) {
       </dl>
     );
   if (mock?.dyn === "inbox") return <div className="p-4"><Inbox /></div>;
+  if (toolKey === "home|My plan") return <Plan />;
   if (mock?.dyn === "tasks") {
     const week = here ? desk.tasks[here.task].week : 1;
     const ids = desk.order.filter((t) => desk.tasks[t].week === week);
@@ -145,12 +270,8 @@ function Screen({ toolKey }: { toolKey: string }) {
             </tbody>
           </table>
         </div>
-        {(mock.pl as { note?: string }).note && (
-          <p className="flex items-center gap-2 px-3.5 py-2.5 text-[12px] text-[#5B6474]">
-            <Icon name="shield" size={13} className="shrink-0 text-[#8A91A3]" />
-            {(mock.pl as { note?: string }).note}
-          </p>
-        )}
+        {here && <Folders taskId={here.task} />}
+        {(mock.pl as { note?: string }).note && <Guard text={(mock.pl as { note?: string }).note!} />}
       </>
     );
   }
@@ -158,14 +279,30 @@ function Screen({ toolKey }: { toolKey: string }) {
   return <ToolScreen mock={mock} flush />;
 }
 
-/** The step in hand, worked inside its tool. */
-function WorkPanel({ taskId, n, toolKey, onClose }: { taskId: string; n: number; toolKey: string; onClose: () => void }) {
+/** A reading step's work: confirm the screen has been read. */
+function ReadConfirm({ task, s, readOnly }: { task: Task; s: Step; readOnly: boolean }) {
+  const { progress, update } = useDesk();
+  const key = stepKey(task.id, s.n);
+  const on = (progress.acks[key] ?? []).includes("read");
+  const toggle = () => update((p) => ({ ...p, acks: { ...p.acks, [key]: on ? [] : ["read"] } }));
+  return (
+    <label className={`mt-3 flex items-start gap-3 rounded border px-3 py-2.5 text-[14px] ${on ? "border-[#BBF7D0] bg-[#F0FDF4]" : "cursor-pointer border-[#DDE1E8] hover:border-[#C9CED8]"}`}>
+      <input type="checkbox" checked={on} disabled={readOnly} onChange={toggle} className="mt-0.5 h-4 w-4 accent-[#16A34A]" />
+      <span className="font-medium text-[#111827]">I have read the worked example on this screen</span>
+    </label>
+  );
+}
+
+/** The step in hand, worked inside its tool. Editable until the task is submitted. */
+function WorkPanel({ task, s, toolKey, onClose }: { task: Task; s: Step; toolKey: string; onClose: () => void }) {
   const { desk, progress, update, openTask } = useDesk();
-  const task = desk.tasks[taskId];
-  const s = task.steps[n - 1];
+  const n = s.n;
   const key = stepKey(task.id, n);
   const done = !!progress.done[key];
+  const sealed = !!progress.submitted[task.id];
   const next = task.steps[n];
+  const kind = workKind(s, desk);
+  const reading = kind === "read";
 
   const goNext = () => {
     if (!next) {
@@ -184,10 +321,11 @@ function WorkPanel({ taskId, n, toolKey, onClose }: { taskId: string; n: number;
   return (
     <aside aria-label={`Your work for step ${n}`} className="flex min-w-0 flex-[1_1_380px] flex-col border-l border-[#DDE1E8] bg-white max-[980px]:border-l-0 max-[980px]:border-t">
       <div className="flex items-center gap-2.5 border-b border-[#DDE1E8] bg-[#F7F8FA] px-4 py-2.5">
-        <span className="grid h-[26px] w-[26px] place-items-center rounded-full bg-[#4338CA] text-[13px] font-bold text-white tabular-nums">{n}</span>
+        <span className={`grid h-[26px] w-[26px] place-items-center rounded-full text-[13px] font-bold text-white tabular-nums ${done ? "bg-[#16A34A]" : "bg-[#4338CA]"}`}>{n}</span>
         <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.06em] text-[#3F4757]">
           {task.id} · Step {n} of {task.steps.length}
         </span>
+        {done && !sealed && <span className="ml-auto text-[12px] text-[#15803D]">Done · you can still change it</span>}
       </div>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
@@ -199,16 +337,47 @@ function WorkPanel({ taskId, n, toolKey, onClose }: { taskId: string; n: number;
           className="flex min-h-0 flex-1 flex-col"
         >
           <div className="border-b border-[#DDE1E8] px-4 py-3.5">
-            <h3 className="text-[16px] font-bold leading-[1.35] text-[#111827]">{s.t}</h3>
-            {s.w && s.w !== s.t && <p className="mt-2 text-[14px] leading-[1.55] text-[#3F4757]">{s.w}</p>}
+            {/* One statement of the step: the full instruction when the title is only its start. */}
+            {(() => {
+              const stem = s.t.replace(/(…|\.\.\.)$/, "").trim();
+              const repeats = !s.w || s.w === s.t || s.w.startsWith(stem);
+              return repeats ? (
+                <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{s.w || s.t}</h3>
+              ) : (
+                <>
+                  <h3 className="text-[16px] font-bold leading-[1.35] text-[#111827]">{s.t}</h3>
+                  <p className="mt-2 text-[14px] leading-[1.55] text-[#3F4757]">{s.w}</p>
+                </>
+              );
+            })()}
           </div>
           <div className="flex-1 border-b border-[#DDE1E8] px-4 pb-3.5 [&>*:first-child]:mt-3">
-            <Work task={task} s={s} readOnly={done} />
+            {/* A decision first; then the work the pack puts after it, in the shape that work takes. */}
+            {s.kind !== "do" && <Work task={task} s={s} readOnly={sealed} />}
+            {REGISTERS[task.id]?.steps[n] ? (
+              <RegisterProgress task={task} s={s} />
+            ) : BRIEFS[task.id]?.steps[n] !== undefined ? (
+              <BriefProgress task={task} s={s} />
+            ) : rmfTable(s) !== null ? (
+              <RmfForm task={task} t={rmfTable(s)!} readOnly={sealed} />
+            ) : kind === "submit" ? (
+              <SubmitWork task={task} s={s} readOnly={sealed} />
+            ) : s.kind !== "do" ? null : kind === "read" ? (
+              <ReadConfirm task={task} s={s} readOnly={sealed} />
+            ) : kind === "grid" ? (
+              <GridProgress task={task} s={s} />
+            ) : kind === "copy" ? (
+              <CopyWork task={task} s={s} readOnly={sealed} />
+            ) : kind === "log" ? (
+              <LogWork task={task} s={s} readOnly={sealed} />
+            ) : (
+              <Work task={task} s={s} readOnly={sealed} />
+            )}
           </div>
           <p className="flex items-center gap-2 border-b border-[#DDE1E8] bg-[#F0FDF4] px-4 py-2.5 text-[13px] text-[#14532D]">
             <Icon name="checkCircle" size={15} className="shrink-0" />
             <span>
-              <strong className="font-bold">Done when</strong> {s.o}
+              <strong className="font-bold">Done when</strong> {reading ? "you have read the screen and confirmed it" : s.o}
             </span>
           </p>
         </motion.div>
@@ -228,13 +397,13 @@ function WorkPanel({ taskId, n, toolKey, onClose }: { taskId: string; n: number;
           )}
         </span>
         {done ? (
-          <button type="button" onClick={goNext} className="inline-flex min-h-12 items-center gap-1.5 border-l border-[#DDE1E8] bg-[#111827] px-5 text-[14px] font-semibold text-white hover:brightness-110 focus-ring">
-            {next ? `Step ${next.n}` : "Back to the task"} <Icon name="arrowRight" size={14} />
+          <button type="button" onClick={onClose} className="inline-flex min-h-12 items-center gap-1.5 border-l border-[#DDE1E8] bg-[#111827] px-5 text-[14px] font-semibold text-white hover:brightness-110 focus-ring">
+            Done <Icon name="check" size={14} />
           </button>
         ) : (
           <button
             type="button"
-            disabled={!decided(progress, task, s)}
+            disabled={sealed || !stepAnswered(desk, progress, task, s)}
             onClick={complete}
             className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] disabled:hover:brightness-100"
           >
@@ -243,5 +412,83 @@ function WorkPanel({ taskId, n, toolKey, onClose }: { taskId: string; n: number;
         )}
       </footer>
     </aside>
+  );
+}
+
+const th = "border-b border-r border-[#DDE1E8] border-r-[#E9ECF1] px-3.5 py-[9px] text-left font-semibold last:border-r-0";
+const td = "border-b border-r border-[#E9ECF1] px-3.5 py-[9px] align-top last:border-r-0";
+
+/** The mentee's assignment, as Home › My Organisation states it: ID, start date, each task's owner. */
+function Assignment() {
+  const { desk, start, here } = useDesk();
+  const week = here ? desk.tasks[here.task].week : 1;
+  const ids = desk.order.filter((t) => desk.tasks[t].week === week);
+  return (
+    <div className="grid border-b border-[#DDE1E8] bg-[#F7F8FA] text-[13px] sm:grid-cols-[minmax(0,200px)_minmax(0,1fr)]">
+      <dl className="grid content-start gap-2 border-[#DDE1E8] px-4 py-3 max-sm:border-b sm:border-r">
+        <div><dt className="text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">Mentee ID</dt><dd className="font-mono font-semibold text-[#111827]">{desk.mentee}</dd></div>
+        <div><dt className="text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">Start date</dt><dd className="font-mono font-semibold text-[#111827]">{dmy(start)}</dd></div>
+      </dl>
+      <table className="w-full border-collapse">
+        <thead className="text-[11px] uppercase tracking-[0.06em] text-[#5B6474]"><tr><th className={th}>Task</th><th className={th}>Task owner</th></tr></thead>
+        <tbody>
+          {ids.map((t) => (
+            <tr key={t}><td className={`${td} font-mono text-[12px] font-semibold text-[#111827]`}>{t}</td><td className={`${td} text-[#111827]`}>{desk.tasks[t].owner}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** The task's four platform folders, under My Tasks. */
+function Folders({ taskId }: { taskId: string }) {
+  const { desk } = useDesk();
+  const names = ["00_Admin — signed forms", "01_Inputs — what you receive (read-only)", "02_Working — your drafts", "03_Submission — final files"];
+  return (
+    <div className="border-b border-[#DDE1E8] bg-white">
+      <p className="border-b border-[#E9ECF1] bg-[#F7F8FA] px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">{taskId} · your folders</p>
+      <table className="w-full border-collapse text-[13px]">
+        <tbody>
+          {folders(desk, desk.tasks[taskId]).map((f, i) => (
+            <tr key={f}><td className={`${td} w-[45%] text-[#3F4757]`}>{names[i]}</td><td className={`${td} break-all font-mono text-[12.5px] text-[#111827]`}>{f}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Home › My plan: every due date of the 12 weeks from the mentee's own start, tests included. */
+function Plan() {
+  const { desk, start, here } = useDesk();
+  const date = (d: Date) => `${fmtDay(d)} ${d.getFullYear()}`;
+  const rows = desk.weeks.flatMap((w) => {
+    // "KC-01", or "FGE (Foundation Gate Exam)"
+    const m = (w.kc ?? "").match(/^(\S+)(?: \((.+)\))?$/);
+    return [
+      ...desk.order.filter((t) => desk.tasks[t].week === w.n).map((t) => ({ wk: w.n, id: t, org: desk.tasks[t].orglbl, title: desk.tasks[t].title, due: date(dueDate(start, desk.tasks[t].dueDay)) })),
+      ...(m ? [{ wk: w.n, id: m[1], org: "", title: m[2] ?? "Knowledge check", due: date(testDue(start, w.n)) }] : []),
+    ];
+  });
+  return (
+    <div className="overflow-x-auto border-b border-[#DDE1E8] bg-white">
+      <table className="w-full min-w-[560px] border-collapse text-[13px]">
+        <thead className="bg-[#F7F8FA] text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">
+          <tr>{["Wk", "Task / test", "Org", "Title", "Due"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id} className={here?.task === r.id ? "bg-[#F3F4FF]" : ""}>
+              <td className={`${td} font-mono text-[12px] text-[#5B6474]`}>{r.wk}</td>
+              <td className={`${td} font-mono text-[12px] font-semibold text-[#111827]`}>{r.id}</td>
+              <td className={`${td} text-[#3F4757]`}>{r.org}</td>
+              <td className={`${td} text-[#111827]`}>{r.title}</td>
+              <td className={`${td} whitespace-nowrap text-[#111827]`}>{r.due}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Icon } from "@/components/ui/icon";
+import { OrgLogo, logoFor } from "@/components/app/org-logo";
 import { useDesk } from "./desk-context";
 import { currentWeek, dayIndex, dueDate, fmtDay, type Desk, type Task } from "@/lib/desk/model";
 import { stepKey, taskStatus, type Progress } from "@/lib/desk/progress";
@@ -81,6 +82,8 @@ export function WeekTimeline({ week, onWeek }: { week: number; onWeek: (n: numbe
         const here = w.n === week;
         const hc = w.hc?.split(" ")[0];
         const notes = [w.gate, hc && `checkpoint ${hc}`].filter(Boolean).join(", ");
+        // The organisations this week's tasks are for ("AB" is both), in A, B order.
+        const orgs = (["A", "B"] as const).filter((k) => ts.some((t) => t.org.includes(k)));
         return (
           <button
             key={w.n}
@@ -88,17 +91,25 @@ export function WeekTimeline({ week, onWeek }: { week: number; onWeek: (n: numbe
             role="tab"
             aria-selected={here}
             onClick={() => onWeek(w.n)}
-            title={`Week ${w.n}, ${w.ph}: ${w.th}${notes ? `. ${notes}` : ""}. ${open ? `${got} of ${total} steps done` : `Opens ${fmtDay(dueDate(start, (w.n - 1) * 7))}`}`}
-            className={`relative flex min-w-[64px] flex-[1_0_64px] flex-col justify-center gap-1.5 border-r border-[#DDE1E8] px-2.5 text-left focus-ring ${
+            title={`Week ${w.n}, ${w.ph}: ${w.th}. ${orgs.map((k) => desk.orgs[k].name).join(" and ")}${notes ? `. ${notes}` : ""}. ${open ? `${got} of ${total} steps done` : `Opens ${fmtDay(dueDate(start, (w.n - 1) * 7))}`}`}
+            className={`relative flex min-w-[108px] flex-[1_0_108px] flex-col justify-center gap-1.5 border-r border-[#DDE1E8] px-2.5 text-left focus-ring ${
               here ? "bg-white" : "bg-[#F7F8FA] hover:bg-[#F3F4F7]"
             }`}
           >
             <span className="flex w-full items-center gap-1 leading-none">
               <span className={`font-mono text-[12px] font-semibold ${here ? "text-[#111827]" : "text-[#6B7280]"}`}>W{w.n}</span>
               {w.n === today && <span className="h-1.5 w-1.5 rounded-full bg-[#4338CA]" aria-label="this week" />}
+              {/* Who this week's work is for: the organisations' badges, overlapped when both. */}
+              <span className={`ml-1 flex shrink-0 items-center gap-0.5 ${open ? "" : "opacity-60 grayscale"}`} aria-label={`for ${orgs.map((k) => desk.orgs[k].short).join(" and ")}`}>
+                {orgs.map((k) => (
+                  <span key={k} title={desk.orgs[k].name}>
+                    <OrgLogo org={logoFor(desk.orgs[k].name)} className="h-4 w-4 text-[6.5px]" iconSize={11} />
+                  </span>
+                ))}
+              </span>
               <span className="flex-1" />
-              {w.gate && <span className="h-1.5 w-1.5 rotate-45 bg-[#D97706]" aria-label="exam week" />}
-              {hc && <span className="h-1.5 w-1.5 rounded-full bg-[#111827]" aria-label="checkpoint week" />}
+              {w.gate && <span className="h-1.5 w-1.5 shrink-0 rotate-45 bg-[#D97706]" aria-label="exam week" />}
+              {hc && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#111827]" aria-label="checkpoint week" />}
               {!open && <Icon name="lock" size={10} className="text-[#8A91A3]" />}
             </span>
             <span className={`block h-[3px] w-full ${open ? "bg-[#E3E6EC]" : "bg-transparent"}`}>
@@ -199,6 +210,7 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
                       )}
                       <span className="text-[#5B6474]">{n}/{t.steps.length} steps</span>
                       {t.hc && <span className="rounded-[3px] bg-[#111827] px-[5px] py-px font-mono text-[10px] font-semibold text-white">{t.hc}</span>}
+                      {t.li.length > 0 && <span title={`Includes Lead Implementer extension ${t.li.join(", ")}`} className="rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-[5px] py-px font-mono text-[10px] font-semibold text-[#3730A3]">LI</span>}
                     </span>
                   </span>
                 </button>

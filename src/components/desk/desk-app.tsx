@@ -9,17 +9,12 @@ import { Ring, WeekPanel, WeekRail, WeekTimeline } from "./week-panel";
 import { WeekOverview } from "./week-overview";
 import { Toolbar } from "./toolbar";
 import { Viewer } from "./viewer";
-import { ToolModal } from "./tool-modal";
+import { ToolModal, ToolWindow } from "./tool-modal";
 import { press } from "./ui";
-import { currentWeek, loadDesk, weekOpen, type Desk } from "@/lib/desk/model";
+import { currentWeek, loadDesk, startOf, weekOpen, type Desk } from "@/lib/desk/model";
 import { stepKey, taskStatus, useProgress, type Progress } from "@/lib/desk/progress";
 
 /** Midnight of the mentee's start date. They may start any day; until they choose, today. */
-function startOf(iso: string | null | undefined): Date {
-  const d = iso ? new Date(`${iso.slice(0, 10)}T00:00:00`) : new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
 
 /** "#T5.1-4" → { task: "T5.1", step: 4 }. */
 function parseHash(desk: Desk): { task: string; step: number } | null {
@@ -48,7 +43,7 @@ export function DeskApp() {
   if (!desk || !user) return <DeskSkeleton />;
   return (
     <MotionConfig reducedMotion="user">
-      <DeskLoaded key={user.startDate ?? ""} desk={desk} who={user.email} startIso={user.startDate} />
+      <DeskLoaded key={user.startDate ?? ""} desk={desk} who={user.email} startIso={user.startDate} preview={user.role === "admin"} />
     </MotionConfig>
   );
 }
@@ -76,11 +71,11 @@ function DeskSkeleton() {
   );
 }
 
-function DeskLoaded({ desk, who, startIso }: { desk: Desk; who: string; startIso: string | null }) {
+function DeskLoaded({ desk, who, startIso, preview }: { desk: Desk; who: string; startIso: string | null; /** Admins see every week open, to test the programme ahead of the calendar. */ preview?: boolean }) {
   const { progress, update } = useProgress(who);
   const start = useMemo(() => startOf(startIso), [startIso]);
   const now = currentWeek(start);
-  const isOpen = useCallback((w: number) => weekOpen(w, start), [start]);
+  const isOpen = useCallback((w: number) => preview || weekOpen(w, start), [start, preview]);
 
   const [taskId, setTaskId] = useState<string>(
     () => desk.order.find((id) => desk.tasks[id].week === now && !progress.submitted[id]) ?? desk.order.find((id) => desk.tasks[id].week === now) ?? desk.order[0],
@@ -93,6 +88,8 @@ function DeskLoaded({ desk, who, startIso }: { desk: Desk; who: string; startIso
   const [viewing, setViewing] = useState<ViewItem | null>(null);
   // The platform tool open in the modal ("evidence|Audit Requests (PBC)").
   const [toolKey, setToolKey] = useState<string | null>(null);
+  // Tools open for reading, as floating windows; the last is on top.
+  const [windows, setWindows] = useState<string[]>([]);
   // The week panel folds to a rail. It opens every time you arrive on the desk, and folds itself
   // when you pick a task from it, so the work gets the room.
   const [panelOpen, setPanel] = useState(true);
@@ -131,9 +128,19 @@ function DeskLoaded({ desk, who, startIso }: { desk: Desk; who: string; startIso
   // tool that step is done in stays unlocked in the toolbar either way.
   const nextUp = desk.tasks[taskId].steps.find((x) => !progress.done[stepKey(taskId, x.n)])?.n ?? 0;
   const here = weekView ? null : focus || nextUp ? { task: taskId, n: focus || nextUp } : null;
-  // A tool asked for through the viewer opens in the tool modal; references still open in the sheet.
-  const view = (item: ViewItem) => (item.kind === "tool" ? setToolKey(item.id) : setViewing(item));
-  const ctx: DeskCtx = { desk, progress, update, start, isOpen, openTask, view, here, openTool: setToolKey };
+  // Work in a modal, reading in windows: the step in hand opens its tool as the modal while it is
+  // still to do (or when asked to change it); anything else — a finished step's tool, a tool opened
+  // for a look mid-step — opens as a floating, resizable window beside the work.
+  const openTool = (key: string, mode?: "work") => {
+    const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
+    const t = here ? desk.tasks[here.task] : undefined;
+    const working = !!step && !!t && step.key === key && isOpen(t.week) && !progress.submitted[t.id] && (mode === "work" || !progress.done[stepKey(t.id, step.n)]);
+    if (working) return setToolKey(key);
+    setWindows((w) => [...w.filter((x) => x !== key), key]);
+  };
+  // A tool asked for through the viewer opens like any other; references still open in the sheet.
+  const view = (item: ViewItem) => (item.kind === "tool" ? openTool(item.id) : setViewing(item));
+  const ctx: DeskCtx = { desk, progress, update, start, isOpen, openTask, view, here, openTool };
   // A week opens on its overview; its first task still to submit becomes the task in hand.
   const openWeek = (n: number) => {
     setTaskId(desk.order.find((x) => desk.tasks[x].week === n && !progress.submitted[x]) ?? desk.order.find((x) => desk.tasks[x].week === n)!);
@@ -204,6 +211,11 @@ function DeskLoaded({ desk, who, startIso }: { desk: Desk; who: string; startIso
       </div>
       <Viewer item={viewing} onClose={() => setViewing(null)} />
       <ToolModal toolKey={toolKey} onClose={() => setToolKey(null)} />
+      <AnimatePresence>
+        {windows.map((k, i) => (
+          <ToolWindow key={k} toolKey={k} index={i} onClose={() => setWindows((w) => w.filter((x) => x !== k))} />
+        ))}
+      </AnimatePresence>
     </Ctx.Provider>
   );
 }
@@ -231,6 +243,7 @@ function TaskPills({ week, taskId, desk, progress, openTask }: { week: number; t
             <span className={`relative shrink-0 font-mono text-[11.5px] ${here ? "text-indigo-700" : "text-slate-500"}`}>{t.id}</span>
             <span className={`relative min-w-0 truncate text-[12.5px] max-sm:hidden ${here ? "font-semibold text-slate-900" : "text-slate-700"}`}>{t.title}</span>
             {t.hc ? <span className="relative shrink-0 text-[10.5px] font-semibold text-amber-700">{t.hc}</span> : null}
+            {t.li.length > 0 && <span title={`Includes Lead Implementer extension ${t.li.join(", ")}`} className="relative shrink-0 rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-[5px] py-px font-mono text-[10px] font-semibold text-[#3730A3]">LI</span>}
           </button>
         );
       })}

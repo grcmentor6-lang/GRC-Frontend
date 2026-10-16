@@ -46,6 +46,8 @@ def main(src: str) -> None:
         j["dueDay"] = (date.fromisoformat(j["due"]) - start).days
 
     blob = json.dumps(w, ensure_ascii=False, separators=(",", ":"))
+    # The pack's toolbar calls it "This week's plan"; every step, input and key result says "My plan".
+    blob = blob.replace("This week's plan", "My plan")
     assert '"best"' not in blob, "answer key leaked into the sample"
     out = Path(__file__).resolve().parent.parent / "public" / "desk" / "sample.json"
     out.parent.mkdir(parents=True, exist_ok=True)

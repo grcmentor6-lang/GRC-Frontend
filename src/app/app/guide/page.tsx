@@ -641,7 +641,7 @@ export default function GuidePage() {
           >
             <div className="grid sm:grid-cols-2 gap-3">
               {[
-                { icon: "layers" as IconName, t: "My Learnings", d: "Every organisation, project, task and deliverable you have completed, with its status and score.", href: "/app/learnings" },
+                { icon: "inbox" as IconName, t: "My Submissions", d: "Everything you have handed in on the Working Desk, step by step, with each task's status.", href: "/app/submissions" },
                 { icon: "star" as IconName, t: "Badges", d: "Earned for milestones — verbs practised, standards covered, tasks and tracks completed.", href: "/app/badges" },
                 { icon: "ribbon" as IconName, t: "Certificate", d: "Issued on track completion and independently verifiable by a third party from its code.", href: "/app/certificate" },
                 { icon: "file" as IconName, t: "My CV", d: "Auto-compiled from graded work: engagements, deliverables, standards and the verbs you have practised.", href: "/app/cv" },
@@ -683,7 +683,7 @@ export default function GuidePage() {
                 { icon: "home" as IconName, t: "Dashboard", d: "Your progress at a glance and the Continue card that jumps straight to your next activity." },
                 { icon: "desk" as IconName, t: "Working Desk", d: "Where you execute activities. You will spend most of your time here." },
                 { icon: "calendar" as IconName, t: "Calendar", d: "Scheduled stakeholder sessions and task deadlines from your engagements." },
-                { icon: "layers" as IconName, t: "My Learnings", d: "The full tree of organisations, projects, tasks and completed deliverables." },
+                { icon: "inbox" as IconName, t: "My Submissions", d: "Every step you have handed in, task by task, and where each task stands." },
                 { icon: "shield" as IconName, t: "Standards", d: "The same work viewed by standard instead of by project — useful for seeing your coverage of a framework." },
                 { icon: "settings" as IconName, t: "Account Settings", d: "In the avatar menu, top-right — profile, password and billing." },
                 { icon: "help" as IconName, t: "User Guide", d: "This page. It stays in the menu — come back whenever something is unclear." },

@@ -2,19 +2,23 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { Plaque } from "@/components/app/plaque";
 import { ItemPoster, LibraryProvenance, TaskContext } from "@/components/app/library";
 import { LIBRARY_BY_ID, entriesOf, findEntry, itemHref, nameOf, summaryOf, tasksCovering } from "@/lib/library";
 import { TASK_META } from "@/lib/taskmeta";
+import { useAuth } from "@/components/auth/auth-provider";
+import { LeadImplementerPanel } from "@/components/career/li-path";
 
 export default function LibraryItemPage({ params, searchParams }: {
   params: Promise<{ standardId: string; itemId: string }>;
-  searchParams: Promise<{ task?: string }>;
+  searchParams: Promise<{ task?: string; from?: string }>;
 }) {
   const { standardId, itemId } = use(params);
-  const { task } = use(searchParams);
+  const { task, from } = use(searchParams);
+  const router = useRouter();
+  const { user } = useAuth();
   const standard = LIBRARY_BY_ID[standardId];
   const entry = standard && findEntry(standard, itemId);
   if (!standard || !entry) notFound();
@@ -28,6 +32,12 @@ export default function LibraryItemPage({ params, searchParams }: {
 
   return (
     <div className="page-shell space-y-4">
+      {/* Opened from the Lead Implementer path: Back returns to the exact tab it was opened from. */}
+      {from === "career" && (
+        <button type="button" onClick={() => router.back()} className="focus-ring mr-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-indigo-700 hover:text-indigo-900">
+          <Icon name="arrowLeft" size={13} /> Back to your Lead Implementer path
+        </button>
+      )}
       <Link
         href={`/app/library/${standard.id}${task ? `?task=${encodeURIComponent(task)}` : ""}`}
         className="focus-ring inline-flex items-center gap-1.5 text-[12px] text-slate-500 hover:text-slate-800"
@@ -66,6 +76,8 @@ export default function LibraryItemPage({ params, searchParams }: {
           )}
 
           <LibraryProvenance standard={standard} />
+
+          {standard.id === "iso27001" && user && <LeadImplementerPanel itemRef={item.ref} who={user.email} />}
 
           <div>
             <span className="block font-mono text-[9.5px] uppercase tracking-[0.08em] text-slate-400 mb-2">Where GRC 101 uses it</span>

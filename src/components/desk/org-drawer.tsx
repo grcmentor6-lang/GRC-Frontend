@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useDragControls } from "framer-motion";
+import { useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { FloatWindow } from "./float-window";
 import { Icon } from "@/components/ui/icon";
 import { OrgLogo, logoFor } from "@/components/app/org-logo";
 import { loadDesk, type Desk, type Org } from "@/lib/desk/model";
@@ -45,109 +46,66 @@ function useDesk(): Desk | null {
 }
 
 /**
- * One organisation in a box the mentee can drag anywhere, so its profile stays in view beside the
- * work. Each organisation has its own box, so both can be open side by side. The title bar is the
- * handle; the record is in tabs below.
+ * One organisation in a window the mentee can drag and resize, so its profile stays in view beside
+ * the work. Each organisation has its own window, so both can be open side by side.
  */
 export function OrgBox({ open, orgKey, onClose }: { open: boolean; orgKey: Key; onClose: () => void }) {
   const desk = useDesk();
-  const key = orgKey;
-  const [tab, setTab] = useState<Tab>("overview");
-  const controls = useDragControls();
-  const bounds = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
-  const org = desk?.orgs[key] as OrgFull | undefined;
-
+  const org = desk?.orgs[orgKey] as OrgFull | undefined;
   return (
     <AnimatePresence>
       {open && (
-        <div ref={bounds} className={`pointer-events-none fixed inset-0 ${key === "A" ? "z-[60]" : "z-[61]"}`}>
-          <motion.section
-            drag
-            dragListener={false}
-            dragControls={controls}
-            dragMomentum={false}
-            dragConstraints={bounds}
-            dragElastic={0.04}
-            initial={{ opacity: 0, scale: 0.96, y: -6 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.12 } }}
-            transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-            style={{ transformOrigin: "top left" }}
-            className={`pointer-events-auto absolute top-[72px] flex ${key === "A" ? "left-3 md:left-[84px]" : "left-3 md:left-[84px] lg:left-[660px]"} max-h-[calc(100dvh-96px)] w-[min(560px,calc(100vw-24px))] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_28px_70px_-22px_rgba(15,23,42,0.45),0_2px_8px_rgba(15,23,42,0.08)] ring-1 ring-slate-200`}
-            role="dialog"
-            aria-label={org?.name ?? `Org ${key}`}
-          >
-            <header
-              onPointerDown={(e) => controls.start(e)}
-              className="flex shrink-0 cursor-grab touch-none select-none items-center gap-3 border-b border-slate-100 px-4 pb-3 pt-3.5 active:cursor-grabbing"
-            >
-              {org ? <Monogram org={org} size="h-10 w-10" icon={34} /> : <span className="h-10 w-10 animate-pulse rounded-full bg-slate-100" />}
-              <div className="min-w-0 flex-1">
-                <p className="text-[11.5px] font-medium text-slate-500">Org {key} · {key === "A" ? "your main organisation" : "your second organisation"}</p>
-                <h2 className="truncate text-[15.5px] font-semibold text-slate-900">{org?.name ?? "Loading…"}</h2>
-              </div>
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={onClose}
-                aria-label="Close"
-                className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 ${press}`}
-              >
-                <Icon name="x" size={16} />
-              </button>
-            </header>
-
-            <nav role="tablist" aria-label="Organisation details" className="flex shrink-0 gap-1 overflow-x-auto border-b border-slate-100 px-3 [scrollbar-width:none]">
-              {TABS.map((t) => (
-                <button
-                  key={t.k}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === t.k}
-                  onClick={() => setTab(t.k)}
-                  className={`relative shrink-0 px-2.5 py-2.5 text-[13px] font-medium focus-ring ${tab === t.k ? "text-slate-900" : "text-slate-500 hover:text-slate-800"}`}
-                >
-                  {t.l}
-                  {tab === t.k && <motion.span layoutId={`org-tab-${key}`} className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-indigo-600" transition={{ type: "spring", duration: 0.3, bounce: 0.1 }} />}
-                </button>
-              ))}
-            </nav>
-
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-              {!org ? (
-                <div className="grid gap-2" aria-busy="true">
-                  {[0, 1, 2].map((i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-slate-100" />)}
-                </div>
-              ) : (
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={tab}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, transition: { duration: 0.08 } }}
-                    transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                  >
-                    {tab === "overview" && <Overview org={org} />}
-                    {tab === "offices" && <Offices org={org} />}
-                    {tab === "standards" && <Standards org={org} />}
-                    {tab === "records" && <Records org={org} />}
-                    {tab === "legal" && <Legal org={org} />}
-                  </motion.div>
-                </AnimatePresence>
-              )}
-            </div>
-          </motion.section>
-        </div>
+        <FloatWindow
+          key="org"
+          title={org?.name ?? "Loading…"}
+          eyebrow={`Org ${orgKey} · ${orgKey === "A" ? "your main organisation" : "your second organisation"}`}
+          leading={org ? <Monogram org={org} size="h-8 w-8" icon={28} /> : undefined}
+          onClose={onClose}
+          index={orgKey === "A" ? 0 : 1}
+          left={orgKey === "A" ? "84px" : "min(660px, 40vw)"}
+          z={orgKey === "A" ? 66 : 67}
+        >
+          {org ? <OrgDetails org={org} /> : <div className="h-24 animate-pulse bg-slate-50" aria-busy="true" />}
+        </FloatWindow>
       )}
     </AnimatePresence>
+  );
+}
+
+/**
+ * An organisation's record in tabs — Overview, Offices, Standards, Records, Legal. The same record
+ * shows in the header's organisation windows and in My Organisation.
+ */
+export function OrgDetails({ org }: { org: OrgFull }) {
+  const [tab, setTab] = useState<Tab>("overview");
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <nav role="tablist" aria-label="Organisation details" className="flex shrink-0 overflow-x-auto border-b border-[#DDE1E8] bg-[#F7F8FA] [scrollbar-width:none]">
+        {TABS.map((t) => {
+          const on = tab === t.k;
+          return (
+            <button
+              key={t.k}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setTab(t.k)}
+              className={`relative flex shrink-0 items-center gap-1.5 border-r border-[#E9ECF1] px-3.5 py-2.5 text-[13px] font-medium focus-ring ${on ? "bg-white text-[#111827]" : "text-[#5B6474] hover:bg-white/70 hover:text-[#111827]"}`}
+            >
+              {t.l}
+              {on && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-[#4338CA]" aria-hidden />}
+            </button>
+          );
+        })}
+      </nav>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+        {tab === "overview" && <Overview org={org} />}
+        {tab === "offices" && <Offices org={org} />}
+        {tab === "standards" && <Standards org={org} />}
+        {tab === "records" && <Records org={org} />}
+        {tab === "legal" && <Legal org={org} />}
+      </div>
+    </div>
   );
 }
 

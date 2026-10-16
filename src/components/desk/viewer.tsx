@@ -5,6 +5,8 @@ import { Icon } from "@/components/ui/icon";
 import { useDesk, type ViewItem } from "./desk-context";
 import { TableView, Label, press } from "./ui";
 import type { ToolMock } from "@/lib/desk/model";
+import { DOC_TEXT } from "@/lib/desk/docs";
+import { DocCitation } from "./doc-text";
 
 /** "<b>Frame:</b> Please send…" → bold label + text, without dangerouslySetInnerHTML. */
 function Rich({ s }: { s: string }) {
@@ -134,11 +136,16 @@ function Body({ item }: { item: ViewItem }): { eyebrow: string; title: string; b
     case "ds":
       return { eyebrow: "Your data file", title: item.id, body: desk.ds[item.id] ? <TableView t={desk.ds[item.id]} max={40} /> : <p>Released with its week.</p> };
     case "doc": {
-      const lib = desk.library.docs.find(([code, title]) => code === item.id || title === desk.docs[item.id]);
+      // "BKB-ADD-16#7": the document, and the sections the step cites.
+      const [doc, secs] = item.id.split("#");
+      const cites = secs ? secs.split(",") : [];
+      const lib = desk.library.docs.find(([code, title]) => code === doc || title === desk.docs[doc]);
       return {
-        eyebrow: "Library",
-        title: `${item.id} · ${desk.docs[item.id] ?? lib?.[1] ?? ""}`,
-        body: lib ? (
+        eyebrow: cites.length ? `Library · §${cites.join(", §")}` : "Library",
+        title: `${doc} · ${desk.docs[doc] ?? lib?.[1] ?? ""}`,
+        body: DOC_TEXT.has(doc) ? (
+          <DocCitation id={doc} cites={cites} />
+        ) : lib ? (
           <ol className="grid gap-1 text-[13px] text-slate-700">
             {lib[2].map(([n, h]) => <li key={n}><span className="inline-block w-12 text-slate-400 tabular-nums">§{n}</span>{h}</li>)}
           </ol>

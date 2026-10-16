@@ -15,7 +15,7 @@ export const DASH_NAV: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: "home", href: "/app" },
   { id: "desk", label: "Working Desk", icon: "desk", href: "/app/desk" },
   { id: "calendar", label: "Calendar", icon: "calendar", href: "/app/calendar" },
-  { id: "learnings", label: "My Learnings", icon: "layers", href: "/app/learnings" },
+  { id: "submissions", label: "My Submissions", icon: "inbox", href: "/app/submissions" },
   { id: "library", label: "Standards Library", icon: "book", href: "/app/library" },
   { id: "badges", label: "Badges", icon: "star", href: "/app/badges" },
   { id: "certificate", label: "Certificate", icon: "ribbon", href: "/app/certificate" },

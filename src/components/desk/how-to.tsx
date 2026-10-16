@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { Label, press } from "./ui";
 import { QUESTIONS, qTitle, krActivities, krFor, splitKr, stepRefs, type QuestionKey, type Step, type Task } from "@/lib/desk/model";
 import { stepKey, type Progress } from "@/lib/desk/progress";
+import { stepAnswered, submissionText } from "@/lib/desk/work";
 
 const REF_ICON: Record<string, IconName> = { rule: "shield", page: "table", tpl: "file", ds: "grid", doc: "book", clause: "pin" };
 
@@ -14,23 +15,12 @@ export function isStepComplete(p: Progress, task: Task, s: Step): boolean {
   return !!p.done[stepKey(task.id, s.n)];
 }
 
-/** A decision is answered when every option slot has a pick; per-row decisions need one per row. */
-export function decided(p: Progress, task: Task, s: Step): boolean {
-  const pick = p.picks[stepKey(task.id, s.n)];
-  if (s.kind === "pick") return typeof pick === "string";
-  if (s.kind === "each") {
-    const rows = task.panel.pl.r ?? [];
-    return typeof pick === "object" && rows.length > 0 ? rows.every((_, i) => pick[i]) : typeof pick === "object" && Object.keys(pick).length > 0;
-  }
-  return true;
-}
-
 /**
  * The How-to tab: every activity as a numbered step, the current one open, the others a click
  * away. One step is open at a time: opening another closes it, and the key results follow.
  */
 export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: number; onFocus: (n: number) => void; locked: boolean }) {
-  const { progress } = useDesk();
+  const { desk, progress } = useDesk();
   const doneCount = task.steps.filter((x) => isStepComplete(progress, task, x)).length;
   // The first step not yet done is the one to do next; it carries the UP NEXT tag.
   const next = locked ? 0 : (task.steps.find((x) => !isStepComplete(progress, task, x))?.n ?? 0);
@@ -60,8 +50,10 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
         <span className="py-2" />
       </div>
       <ol>
-        {task.steps.map((s) => {
+        {task.steps.map((s, i) => {
           const open = s.n === focus;
+          // A Lead Implementer extension's steps run together; a band heads the run.
+          const ext = s.li && task.steps[i - 1]?.li !== s.li ? desk.li[s.li] : null;
           const done = isStepComplete(progress, task, s);
           const isNext = s.n === next;
           const kr = krFor(task, s.n);
@@ -69,7 +61,17 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
           const decision = s.kind !== "do";
           const copy = stepCopy(s);
           return (
-            <li key={s.n} id={`act-${s.n}`} className="min-w-0 scroll-mt-16 border-b border-[#E9ECF1] last:border-b-[#DDE1E8]">
+            <Fragment key={s.n}>
+            {ext && (
+              <li aria-label={`Lead Implementer extension ${ext.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#C7CBF5] bg-[#EEF0FF] px-4 py-2.5">
+                <Icon name="shield" size={15} className="shrink-0 text-[#4338CA]" />
+                <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3730A3]">Lead Implementer · {ext.id}</span>
+                <span className="min-w-0 flex-1 text-[13.5px] font-semibold text-[#111827]">{ext.title}</span>
+                <span className="text-[12px] text-[#3F4757]">ISO/IEC 27001 {ext.clauses} · {ext.hours} h</span>
+                <Link href="/app/career" className="text-[12px] font-semibold text-[#3730A3] no-underline hover:underline focus-ring">Your career path</Link>
+              </li>
+            )}
+            <li id={`act-${s.n}`} className="min-w-0 scroll-mt-16 border-b border-[#E9ECF1] last:border-b-[#DDE1E8]">
               <button
                 type="button"
                 onClick={() => onFocus(open ? 0 : s.n)}
@@ -96,11 +98,11 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                 <span className={`${cell} flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-3.5 py-3 ${open ? "" : "@[760px]:flex-nowrap"} ${locked ? "text-[#6B7280]" : "text-[#111827]"}`}>
                   {/* Closed: one line, full wording on hover. Open: the step in full — the whole question
                       for a decision, and whatever the instruction adds beyond the title, in small type. */}
-                  <span className={`min-w-0 text-[14px] leading-snug ${open ? "" : "@[760px]:truncate"}`} title={open ? undefined : copy.title === s.t ? (copy.detail ? `${s.t}. ${copy.detail}` : s.t) : copy.title}>
-                    {open ? copy.title : s.t}
+                  <span className={`min-w-0 text-[14px] leading-snug ${open ? "" : "@[760px]:truncate"}`} title={open ? undefined : copy.title === copy.short ? (copy.detail ? `${copy.short}. ${copy.detail}` : copy.short) : copy.title}>
+                    {open ? copy.title : copy.short}
                   </span>
                   {isNext && <span className="shrink-0 rounded-[3px] bg-[#4338CA] px-1.5 py-0.5 text-[11px] font-semibold text-white">UP NEXT</span>}
-                  {s.li && <span className="shrink-0 rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#3730A3]">{s.li}</span>}
+                  {s.li && <span title={`Lead Implementer extension: ${desk.li[s.li]?.title ?? s.li}`} className="shrink-0 rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#3730A3]">{s.li}</span>}
                   {open && copy.detail && <span className="block w-full text-[13px] leading-snug text-[#5B6474]">{copy.detail}</span>}
                   {/* Narrow sheet: the folded columns ride along under the step. */}
                   <span className="flex w-full flex-wrap items-center gap-2 text-[12px] text-[#5B6474] @[760px]:hidden">
@@ -129,6 +131,7 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
               </button>
               {open && <Activity task={task} s={s} locked={locked} onNext={() => onFocus(s.n < task.steps.length ? s.n + 1 : 0)} />}
             </li>
+            </Fragment>
           );
         })}
       </ol>
@@ -142,13 +145,20 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
  * options are shown as the answer choices, so they are dropped here; what is left is either the
  * whole question (when the title was cut) or the detail after the title.
  */
-function stepCopy(s: Step): { title: string; detail: string } {
-  const body = s.w.split(/\s*Options:/)[0].replace(/^DECIDE:\s*/i, "").trim();
-  const cut = /(…|\.\.\.)$/.test(s.t);
-  if (cut) return { title: s.kind === "do" ? body : `Decide: ${body}`, detail: "" };
-  const core = s.t.replace(/^Decide:\s*/i, "").trim();
-  const rest = body.startsWith(core) ? body.slice(core.length).replace(/^[\s.?:]+/, "").trim() : body === core ? "" : body;
-  return { title: s.t, detail: rest };
+function stepCopy(s: Step): { short: string; title: string; detail: string } {
+  // "Decide:" / "Decide for each row:" is what the Type column already says, so the table drops it.
+  const lead = /^decide( for each row)?:\s*/i;
+  const short = s.kind === "do" ? s.t : s.t.replace(lead, "");
+  const body = s.w.split(/\s*Options:/)[0].replace(lead, "").trim();
+  if (/(…|\.\.\.)$/.test(s.t)) return { short, title: body, detail: "" };
+  const rest = body.startsWith(short) ? body.slice(short.length).replace(/^[\s.?:]+/, "").trim() : body === short ? "" : body;
+  return { short, title: short, detail: rest };
+}
+
+/** The first sentence of a paragraph — enough to say why, without a block to read. */
+function firstSentence(t: string): string {
+  const m = t.match(/^.*?[.!?](?=\s|$)/);
+  return (m ? m[0] : t).trim();
 }
 
 /** "Decision" in the redesign's amber chip; a per-row decision says so. */
@@ -162,192 +172,80 @@ function TypeChip({ each }: { each: boolean }) {
 
 function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: boolean; onNext: () => void }) {
   const { desk, progress, update, view, openTool } = useDesk();
-  // Closed until asked for: the card floats over the work area, so it should not cover it unbidden.
+  // Help is folded until asked for, then shown as tabs under the step's own bar: no row of its own.
   const [q, setQ] = useState<QuestionKey | null>(null);
-  const barRef = useRef<HTMLDivElement>(null);
-  const tabRefs = useRef<Partial<Record<QuestionKey, HTMLButtonElement | null>>>({});
-  // Where the card sits: under its tab, kept inside the bar, with the pointer on the tab's centre.
-  const [anchor, setAnchor] = useState({ left: 0, width: 520, caret: 40 });
-  useLayoutEffect(() => {
-    if (!q) return;
-    const place = () => {
-      const bar = barRef.current;
-      const tab = tabRefs.current[q];
-      if (!bar || !tab) return;
-      const total = bar.clientWidth;
-      const width = Math.min(560, total);
-      const centre = tab.offsetLeft + tab.offsetWidth / 2 - (tab.offsetParent === bar ? 0 : -((tab.offsetParent as HTMLElement | null)?.offsetLeft ?? 0));
-      const left = Math.max(0, Math.min(total - width, centre - width / 2));
-      setAnchor({ left, width, caret: Math.max(18, Math.min(width - 18, centre - left)) });
-    };
-    place();
-    window.addEventListener("resize", place);
-    return () => window.removeEventListener("resize", place);
-  }, [q]);
   useEffect(() => {
     if (!q) return;
-    const onDown = (e: MouseEvent) => !barRef.current?.contains(e.target as Node) && setQ(null);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setQ(null);
       if ((e.target as HTMLElement).closest("input, textarea, select")) return;
+      if (e.key === "Escape") setQ(null);
       const i = QUESTIONS.findIndex((x) => x.key === q);
       if (e.key === "ArrowRight" && i < QUESTIONS.length - 1) setQ(QUESTIONS[i + 1].key);
       if (e.key === "ArrowLeft" && i > 0) setQ(QUESTIONS[i - 1].key);
     };
-    document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [q]);
   const key = stepKey(task.id, s.n);
   const done = !!progress.done[key];
-  const readOnly = locked || done || !!progress.submitted[task.id];
-  const kr = krFor(task, s.n);
+  // Editable until the task is submitted, even once the step is marked complete.
+  const sealed = !!progress.submitted[task.id];
+  const readOnly = locked || sealed;
   // Steps naming a tool with a screen are worked in that tool's modal; the two that name none stay here.
   const inTool = !!s.key && !!desk.tp[s.key];
-  const krActs = kr ? krActivities(kr.kr) : [];
   const note = desk.notes[task.id]?.find(([n]) => n === s.n)?.[2] ?? s.help;
-  const rules = s.refs.rules.map((id) => [id, ...(desk.rules[id] ?? ["", ""])] as const);
   const refs = stepRefs(s);
-  const qi = QUESTIONS.findIndex((x) => x.key === q);
-  const cur = qi >= 0 ? QUESTIONS[qi] : null;
 
   const refName = (kind: string, id: string): string => {
     if (kind === "rule") return desk.rules[id]?.[0] ?? "Rule";
     if (kind === "tpl") return desk.tpls[id]?.[2] ?? "Template";
-    if (kind === "doc") return desk.docs[id] ?? "Library document";
+    if (kind === "doc") {
+      const [doc, secs] = id.split("#");
+      return `${desk.docs[doc] ?? "Library document"}${secs ? ` · §${secs.split(",").join(", §")}` : ""}`;
+    }
     if (kind === "clause") return desk.iso[id] ? `ISO/IEC 27001 · ${desk.iso[id]}` : "ISO/IEC 27001 clause";
     if (kind === "page") return "Reference page";
     return "Your data file";
   };
-  const whereLines = (typeof task.card["Where to add"] === "string" ? task.card["Where to add"] : "")
-    .split(/(?<=\.)\s+(?=[A-Z])/)
-    .filter(Boolean);
-  const important = task.card["Why is this important"];
+  const initials = task.owner.split(/\s+/).filter((w) => /^[A-Z]/.test(w)).slice(0, 2).map((w) => w[0]).join("");
+
+  // Short, plain answers built only from what the pack says. NOTE: a step's own `why` is the answer
+  // explanation of a decision (the pack reveals it after review), so it is never shown here.
+  const taskWhy = typeof task.card["Why am I doing this"] === "string" ? firstSentence(task.card["Why am I doing this"] as string) : "";
 
   const answer: Record<QuestionKey, ReactNode> = {
+    // The open row already shows the instruction; Do adds only the owner's note, in simpler words.
     do: (
-      <div className="grid gap-3">
-        <p className="text-[14.5px] leading-relaxed text-slate-800">{s.w}</p>
-        <p className="flex items-start gap-2.5 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-[13px] text-emerald-900 ring-1 ring-inset ring-emerald-100">
-          <Icon name="checkCircle" size={16} className="mt-px shrink-0 text-emerald-600" />
-          <span><span className="font-semibold">Done when</span> {s.o}</span>
-        </p>
-      </div>
-    ),
-    how: (
-      <figure className="grid gap-3">
-        <blockquote className="rounded-xl bg-slate-50 px-4 py-3.5 text-[14px] leading-relaxed text-slate-800 ring-1 ring-inset ring-slate-200">{note}</blockquote>
-        <figcaption className="flex items-center gap-2 text-[12.5px] text-slate-500">
-          <span className="grid h-6 w-6 place-items-center rounded-full bg-indigo-100 text-[10px] font-semibold text-indigo-700">
-            {task.owner.split(/\s+/).filter((w) => /^[A-Z]/.test(w)).slice(0, 2).map((w) => w[0]).join("")}
-          </span>
-          In simpler words, from the {task.owner}
-        </figcaption>
+      <figure className="grid gap-2">
+        <blockquote className="border-l-2 border-[#C7CBF5] pl-3 text-[14px] leading-relaxed text-[#111827]">{note || s.w}</blockquote>
+        {note && (
+          <figcaption className="flex items-center gap-2 text-[12px] text-[#5B6474]">
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-[#EEF0FF] text-[9.5px] font-semibold text-[#3730A3]">{initials}</span>
+            In simpler words, from the {task.owner}
+          </figcaption>
+        )}
       </figure>
     ),
-    why: kr ? (
-      <div className="grid gap-3">
-        <p className="text-[14.5px] leading-relaxed text-slate-800">
-          <span className="mr-2 rounded-md bg-indigo-50 px-1.5 py-0.5 text-[12px] font-semibold text-indigo-700">{splitKr(kr.kr).tag}</span>
-          {splitKr(kr.kr).text}
-        </p>
-        <div className="grid gap-1.5">
-          <div className="flex gap-1">
-            {krActs.map((a) => (
-              <span
-                key={a}
-                className={`h-1.5 flex-1 rounded-full ${progress.done[stepKey(task.id, a)] ? "bg-emerald-500" : a === s.n ? "bg-indigo-500" : "bg-slate-200"}`}
-              />
-            ))}
-          </div>
-          <p className="text-[12.5px] text-slate-500">This is activity {krActs.indexOf(s.n) + 1} of {krActs.length} in {splitKr(kr.kr).tag}.</p>
-        </div>
-      </div>
-    ) : <p className="text-[14.5px] leading-relaxed text-slate-800">It serves the task objective: {task.obj}</p>,
-    where: (
-      <div className="grid gap-3">
-        <button
-          type="button"
-          onClick={() => (desk.tp[s.key] ? openTool(s.key) : view({ kind: "panel", id: task.id }))}
-          className={`group flex items-center gap-3 rounded-xl bg-indigo-50/70 p-3 text-left ring-1 ring-inset ring-indigo-100 hover:bg-indigo-50 hover:ring-indigo-200 ${press}`}
-        >
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white text-indigo-600 shadow-sm ring-1 ring-indigo-100"><Icon name="grid" size={18} /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[12px] text-indigo-700">Platform tool</span>
-            <span className="block truncate text-[14px] font-semibold text-slate-900">{s.tool}</span>
-          </span>
-          <span className="flex items-center gap-1 text-[12.5px] font-medium text-indigo-700">Open<Icon name="arrowUpRight" size={14} className="transition-transform duration-150 group-hover:-translate-y-px group-hover:translate-x-px" /></span>
-        </button>
-        {whereLines.length > 0 && (
-          <ul className="grid gap-1.5 text-[13px] leading-relaxed text-slate-600">
-            {whereLines.map((l) => (
-              <li key={l} className="flex gap-2"><Icon name="folder" size={14} className="mt-1 shrink-0 text-slate-400" />{l}</li>
-            ))}
-          </ul>
-        )}
-      </div>
-    ),
+    // Why the work matters, in one plain line from the task's own "Why am I doing this". The key
+    // result is not repeated here: the table's Key result column already shows it.
+    why: <p className="text-[14px] leading-relaxed text-[#111827]">{taskWhy || task.obj}</p>,
     read: refs.length ? (
-      <ul className="grid gap-1.5">
+      <ul className="grid gap-px overflow-hidden rounded border border-[#DDE1E8] bg-[#E9ECF1] sm:grid-cols-2">
         {refs.map((r) => (
           <li key={r.kind + r.id}>
-            <button
-              type="button"
-              onClick={() => view(r)}
-              className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left ring-1 ring-inset ring-slate-200 hover:bg-slate-50 hover:ring-slate-300 ${press}`}
-            >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-100 text-slate-600"><Icon name={REF_ICON[r.kind]} size={15} /></span>
+            <button type="button" onClick={() => view(r)} className="group flex w-full items-center gap-3 bg-white px-3 py-2.5 text-left hover:bg-[#FAFAFC] focus-ring">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded border border-[#E3E6EC] text-[#3F4757]"><Icon name={REF_ICON[r.kind]} size={14} /></span>
               <span className="min-w-0 flex-1">
-                <span className="block font-mono text-[12px] font-medium text-slate-900">{r.id}</span>
-                <span className="block truncate text-[12.5px] text-slate-500">{refName(r.kind, r.id)}</span>
+                <span className="block font-mono text-[12px] font-semibold text-[#111827]">{r.id.split("#")[0]}</span>
+                <span className="block truncate text-[12.5px] text-[#5B6474]">{refName(r.kind, r.id)}</span>
               </span>
-              <Icon name="chevronRight" size={15} className="text-slate-300 transition-colors group-hover:text-slate-500" />
+              <Icon name="chevronRight" size={14} className="text-[#8A91A3] group-hover:text-[#3F4757]" />
             </button>
           </li>
         ))}
       </ul>
-    ) : <p className="text-[14px] text-slate-600">Nothing extra to read. The instruction is complete on its own.</p>,
-    deliver: (
-      <div className="grid gap-3">
-        <div className="grid gap-1">
-          <p className="text-[12.5px] font-medium text-slate-500">This activity produces</p>
-          <p className="text-[14.5px] leading-relaxed text-slate-800">{s.o}</p>
-        </div>
-        <div className="grid gap-1.5">
-          <p className="text-[12.5px] font-medium text-slate-500">It goes into</p>
-          <div className="flex flex-wrap gap-1.5">
-            {task.subs.map((x) => (
-              <span key={x.code} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1.5 text-[12.5px] text-slate-700 ring-1 ring-inset ring-slate-200">
-                <span className="font-mono text-[11.5px] font-semibold text-slate-900">{x.code}</span>
-                {x.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    ),
-    learn: rules.length ? (
-      <div className="grid gap-2">
-        {rules.map(([id, name, text]) => (
-          <div key={id} className="grid gap-1 rounded-xl bg-slate-50 p-3.5 ring-1 ring-inset ring-slate-200">
-            <button type="button" onClick={() => view({ kind: "rule", id })} className="w-fit text-left text-[13.5px] font-semibold text-indigo-700 hover:underline">
-              {id} · {name}
-            </button>
-            <p className="text-[13.5px] leading-relaxed text-slate-700">{text}</p>
-          </div>
-        ))}
-      </div>
-    ) : <p className="text-[14px] leading-relaxed text-slate-700">{s.why ?? "No rule for this activity. Follow the instruction exactly."}</p>,
-    impact: (
-      <div className="grid gap-3">
-        {kr ? <KrProgress task={task} kr={kr.kr} /> : <p className="text-[14px] text-slate-700">Counts toward the task objective.</p>}
-        {typeof important === "string" && (
-          <p className="rounded-xl bg-amber-50/70 px-3.5 py-3 text-[13px] leading-relaxed text-amber-950 ring-1 ring-inset ring-amber-100">{important}</p>
-        )}
-      </div>
+    ) : (
+      <p className="text-[14px] text-[#5B6474]">Nothing extra to read. The instruction is complete on its own.</p>
     ),
   };
 
@@ -356,179 +254,130 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
     onNext();
   };
 
+  // The Help toggle rides inside the bar the step already has, beside its main action.
+  const helpButton = (
+    <button
+      type="button"
+      onClick={() => setQ(q ? null : "do")}
+      aria-expanded={!!q}
+      aria-label="Help with this step"
+      title="Do, Why and References for this step"
+      className={`inline-flex h-9 items-center gap-1.5 rounded border px-3 text-[13px] font-medium ${press} ${
+        q ? "border-[#C7CBF5] bg-[#EEF0FF] text-[#3730A3]" : "border-[#DDE1E8] bg-white text-[#3F4757] hover:border-[#C9CED8] hover:text-[#111827]"
+      }`}
+    >
+      <Icon name="help" size={15} />
+      Help
+    </button>
+  );
+
+  // Do · Why · Reference as tabs, in place, directly under the bar that opened them.
+  const helpPanel = q && (
+    <section aria-label="Help with this step" className="desk-pop mt-2 rounded border border-[#DDE1E8] bg-white">
+      <div className="flex items-stretch border-b border-[#DDE1E8] bg-[#F7F8FA]">
+        <div role="tablist" aria-label="About this step" className="flex min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
+          {QUESTIONS.map((x) => {
+            const on = q === x.key;
+            return (
+              <button
+                key={x.key}
+                role="tab"
+                type="button"
+                aria-selected={on}
+                onClick={() => setQ(x.key)}
+                title={qTitle(x)}
+                className={`relative flex h-9 shrink-0 items-center gap-1.5 border-r border-[#E9ECF1] px-4 text-[13px] font-medium focus-ring ${
+                  on ? "bg-white text-[#111827]" : "text-[#5B6474] hover:bg-white/70 hover:text-[#111827]"
+                }`}
+              >
+                <Icon name={x.icon} size={15} strokeWidth={1.7} className={on ? "text-[#4338CA]" : "text-[#8A91A3]"} />
+                {x.label}
+                {on && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-[#4338CA]" aria-hidden />}
+              </button>
+            );
+          })}
+        </div>
+        <button type="button" onClick={() => setQ(null)} aria-label="Close help" className="grid w-9 shrink-0 place-items-center border-l border-[#E9ECF1] text-[#8A91A3] hover:bg-white hover:text-[#3F4757] focus-ring">
+          <Icon name="x" size={15} />
+        </button>
+      </div>
+      <div role="tabpanel" aria-label={qTitle(QUESTIONS.find((x) => x.key === q)!)} className="px-4 py-3.5">
+        {answer[q]}
+      </div>
+    </section>
+  );
+
   return (
     <div className="border-t border-[#E9ECF1] bg-white px-4 pb-4 pt-3">
-      {/* The activity bar: the eight questions, answered for this activity. A tab opens its card
-          beneath; the card closes with x and walks on to the next question. */}
-      <div ref={barRef} className="relative">
-      <div role="tablist" aria-label="About this activity" className="flex overflow-x-auto rounded border border-[#DDE1E8] bg-[#F7F8FA] [scrollbar-width:none]">
-        {QUESTIONS.map((x, i) => {
-          const on = q === x.key;
-          return (
-            <button
-              key={x.key}
-              ref={(el) => {
-                tabRefs.current[x.key] = el;
-              }}
-              role="tab"
-              type="button"
-              aria-selected={on}
-              onClick={() => setQ(on ? null : x.key)}
-              title={`${i + 1}. ${qTitle(x)}`}
-              className={`group relative flex h-9 min-w-[84px] flex-1 items-center justify-center gap-1.5 border-r border-[#E9ECF1] px-2.5 text-[12.5px] font-medium last:border-r-0 ${press} ${
-                on ? "text-slate-900" : "text-slate-600 hover:bg-white/60 hover:text-slate-900"
-              }`}
-            >
-              {on && <motion.span layoutId={`qbar-${key}`} className="absolute inset-0 bg-white shadow-[inset_0_-2px_0_#4338CA]" transition={{ type: "spring", duration: 0.3, bounce: 0.12 }} />}
-              <Icon name={x.icon} size={16} strokeWidth={1.7} className={`relative shrink-0 transition-colors duration-150 ${on ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"}`} />
-              <span className="relative">{x.label}</span>
-            </button>
-          );
-        })}
-      </div>
-      <AnimatePresence>
-        {cur && (
-          // The pointer is drawn beside the card, not inside it, so the card's own entrance
-          // transform never moves it off the tab it points at.
-          <motion.svg
-            key="caret"
-            aria-hidden
-            width="20"
-            height="10"
-            viewBox="0 0 20 10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, x: anchor.left + anchor.caret - 10 }}
-            exit={{ opacity: 0, transition: { duration: 0.1 } }}
-            transition={{ type: "spring", duration: 0.32, bounce: 0.1 }}
-            className="pointer-events-none absolute left-0 top-[calc(100%+3px)] z-40 overflow-visible"
-          >
-            <path d="M0 10 L10 0.8 L20 10" className="fill-white stroke-slate-200" strokeWidth="1" />
-            <path d="M0.8 10.6 H19.2" className="stroke-white" strokeWidth="1.6" />
-          </motion.svg>
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {cur && (
-          <motion.section
-            role="tabpanel"
-            aria-label={qTitle(cur)}
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1, x: anchor.left }}
-            exit={{ opacity: 0, y: -4, scale: 0.98, transition: { duration: 0.12 } }}
-            transition={{ type: "spring", duration: 0.32, bounce: 0.1 }}
-            style={{ width: anchor.width, transformOrigin: `${anchor.caret}px top` }}
-            className="absolute left-0 top-[calc(100%+12px)] z-30 rounded-2xl bg-white shadow-[0_24px_56px_-18px_rgba(15,23,42,0.38),0_2px_6px_rgba(15,23,42,0.06)] ring-1 ring-slate-200/90"
-          >
-            <header className="flex items-center gap-3 px-5 pb-3 pt-4">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-600 text-white shadow-[0_6px_14px_-6px_rgba(79,70,229,0.7)]">
-                <Icon name={cur.icon} size={20} strokeWidth={1.7} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-[15.5px] font-semibold leading-tight text-slate-900">{qTitle(cur)}</h3>
-                <p className="mt-0.5 text-[12px] text-slate-500 tabular-nums">Step {s.n} · question {qi + 1} of {QUESTIONS.length}</p>
-              </div>
-              <button type="button" onClick={() => setQ(null)} aria-label="Close card" className={`grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 ${press}`}>
-                <Icon name="x" size={16} />
-              </button>
-            </header>
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={cur.key}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, transition: { duration: 0.08 } }}
-                transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                className="max-h-[min(46vh,420px)] overflow-y-auto px-5 pb-4"
-              >
-                {answer[cur.key]}
-              </motion.div>
-            </AnimatePresence>
-            <footer className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
-              <button
-                type="button"
-                disabled={qi === 0}
-                onClick={() => setQ(QUESTIONS[qi - 1].key)}
-                className={`inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12.5px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:invisible ${press}`}
-              >
-                <Icon name="arrowLeft" size={14} />
-                {qi > 0 && QUESTIONS[qi - 1].label}
-              </button>
-              <div className="flex items-center gap-1.5" aria-label="Questions">
-                {QUESTIONS.map((x, i) => (
-                  <button
-                    key={x.key}
-                    type="button"
-                    onClick={() => setQ(x.key)}
-                    aria-label={qTitle(x)}
-                    aria-current={i === qi ? "true" : undefined}
-                    className={`h-1.5 rounded-full transition-[width,background-color] duration-200 ${i === qi ? "w-5 bg-indigo-600" : "w-1.5 bg-slate-300 hover:bg-slate-400"}`}
-                  />
-                ))}
-              </div>
-              <button
-                type="button"
-                disabled={qi === QUESTIONS.length - 1}
-                onClick={() => setQ(QUESTIONS[qi + 1].key)}
-                className={`inline-flex h-8 items-center gap-1 rounded-lg bg-slate-900 px-3 text-[12.5px] font-semibold text-white hover:bg-slate-800 disabled:invisible ${press}`}
-              >
-                {qi < QUESTIONS.length - 1 && QUESTIONS[qi + 1].label}
-                <Icon name="arrowRight" size={14} />
-              </button>
-            </footer>
-          </motion.section>
-        )}
-      </AnimatePresence>
-      </div>
-
-
       {inTool ? (
-        // The work happens in the platform tool the step names: the step guides, the tool is where.
-        <div className="mt-3 flex flex-wrap items-center gap-3 rounded border border-[#DDE1E8] bg-[#F7F8FA] p-3">
-          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded border border-[#E3E6EC] bg-white text-[#3F4757]">
-            <Icon name="grid" size={15} />
-          </span>
-          <span className="min-w-[11rem] flex-1">
-            <span className="block text-[12px] text-indigo-700">{done ? "Done in" : "Do this step in"}</span>
-            <span className="block text-[14px] font-semibold text-slate-900">{s.tool}</span>
-            <span className="block text-[12px] text-slate-500">Done when: {s.o}</span>
-          </span>
-          {done ? (
-            <span className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
-              <button type="button" onClick={() => openTool(s.key)} className={`h-9 rounded-lg px-3 text-[13px] font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-white ${press}`}>
-                Review
-              </button>
+        <>
+          {/* The work happens in the platform tool the step names: the step guides, the tool is where. */}
+          <div className="flex flex-wrap items-center gap-3 rounded border border-[#DDE1E8] bg-[#F7F8FA] p-3">
+            <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded border border-[#E3E6EC] bg-white text-[#3F4757]">
+              <Icon name="grid" size={15} />
             </span>
-          ) : (
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => openTool(s.key)}
-              className={`inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
-            >
-              Open {s.tool.split("›").pop()?.trim()} <Icon name="arrowUpRight" size={14} />
-            </button>
-          )}
-        </div>
+            <span className="min-w-[11rem] flex-1">
+              <span className="block text-[12px] text-indigo-700">{done ? "Done in" : "Do this step in"}</span>
+              <span className="block text-[14px] font-semibold text-slate-900">{s.tool}</span>
+              <span className="block text-[12px] text-slate-500">Done when: {s.o}</span>
+            </span>
+            <span className="flex items-center gap-2">
+              {helpButton}
+              {done ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 px-1 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
+                  {/* Done: the tool reopens as a read-only window; Edit brings the work back until submission. */}
+                  <button type="button" onClick={() => openTool(s.key)} className={`h-9 rounded border border-[#DDE1E8] bg-white px-3 text-[13px] font-medium text-[#3F4757] hover:border-[#C9CED8] ${press}`}>
+                    View
+                  </button>
+                  {!sealed && (
+                    <button type="button" onClick={() => openTool(s.key, "work")} className={`h-9 rounded border border-[#C7CBF5] bg-white px-3 text-[13px] font-medium text-[#3730A3] hover:bg-[#EEF0FF] ${press}`}>
+                      Edit
+                    </button>
+                  )}
+                </>
+              ) : (
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={() => openTool(s.key)}
+                  className={`inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+                >
+                  Open {s.tool.split("›").pop()?.trim()} <Icon name="arrowUpRight" size={14} />
+                </button>
+              )}
+            </span>
+          </div>
+          <Submitted task={task} s={s} />
+          {helpPanel}
+        </>
       ) : (
         <>
-          <Work task={task} s={s} readOnly={readOnly} />
+          {/* Help sits on the heading line, above the choices, where it is seen before deciding. */}
+          <div className="flex items-center justify-between gap-3">
+            <Label>{s.kind === "each" ? "Your decision for each row" : s.kind === "pick" ? "Your decision" : "Your work"}</Label>
+            {helpButton}
+          </div>
+          {helpPanel}
+          <Work task={task} s={s} readOnly={readOnly} bare />
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[12.5px] text-slate-500">
               <span className="font-medium text-slate-700">Done when:</span> {s.o}
             </p>
-            {done ? (
-              <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
-            ) : (
-              <button
-                type="button"
-                disabled={readOnly || !decided(progress, task, s)}
-                onClick={markDone}
-                className={`rounded-lg bg-indigo-600 px-4 py-2 text-[13px] font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 ${press}`}
-              >
-                Mark activity complete
-              </button>
-            )}
+            <span className="flex items-center gap-2">
+              {done ? (
+                <span className="inline-flex items-center gap-1.5 px-1 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
+              ) : (
+                <button
+                  type="button"
+                  disabled={readOnly || !stepAnswered(desk, progress, task, s)}
+                  onClick={markDone}
+                  className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+                >
+                  Mark activity complete
+                </button>
+              )}
+            </span>
           </div>
         </>
       )}
@@ -536,8 +385,21 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
   );
 }
 
+/** What the mentee handed in for a step done in a tool, in one line under its bar. */
+function Submitted({ task, s }: { task: Task; s: Step }) {
+  const { desk, progress } = useDesk();
+  const text = submissionText(desk, progress, task, s);
+  if (!text) return null;
+  return (
+    <p className="mt-2 flex items-start gap-2 text-[13px] text-[#3F4757]">
+      <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">You submitted</span>
+      <span className="line-clamp-2 min-w-0">{text}</span>
+    </p>
+  );
+}
+
 /** Where the mentee does the activity. File uploads replace the typed box in Phase 3. */
-export function Work({ task, s, readOnly }: { task: Task; s: Step; readOnly: boolean }) {
+export function Work({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: boolean; /** The caller draws the heading (and its own controls beside it). */ bare?: boolean }) {
   const { progress, update } = useDesk();
   const key = stepKey(task.id, s.n);
   const pick = progress.picks[key];
@@ -545,8 +407,8 @@ export function Work({ task, s, readOnly }: { task: Task; s: Step; readOnly: boo
 
   if (s.kind === "pick" && s.opt)
     return (
-      <fieldset className="mt-4 grid gap-2" disabled={readOnly}>
-        <legend className="mb-2"><Label>Your decision</Label></legend>
+      <fieldset className={`${bare ? "mt-2" : "mt-4"} grid gap-2`} disabled={readOnly}>
+        {!bare && <legend className="mb-2"><Label>Your decision</Label></legend>}
         {s.opt.map((o, i) => {
           const letter = String.fromCharCode(65 + i);
           const on = pick === letter;
@@ -565,8 +427,8 @@ export function Work({ task, s, readOnly }: { task: Task; s: Step; readOnly: boo
     const rows = task.panel.pl.r ?? [];
     const picks = typeof pick === "object" ? pick : {};
     return (
-      <fieldset className="mt-4 grid gap-2" disabled={readOnly}>
-        <legend className="mb-2"><Label>Your decision for each row</Label></legend>
+      <fieldset className={`${bare ? "mt-2" : "mt-4"} grid gap-2`} disabled={readOnly}>
+        {!bare && <legend className="mb-2"><Label>Your decision for each row</Label></legend>}
         {(rows.length ? rows : [["All rows"]]).map((r, i) => (
           <label key={i} className="grid grid-cols-[minmax(0,1fr)_minmax(140px,220px)] items-center gap-3 rounded border border-[#DDE1E8] px-3 py-2 text-[13px]">
             <span className="min-w-0 truncate text-slate-700"><span className="font-medium">{r[0]}</span>{r[1] ? ` · ${r[1]}` : ""}</span>
@@ -585,8 +447,8 @@ export function Work({ task, s, readOnly }: { task: Task; s: Step; readOnly: boo
   }
 
   return (
-    <div className="mt-4 grid gap-1.5">
-      <label htmlFor={`w-${key}`}><Label>Your work</Label></label>
+    <div className={`${bare ? "mt-2" : "mt-4"} grid gap-1.5`}>
+      {!bare && <label htmlFor={`w-${key}`}><Label>Your work</Label></label>}
       <textarea
         id={`w-${key}`}
         rows={3}

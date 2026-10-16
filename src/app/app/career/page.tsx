@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Card, Bar } from "@/components/ui/primitives";
 import { DVerb } from "@/components/ui/dverb";
 import { CAREER_LADDER, CAREER_PROGRAMS, type CareerProgram } from "@/lib/career";
-import { learningsApi } from "@/lib/learnings";
+import { useAuth } from "@/components/auth/auth-provider";
+import { LeadImplementerPath } from "@/components/career/li-path";
+import { Grc101Profile } from "@/components/career/grc101-profile";
 
 const CR_FW: Record<string, string> = {
   indigo: "bg-indigo-50 text-indigo-700 ring-indigo-100",
@@ -221,19 +223,11 @@ function CareerRoles({ program }: { program: CareerProgram }) {
 
 export default function CareerPage() {
   const [programId, setProgramId] = useState("grc101");
-  const [progress, setProgress] = useState(0);
+  // GRC 101 progress is the Working Desk's (steps done of all steps), reported by the LI path below.
+  const [deskPct, setDeskPct] = useState(0);
+  const { user } = useAuth();
   const program = CAREER_PROGRAMS.find((p) => p.id === programId)!;
-
-  useEffect(() => {
-    let cancelled = false;
-    setProgress(0);
-    if (program.status === "active") {
-      learningsApi.progress(programId).then((p) => !cancelled && setProgress(p.overallPct)).catch(() => {});
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [programId, program.status]);
+  const progress = program.status === "active" ? deskPct : 0;
 
   return (
     <div className="page-shell space-y-4">
@@ -263,8 +257,16 @@ export default function CareerPage() {
       </div>
 
       <CareerHero program={program} progress={progress} />
+      {program.id === "grc101" && user && (
+        <Suspense fallback={<div className="h-64 animate-pulse rounded-md bg-slate-100" aria-busy="true" />}>
+          <LeadImplementerPath who={user.email} onProgress={setDeskPct} />
+        </Suspense>
+      )}
       <CareerLadder program={program} />
 
+      {/* GRC 101 shows what the programme itself develops; 301 and 501 have no content yet, so they
+          keep the outline in lib/career. */}
+      {program.id === "grc101" && user ? <Grc101Profile who={user.email} /> : (
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
         <div className="xl:col-span-2 space-y-5">
           <CareerSkills program={program} />
@@ -276,6 +278,7 @@ export default function CareerPage() {
           <CareerFrameworks program={program} />
         </div>
       </div>
+      )}
 
       <div className="text-center text-[11px] text-slate-400 pt-2 pb-4">
         grcmentor · {program.code} · {program.title}

@@ -23,7 +23,7 @@ const MENU_W = 400;
  * amber dot, and its tool is the amber row of the menu.
  */
 export function Toolbar() {
-  const { desk, isOpen, progress, here, openTool } = useDesk();
+  const { desk, isOpen, here, openTool } = useDesk();
   const unread = useUnread();
   const [pop, setPop] = useState<string | null>(null);
   const [left, setLeft] = useState(0);
@@ -73,7 +73,7 @@ export function Toolbar() {
   const target = step?.key ?? ""; // the tool the step in hand is done in
   const targetSec = target.split("|")[0];
   const sec = pop ? desk.sections[pop] : undefined;
-  const open = (key: string) => toolOpen(desk, progress, isOpen, here, key);
+  const open = (key: string) => toolOpen(desk, isOpen, key);
 
   const toggle = (k: string, el: HTMLButtonElement) => {
     if (pop === k) return setPop(null);
@@ -100,7 +100,7 @@ export function Toolbar() {
             openTool(`${k}|*`);
           } else toggle(k, e.currentTarget);
         }}
-        title={unlocked ? (due ? `${l} · your current step is done here` : l) : `${l} opens when a step sends you here`}
+        title={unlocked ? (due ? `${l} · your current step is done here` : l) : `${l} opens in a later week`}
         className={`relative flex h-[50px] min-w-[52px] shrink-0 flex-col items-center justify-center gap-[3px] px-1.5 text-[10.5px] focus-ring lg:h-[54px] lg:min-w-[60px] lg:px-2 lg:text-[11px] ${
           opts.end ? "border-r border-[#2A2E3B]" : ""
         } ${on ? "bg-white text-[#111827]" : unlocked ? "text-[#F1F2F6] hover:bg-[#1F2330]" : "cursor-not-allowed text-[#7C8399]"}`}
@@ -122,7 +122,7 @@ export function Toolbar() {
   const ends = new Set(desk.secs.map((s, i) => (s && (desk.secs[i + 1] === null || i === desk.secs.length - 1) ? s.k : null)).filter(Boolean) as string[]);
 
   return (
-    <div ref={ref} className="pointer-events-none absolute bottom-3 left-3 right-[72px] z-20 flex justify-center sm:left-4" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+    <div ref={ref} className="pointer-events-none absolute bottom-3 left-3 right-[72px] z-[70] flex justify-center sm:left-4" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <div className="pointer-events-auto relative min-w-0 max-w-full">
         {pop && sec && (
           <div
@@ -178,7 +178,7 @@ export function Toolbar() {
           style={{ maskImage: fadeMask, WebkitMaskImage: fadeMask }}
           className="flex max-w-full items-stretch overflow-x-auto rounded-lg border border-[#12141C] bg-[#12141C] shadow-[0_10px_28px_rgba(17,24,39,0.25)] [scrollbar-width:none]"
         >
-          {desk.secs.map((s) => (s === null ? null : cell(s.k, s.l, SEC_ICON[s.k] ?? "grid", sectionOpen(desk, progress, isOpen, here, s.k), { end: ends.has(s.k) })))}
+          {desk.secs.map((s) => (s === null ? null : cell(s.k, s.l, SEC_ICON[s.k] ?? "grid", sectionOpen(desk, isOpen, s.k), { end: ends.has(s.k) })))}
           {desk.ut.map((u) => cell(u.k, u.l, UT_ICON[u.k] ?? "grid", true, { badge: u.k === "inbox" ? unread : undefined }))}
         </nav>
       </div>

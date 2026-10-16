@@ -19,17 +19,23 @@ export interface Progress {
   submitted: Record<string, string>;
   /** Task message id → option letter ("OK" for a notice that is only acknowledged). */
   msgs: Record<string, string>;
+  /** "F1.1-1" → the parts of a reading step the mentee confirmed they read ("A", "B", "read"). */
+  acks: Record<string, string[]>;
+  /** "T3.1|regwatch|Obligations Register" → the register's filled cells, "row,col" → value. Shared by the task's steps. */
+  grids: Record<string, Record<string, string>>;
+  /** "T5.1-7" → ISO time the step was ticked in the work log. */
+  logs: Record<string, string>;
 }
 
-const EMPTY: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs: {} };
+const EMPTY: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs: {}, acks: {}, grids: {}, logs: {} };
 
 export function useProgress(who: string) {
-  // v3 (2026-10-13): progress reset for testing the toolbar-first flow; bump again for a fresh start.
-  const key = `grc101.desk.v3.${who}`;
+  // v4 (2026-10-15): progress reset with the new work types; bump again for a fresh start.
+  const key = `grc101.desk.v4.${who}`;
   // Lazy read: the desk mounts only in the browser, after its content has loaded.
   const [progress, setProgress] = useState<Progress>(() => {
     try {
-      for (const old of [`grc101.desk.${who}`, `grc101.desk.v2.${who}`]) localStorage.removeItem(old); // earlier saves, no longer read
+      for (const old of [`grc101.desk.${who}`, `grc101.desk.v2.${who}`, `grc101.desk.v3.${who}`]) localStorage.removeItem(old); // earlier saves, no longer read
       const raw = localStorage.getItem(key);
       return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY;
     } catch {
