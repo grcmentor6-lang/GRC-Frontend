@@ -33,7 +33,7 @@ export default function LibraryItemPage({ params, searchParams }: {
   return (
     <div className="page-shell space-y-4">
       {/* Opened from the Lead Implementer path: Back returns to the exact tab it was opened from. */}
-      {from === "career" && (
+      {from === "certification" && (
         <button type="button" onClick={() => router.back()} className="focus-ring mr-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-indigo-700 hover:text-indigo-900">
           <Icon name="arrowLeft" size={13} /> Back to your Lead Implementer path
         </button>

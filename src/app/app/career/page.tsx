@@ -1,12 +1,11 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Card, Bar } from "@/components/ui/primitives";
 import { DVerb } from "@/components/ui/dverb";
 import { CAREER_LADDER, CAREER_PROGRAMS, type CareerProgram } from "@/lib/career";
 import { useAuth } from "@/components/auth/auth-provider";
-import { LeadImplementerPath } from "@/components/career/li-path";
 import { Grc101Profile } from "@/components/career/grc101-profile";
 
 const CR_FW: Record<string, string> = {
@@ -223,7 +222,7 @@ function CareerRoles({ program }: { program: CareerProgram }) {
 
 export default function CareerPage() {
   const [programId, setProgramId] = useState("grc101");
-  // GRC 101 progress is the Working Desk's (steps done of all steps), reported by the LI path below.
+  // GRC 101 progress is the Working Desk's (steps done of all steps), reported by the profile below.
   const [deskPct, setDeskPct] = useState(0);
   const { user } = useAuth();
   const program = CAREER_PROGRAMS.find((p) => p.id === programId)!;
@@ -257,16 +256,11 @@ export default function CareerPage() {
       </div>
 
       <CareerHero program={program} progress={progress} />
-      {program.id === "grc101" && user && (
-        <Suspense fallback={<div className="h-64 animate-pulse rounded-md bg-slate-100" aria-busy="true" />}>
-          <LeadImplementerPath who={user.email} onProgress={setDeskPct} />
-        </Suspense>
-      )}
       <CareerLadder program={program} />
 
       {/* GRC 101 shows what the programme itself develops; 301 and 501 have no content yet, so they
           keep the outline in lib/career. */}
-      {program.id === "grc101" && user ? <Grc101Profile who={user.email} /> : (
+      {program.id === "grc101" && user ? <Grc101Profile who={user.email} onProgress={setDeskPct} /> : (
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
         <div className="xl:col-span-2 space-y-5">
           <CareerSkills program={program} />

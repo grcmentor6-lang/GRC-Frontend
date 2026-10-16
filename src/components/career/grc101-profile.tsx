@@ -10,17 +10,17 @@ import { itemDone, itemHref, itemProgress, workIn } from "@/lib/desk/li";
 
 /**
  * What GRC 101 develops, from the programme itself rather than the old mockup copy: its competency
- * domains (D1–D10; D11 is the Lead Implementer path above), its six work threads, the standards that
+ * domains (D1–D10; D11 is the Lead Implementer path on the Certification page), its six work threads, the standards that
  * bind the mentee's organisations, the pass rules, and the roles that assign the work. Everything is
  * the desk content (public/desk/sample.json) marked from the mentee's desk progress.
  */
-export function Grc101Profile({ who }: { who: string }) {
+export function Grc101Profile({ who, onProgress }: { who: string; /** Share of all desk steps done, 0–100. */ onProgress?: (pct: number) => void }) {
   const [desk, setDesk] = useState<Desk | null>(null);
   useEffect(() => {
     loadDesk().then(setDesk, () => {});
   }, []);
   if (!desk) return <div className="h-64 animate-pulse rounded-md bg-slate-100" aria-busy="true" />;
-  return <Profile desk={desk} who={who} />;
+  return <Profile desk={desk} who={who} onProgress={onProgress} />;
 }
 
 type State = "acquired" | "developing" | "upcoming";
@@ -61,8 +61,12 @@ function Chips({ ids, desk, p }: { ids: string[]; desk: Desk; p: Progress }) {
   );
 }
 
-function Profile({ desk, who }: { desk: Desk; who: string }) {
+function Profile({ desk, who, onProgress }: { desk: Desk; who: string; onProgress?: (pct: number) => void }) {
   const { progress: p } = useProgress(who);
+  useEffect(() => {
+    const steps = Object.values(desk.tasks).flatMap((t) => t.steps.map((s) => `${t.id}-${s.n}`));
+    onProgress?.(Math.round((steps.filter((k) => p.done[k]).length / steps.length) * 100));
+  }, [desk, p, onProgress]);
   const tasks = desk.order.map((id) => desk.tasks[id]);
 
   // Competency domains D1–D10, from the tasks each one tags.

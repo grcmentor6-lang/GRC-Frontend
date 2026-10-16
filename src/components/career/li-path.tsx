@@ -9,7 +9,7 @@ import { useProgress, type Progress } from "@/lib/desk/progress";
 import { itemDone, itemHref, itemProgress, loadLi, standing, workIn, type LiMap, type Standing } from "@/lib/desk/li";
 
 /**
- * The mentee's path to ISO/IEC 27001 Lead Implementer, on the Career page, from the LI sheets of
+ * The mentee's path to ISO/IEC 27001 Lead Implementer, on the Certification page, from the LI sheets of
  * the Programme Workbook (scripts/build-li-map.py). Summary first, then the four views of the same
  * work: the skills, clauses 4–10, Annex A and the extensions that add an implementer's deliverable.
  * Every row is marked from the mentee's own progress; a chip opens that work on the Working Desk and
@@ -28,7 +28,7 @@ const TABS = [
 type TabKey = (typeof TABS)[number]["k"];
 
 /** Where a library link from here says it came from, so the page can offer the way back. */
-const FROM = "from=career";
+const FROM = "from=certification";
 
 export function LeadImplementerPath({ who, onProgress }: { who: string; /** Share of all desk steps done, 0–100. */ onProgress?: (pct: number) => void }) {
   const [desk, setDesk] = useState<Desk | null>(null);
@@ -68,7 +68,7 @@ function Path({ desk, li, who, onProgress }: { desk: Desk; li: LiMap; who: strin
           <Icon name="shield" size={18} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#4338CA]">Your career path</p>
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#4338CA]">GRC 101 prepares you for</p>
           <h2 id="li-path" className="text-[18px] font-bold tracking-[-0.01em] text-[#111827]">ISO/IEC 27001 Lead Implementer</h2>
           <p className="mt-0.5 max-w-3xl text-[13px] leading-relaxed text-[#5B6474]">
             A Lead Implementer builds and runs an organisation&apos;s information security management system to ISO/IEC 27001. GRC 101 has you practise every
@@ -461,7 +461,7 @@ function Panel({ desk, li, who, itemRef }: { desk: Desk; li: LiMap; who: string;
       <p className="flex items-center gap-2 border-b border-[#DDE1E8] bg-[#F7F8FA] px-3 py-2">
         <Icon name="shield" size={13} className="text-[#4338CA]" />
         <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">Your Lead Implementer path</span>
-        <Link href="/app/career" className="ml-auto text-[12px] font-semibold text-[#3730A3] no-underline hover:underline focus-ring">
+        <Link href="/app/certification" className="ml-auto text-[12px] font-semibold text-[#3730A3] no-underline hover:underline focus-ring">
           Full map
         </Link>
       </p>

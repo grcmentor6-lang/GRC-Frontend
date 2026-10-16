@@ -21,6 +21,7 @@ export const DASH_NAV: NavItem[] = [
   { id: "certificate", label: "Certificate", icon: "ribbon", href: "/app/certificate" },
   { id: "cv", label: "My CV", icon: "file", href: "/app/cv" },
   { id: "career", label: "Career", icon: "rocket", href: "/app/career" },
+  { id: "certification", label: "Certification", icon: "shield", href: "/app/certification" },
   { id: "reports", label: "Reports", icon: "chart", href: "/app/reports" },
   { id: "jobs", label: "Matching Jobs", icon: "briefcase", href: "/app/jobs" },
   { id: "guide", label: "User Guide", icon: "help", href: "/app/guide" },

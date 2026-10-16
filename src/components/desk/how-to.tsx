@@ -68,7 +68,7 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                 <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3730A3]">Lead Implementer · {ext.id}</span>
                 <span className="min-w-0 flex-1 text-[13.5px] font-semibold text-[#111827]">{ext.title}</span>
                 <span className="text-[12px] text-[#3F4757]">ISO/IEC 27001 {ext.clauses} · {ext.hours} h</span>
-                <Link href="/app/career" className="text-[12px] font-semibold text-[#3730A3] no-underline hover:underline focus-ring">Your career path</Link>
+                <Link href="/app/certification" className="text-[12px] font-semibold text-[#3730A3] no-underline hover:underline focus-ring">Certification path</Link>
               </li>
             )}
             <li id={`act-${s.n}`} className="min-w-0 scroll-mt-16 border-b border-[#E9ECF1] last:border-b-[#DDE1E8]">
