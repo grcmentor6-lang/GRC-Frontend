@@ -1,5 +1,6 @@
 "use client";
 
+import { ALL_WEEKS_OPEN } from "@/lib/flags";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -21,7 +22,7 @@ export default function SubmissionsPage() {
     loadDesk().then(setDesk, () => setDesk(null));
   }, []);
   if (!desk || !user) return <div className="page-shell"><div className="h-40 animate-pulse rounded-md bg-slate-100" aria-busy="true" /></div>;
-  return <Submissions desk={desk} who={user.email} startIso={user.startDate} preview={user.role === "admin"} />;
+  return <Submissions desk={desk} who={user.email} startIso={user.startDate} preview={ALL_WEEKS_OPEN || user.role === "admin"} />;
 }
 
 function Submissions({ desk, who, startIso, preview }: { desk: Desk; who: string; startIso: string | null; preview?: boolean }) {

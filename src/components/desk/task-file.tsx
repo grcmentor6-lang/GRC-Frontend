@@ -8,6 +8,9 @@ import { HowTo } from "./how-to";
 import { press } from "./ui";
 import { dayIndex, dueDate, fmtDay, krActivities, splitKr, type Task } from "@/lib/desk/model";
 import { stepKey, taskStatus } from "@/lib/desk/progress";
+import { badgeOfTask, standing as badgeStanding } from "@/lib/desk/badges";
+import { MethodMedal } from "@/components/badges/method-medal";
+import Link from "next/link";
 
 /** Where an outside link asks the task file to land. The file itself has no tabs any more. */
 export type Tab = "task" | "how" | "refs" | "deliver" | "msgs";
@@ -24,6 +27,8 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
   const doneCount = task.steps.filter((s) => isDone(s.n)).length;
   const st = taskStatus(progress, task);
   const due = dueText(start, task.dueDay, st === "submitted");
+  const badge = badgeOfTask(task.id);
+  const badgeState = badge ? badgeStanding(badge, progress).state : "not-started";
   // Watched by StepBar: while the task's own heading is on screen the condensed bar stays away.
   const headingRef = useRef<HTMLDivElement>(null);
   const stepsRef = useRef<HTMLElement>(null);
@@ -46,11 +51,24 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
         <header ref={headingRef} className="flex items-center gap-3 border-b border-[#DDE1E8] px-4 py-3.5">
           <span className="shrink-0 rounded bg-[#111827] px-2 py-[5px] font-mono text-[13px] font-semibold leading-none text-white">{task.id}</span>
           <h1 className="min-w-0 text-[22px] font-bold leading-[1.25] tracking-[-0.01em] text-[#111827] text-balance max-md:text-[19px]">{task.title}</h1>
-          {task.hc && (
-            <span className="ml-auto shrink-0 rounded-[3px] bg-[#111827] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-white" title={`Assessor checkpoint ${task.hc}`}>
-              {task.hc}
-            </span>
-          )}
+          <span className="ml-auto flex shrink-0 items-center gap-2">
+            {/* The method badge this task earns towards (pack v1.9.0; F1.1 earns none). */}
+            {badge && (
+              <Link
+                href={`/app/badges#${badge.code}`}
+                title={`This task earns towards the ${badge.name} badge`}
+                className="inline-flex items-center gap-1.5 rounded-[3px] border border-[#DDE1E8] bg-white py-0.5 pl-1 pr-2 text-[12px] font-semibold text-[#3F4757] no-underline hover:border-[#C9CED8] focus-ring max-sm:hidden"
+              >
+                <MethodMedal badge={badge} state={badgeState} size={20} />
+                {badge.name}
+              </Link>
+            )}
+            {task.hc && (
+              <span className="rounded-[3px] bg-[#111827] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-white" title={`Assessor checkpoint ${task.hc}`}>
+                {task.hc}
+              </span>
+            )}
+          </span>
         </header>
 
         {/* The facts strip: five cells, the due date first and tinted when it presses. */}

@@ -1,127 +1,195 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Icon, type IconName } from "@/components/ui/icon";
-import { Card, Bar } from "@/components/ui/primitives";
-import { SkeletonCardGrid } from "@/components/ui/skeleton";
-import { SOFT_TONES } from "@/lib/tones";
-import { BADGES, type BadgeDef } from "@/lib/badges";
-import { BadgeMedal, type MedalState } from "@/components/app/badge-medal";
-import { learningsApi, type Learnings } from "@/lib/learnings";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/components/auth/auth-provider";
+import { Icon } from "@/components/ui/icon";
 import { ExtendAccessCard } from "@/components/app/extend-access-card";
+import { MethodMedal } from "@/components/badges/method-medal";
+import { loadDesk, type Desk } from "@/lib/desk/model";
+import { useProgress, type Progress } from "@/lib/desk/progress";
+import { BADGES, CAPSTONE, DIST_AVG, DIST_MIN, NO_BADGE, PASS, capstoneStanding, criteriaText, standing, type BadgeStanding, type BadgeState, type MethodBadge } from "@/lib/desk/badges";
 
-interface BadgeProgress extends BadgeDef { done: number; total: number; state: MedalState; pct: number }
-
-function compute(badge: BadgeDef, status: Record<string, string>): BadgeProgress {
-  const total = badge.taskCodes.length;
-  const done = badge.taskCodes.filter((c) => status[c] === "complete").length;
-  const state: MedalState = total > 0 && done === total ? "earned" : done > 0 ? "in-progress" : "locked";
-  return { ...badge, done, total, state, pct: total ? Math.round((done / total) * 100) : 0 };
+/**
+ * Badges — the GRC 101 method badges (pack v1.9.0): one per family of GRC work methods the mentee
+ * practises on graded deliverables, plus the capstone. Read from the Working Desk's progress;
+ * earning needs released task scores, which the desk does not have yet, so a badge whose tasks are
+ * submitted shows "awaiting scores" rather than claiming to be earned.
+ */
+export default function BadgesPage() {
+  const { user } = useAuth();
+  const [desk, setDesk] = useState<Desk | null>(null);
+  useEffect(() => {
+    loadDesk().then(setDesk, () => {});
+  }, []);
+  if (!desk || !user) return <div className="page-shell"><div className="h-64 animate-pulse rounded-md bg-slate-100" aria-busy="true" /></div>;
+  return <Badges desk={desk} who={user.email} />;
 }
 
-const STATE_CHIP: Record<MedalState, { label: string; cls: string }> = {
-  earned: { label: "Earned", cls: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
-  "in-progress": { label: "In progress", cls: "bg-indigo-50 text-indigo-700 ring-indigo-100" },
-  locked: { label: "Locked", cls: "bg-slate-100 text-slate-500 ring-slate-200" },
+const STATE: Record<BadgeState, { l: string; cls: string }> = {
+  distinction: { l: "Earned with distinction", cls: "border-[#E9D48A] bg-[#FFFBEB] text-[#92400E]" },
+  earned: { l: "Earned", cls: "border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]" },
+  "in-progress": { l: "In progress", cls: "border-[#C7CBF5] bg-[#EEF0FF] text-[#3730A3]" },
+  "not-started": { l: "Not started", cls: "border-[#DDE1E8] bg-[#F7F8FA] text-[#5B6474]" },
 };
 
-export default function BadgesPage() {
-  const [learnings, setLearnings] = useState<Learnings | null>(null);
-  const [loading, setLoading] = useState(true);
+function Pill({ s }: { s: BadgeState }) {
+  return <span className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-[3px] border px-1.5 py-0.5 text-[11.5px] font-semibold ${STATE[s].cls}`}>{STATE[s].l}</span>;
+}
 
-  useEffect(() => {
-    let cancelled = false;
-    learningsApi.get("grc101").then((l) => !cancelled && setLearnings(l)).catch(() => {}).finally(() => !cancelled && setLoading(false));
-    return () => { cancelled = true; };
-  }, []);
+/** A task on a badge: green once submitted, opening the task on the Working Desk. */
+function TaskChip({ id, desk, p, muted }: { id: string; desk: Desk; p: Progress; muted?: boolean }) {
+  const done = !!p.submitted[id];
+  return (
+    <Link
+      href={`/app/desk#${id}`}
+      title={`${id} ${desk.tasks[id]?.title ?? ""}${done ? " · submitted" : ""}`}
+      className={`inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-0.5 font-mono text-[11.5px] font-semibold no-underline focus-ring ${
+        done ? "border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]" : muted ? "border-[#E9ECF1] bg-white text-[#8A91A3] hover:border-[#C9CED8]" : "border-[#DDE1E8] bg-white text-[#111827] hover:border-[#C9CED8]"
+      }`}
+    >
+      {done && <Icon name="check" size={11} strokeWidth={3} />}
+      {id}
+    </Link>
+  );
+}
 
-  const { badges, earned, inProgress, tasksDone, tasksTotal } = useMemo(() => {
-    const status: Record<string, string> = {};
-    learnings?.orgs.forEach((o) => o.projects.forEach((p) => p.tasks.forEach((t) => { status[t.code] = t.status; })));
-    const badges = BADGES.map((b) => compute(b, status));
-    return {
-      badges,
-      earned: badges.filter((b) => b.state === "earned").length,
-      inProgress: badges.filter((b) => b.state === "in-progress").length,
-      tasksDone: badges.reduce((n, b) => n + b.done, 0),
-      tasksTotal: badges.reduce((n, b) => n + b.total, 0),
-    };
-  }, [learnings]);
+/** "2 of 3 tasks submitted · awaiting scores" — what stands between the mentee and the badge. */
+function where(g: BadgeStanding) {
+  if (g.state === "earned" || g.state === "distinction") return `Average ${Math.round(g.average ?? 0)}`;
+  if (g.submitted === g.total) return `All ${g.total} submitted · awaiting released scores`;
+  return `${g.submitted} of ${g.total} task${g.total === 1 ? "" : "s"} submitted`;
+}
 
-  const kpis: { icon: IconName; tone: string; value: string | number; label: string }[] = [
-    { icon: "ribbon", tone: "emerald", value: earned, label: "Badges earned" },
-    { icon: "history", tone: "indigo", value: inProgress, label: "In progress" },
-    { icon: "star", tone: "amber", value: BADGES.length, label: "Available" },
-    { icon: "checkSquare", tone: "violet", value: `${tasksDone}/${tasksTotal}`, label: "Tasks completed" },
-  ];
+function Badges({ desk, who }: { desk: Desk; who: string }) {
+  const { progress: p } = useProgress(who);
+  const rows = BADGES.map((b) => ({ b, g: standing(b, p) }));
+  const cap = capstoneStanding(p);
+  const earned = rows.filter((r) => r.g.state === "earned" || r.g.state === "distinction").length;
+  const dist = rows.filter((r) => r.g.state === "distinction").length;
+  const tasks = BADGES.flatMap((b) => b.earn);
+  const submitted = tasks.filter((t) => p.submitted[t]).length;
 
   return (
     <div className="page-shell space-y-4">
-      <div className="flex items-start gap-3.5">
-        <span className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(245,158,11,0.6)] shrink-0">
-          <Icon name="ribbon" size={20} />
-        </span>
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-slate-900">Badges</h1>
-          <p className="text-[13px] text-slate-500 tracking-tight mt-0.5 max-w-xl" style={{ textWrap: "pretty" }}>
-            Credential badges you earn by completing mentor-graded tasks — they compile onto your CV and certificate.
+          <h1 className="text-[22px] font-bold tracking-[-0.01em] text-[#111827]">Badges</h1>
+          <p className="max-w-3xl text-[13.5px] text-[#5B6474]">
+            One badge for each family of GRC work methods you practise on graded deliverables, and a capstone for holding all of them. Issued by the Group GRC Office
+            with your submissions attached as evidence.
           </p>
         </div>
+        <Link href="/app/desk" className="inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white no-underline hover:brightness-90 focus-ring">
+          Open the Working Desk <Icon name="arrowRight" size={14} />
+        </Link>
+      </header>
+
+      <dl className="grid grid-cols-2 overflow-hidden rounded-md border border-[#DDE1E8] bg-white lg:grid-cols-4">
+        {[
+          ["Method badges earned", `${earned} / ${BADGES.length}`],
+          ["With distinction", String(dist)],
+          ["Badge tasks submitted", `${submitted} / ${tasks.length}`],
+          ["Method Portfolio", cap.state === "earned" ? "Earned" : `${earned} / ${BADGES.length}`],
+        ].map(([k, v], i) => (
+          <div key={k} className={`border-[#DDE1E8] px-4 py-3 ${i % 2 === 0 ? "border-r" : "lg:border-r"} ${i < 2 ? "max-lg:border-b" : ""} last:border-r-0`}>
+            <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">{k}</dt>
+            <dd className="mt-0.5 font-mono text-[18px] font-semibold tabular-nums text-[#111827]">{v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <p className="flex items-start gap-2 rounded-md border border-[#DDE1E8] bg-[#F7F8FA] px-4 py-2.5 text-[13px] text-[#3F4757]">
+        <Icon name="info" size={15} className="mt-0.5 shrink-0 text-[#4338CA]" />
+        <span>
+          <strong className="text-[#111827]">How a badge is earned:</strong> every task that earns it is submitted and its released score is at least {PASS}.{" "}
+          <strong className="text-[#111827]">With distinction:</strong> the average is at least {DIST_AVG} and no task is below {DIST_MIN}. Scores are released after the
+          review of each task; until then a badge whose tasks you have submitted shows as awaiting scores.
+        </span>
+      </p>
+
+      {/* The capstone: the ten method badges in one strip, each lit as it is earned. */}
+      <section aria-labelledby="cap" className="flex flex-wrap items-center gap-x-6 gap-y-4 rounded-md border border-[#DDE1E8] bg-white px-5 py-4">
+        <MethodMedal badge={CAPSTONE} state={cap.state} size={84} />
+        <div className="min-w-[240px] flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 id="cap" className="text-[16px] font-bold text-[#111827]">{CAPSTONE.name}</h2>
+            <span className="font-mono text-[11.5px] text-[#8A91A3]">{CAPSTONE.code}</span>
+            <Pill s={cap.state} />
+          </div>
+          <p className="mt-1 text-[13px] leading-relaxed text-[#3F4757]">{CAPSTONE.can}</p>
+          <p className="mt-1 text-[12px] text-[#5B6474]">{criteriaText(CAPSTONE)}</p>
+        </div>
+        <ol aria-label="Method badges" className="flex flex-wrap gap-1.5">
+          {rows.map(({ b, g }) => (
+            <li key={b.code} title={`${b.name} · ${STATE[g.state].l}`}>
+              <a href={`#${b.code}`} className="block rounded focus-ring">
+                <MethodMedal badge={b} state={g.state} size={40} />
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,460px),1fr))]">
+        {rows.map(({ b, g }) => (
+          <BadgeCard key={b.code} b={b} g={g} desk={desk} p={p} />
+        ))}
       </div>
 
-      {loading ? (
-        <SkeletonCardGrid cards={8} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" />
-      ) : (
-        <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {kpis.map((s) => (
-              <Card key={s.label} className="flex items-center gap-3 transition-all duration-300 hover:-translate-y-0.5 hover:ring-indigo-200/70">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ring-1 ${SOFT_TONES[s.tone] ?? SOFT_TONES.indigo}`}><Icon name={s.icon} size={17} /></div>
-                <div>
-                  <div className="text-[20px] font-semibold tracking-[-0.02em] text-slate-900 leading-none tabular-nums">{s.value}</div>
-                  <div className="text-[11.5px] text-slate-500 tracking-tight mt-1">{s.label}</div>
-                </div>
-              </Card>
+      <section aria-labelledby="no-badge" className="overflow-hidden rounded-md border border-[#DDE1E8] bg-white">
+        <h2 id="no-badge" className="border-b border-[#DDE1E8] bg-[#F7F8FA] px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.06em] text-[#3F4757]">
+          Method families without a badge in GRC 101
+        </h2>
+        <table className="w-full border-collapse text-[13px]">
+          <tbody>
+            {NO_BADGE.map(([f, why]) => (
+              <tr key={f}>
+                <th scope="row" className="w-[30%] border-b border-r border-[#E9ECF1] px-4 py-2 text-left align-top font-semibold text-[#111827]">{f}</th>
+                <td className="border-b border-[#E9ECF1] px-4 py-2 text-[#3F4757]">{why}</td>
+              </tr>
             ))}
-          </div>
+          </tbody>
+        </table>
+      </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-3">
-            {badges.map((b) => (
-              <Card key={b.id} className="flex flex-col items-center gap-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:ring-indigo-200/70">
-                <BadgeMedal badge={b} state={b.state} className="w-full max-w-[148px]" />
-                <div className="text-center w-full">
-                  <div className="flex items-center justify-center gap-2 flex-wrap">
-                    <h3 className={`text-[13.5px] font-semibold tracking-tight ${b.state === "locked" ? "text-slate-500" : "text-slate-900"}`}>{b.name}</h3>
-                    <span className={`px-2 py-0.5 rounded-full text-[10.5px] font-medium ring-1 tracking-tight ${STATE_CHIP[b.state].cls}`}>{STATE_CHIP[b.state].label}</span>
-                  </div>
-                  <div className="font-mono text-[11px] text-slate-400 mt-1">{b.code}</div>
-                  <p className="text-[12px] text-slate-500 tracking-tight mt-2 leading-relaxed" style={{ textWrap: "pretty" }}>{b.blurb}</p>
-                  {/* What the badge says about their judgment, not their throughput. Task count
-                      is what earns it; this is what it means. */}
-                  <p className="text-[11.5px] text-slate-600 tracking-tight mt-2 leading-relaxed" style={{ textWrap: "pretty" }}>
-                    <span className="font-medium text-slate-700">Certifies:</span> {b.certifies}
-                  </p>
-                  <div className="mt-2 flex flex-wrap justify-center gap-1.5">
-                    {b.competences.map((c) => (
-                      <span key={c} className="inline-flex items-center h-[19px] px-2 rounded-full bg-violet-50 text-violet-700 ring-1 ring-violet-200/70 text-[10.5px] font-medium tracking-tight">
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <Bar pct={b.pct || 2} tone={b.state === "earned" ? "emerald" : b.state === "in-progress" ? "indigo" : "slate"} className="flex-1" />
-                    <span className="text-[11px] font-medium text-slate-500 tabular-nums shrink-0">{b.done}/{b.total} tasks</span>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </>
-      )}
-
-      {!loading && earned > 0 && <ExtendAccessCard kind="badge" />}
-
-      <div className="text-center text-[11px] text-slate-400 pt-2 pb-4">grcmentor · badges update automatically as you complete tasks</div>
+      {earned > 0 && <ExtendAccessCard kind="badge" />}
     </div>
+  );
+}
+
+function BadgeCard({ b, g, desk, p }: { b: MethodBadge; g: BadgeStanding; desk: Desk; p: Progress }) {
+  return (
+    <article id={b.code} className="flex scroll-mt-4 gap-4 rounded-md border border-[#DDE1E8] bg-white p-4">
+      <div className="shrink-0">
+        <MethodMedal badge={b} state={g.state} size={88} />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h2 className="text-[15.5px] font-bold text-[#111827]">{b.name}</h2>
+          <span className="font-mono text-[11.5px] text-[#8A91A3]">{b.code}</span>
+          <span className="ml-auto"><Pill s={g.state} /></span>
+        </div>
+        <p className="text-[12px] leading-snug text-[#5B6474]">
+          <span className="font-semibold text-[#3F4757]">{b.family}</span> · {b.methods}
+        </p>
+        <p className="text-[13px] leading-relaxed text-[#111827]">{b.can}</p>
+        <div className="grid gap-1.5 text-[12px]">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="w-[108px] shrink-0 font-semibold text-[#3F4757]">Earned by</span>
+            {b.earn.map((t) => <TaskChip key={t} id={t} desk={desk} p={p} />)}
+          </div>
+          {b.support.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="w-[108px] shrink-0 text-[#5B6474]">Also practised in</span>
+              {b.support.map((t) => <TaskChip key={t} id={t} desk={desk} p={p} muted />)}
+            </div>
+          )}
+        </div>
+        <p className="mt-auto border-t border-[#E9ECF1] pt-2 text-[12px] text-[#5B6474]">
+          <span className="font-semibold text-[#3F4757]">{where(g)}.</span> {criteriaText(b)}
+        </p>
+      </div>
+    </article>
   );
 }

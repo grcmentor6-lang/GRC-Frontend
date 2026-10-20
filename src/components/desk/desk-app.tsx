@@ -1,5 +1,6 @@
 "use client";
 
+import { ALL_WEEKS_OPEN } from "@/lib/flags";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -43,7 +44,7 @@ export function DeskApp() {
   if (!desk || !user) return <DeskSkeleton />;
   return (
     <MotionConfig reducedMotion="user">
-      <DeskLoaded key={user.startDate ?? ""} desk={desk} who={user.email} startIso={user.startDate} preview={user.role === "admin"} />
+      <DeskLoaded key={user.startDate ?? ""} desk={desk} who={user.email} startIso={user.startDate} preview={ALL_WEEKS_OPEN || user.role === "admin"} />
     </MotionConfig>
   );
 }

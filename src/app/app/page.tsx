@@ -12,7 +12,7 @@ import { DVerb } from "@/components/ui/dverb";
 import { learningsApi, type Learnings } from "@/lib/learnings";
 import { catalog, type Program, type RubricDimension, type Standard } from "@/lib/catalog";
 import { useCachedQuery } from "@/lib/use-query";
-import { BADGES } from "@/lib/badges";
+import { useMethodBadges } from "@/components/badges/use-method-badges";
 import { OrgLogo } from "@/components/app/org-logo";
 import { ProgramTabs } from "@/components/app/program-tabs";
 import { VERB_TONES, LRN_CHIP } from "@/lib/tones";
@@ -343,6 +343,8 @@ function TrackPreviewSection({ preview, code }: { preview: TrackPreview; code?: 
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  // The GRC 101 method badges, from the Working Desk (pack v1.9.0).
+  const methodBadges = useMethodBadges();
   const [programId, setProgramId] = useState("grc101");
   const { data: programsRaw } = useCachedQuery("programs", () => catalog.programs());
   const programs: Program[] = useMemo(() => (programsRaw ? [...programsRaw].sort((a, b) => a.order - b.order) : []), [programsRaw]);
@@ -372,7 +374,6 @@ export default function DashboardPage() {
   learnings?.orgs.forEach((o) => o.projects.forEach((p) => { totalTasks += p.tasks.length; p.tasks.forEach((t) => { if (t.status === "complete") completedTaskCodes.add(t.code); }); }));
   const completedTasks = completedTaskCodes.size;
   const certPct = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const earnedBadges = BADGES.filter((b) => b.taskCodes.length > 0 && b.taskCodes.every((c) => completedTaskCodes.has(c)));
 
 
 
@@ -528,10 +529,10 @@ export default function DashboardPage() {
             <div className="space-y-3.5">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[12.5px] text-slate-600 tracking-tight">Badges earned</span>
-                  <span className="text-[12px] font-semibold text-slate-900 tabular-nums">{earnedBadges.length} / {BADGES.length}</span>
+                  <Link href="/app/badges" className="text-[12.5px] text-slate-600 tracking-tight no-underline hover:text-slate-900">Method badges earned</Link>
+                  <span className="text-[12px] font-semibold text-slate-900 tabular-nums">{methodBadges.earned} / {methodBadges.total}</span>
                 </div>
-                <Bar pct={BADGES.length ? (earnedBadges.length / BADGES.length) * 100 : 0} tone="amber" />
+                <Bar pct={(methodBadges.earned / methodBadges.total) * 100} tone="amber" />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">

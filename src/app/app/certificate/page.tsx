@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Loader } from "@/components/ui/loader";
 import { CertificateSheet, type CertStat } from "@/components/cert/certificate-sheet";
-import { BADGES } from "@/lib/badges";
+import { useMethodBadges } from "@/components/badges/use-method-badges";
 import { certificateApi, CERT_LOCKED, type Certificate } from "@/lib/certificate";
 import { ExtendAccessCard } from "@/components/app/extend-access-card";
 
@@ -124,15 +124,13 @@ export default function CertificatePage() {
     return () => { cancelled = true; };
   }, []);
 
-  const badgesEarned = useMemo(() => {
-    const done = new Set(cert?.completedTaskCodes ?? []);
-    return BADGES.filter((b) => b.taskCodes.length > 0 && b.taskCodes.every((c) => done.has(c))).length;
-  }, [cert]);
+  // The GRC 101 method badges (pack v1.9.0), from the Working Desk.
+  const methodBadges = useMethodBadges();
 
   const stats: CertStat[] = cert
     ? [
         { value: `${cert.tasksDone}`, label: `of ${cert.tasksTotal} tasks` },
-        { value: `${badgesEarned}`, label: "Badges earned" },
+        { value: `${methodBadges.earned}/${methodBadges.total}`, label: "Method badges" },
         { value: `${cert.verbsPracticed}/${cert.verbsTotal}`, label: "Method verbs" },
         { value: `${cert.avgScore} / 5`, label: "Mentor score" },
         // The stat that separates this credential from a completion certificate. Only printed

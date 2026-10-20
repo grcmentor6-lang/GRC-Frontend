@@ -5,6 +5,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { Loader } from "@/components/ui/loader";
 import { CvSheet } from "@/components/cv/cv-sheet";
 import { cvApi, type Cv } from "@/lib/cv";
+import { useMethodBadges } from "@/components/badges/use-method-badges";
 
 function ShareMenu({ cv }: { cv: Cv }) {
   const [open, setOpen] = useState(false);
@@ -73,6 +74,7 @@ function ShareMenu({ cv }: { cv: Cv }) {
 }
 
 export default function CvPage() {
+  const methodBadges = useMethodBadges();
   const [cv, setCv] = useState<Cv | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -105,7 +107,7 @@ export default function CvPage() {
         <Loader label="Loading your CV…" />
       ) : cv ? (
         <>
-          <CvSheet cv={cv} />
+          <CvSheet cv={cv} methodBadges={methodBadges} />
           <div className="text-center text-[11px] text-slate-400 pt-4 pb-2 cv-noprint">Updates automatically as you complete mentor-graded activities.</div>
         </>
       ) : (

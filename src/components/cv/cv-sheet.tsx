@@ -2,8 +2,9 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { Bar } from "@/components/ui/primitives";
 import { DVerb } from "@/components/ui/dverb";
 import { VERB_LIST } from "@/lib/verbs";
-import { BADGES } from "@/lib/badges";
-import { BadgeMedal } from "@/components/app/badge-medal";
+import { MethodMedal } from "@/components/badges/method-medal";
+import { summarise, type MethodBadgeSummary } from "@/components/badges/use-method-badges";
+import { readProgress } from "@/lib/desk/progress";
 import type { Cv } from "@/lib/cv";
 
 const STD_TONES: Record<string, { chip: string; dot: string }> = {
@@ -36,12 +37,10 @@ function Head({ icon, children, action }: { icon?: IconName; children: React.Rea
   );
 }
 
-export function CvSheet({ cv }: { cv: Cv }) {
+export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own method badges; left out on the public CV. */ methodBadges?: MethodBadgeSummary }) {
   const p = cv.profile;
-  const done = new Set(cv.completedTaskCodes);
-  const badges = BADGES.map((b) => ({ ...b, earned: b.taskCodes.length > 0 && b.taskCodes.every((c) => done.has(c)) }));
-  const earnedBadges = badges.filter((b) => b.earned);
-  const lockedBadges = badges.filter((b) => !b.earned);
+  const mb = methodBadges ?? summarise(readProgress(null));
+  const shown = methodBadges ? mb.rows : mb.rows.filter(({ g }) => g.state === "earned" || g.state === "distinction");
   const doneVerbs = new Set(cv.verbs.done);
   const activeVerbs = new Set(cv.verbs.active);
   const skillTone = (v: number) => (v >= 4.3 ? "emerald" : v >= 4.0 ? "indigo" : "amber");
@@ -91,26 +90,27 @@ export function CvSheet({ cv }: { cv: Cv }) {
         </section>
         <div className="h-px bg-slate-100" />
 
-        {/* badges */}
+        {/* Method badges (pack v1.9.0). On the mentee's own CV every badge shows with where it stands;
+            the public CV shows only what has been earned. */}
         <section>
-          <Head icon="trophy" action={<span className="text-[11px] text-slate-400 font-medium">{earnedBadges.length} earned · {lockedBadges.length} in progress</span>}>Credentials &amp; badges</Head>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {earnedBadges.map((b) => (
-              <div key={b.id} className="relative rounded-xl bg-white ring-1 ring-slate-200 p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center z-10"><Icon name="check" size={10} strokeWidth={3.5} /></div>
-                <BadgeMedal badge={b} className="w-full mb-2.5" />
-                <div className="text-[12.5px] font-semibold tracking-tight text-slate-900 leading-tight">{b.name}</div>
-                <div className="text-[10.5px] text-slate-400 tracking-tight leading-tight mt-0.5">{b.blurb}</div>
-              </div>
-            ))}
-            {lockedBadges.map((b) => (
-              <div key={b.id} className="rounded-xl bg-slate-50/60 ring-1 ring-dashed ring-slate-200 p-3.5">
-                <BadgeMedal badge={b} state="locked" className="w-full mb-2.5" />
-                <div className="text-[12.5px] font-semibold tracking-tight text-slate-400 leading-tight">{b.name}</div>
-                <div className="inline-flex items-center gap-1 mt-1.5 text-[10px] text-slate-400 font-medium"><Icon name="history" size={10} /> In progress</div>
-              </div>
-            ))}
-          </div>
+          <Head icon="trophy" action={<span className="text-[11px] text-slate-400 font-medium">{mb.earned} of {mb.total} earned</span>}>Method badges</Head>
+          {shown.length === 0 ? (
+            <p className="text-[12.5px] text-slate-400 tracking-tight">No method badges earned yet. A badge is earned when every task that earns it is scored 65 or more.</p>
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">
+              {shown.map(({ b, g }) => (
+                <div key={b.code} className={`flex items-center gap-2.5 rounded-xl p-2.5 ring-1 ${g.state === "earned" || g.state === "distinction" ? "bg-white ring-slate-200" : "bg-slate-50/60 ring-slate-200"}`}>
+                  <MethodMedal badge={b} state={g.state} size={44} />
+                  <div className="min-w-0">
+                    <div className={`text-[12px] font-semibold leading-tight tracking-tight ${g.state === "not-started" ? "text-slate-400" : "text-slate-900"}`}>{b.name}</div>
+                    <div className="mt-0.5 text-[10.5px] leading-tight text-slate-400">
+                      {g.state === "distinction" ? "With distinction" : g.state === "earned" ? "Earned" : g.state === "in-progress" ? `${g.submitted} of ${g.total} tasks submitted` : "Not started"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
         <div className="h-px bg-slate-100" />
 

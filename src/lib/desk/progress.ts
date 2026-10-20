@@ -60,6 +60,20 @@ export function useProgress(who: string) {
   return { progress, update };
 }
 
+/**
+ * A read-only look at someone's desk progress, for pages outside the desk (Badges, Dashboard, CV,
+ * Certificate). Empty for no one, or when storage is blocked.
+ */
+export function readProgress(who: string | null | undefined): Progress {
+  if (!who || typeof window === "undefined") return EMPTY;
+  try {
+    const raw = localStorage.getItem(`grc101.desk.v4.${who}`);
+    return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY;
+  } catch {
+    return EMPTY;
+  }
+}
+
 export const stepKey = (taskId: string, n: number) => `${taskId}-${n}`;
 
 export type TaskStatus = "submitted" | "started" | "todo";
