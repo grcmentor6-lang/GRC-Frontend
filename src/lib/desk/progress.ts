@@ -25,18 +25,52 @@ export interface Progress {
   grids: Record<string, Record<string, string>>;
   /** "T5.1-7" → ISO time the step was ticked in the work log. */
   logs: Record<string, string>;
+  /** Decision id ("F1.1-D1") → the feedback revealed once the pick was locked (POST /me/desk/decision). */
+  decisions: Record<string, DecisionFeedback>;
 }
 
-const EMPTY: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs: {}, acks: {}, grids: {}, logs: {} };
+export interface DecisionFeedback {
+  pick: string;
+  /** Null where the best answer depends on the mentee's own material; the reviewer checks it. */
+  best: string | null;
+  correct: boolean | null;
+  why: string | null;
+  /** Per option, A–C. Null until the reasons for this decision are written. */
+  options: { reason: string; consequence: string }[] | null;
+  reviewed: boolean;
+}
+
+const EMPTY: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs: {}, acks: {}, grids: {}, logs: {}, decisions: {} };
+
+/**
+ * Where a mentee's desk progress is kept. The version is bumped to start everyone afresh:
+ * v4 (2026-10-15) with the new work types, v5 (2026-10-20) emptied every submission by request, v6 (2026-10-21) cleared decision steps only.
+ */
+export const progressKey = (who: string) => `grc101.desk.v6.${who}`;
+
+/**
+ * v6 (2026-10-21): decision steps gained their second half (the forms and tables after "Then:"),
+ * so every decision submission is cleared, by request, and the rest of the work is kept.
+ */
+function fromV5(who: string): string | null {
+  const raw = localStorage.getItem(`grc101.desk.v5.${who}`);
+  if (!raw) return null;
+  const p = JSON.parse(raw) as Partial<Progress>;
+  const decided = Object.keys(p.picks ?? {});
+  for (const k of decided) delete p.done?.[k];
+  const out = JSON.stringify({ ...p, picks: {}, decisions: {} });
+  localStorage.setItem(`grc101.desk.v6.${who}`, out);
+  localStorage.removeItem(`grc101.desk.v5.${who}`);
+  return out;
+}
 
 export function useProgress(who: string) {
-  // v4 (2026-10-15): progress reset with the new work types; bump again for a fresh start.
-  const key = `grc101.desk.v4.${who}`;
+  const key = progressKey(who);
   // Lazy read: the desk mounts only in the browser, after its content has loaded.
   const [progress, setProgress] = useState<Progress>(() => {
     try {
-      for (const old of [`grc101.desk.${who}`, `grc101.desk.v2.${who}`, `grc101.desk.v3.${who}`]) localStorage.removeItem(old); // earlier saves, no longer read
-      const raw = localStorage.getItem(key);
+      for (const old of [`grc101.desk.${who}`, `grc101.desk.v2.${who}`, `grc101.desk.v3.${who}`, `grc101.desk.v4.${who}`]) localStorage.removeItem(old); // earlier saves, no longer read
+      const raw = localStorage.getItem(key) ?? fromV5(who);
       return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY;
     } catch {
       return EMPTY; // private window or blocked storage: start empty
@@ -67,7 +101,7 @@ export function useProgress(who: string) {
 export function readProgress(who: string | null | undefined): Progress {
   if (!who || typeof window === "undefined") return EMPTY;
   try {
-    const raw = localStorage.getItem(`grc101.desk.v4.${who}`);
+    const raw = localStorage.getItem(progressKey(who));
     return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY;
   } catch {
     return EMPTY;

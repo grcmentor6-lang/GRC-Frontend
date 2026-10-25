@@ -7,7 +7,7 @@ import { stepKey } from "@/lib/desk/progress";
 import { gridKey, gridStatus } from "@/lib/desk/work";
 import { BRIEFS, REGISTERS, addRow, addedBy, briefKey, briefStatus, cellValue, regKey, regRows, regStatus, removeRow } from "@/lib/desk/registers";
 import { DocCitation } from "./doc-text";
-import { RMF, fileExts, fileNameOk, openBefore, receiptHash, rmfExpected, rmfKey, same, submitCodes } from "@/lib/desk/forms";
+import { RMF, dmyToIso, fileExts, fileNameOk, isDateRow, isoToDmy, openBefore, receiptHash, rmfExpected, rmfKey, same, submitCodes } from "@/lib/desk/forms";
 
 /*
  * The work a "do" step asks for, in the shape the pack gives it (see workKind in lib/desk/model):
@@ -176,15 +176,30 @@ export function RmfForm({ task, t, readOnly }: { task: Task; t: number; readOnly
               <tr key={i}>
                 <th scope="row" className="w-[38%] border-b border-r border-[#E9ECF1] bg-[#F7F8FA] px-3 py-2 text-left align-top font-mono text-[12px] font-semibold text-[#111827]">{r}</th>
                 <td className="border-b border-[#E9ECF1] p-0 align-top">
-                  <input
-                    value={v}
-                    readOnly={readOnly}
-                    onChange={(e) => set(cell, e.target.value)}
-                    placeholder={t === 2 ? "DD-MMM-YYYY" : "copy here"}
-                    aria-label={`${table.title}: ${r}`}
-                    aria-invalid={off}
-                    className={`block min-h-[38px] w-full px-3 py-2 text-[13px] outline-none placeholder:italic placeholder:text-[#8A91A3] focus:shadow-[inset_0_0_0_2px_#4338CA] ${v.trim() ? "bg-white text-[#111827]" : "bg-[#EEF0FF]/70"}`}
-                  />
+                  {isDateRow(t, i) ? (
+                    // A date picker; what is stored (and checked) is the pack's DD-MMM-YYYY.
+                    <span className="block">
+                      <input
+                        type="date"
+                        value={dmyToIso(v)}
+                        readOnly={readOnly}
+                        onChange={(e) => set(cell, isoToDmy(e.target.value))}
+                        aria-label={`${table.title}: ${r}`}
+                        aria-invalid={off}
+                        className={`block min-h-[38px] w-full px-3 py-2 text-[13px] outline-none focus:shadow-[inset_0_0_0_2px_#4338CA] ${v.trim() ? "bg-white text-[#111827]" : "bg-[#EEF0FF]/70 text-[#8A91A3]"}`}
+                      />
+                      {v && <span className="block px-3 pb-1.5 font-mono text-[11.5px] text-[#5B6474]">Recorded as {v}</span>}
+                    </span>
+                  ) : (
+                    <input
+                      value={v}
+                      readOnly={readOnly}
+                      onChange={(e) => set(cell, e.target.value)}
+                      aria-label={`${table.title}: ${r}`}
+                      aria-invalid={off}
+                      className={`block min-h-[38px] w-full px-3 py-2 text-[13px] outline-none placeholder:italic placeholder:text-[#8A91A3] focus:shadow-[inset_0_0_0_2px_#4338CA] ${v.trim() ? "bg-white text-[#111827]" : "bg-[#EEF0FF]/70"}`}
+                    />
+                  )}
                   {off && <span className="block px-3 pb-1.5 text-[12px] text-[#92400E]">Not what {table.from.split("›").pop()!.trim()} shows. Check it again.</span>}
                 </td>
               </tr>
@@ -221,18 +236,50 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
         const ok = fileNameOk(desk, task, c, v);
         const ext = fileExts(task, c);
         return (
-          <label key={c} className="grid gap-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">File name for {c} · saved in 02_Working</span>
-            <input readOnly={readOnly} value={v} onChange={(e) => update((p) => ({ ...p, answers: { ...p.answers, [`${key}#${c}`]: e.target.value } }))} placeholder={`<mentee ID>_${task.id}_${c}_v1.${ext[0]}`} className={`${field} font-mono text-[13px]`} />
-            <span className={`text-[12px] ${v.trim() && !ok ? "text-[#92400E]" : "text-[#5B6474]"}`}>
-              {v.trim() && !ok ? `Follow the convention: ${desk.mentee}_${task.id}_${c}_v1.${ext.join(" or .")}` : `Your mentee ID is ${desk.mentee}.`}
-            </span>
-          </label>
+          <div key={c} data-guide="file-name" className="grid gap-1.5">
+            <label htmlFor={`fn-${key}-${c}`} className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">File name for {c} · saved in 02_Working</label>
+            <input
+              id={`fn-${key}-${c}`}
+              data-guide="file-name-input"
+              readOnly={readOnly}
+              value={v}
+              onChange={(e) => update((p) => ({ ...p, answers: { ...p.answers, [`${key}#${c}`]: e.target.value } }))}
+              placeholder="Type the file name"
+              aria-invalid={!!v.trim() && !ok}
+              aria-describedby={`fp-${key}-${c}`}
+              className={`${field} font-mono text-[13px]`}
+            />
+            {/* The naming convention, spelled out with this mentee's own values: the four parts, what
+                each one is, and the joins. "Mentee ID, task, code, version" alone said what to look up,
+                not where; every value is here. */}
+            <div id={`fp-${key}-${c}`} className="rounded border border-[#E9ECF1] bg-[#F7F8FA] px-3 py-2.5">
+              <p className="text-[12px] text-[#3F4757]">Four parts, in this order:</p>
+              <ol className="mt-1.5 grid gap-1">
+                {[
+                  [desk.mentee, "your mentee ID"],
+                  [task.id, "this task"],
+                  [c, "this file's code"],
+                  ["v1", "first version"],
+                ].map(([part, what], i) => (
+                  <li key={what} className="grid grid-cols-[16px_auto_1fr] items-baseline gap-x-2 text-[12px]">
+                    <span className="text-right font-mono text-[11px] text-[#8A91A3]">{i + 1}</span>
+                    <span className="font-mono text-[13px] font-semibold text-[#111827]">{part}</span>
+                    <span className="text-[#5B6474]">{what}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-2 text-[12px] text-[#3F4757]">
+                Join them with an underscore <span className="font-mono font-semibold text-[#111827]">_</span> and end with{" "}
+                <span className="font-mono font-semibold text-[#111827]">.{ext.join(" or .")}</span>
+              </p>
+            </div>
+            {v.trim() && !ok && <span className="text-[12px] text-[#92400E]">Not quite. Type the four parts above in order, joined by _, then .{ext[0]}.</span>}
+          </div>
         );
       })}
       {!files.length && <p className="text-[13.5px] text-[#3F4757]">{codes.join(", ") || "Your work"} is handed in on the platform; no file to name.</p>}
       {at ? (
-        <dl className="grid gap-1 rounded border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2.5 text-[12.5px] text-[#14532D]">
+        <dl data-guide="receipt" className="grid gap-1 rounded border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2.5 text-[12.5px] text-[#14532D]">
           <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]">Receipt</dt>
           <dd>{progress.answers[key]}</dd>
           <dd className="break-all font-mono text-[11.5px]">SHA-256 {progress.answers[`${key}#hash`]}</dd>
@@ -241,7 +288,7 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
       ) : null}
       {!readOnly && (
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" disabled={!named || waiting.length > 0} onClick={submit} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]">
+          <button data-guide="submit" type="button" disabled={!named || waiting.length > 0} onClick={submit} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]">
             {at ? "Submit again" : "Submit"}
           </button>
           {waiting.length > 0 && <span className="text-[12.5px] text-[#5B6474]">Finish step{waiting.length > 1 ? "s" : ""} {waiting.join(", ")} first.</span>}
@@ -472,6 +519,67 @@ export function BriefProgress({ task, s }: { task: Task; s: Step }) {
       <dl className="border border-[#DDE1E8] px-3 py-2">
         <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">Lines filled</dt>
         <dd className="font-mono text-[15px] font-semibold tabular-nums text-[#111827]">{g.filled} / {g.cells}</dd>
+      </dl>
+    </div>
+  );
+}
+
+/**
+ * The READ-ME-FIRST file, opened at the table this step fills — each table is its own step (1, 4,
+ * 5), so the others are not shown here. It is what the step's modal shows; the screen the values
+ * come from opens in its own window beside it, from the toolbar.
+ */
+export function RmfFile({ task, t, readOnly, handIn }: {
+  task: Task;
+  t: number;
+  readOnly: boolean;
+  /** The step that hands the file in: all three tables, as filled, under the name it is saved as. */
+  handIn?: { name: string };
+}) {
+  const { desk } = useDesk();
+  return (
+    <div className="flex-1 bg-[#E9ECF1] p-4">
+      <article aria-label={RMF.file} data-guide={handIn ? "rmf-file" : undefined} className="mx-auto grid max-w-[760px] gap-5 bg-white px-6 py-5 shadow-[0_1px_3px_rgba(17,24,39,0.12)]">
+        <header className="border-b border-[#DDE1E8] pb-3">
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#5B6474]">
+            {task.id} · {handIn ? "02_Working" : "01_Inputs"} · {desk.mentee}
+          </p>
+          <h3 className="break-all text-[18px] font-bold text-[#111827]">{handIn?.name || RMF.file}</h3>
+          <p className="text-[12.5px] text-[#5B6474]">
+            {handIn
+              ? "The file you hand in: all three tables, as you filled them in steps 1, 4 and 5."
+              : `Table ${t + 1} of ${RMF.tables.length}. The other tables are filled in their own steps.`}
+          </p>
+        </header>
+        {handIn ? (
+          RMF.tables.map((_, i) => <RmfForm key={i} task={task} t={i} readOnly />)
+        ) : (
+          <div data-guide="rmf-table">
+            <RmfForm task={task} t={t} readOnly={readOnly} />
+          </div>
+        )}
+      </article>
+    </div>
+  );
+}
+
+/** Beside the file: which table this step fills, where its values are, and how far it is. */
+export function RmfProgress({ task, t }: { task: Task; t: number }) {
+  const { progress } = useDesk();
+  const table = RMF.tables[t];
+  const cells = progress.grids?.[rmfKey(task.id)] ?? {};
+  const filled = table.rows.filter((_, i) => (cells[`${t},${i}`] ?? "").trim()).length;
+  return (
+    <div className="mt-3 grid gap-2">
+      <p className="flex items-start gap-2 text-[13.5px] leading-relaxed text-[#111827]">
+        <Icon name="edit" size={15} className="mt-0.5 shrink-0 text-[#4338CA]" />
+        <span>
+          Fill table {t + 1} <strong>“{table.title}”</strong> in READ-ME-FIRST, on the left. The values are on <strong>{table.from}</strong>: open it from the toolbar at the bottom of the screen and it appears beside the file.
+        </span>
+      </p>
+      <dl className="border border-[#DDE1E8] px-3 py-2">
+        <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">Values filled</dt>
+        <dd className="font-mono text-[15px] font-semibold tabular-nums text-[#111827]">{filled} / {table.rows.length}</dd>
       </dl>
     </div>
   );

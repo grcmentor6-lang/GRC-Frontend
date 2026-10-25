@@ -90,6 +90,7 @@ export function Toolbar() {
     return (
       <button
         key={k}
+        data-guide-section={k}
         type="button"
         aria-disabled={!unlocked}
         aria-expanded={DIRECT.has(k) ? undefined : on}
@@ -126,6 +127,7 @@ export function Toolbar() {
       <div className="pointer-events-auto relative min-w-0 max-w-full">
         {pop && sec && (
           <div
+            data-guide-menu={pop}
             className="desk-pop absolute bottom-[calc(100%+8px)] z-40 w-[400px] max-w-[calc(100vw-24px)] overflow-hidden rounded-md border border-[#C9CED8] bg-white shadow-[0_12px_32px_rgba(17,24,39,0.16)]"
             style={{ left, transformOrigin: "bottom left" }}
           >

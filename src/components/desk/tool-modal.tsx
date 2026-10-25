@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
-import { Work } from "./how-to";
-import { BriefProgress, BriefWork, CopyWork, GridProgress, GridWork, LogWork, RegisterProgress, RegisterWork, RmfForm, SubmitWork } from "./work-kinds";
+import { PartHead, Work, thenOf } from "./how-to";
+import { BriefProgress, BriefWork, CopyWork, GridProgress, GridWork, LogWork, RegisterProgress, RegisterWork, RmfFile, RmfProgress, SubmitWork } from "./work-kinds";
 import { BRIEFS, REGISTERS, deliverableFor, stepSources } from "@/lib/desk/registers";
 import { gridKey, stepAnswered } from "@/lib/desk/work";
 import { Inbox } from "./chat";
@@ -15,8 +15,12 @@ import { DocCitation } from "./doc-text";
 import { DOC_TEXT } from "@/lib/desk/docs";
 import { OrgDetails, type OrgFull } from "./org-drawer";
 import { dmy, dueDate, fmtDay, rmfTable, testDue, workKind, type Step, type Task } from "@/lib/desk/model";
-import { folders } from "@/lib/desk/forms";
+import { RMF, folders, submitCodes } from "@/lib/desk/forms";
 import { stepKey } from "@/lib/desk/progress";
+import { appZoom } from "@/lib/zoom";
+import { useAuth } from "@/components/auth/auth-provider";
+import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
+import { STEP_GUIDES } from "./step-guides";
 
 /**
  * The step being worked, as a centred modal: the tool's screen on the left, the step's work on the
@@ -27,7 +31,7 @@ import { stepKey } from "@/lib/desk/progress";
 export function ToolModal({ toolKey, onClose }: { toolKey: string | null; onClose: () => void }) {
   useEffect(() => {
     if (!toolKey) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !document.querySelector('[aria-label^="Guide:"]') && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [toolKey, onClose]);
@@ -36,15 +40,32 @@ export function ToolModal({ toolKey, onClose }: { toolKey: string | null; onClos
 }
 
 /** A tool opened for reading: a floating, resizable window with just its screen. */
-export function ToolWindow({ toolKey, index, onClose }: { toolKey: string; index: number; onClose: () => void }) {
+export function ToolWindow({ toolKey, index, onClose, beside, plain }: {
+  toolKey: string;
+  index: number;
+  onClose: () => void;
+  /** Opened while a step's modal is up: narrower, and placed beside the work rather than over it. */
+  beside?: boolean;
+  /** The modal's own tool, opened as its source screen: show the screen, not the step's work. */
+  plain?: boolean;
+}) {
   const { desk, progress, here } = useDesk();
   // A register this task has started is shown with the mentee's entries, read-only.
   const mine = here && progress.grids?.[gridKey(here.task, toolKey)] ? here.task : null;
   // The step in hand works on the task's register or brief: the window shows that, as filled.
   const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
-  const deliverable = here && step?.key === toolKey ? deliverableFor(desk.tasks[here.task], here.n) : null;
+  const deliverable = here && step?.key === toolKey && !plain ? deliverableFor(desk.tasks[here.task], here.n) : null;
   const sec = toolKey.split("|")[0];
   const mock = desk.tp[toolKey] ?? desk.tp[`${sec}|*`];
+  // Beside the modal: in the gap to its left when there is one; otherwise at the right edge, over
+  // the instruction panel the mentee has already read, never over the table they are filling in.
+  // The gap is used down to 320px wide, the window narrowed to fit it.
+  const [place] = useState(() => {
+    const m = typeof document === "undefined" ? null : document.querySelector("[data-desk-modal]")?.getBoundingClientRect();
+    const off = 12 + index * 28;
+    const gap = m ? m.left / appZoom() - off - 12 : Infinity;
+    return gap >= 320 ? { left: `${off}px`, width: Math.min(420, gap) } : { left: `calc(100vw / var(--app-zoom) - ${420 + off}px)`, width: 420 };
+  });
   return (
     <FloatWindow
       title={mock?.tool ?? toolKey.replace("|", " › ")}
@@ -52,10 +73,11 @@ export function ToolWindow({ toolKey, index, onClose }: { toolKey: string; index
       leading={<span className="grid h-7 w-7 place-items-center rounded bg-[#111827] text-white"><Icon name="grid" size={14} /></span>}
       onClose={onClose}
       index={index}
-      width={720}
+      width={beside ? place.width : 720}
+      left={beside ? place.left : undefined}
     >
       <div className="flex min-h-full flex-col bg-[#F7F8FA]">
-        {toolKey === "home|My Organisation" ? <BothOrgs /> : deliverable === "register" ? <RegisterWork task={desk.tasks[here!.task]} readOnly /> : deliverable === "brief" ? <BriefWork task={desk.tasks[here!.task]} readOnly /> : mine ? <GridWork taskId={mine} toolKey={toolKey} readOnly /> : <Screen toolKey={toolKey} />}
+        {toolKey === "home|My Organisation" ? <BothOrgs /> : plain ? <Screen toolKey={toolKey} /> : deliverable === "register" ? <RegisterWork task={desk.tasks[here!.task]} readOnly /> : deliverable === "brief" ? <BriefWork task={desk.tasks[here!.task]} readOnly /> : mine ? <GridWork taskId={mine} toolKey={toolKey} readOnly /> : <Screen toolKey={toolKey} />}
         {desk.guard[sec] && <Guard text={desk.guard[sec]} />}
       </div>
     </FloatWindow>
@@ -89,12 +111,27 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
   // A step's first source opens beside the work by itself; the others, and a closed one, from the
   // "Read from" strip. Kept per step, since the modal walks on to the next step in place.
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
-  const sid = (i: number) => `${here?.task}-${here?.n}:${i}`;
-  const isShown = (i: number) => toggled[sid(i)] ?? i === 0;
-  const show = (i: number, on: boolean) => setToggled((t) => ({ ...t, [sid(i)]: on }));
+  const sid = (i: number | string) => `${here?.task}-${here?.n}:${i}`;
+  const isShown = (i: number | string) => toggled[sid(i)] ?? (i === 0 || i === "tool");
+  const show = (i: number | string, on: boolean) => setToggled((t) => ({ ...t, [sid(i)]: on }));
+  // A step that fills READ-ME-FIRST works in the file; the screen it copies from (My Organisation,
+  // My Tasks, My plan) is the source, open in its own window beside it.
+  const rmf = s ? rmfTable(s) : null;
+  // The step that hands READ-ME-FIRST in (F1.1 step 6): the file is what the modal shows, as on the
+  // steps that fill it; My Tasks, where the folders are, opens from the toolbar like any screen.
+  const handIn = !!task && !!s && submitCodes(task, s).includes("ONB-RMF");
+  const heading = rmf !== null || handIn ? RMF.file : title;
+  // A walk-through of the step, where one is written: it runs the first time the mentee opens the
+  // step, and again from "Show me how".
+  const { user } = useAuth();
+  const guideKey = task && s ? `${task.id}-${s.n}` : "";
+  const guide = STEP_GUIDES[guideKey];
+  const [guideAt, setGuideAt] = useState(-1);
+  const startGuide = () => setGuideAt(0);
+  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && present, startGuide, 700);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center p-3 pb-[88px] sm:p-6 sm:pb-[92px]" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-[60] flex items-start justify-center p-3 pb-[88px] sm:p-6 sm:pb-[92px]" role="dialog" aria-modal="true" aria-label={heading}>
       <motion.button
         type="button"
         aria-label="Close"
@@ -110,7 +147,8 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 4, transition: { duration: 0.12 } }}
         transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-        className="relative flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_rgba(17,24,39,0.35)]"
+        data-desk-modal
+        className={`relative flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_rgba(17,24,39,0.35)]`}
       >
         <header className="flex shrink-0 items-stretch border-b border-[#DDE1E8]">
           <span className="grid w-14 shrink-0 place-items-center bg-[#111827] text-white">
@@ -118,18 +156,31 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
           </span>
           <div className="min-w-0 flex-1 px-4 py-2.5">
             <p className="text-[12px] text-[#5B6474]">
-              {section?.t ?? sec}
-              {mock?.stamp ? ` · ${mock.stamp}` : ""}
+              {handIn && task ? `File · ${task.id} · 02_Working` : rmf !== null && task ? `File · ${task.id} · 01_Inputs` : `${section?.t ?? sec}${mock?.stamp ? ` · ${mock.stamp}` : ""}`}
             </p>
-            <h2 className="truncate text-[17px] font-bold text-[#111827]">{title}</h2>
+            <h2 className="truncate text-[17px] font-bold text-[#111827]">{heading}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Close tool" className="grid w-14 shrink-0 place-items-center border-l border-[#DDE1E8] text-[#3F4757] hover:bg-[#F3F4F7] focus-ring">
             <Icon name="x" size={18} />
           </button>
         </header>
 
-        <div className="flex min-h-0 flex-1 flex-wrap overflow-y-auto">
-          <div className="flex min-w-0 flex-[999_1_560px] flex-col bg-[#F7F8FA]">
+        {/* Side by side (wide), the work and the step scroll apart, so the step's button stays in view
+            however long the work is; stacked (narrow), the whole body scrolls. */}
+        <div className="flex min-h-0 flex-1 flex-wrap overflow-y-auto min-[981px]:flex-nowrap min-[981px]:overflow-hidden">
+          <div className="flex min-w-0 flex-[999_1_560px] flex-col bg-[#F7F8FA] min-[981px]:max-h-full min-[981px]:overflow-y-auto">
+            {rmf !== null && (
+              // The file is open; the values are on a platform screen the mentee opens from the toolbar.
+              <p className="flex shrink-0 items-start gap-2 border-b border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2 text-[12.5px] leading-relaxed text-[#78350F]">
+                <Icon name="chevronDown" size={14} className="mt-[3px] shrink-0" />
+                <span>
+                  {/* Named exactly as the toolbar names them: the section, then the tool. */}
+                  <strong className="font-semibold">Next:</strong> open <strong className="font-semibold">{section?.t ?? sec} › {toolKey.split("|")[1]}</strong> from the toolbar at
+                  the bottom of the screen (<strong className="font-semibold">{section?.t ?? sec}</strong>, then <strong className="font-semibold">{toolKey.split("|")[1]}</strong>). It
+                  opens beside this file.
+                </span>
+              </p>
+            )}
             {sources.length > 0 && (
               // Where to read: the step's source opens in its own window beside the work, so the
               // mentee copies across without switching away from the tool.
@@ -165,7 +216,11 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
                 </FloatWindow>
               ) : null,
             )}
-            {task && deliverable === "register" ? (
+            {task && s && handIn ? (
+              <RmfFile task={task} t={0} readOnly handIn={{ name: (progress.answers[`${stepKey(task.id, s.n)}#ONB-RMF`] ?? "").trim() }} />
+            ) : task && rmf !== null ? (
+              <RmfFile task={task} t={rmf} readOnly={!!progress.submitted[task.id]} />
+            ) : task && deliverable === "register" ? (
               <RegisterWork task={task} s={s} readOnly={!!progress.submitted[task.id]} />
             ) : task && deliverable === "brief" ? (
               <BriefWork task={task} s={s} readOnly={!!progress.submitted[task.id]} />
@@ -179,7 +234,18 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
             )}
             {desk.guard[sec] && <Guard text={desk.guard[sec]} />}
           </div>
-          {task && s && <WorkPanel task={task} s={s} toolKey={toolKey} onClose={onClose} />}
+          {task && s && <WorkPanel task={task} s={s} toolKey={toolKey} onClose={onClose} onGuide={guide ? startGuide : undefined} />}
+          {guide && present && (
+            <GuidedTour
+              steps={guide}
+              step={guideAt}
+              onStep={setGuideAt}
+              onClose={() => {
+                setGuideAt(-1);
+                markTourSeen(`grc101.guide.${guideKey}`, user?.email);
+              }}
+            />
+          )}
         </div>
       </motion.div>
     </div>
@@ -203,7 +269,7 @@ function BothOrgs() {
             className={`relative flex-1 border-r border-[#DDE1E8] px-4 py-2.5 text-left last:border-r-0 focus-ring ${k === x ? "bg-white" : "bg-[#F7F8FA] hover:bg-[#F3F4F7]"}`}
           >
             <span className="block text-[11.5px] text-[#5B6474]">Org {x} · {x === "A" ? "your main organisation" : "your second organisation"}</span>
-            <span className={`block truncate text-[14px] ${k === x ? "font-bold text-[#111827]" : "font-semibold text-[#3F4757]"}`}>{desk.orgs[x].name}</span>
+            <span className={`block text-[14px] leading-snug ${k === x ? "font-bold text-[#111827]" : "font-semibold text-[#3F4757]"}`}>{desk.orgs[x].name}</span>
             {k === x && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-[#4338CA]" aria-hidden />}
           </button>
         ))}
@@ -294,7 +360,7 @@ function ReadConfirm({ task, s, readOnly }: { task: Task; s: Step; readOnly: boo
 }
 
 /** The step in hand, worked inside its tool. Editable until the task is submitted. */
-function WorkPanel({ task, s, toolKey, onClose }: { task: Task; s: Step; toolKey: string; onClose: () => void }) {
+function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step; toolKey: string; onClose: () => void; /** Replays the step's walk-through. */ onGuide?: () => void }) {
   const { desk, progress, update, openTask } = useDesk();
   const n = s.n;
   const key = stepKey(task.id, n);
@@ -315,17 +381,26 @@ function WorkPanel({ task, s, toolKey, onClose }: { task: Task; s: Step; toolKey
   };
   const complete = () => {
     update((p) => ({ ...p, done: { ...p.done, [key]: true } }));
-    goNext();
+    if (s.kind !== "pick") goNext(); // a decision stays put so its feedback can be read
   };
 
   return (
-    <aside aria-label={`Your work for step ${n}`} className="flex min-w-0 flex-[1_1_380px] flex-col border-l border-[#DDE1E8] bg-white max-[980px]:border-l-0 max-[980px]:border-t">
+    <aside aria-label={`Your work for step ${n}`} className="flex min-w-0 flex-[1_1_380px] flex-col border-l border-[#DDE1E8] bg-white max-[980px]:border-l-0 max-[980px]:border-t min-[981px]:max-h-full min-[981px]:overflow-hidden">
       <div className="flex items-center gap-2.5 border-b border-[#DDE1E8] bg-[#F7F8FA] px-4 py-2.5">
         <span className={`grid h-[26px] w-[26px] place-items-center rounded-full text-[13px] font-bold text-white tabular-nums ${done ? "bg-[#16A34A]" : "bg-[#4338CA]"}`}>{n}</span>
         <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.06em] text-[#3F4757]">
           {task.id} · Step {n} of {task.steps.length}
         </span>
-        {done && !sealed && <span className="ml-auto text-[12px] text-[#15803D]">Done · you can still change it</span>}
+        {done && !sealed && <span className="ml-auto text-[12px] text-[#15803D]">{s.kind === "pick" ? "Done · decision locked" : "Done · you can still change it"}</span>}
+        {onGuide && (
+          <button
+            type="button"
+            onClick={onGuide}
+            className={`${done && !sealed ? "" : "ml-auto"} inline-flex items-center gap-1 rounded border border-[#DDE1E8] bg-white px-2 py-1 text-[12px] font-semibold text-[#3730A3] hover:border-[#C7CBF5] hover:bg-[#EEF0FF] focus-ring`}
+          >
+            <Icon name="play" size={12} /> Show me how
+          </button>
+        )}
       </div>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
@@ -334,13 +409,17 @@ function WorkPanel({ task, s, toolKey, onClose }: { task: Task; s: Step; toolKey
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -8, transition: { duration: 0.1 } }}
           transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-          className="flex min-h-0 flex-1 flex-col"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto"
         >
-          <div className="border-b border-[#DDE1E8] px-4 py-3.5">
+          <div data-guide="step-text" className="border-b border-[#DDE1E8] px-4 py-3.5">
             {/* One statement of the step: the full instruction when the title is only its start. */}
             {(() => {
               const stem = s.t.replace(/(…|\.\.\.)$/, "").trim();
               const repeats = !s.w || s.w === s.t || s.w.startsWith(stem);
+              if (s.kind === "pick") {
+                const question = s.w.split(/\s*Options:/)[0].replace(/^decide:\s*/i, "").trim();
+                return <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{question}</h3>;
+              }
               return repeats ? (
                 <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{s.w || s.t}</h3>
               ) : (
@@ -353,13 +432,24 @@ function WorkPanel({ task, s, toolKey, onClose }: { task: Task; s: Step; toolKey
           </div>
           <div className="flex-1 border-b border-[#DDE1E8] px-4 pb-3.5 [&>*:first-child]:mt-3">
             {/* A decision first; then the work the pack puts after it, in the shape that work takes. */}
-            {s.kind !== "do" && <Work task={task} s={s} readOnly={sealed} />}
+            {s.kind === "pick" ? (
+              <>
+                <PartHead n={1} label="Decide" />
+                <div data-guide="decision"><Work task={task} s={s} readOnly={sealed} bare /></div>
+                <PartHead n={2} label="Then" />
+                {rmfTable(s) === null && !REGISTERS[task.id]?.steps[n] && BRIEFS[task.id]?.steps[n] === undefined && (
+                  <p className="text-[14px] leading-snug text-[#111827]">{thenOf(s)}</p>
+                )}
+              </>
+            ) : (
+              s.kind !== "do" && <Work task={task} s={s} readOnly={sealed} />
+            )}
             {REGISTERS[task.id]?.steps[n] ? (
               <RegisterProgress task={task} s={s} />
             ) : BRIEFS[task.id]?.steps[n] !== undefined ? (
               <BriefProgress task={task} s={s} />
             ) : rmfTable(s) !== null ? (
-              <RmfForm task={task} t={rmfTable(s)!} readOnly={sealed} />
+              <RmfProgress task={task} t={rmfTable(s)!} />
             ) : kind === "submit" ? (
               <SubmitWork task={task} s={s} readOnly={sealed} />
             ) : s.kind !== "do" ? null : kind === "read" ? (
@@ -397,12 +487,19 @@ function WorkPanel({ task, s, toolKey, onClose }: { task: Task; s: Step; toolKey
           )}
         </span>
         {done ? (
-          <button type="button" onClick={onClose} className="inline-flex min-h-12 items-center gap-1.5 border-l border-[#DDE1E8] bg-[#111827] px-5 text-[14px] font-semibold text-white hover:brightness-110 focus-ring">
-            Done <Icon name="check" size={14} />
-          </button>
+          s.kind === "pick" ? (
+            <button type="button" onClick={goNext} className="inline-flex min-h-12 items-center gap-1.5 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring">
+              Next step <Icon name="arrowRight" size={14} />
+            </button>
+          ) : (
+            <button type="button" onClick={onClose} className="inline-flex min-h-12 items-center gap-1.5 border-l border-[#DDE1E8] bg-[#111827] px-5 text-[14px] font-semibold text-white hover:brightness-110 focus-ring">
+              Done <Icon name="check" size={14} />
+            </button>
+          )
         ) : (
           <button
             type="button"
+            data-guide="mark-complete"
             disabled={sealed || !stepAnswered(desk, progress, task, s)}
             onClick={complete}
             className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] disabled:hover:brightness-100"
@@ -446,15 +543,18 @@ function Folders({ taskId }: { taskId: string }) {
   const { desk } = useDesk();
   const names = ["00_Admin — signed forms", "01_Inputs — what you receive (read-only)", "02_Working — your drafts", "03_Submission — final files"];
   return (
-    <div className="border-b border-[#DDE1E8] bg-white">
+    <div data-guide="folders" className="@container border-b border-[#DDE1E8] bg-white">
       <p className="border-b border-[#E9ECF1] bg-[#F7F8FA] px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">{taskId} · your folders</p>
-      <table className="w-full border-collapse text-[13px]">
-        <tbody>
-          {folders(desk, desk.tasks[taskId]).map((f, i) => (
-            <tr key={f}><td className={`${td} w-[45%] text-[#3F4757]`}>{names[i]}</td><td className={`${td} break-all font-mono text-[12.5px] text-[#111827]`}>{f}</td></tr>
-          ))}
-        </tbody>
-      </table>
+      {/* The paths are copied character for character, so one is never broken across lines: in a
+          narrow window (the side window beside READ-ME-FIRST) each label sits above its path. */}
+      <dl className="text-[13px]">
+        {folders(desk, desk.tasks[taskId]).map((f, i) => (
+          <div key={f} className="grid gap-0.5 border-b border-[#E9ECF1] px-3.5 py-2 last:border-b-0 @[520px]:grid-cols-[45%_1fr] @[520px]:gap-3">
+            <dt className="text-[12.5px] text-[#3F4757]">{names[i]}</dt>
+            <dd className="whitespace-nowrap font-mono text-[12.5px] text-[#111827]">{f}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
@@ -472,19 +572,19 @@ function Plan() {
     ];
   });
   return (
-    <div className="overflow-x-auto border-b border-[#DDE1E8] bg-white">
+    <div data-guide="plan" className="overflow-x-auto border-b border-[#DDE1E8] bg-white">
       <table className="w-full min-w-[560px] border-collapse text-[13px]">
         <thead className="bg-[#F7F8FA] text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">
-          <tr>{["Wk", "Task / test", "Org", "Title", "Due"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
+          <tr>{["Wk", "Task / test", "Due", "Title", "Org"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
         </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.id} className={here?.task === r.id ? "bg-[#F3F4FF]" : ""}>
               <td className={`${td} font-mono text-[12px] text-[#5B6474]`}>{r.wk}</td>
               <td className={`${td} font-mono text-[12px] font-semibold text-[#111827]`}>{r.id}</td>
-              <td className={`${td} text-[#3F4757]`}>{r.org}</td>
+              <td className={`${td} whitespace-nowrap font-semibold text-[#111827]`}>{r.due}</td>
               <td className={`${td} text-[#111827]`}>{r.title}</td>
-              <td className={`${td} whitespace-nowrap text-[#111827]`}>{r.due}</td>
+              <td className={`${td} text-[#3F4757]`}>{r.org}</td>
             </tr>
           ))}
         </tbody>

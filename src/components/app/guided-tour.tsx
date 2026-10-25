@@ -20,6 +20,20 @@ export type TourStep = {
   /** Live content rendered under the body — for a step that's better tried than described. The card
    *  already stops click propagation, so anything in here is interactive. */
   demo?: React.ReactNode;
+  /** A "do it" step: the mentee performs the action on the lit element (it stays clickable through
+   *  the hole) and the tour moves on by itself once this returns true. No Next button is shown; a
+   *  cursor tapping the target shows what to do, and `doIt` says it to a screen reader. */
+  waitFor?: () => boolean;
+  doIt?: string;
+  /** A "do it" step the mentee finishes in their own time (typing a value): Next is shown but stays
+   *  disabled until this returns true, and the cursor points at the target meanwhile. */
+  nextWhen?: () => boolean;
+  /** A second thing the step needs in view and live — the screen a value is copied from. Its
+   *  top-level layer is raised over the dim for the step, rather than cut a second hole. */
+  alsoShow?: () => HTMLElement | null;
+  /** Where the do-it cursor taps, when that is not the middle of the lit area: a lit block that
+   *  explains a field, whose middle would land the cursor on the explanation instead of the field. */
+  pointAt?: () => HTMLElement | null;
 };
 
 /** Hidden-state offset for the card's directional entrance (settles toward the target). */
@@ -38,8 +52,11 @@ type Pos = { side: Side; top: number; left: number; arrow: number };
 const GAP = 12; // tooltip ↔ target
 const MARGIN = 14; // tooltip ↔ viewport edge
 const PAD = 6; // spotlight padding around target
-const TIP_W = 320;
+const TIP_W = 340;
 const OFFSCREEN: Box = { top: -9999, left: -9999, width: 0, height: 0 }; // sentinel: no target → plain full-screen dim, no hole
+
+/** Angles of the click sparks around the cursor's tip — clear of the 20–80° wedge its body covers. */
+const SPARKS = [100, 150, 200, 250, 300, 350];
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 /** Eat a click on the dimmed part of the page — never let it reach what's underneath, and never
@@ -47,7 +64,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 const swallow = (e: React.MouseEvent) => e.stopPropagation();
 
 /** driver.js-style placement: prefer the side with room (bottom→top→right→left); for oversized
- *  targets, float the card at the bottom-centre (no arrow), and with no target at all, dead-centre.
+ *  targets, float the card clear of the target (no arrow), and with no target at all, dead-centre.
  *  Returns the arrow's cross-axis offset. */
 function place(r: Box | null, th: number, zoom: number): Pos {
   // `r` and `th` are already in the page's own (zoomed) pixels; the viewport is not, so divide.
@@ -57,10 +74,21 @@ function place(r: Box | null, th: number, zoom: number): Pos {
   // No target (the welcome card) — nothing to keep in view, so centre it. An oversized target still
   // floats at the bottom, where it covers least of what the step is pointing at.
   if (!r) return { side: "float", top: clamp((vh - th) / 2, MARGIN, vh - th - MARGIN), left: cx, arrow: 0 };
-  const float: Pos = { side: "float", top: vh - th - 24, left: cx, arrow: 0 };
-  if (r.height > vh * 0.7 || r.width > vw * 0.85) return float;
-
+  // Floating, take the half of the screen the target is not in: a card parked over the very thing
+  // a "do it" step says to click leaves nothing to click.
+  const float: Pos = { side: "float", top: r.top + r.height / 2 > vh / 2 ? MARGIN : vh - th - 24, left: cx, arrow: 0 };
+  // Only height forces a float: a full-width target (a menu row on a phone) still has room above or
+  // below it, and top/bottom placement centres the card on the screen anyway.
   const space = { top: r.top, bottom: vh - (r.top + r.height), left: r.left, right: vw - (r.left + r.width) };
+  // A tall target (a whole file) has no room above or below, but often has beside it: the card
+  // goes there, level with the target's middle, before it would float over the target itself.
+  if (r.height > vh * 0.7) {
+    const beside = space.right >= TIP_W + GAP + MARGIN ? "right" : space.left >= TIP_W + GAP + MARGIN ? "left" : null;
+    if (!beside) return float;
+    const top = clamp(r.top + r.height / 2 - th / 2, MARGIN, vh - th - MARGIN);
+    const left = beside === "right" ? r.left + r.width + GAP : r.left - GAP - TIP_W;
+    return { side: beside, top, left, arrow: clamp(r.top + r.height / 2 - top, 18, th - 18) };
+  }
   const fits: Record<Exclude<Side, "float">, boolean> = {
     bottom: space.bottom >= th + GAP + MARGIN,
     top: space.top >= th + GAP + MARGIN,
@@ -79,6 +107,30 @@ function place(r: Box | null, th: number, zoom: number): Pos {
   const top = clamp(r.top + r.height / 2 - th / 2, MARGIN, vh - th - MARGIN);
   const left = side === "right" ? r.left + r.width + GAP : r.left - GAP - TIP_W;
   return { side, top, left, arrow: clamp(r.top + r.height / 2 - top, 18, th - 18) };
+}
+
+/**
+ * The part of an element the mentee can actually see: its box cut to every ancestor that clips
+ * (a scrolling pane, a modal body) and to the viewport. A tall target (the whole READ-ME-FIRST file)
+ * runs on below its pane's edge; lighting its full box lit whatever sat under that edge, the toolbar
+ * included, and put the card's arrow on nothing.
+ */
+function visibleRect(el: HTMLElement | null): { top: number; left: number; width: number; height: number } | null {
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  let top = r.top, left = r.left, right = r.right, bottom = r.bottom;
+  for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+    const cs = getComputedStyle(n);
+    const clips = (v: string) => v !== "visible";
+    if (!clips(cs.overflowX) && !clips(cs.overflowY)) continue;
+    const c = n.getBoundingClientRect();
+    if (clips(cs.overflowY)) { top = Math.max(top, c.top); bottom = Math.min(bottom, c.bottom); }
+    if (clips(cs.overflowX)) { left = Math.max(left, c.left); right = Math.min(right, c.right); }
+  }
+  top = Math.max(top, 0); left = Math.max(left, 0);
+  bottom = Math.min(bottom, window.innerHeight); right = Math.min(right, window.innerWidth);
+  if (bottom <= top || right <= left) return r; // wholly out of view: keep the real box so it is scrolled to
+  return { top, left, width: right - left, height: bottom - top };
 }
 
 const inView = (r: DOMRect) => r.top >= 64 && r.bottom <= window.innerHeight - 16 && r.height < window.innerHeight;
@@ -108,7 +160,11 @@ function freezeScroll(el: HTMLElement | null): () => void {
     const o = getComputedStyle(n).overflowY;
     if ((o === "auto" || o === "scroll" || o === "overlay") && n.scrollHeight > n.clientHeight) nodes.push(n);
   }
-  if (document.scrollingElement instanceof HTMLElement) nodes.push(document.scrollingElement);
+  // The document itself only when it really scrolls. Under the app's CSS `zoom` its offsetWidth and
+  // clientWidth disagree by far more than a scrollbar, so "compensating" a root that never scrolled
+  // added ~400px of padding and squeezed the whole desk (the toolbar lost its right-hand buttons).
+  const root = document.scrollingElement;
+  if (root instanceof HTMLElement && root.scrollHeight > root.clientHeight) nodes.push(root);
 
   for (const n of nodes) {
     if (seen.has(n)) continue;
@@ -149,6 +205,37 @@ function liftTarget(el: HTMLElement | null): () => void {
   if (getComputedStyle(el).position === "static") el.style.position = "relative";
   el.style.zIndex = String(LIFT_Z);
   return () => { el.style.zIndex = prevZ; el.style.position = prevPosition; };
+}
+
+/** The cursor's tip: the middle of `pointAt` if the step names one, else the middle of the lit box. */
+function tapAt(s: TourStep, box: Box): { left: number; top: number } {
+  const r = s.pointAt?.()?.getBoundingClientRect();
+  if (!r) return { left: box.left + box.width / 2, top: box.top + box.height / 2 };
+  const z = appZoom();
+  return { left: (r.left + r.width / 2) / z, top: (r.top + r.height / 2) / z };
+}
+
+/** Raise an element's top-level layer (its child of <body>, e.g. a portalled window) over the tour's
+ *  overlay, and hand back the undo. Only portalled layers: raising the app root would lift it all. */
+function raiseOver(el: HTMLElement | null | undefined, z = "71"): () => void {
+  let n = el;
+  while (n?.parentElement && n.parentElement !== document.body) n = n.parentElement;
+  if (!n || n.parentElement !== document.body || getComputedStyle(n).position !== "fixed") return () => {};
+  const layer = n;
+  const prev = layer.style.zIndex;
+  layer.style.zIndex = z;
+  return () => { layer.style.zIndex = prev; };
+}
+
+/** Whatever portalled layer sits on top of the target's centre (a window parked over the button the
+ *  step points at) goes behind for the step, so the hole shows the target and not the window. */
+function sinkCovering(el: HTMLElement | null): () => void {
+  if (!el) return () => {};
+  const r = el.getBoundingClientRect();
+  // The topmost thing there that is not the tour's own dim and click-blockers.
+  const hit = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((n) => !n.closest("[data-guide-tour]"));
+  if (!hit || el.contains(hit)) return () => {};
+  return raiseOver(hit as HTMLElement, "1");
 }
 
 /**
@@ -231,11 +318,20 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
   const [box, setBox] = useState<Box>(OFFSCREEN);
   const [pos, setPos] = useState<Pos | null>(null);
   const [shown, setShown] = useState(false);
+  // The cursor steps aside while the mentee is typing in the lit field it points at.
+  const [typing, setTyping] = useState(false);
   const tipRef = useRef<HTMLDivElement>(null);
   const stepRef = useRef<TourStep | null>(null);
   /** Mirror of what's committed, so a tracking frame that measures no change costs nothing. Null
    *  forces the next measurement through (step change / reopen). */
   const lastRef = useRef<{ box: Box | null; pos: Pos | null }>({ box: null, pos: null });
+
+  // Through a ref: a parent that passes fresh arrows on every render (the desk modal re-renders on
+  // each keystroke) must not restart the step, which re-hid and re-showed the card per letter.
+  const cb = useRef({ onStep, onClose });
+  useLayoutEffect(() => { cb.current = { onStep, onClose }; });
+  // A nextWhen step: whether Next is unlocked yet, polled while the step runs.
+  const [ready, setReady] = useState(false);
 
   const active = step >= 0 && step < steps.length;
   stepRef.current = active ? steps[step] : null;
@@ -245,7 +341,7 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
   const reposition = useCallback(() => {
     const s = stepRef.current;
     if (!s) return;
-    const raw = s.getEl()?.getBoundingClientRect() ?? null;
+    const raw = visibleRect(s.getEl());
     const last = lastRef.current;
     // A rect is measured in viewport pixels, the hole and the card are drawn in the page's zoomed
     // ones. Convert here, once, so everything downstream is already in the units it is written in.
@@ -283,11 +379,30 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
     // Both key off the target, so both are re-taken below if it only turns up later.
     let thaw = freezeScroll(s.getEl());
     let drop = liftTarget(s.getEl());
+    // Only when it sits clear of the target. On a phone the window covers the field; sinkCovering
+    // below sends it behind for the step instead, since the field has to be reachable (the step
+    // before has just shown them the value). It comes back on top when the step ends.
+    const also = s.alsoShow?.();
+    const tr = s.getEl()?.getBoundingClientRect();
+    const ar = also?.getBoundingClientRect();
+    const clear = !!(tr && ar) && (ar.right <= tr.left || ar.left >= tr.right || ar.bottom <= tr.top || ar.top >= tr.bottom);
+    const lower = clear ? raiseOver(also) : () => {};
+    // Taken after the scroll below has had a frame to land, so the centre point is the real one.
+    let unsink = () => {};
+    const sinkId = requestAnimationFrame(() => { unsink = sinkCovering(s.getEl()); });
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Off screen, or on screen but partly hidden by its own pane (the last folder under the fold of
+    // the My Tasks window): either way it is scrolled to, so the step points at all of it.
+    const hidden = (n: HTMLElement) => {
+      const b = n.getBoundingClientRect();
+      return !inView(b) || (visibleRect(n)?.height ?? b.height) < b.height - 2;
+    };
     const scrollTo = (n: HTMLElement) => {
       const b = n.getBoundingClientRect();
-      if (!inView(b)) n.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: b.height > window.innerHeight * 0.7 ? "start" : "center" });
+      if (!hidden(n)) return;
+      const tall = b.height > window.innerHeight * 0.7;
+      n.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: tall ? "start" : inView(b) ? "nearest" : "center" });
     };
 
     let raf = 0;
@@ -307,7 +422,7 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
 
     const el = s.getEl();
     if (el) {
-      const needsScroll = !inView(el.getBoundingClientRect());
+      const needsScroll = hidden(el);
       scrollTo(el);
       track(needsScroll ? 650 : 380);
       showId = setTimeout(() => setShown(true), reduce ? 0 : needsScroll ? 380 : 100);
@@ -334,14 +449,52 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
         } else if (performance.now() > giveUp) {
           clearInterval(poll);
           if (!s.optional) setShown(true); // never showed up — card floats over the dim
-          else if (step + 1 < steps.length) onStep(step + 1);
-          else onClose();
+          else if (step + 1 < steps.length) cb.current.onStep(step + 1);
+          else cb.current.onClose();
         }
       }, 120);
     }
 
-    return () => { thaw(); drop(); cancelAnimationFrame(raf); clearInterval(poll); clearTimeout(showId); };
-  }, [step, active, reposition, steps.length, onStep, onClose]);
+    // A target that grows (a flag appearing under a field) keeps its hole and card in step.
+    const ro = new ResizeObserver(() => reposition());
+    if (el) ro.observe(el);
+
+    return () => { ro.disconnect(); thaw(); drop(); lower(); cancelAnimationFrame(sinkId); unsink(); cancelAnimationFrame(raf); clearInterval(poll); clearTimeout(showId); };
+  }, [step, active, reposition, steps.length]);
+
+  // A "do it" step: watch for the action and move on when it has happened.
+  useEffect(() => {
+    if (!active) return;
+    const wait = steps[step]?.waitFor;
+    if (!wait) return;
+    const id = window.setInterval(() => {
+      if (!wait()) return;
+      clearInterval(id);
+      if (step + 1 < steps.length) cb.current.onStep(step + 1);
+      else cb.current.onClose();
+    }, 150);
+    return () => clearInterval(id);
+  }, [active, step, steps]);
+
+  useEffect(() => {
+    const when = active ? steps[step]?.nextWhen : undefined;
+    if (!when) return;
+    const id = window.setInterval(() => setReady(when()), 150);
+    return () => { clearInterval(id); setReady(false); };
+  }, [active, step, steps]);
+
+  useEffect(() => {
+    if (!active) return;
+    const sync = () => {
+      const t = stepRef.current?.getEl();
+      setTyping(!!t && !!document.activeElement && t.contains(document.activeElement) && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName));
+    };
+    sync();
+    const later = () => setTimeout(sync); // focus has not landed anywhere yet during focusout
+    document.addEventListener("focusin", sync);
+    document.addEventListener("focusout", later);
+    return () => { document.removeEventListener("focusin", sync); document.removeEventListener("focusout", later); };
+  }, [active, step]);
 
   // Reset when the tour closes so the next open appears cleanly (no stale hole).
   useEffect(() => {
@@ -373,19 +526,20 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
   useEffect(() => {
     if (!active) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { onClose(); return; }
+      if (e.key === "Escape") { cb.current.onClose(); return; }
       // Arrows only navigate the tour when the mentee isn't typing. The spotlight is now a hole
       // they can work through, so a cursor key inside a field it is pointing at means "move the
       // caret" — jumping to the next step there would throw away what they were mid-way through
       // writing the guidance for.
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-      if (e.key === "ArrowRight") onStep(Math.min(steps.length - 1, step + 1));
-      else if (e.key === "ArrowLeft") onStep(Math.max(0, step - 1));
+      const s = steps[step];
+      if (e.key === "ArrowRight" && !s?.waitFor && (!s?.nextWhen || s.nextWhen())) cb.current.onStep(Math.min(steps.length - 1, step + 1));
+      else if (e.key === "ArrowLeft") cb.current.onStep(Math.max(0, step - 1));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, step, steps.length, onStep, onClose]);
+  }, [active, step, steps]);
 
   if (!active || typeof document === "undefined") return null;
   const current = steps[step];
@@ -409,7 +563,7 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
       : {};
 
   return createPortal(
-    <div className="fixed inset-0 z-[70] pointer-events-none">
+    <div data-guide-tour className="fixed inset-0 z-[70] pointer-events-none">
       {/* Targetless step (the welcome card) — nothing to cut a hole around, so dim the page flat.
           The cutout below can't do this: its shadow spreads from the off-screen sentinel box and
           never reaches the viewport. */}
@@ -419,11 +573,11 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
         /* spotlight cutout — one div: the giant shadow dims the page, while a crisp white separation
            ring + indigo halo + soft glow make the target read as "lit", on-brand and not harsh. */
         <div
-          className="absolute rounded-xl pointer-events-none"
+          className="absolute rounded-lg pointer-events-none"
           style={{
             ...box,
             boxShadow:
-              "0 0 0 9999px rgba(15,23,42,0.62), 0 0 0 1.5px rgba(255,255,255,0.95), 0 0 0 4px rgba(99,102,241,0.45), 0 0 30px 5px rgba(217,70,239,0.40)",
+              "0 0 0 9999px rgba(15,23,42,0.62), 0 0 0 1.5px #fff, 0 0 0 3.5px rgba(67,56,202,0.85)",
           }}
         />
       )}
@@ -442,6 +596,22 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
           <div className="absolute right-0 pointer-events-auto" style={{ top: box.top, height: box.height, left: box.left + box.width }} onClick={swallow} />
         </>
       )}
+      {/* A "do it" step: a cursor taps the lit control, so the step shows where to click rather than
+          saying it. Its tip sits on the target's centre; clicks pass straight through it. */}
+      {(current.waitFor || (current.nextWhen && !ready)) && box !== OFFSCREEN && shown && !typing && (
+        <div aria-hidden className="absolute pointer-events-none" style={tapAt(current, box)}>
+          {SPARKS.map((a) => (
+            <span key={a} className="absolute left-0 top-0 h-0 w-0" style={{ transform: `rotate(${a}deg)` }}>
+              <span className="guide-spark absolute left-0 -top-px block h-[2.5px] w-2 rounded-full bg-[#6366F1]" />
+            </span>
+          ))}
+          {/* A classic arrow-with-tail pointer, indigo inside a white keyline so it reads on the
+              dark toolbar and on white rows alike. Tip at (3, 2) of the 24 box. */}
+          <svg className="guide-pointer absolute -left-[3.5px] -top-[2.3px] drop-shadow-[0_3px_4px_rgba(15,23,42,0.4)]" width="28" height="28" viewBox="0 0 24 24">
+            <path d="M3 2v19l5.2-4.7 3.4 7.3 3.3-1.5-3.3-7.1h7z" fill="#4338CA" stroke="#fff" strokeWidth="1.8" strokeLinejoin="round" />
+          </svg>
+        </div>
+      )}
       {/* card */}
       <div
         ref={tipRef}
@@ -453,53 +623,56 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
           opacity: shown ? 1 : 0,
           transform: shown ? "translate(0) scale(1)" : `${ENTER_OFFSET[side]} scale(0.98)`,
         }}
-        className="absolute pointer-events-auto rounded-2xl bg-white ring-1 ring-slate-200 shadow-[0_24px_60px_-15px_rgba(15,23,42,0.45)] p-4 transition-[opacity,transform] duration-200 ease-out"
+        className="absolute pointer-events-auto rounded-xl bg-white ring-1 ring-slate-200 shadow-[0_18px_40px_-12px_rgba(15,23,42,0.45)] p-4 transition-[opacity,transform] duration-200 ease-out"
         role="dialog"
         aria-modal="true"
         aria-label={`Guide: ${current.title}`}
       >
         {!floating && <span className="absolute w-0 h-0" style={caretPos} aria-hidden />}
 
-        {/* header — gradient icon tile (the one bold element) + title + step counter */}
+        {/* header — icon tile + title + step counter */}
         <div className="flex items-start gap-3">
-          <span className="shrink-0 grid place-items-center w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-[0_4px_14px_-3px_rgba(217,70,239,0.6)]">
+          <span className="shrink-0 grid place-items-center w-9 h-9 rounded-lg bg-[#4338CA] text-white">
             <Icon name={current.icon ?? "sparkle"} size={17} />
           </span>
           <div className="min-w-0 flex-1 pt-0.5">
-            <h3 className="text-[14px] font-semibold tracking-tight text-slate-900 leading-snug">{current.title}</h3>
-            <p className="text-[10.5px] font-semibold tracking-[0.1em] uppercase text-fuchsia-600 mt-0.5">Step {step + 1} of {steps.length}</p>
+            <h3 className="text-[15px] font-semibold tracking-tight text-slate-900 leading-snug" style={{ textWrap: "balance" }}>{current.title}</h3>
+            <p className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-[#4338CA] mt-0.5 tabular-nums">Step {step + 1} of {steps.length}</p>
           </div>
           <button onClick={onClose} aria-label="Skip guide" className="focus-ring shrink-0 -mr-1 -mt-1 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
             <Icon name="x" size={14} />
           </button>
         </div>
 
-        <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-2.5" style={{ textWrap: "pretty" }}>{current.body}</p>
+        <p className="text-[13.5px] text-slate-700 leading-relaxed mt-3" style={{ textWrap: "pretty" }}>{current.body}</p>
         {current.demo}
+        {(current.waitFor || current.nextWhen) && <p className="sr-only">{current.doIt ?? "Do it now to continue"}</p>}
 
         {/* footer — progress dots left, controls right */}
         <div className="flex items-center justify-between gap-3 mt-4">
           <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
             {steps.map((_, i) => (
-              <span key={i} className={`shrink-0 h-1.5 rounded-full transition-all duration-300 ${i === step ? "w-4 bg-fuchsia-500" : i < step ? "w-1.5 bg-fuchsia-300" : "w-1.5 bg-slate-200"}`} />
+              <span key={i} className={`shrink-0 h-1.5 rounded-full transition-all duration-300 ${i === step ? "w-4 bg-[#4338CA]" : i < step ? "w-1.5 bg-[#A5B4FC]" : "w-1.5 bg-slate-200"}`} />
             ))}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {step > 0 ? (
-              <button onClick={() => onStep(step - 1)} className="focus-ring h-8 px-2.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-[12px] font-medium tracking-tight inline-flex items-center gap-1 cursor-pointer transition-colors">
+              <button onClick={() => onStep(step - 1)} className="focus-ring h-8 px-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-[12.5px] font-medium inline-flex items-center gap-1 cursor-pointer transition-colors">
                 <Icon name="arrowLeft" size={13} /> Back
               </button>
             ) : (
-              <button onClick={onClose} className="focus-ring h-8 px-2.5 rounded-lg text-slate-400 hover:text-slate-600 text-[12px] font-medium tracking-tight cursor-pointer transition-colors">
+              <button onClick={onClose} className="focus-ring h-8 px-2.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-[12.5px] font-medium cursor-pointer transition-colors">
                 Skip
               </button>
             )}
-            <button
+            {!current.waitFor && <button
               onClick={() => (isLast ? onClose() : onStep(step + 1))}
-              className="focus-ring h-8 px-3.5 rounded-lg bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-700 hover:to-fuchsia-700 text-white text-[12px] font-semibold tracking-tight inline-flex items-center gap-1.5 shadow-[0_4px_14px_-5px_rgba(217,70,239,0.7)] cursor-pointer transition-colors"
+              disabled={!!current.nextWhen && !ready}
+              title={current.nextWhen && !ready ? current.doIt : undefined}
+              className="focus-ring disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:active:scale-100 h-8 px-3.5 rounded-lg bg-[#4338CA] hover:bg-[#3730A3] active:scale-[0.97] text-white text-[12.5px] font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-[background-color,transform] duration-150"
             >
               {isLast ? "Got it" : "Next"} <Icon name={isLast ? "check" : "arrowRight"} size={13} strokeWidth={isLast ? 3 : 2} />
-            </button>
+            </button>}
           </div>
         </div>
       </div>

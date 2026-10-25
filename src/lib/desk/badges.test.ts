@@ -15,7 +15,7 @@ for (const b of BADGES) for (const t of [...b.earn, ...b.support]) assert.ok(des
 // The pack's darker edge colour: A's 1F6FB2 → 164F80.
 assert.equal(shade("1F6FB2"), "164F80");
 
-const empty: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs: {}, acks: {}, grids: {}, logs: {} };
+const empty: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs: {}, acks: {}, grids: {}, logs: {}, decisions: {} };
 const b = BADGES.find((x) => x.code === "BDG-B")!; // T7.1, T7.2
 const sub = { ...empty, submitted: { "T7.1": "x", "T7.2": "x" } };
 assert.equal(standing(b, empty).state, "not-started");

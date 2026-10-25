@@ -136,7 +136,9 @@ function DeskLoaded({ desk, who, startIso, preview }: { desk: Desk; who: string;
     const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
     const t = here ? desk.tasks[here.task] : undefined;
     const working = !!step && !!t && step.key === key && isOpen(t.week) && !progress.submitted[t.id] && (mode === "work" || !progress.done[stepKey(t.id, step.n)]);
-    if (working) return setToolKey(key);
+    // The step's own tool, already open as the modal (READ-ME-FIRST over My Organisation, say):
+    // asking for it again from the toolbar opens its screen beside the work instead.
+    if (working && toolKey !== key) return setToolKey(key);
     setWindows((w) => [...w.filter((x) => x !== key), key]);
   };
   // A tool asked for through the viewer opens like any other; references still open in the sheet.
@@ -211,10 +213,17 @@ function DeskLoaded({ desk, who, startIso, preview }: { desk: Desk; who: string;
 
       </div>
       <Viewer item={viewing} onClose={() => setViewing(null)} />
-      <ToolModal toolKey={toolKey} onClose={() => setToolKey(null)} />
+      <ToolModal
+        toolKey={toolKey}
+        onClose={() => {
+          // The modal's own screen, opened beside it from the toolbar, closes with it.
+          setWindows((w) => w.filter((x) => x !== toolKey));
+          setToolKey(null);
+        }}
+      />
       <AnimatePresence>
         {windows.map((k, i) => (
-          <ToolWindow key={k} toolKey={k} index={i} onClose={() => setWindows((w) => w.filter((x) => x !== k))} />
+          <ToolWindow key={k} toolKey={k} index={i} beside={!!toolKey} plain={k === toolKey} onClose={() => setWindows((w) => w.filter((x) => x !== k))} />
         ))}
       </AnimatePresence>
     </Ctx.Provider>

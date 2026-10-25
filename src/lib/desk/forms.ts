@@ -8,9 +8,11 @@ import { stepKey, type Progress } from "./progress";
 export const RMF = {
   file: "READ-ME-FIRST",
   tables: [
-    { title: "My assignment", from: "Home › My Organisation", rows: ["Organisation 1", "Its home office", "Organisation 2", "Its home office", "Task owner of F1.2", "Your start date"] },
-    { title: "My folders", from: "Home › My Tasks › F1.1", rows: ["00_Admin", "01_Inputs", "02_Working", "03_Submission"] },
-    { title: "My week-1 dates", from: "Home › My plan", rows: ["F1.2", "F1.3", "KC-01"] },
+    // Row labels name the value to write, in the words of the screen it is copied from: My
+    // Organisation calls the organisations Org A and Org B (the engine's "Organisation 1 / 2").
+    { title: "My assignment", from: "Home › My Organisation", rows: ["Org A name", "Org A home office", "Org B name", "Org B home office", "Task owner of F1.2", "Your start date"] },
+    { title: "My folders", from: "Home › My Tasks › F1.1", rows: ["00_Admin path", "01_Inputs path", "02_Working path", "03_Submission path"] },
+    { title: "My week-1 dates", from: "Home › My plan", rows: ["F1.2 due date", "F1.3 due date", "KC-01 due date"] },
   ],
 };
 export const rmfKey = (taskId: string) => `${taskId}|${RMF.file}`;
@@ -29,7 +31,64 @@ export function rmfExpected(desk: Desk, start: Date, t: number): string[] {
   const { A, B } = desk.orgs;
   if (t === 0) return [A.name, A.office, B.name, B.office, desk.tasks["F1.2"]?.owner ?? "", dmy(start)];
   if (t === 1) return folders(desk, desk.tasks["F1.1"]);
-  return RMF.tables[2].rows.map((r) => dmy(desk.tasks[r] ? dueDate(start, desk.tasks[r].dueDay) : testDue(start, 1)));
+  return RMF.tables[2].rows.map((r) => {
+    const id = r.split(" ")[0]; // "F1.2 due date" → F1.2
+    return dmy(desk.tasks[id] ? dueDate(start, desk.tasks[id].dueDay) : testDue(start, 1));
+  });
+}
+
+/**
+ * The onboarding attestations, done on the F1.1 steps that ask for them: the undertaking (signed with
+ * full name and mentee ID) and the four data rules (each ticked, then saved). The pack describes them
+ * only in a line each, so every item below restates a line of the pack, and says which:
+ *   Undertaking — "Own work, workspace files only, report outside data. E-signature." (F1.1 panel);
+ *     "Accounts are personal. Sharing breaks the undertaking" (F1.1-D1, BKB-POL-024 §3.1).
+ *   Data rules — "synthetic data only, own work, no AI tools for task work" (F1.1 What will I learn,
+ *     BKB-POL-024 §3.1, BKB-POL-022 §7.1); "work data never leaves the platform" (F1.1-D2).
+ * Not yet reviewed by a GRC professional.
+ */
+export const ATTEST: Record<string, Record<number, { code: string; title: string; items: string[]; sign: boolean }>> = {
+  "F1.1": {
+    2: {
+      code: "ADM-UND",
+      title: "Undertaking",
+      sign: true,
+      items: [
+        "All the work I submit is my own.",
+        "I keep task files in my workspace only.",
+        "I report any outside data I come across.",
+        "My account is personal. I do not share it.",
+      ],
+    },
+    3: {
+      code: "ADM-RULES",
+      title: "Data and AI rules",
+      sign: false,
+      items: [
+        "I use only the synthetic data the platform gives me.",
+        "All my task work is my own.",
+        "I use no AI tool for task work.",
+        "Task data never leaves the platform.",
+      ],
+    },
+  },
+};
+export const attestKey = (taskId: string, code: string) => `${taskId}|${code}`;
+/** Signed or saved: the time is set only by the form's own button. */
+export const attestDone = (p: { grids?: Record<string, Record<string, string>> }, taskId: string, code: string) =>
+  !!p.grids?.[attestKey(taskId, code)]?.at;
+
+/** The READ-ME-FIRST rows that hold a date: "Your start date" in table 1 and all of table 3. */
+export const isDateRow = (t: number, i: number) => t === 2 || (t === 0 && i === 5);
+
+const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+/** A date picker's "2026-10-18" as the pack writes it, "18-OCT-2026" (stored and checked that way). */
+export const isoToDmy = (iso: string) => (iso ? dmy(new Date(`${iso}T00:00:00`)) : "");
+/** Back again, for the picker to show what is stored; "" when the stored value is not a date. */
+export function dmyToIso(v: string): string {
+  const m = v.trim().toUpperCase().match(/^(\d{1,2})-([A-Z]{3})-(\d{4})$/);
+  const mon = m ? MON.indexOf(m[2]) : -1;
+  return m && mon >= 0 ? `${m[3]}-${String(mon + 1).padStart(2, "0")}-${m[1].padStart(2, "0")}` : "";
 }
 
 export const same = (a: string, b: string) => a.trim().replace(/\s+/g, " ").toLowerCase() === b.trim().replace(/\s+/g, " ").toLowerCase();

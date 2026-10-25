@@ -33,7 +33,7 @@ function scrollParent(el: HTMLElement | null): HTMLElement | null {
  * rather than under it — the reference strip and the gate step nav (`top-[60px]`), the floating
  * acceptance checklist (`--hdr-h` + 64px), and step-screen's "at the deliverable" band (-116px).
  */
-export function StepBar({ code, eyebrow, title, watch, done, score, onScore, label = "Step" }: {
+export function StepBar({ code, eyebrow, title, watch, done, score, onScore, action, label = "Step" }: {
   code?: string;
   /** What the code is a code of: "Step" on a step, "Task" on the GRC 101 task file. */
   label?: string;
@@ -47,6 +47,8 @@ export function StepBar({ code, eyebrow, title, watch, done, score, onScore, lab
   score?: string;
   /** Opens the feedback the score came from. */
   onScore?: () => void;
+  /** A page's own control, set before "back to top" (the desk's Key results on a narrow sheet). */
+  action?: React.ReactNode;
 }) {
   const [on, setOn] = useState(false);
   const bar = useRef<HTMLDivElement>(null);
@@ -123,6 +125,7 @@ export function StepBar({ code, eyebrow, title, watch, done, score, onScore, lab
           <b className="tabular-nums">{score}</b>
         </button>
       )}
+      {action}
       <button
         onClick={toTop}
         tabIndex={tab}

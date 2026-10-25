@@ -83,7 +83,7 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
           className="w-[330px] rounded-2xl bg-white ring-1 ring-slate-200 shadow-[0_18px_50px_-16px_rgba(15,23,42,0.28)] overflow-hidden"
         >
           <div className="flex items-center justify-between px-4 h-11 border-b border-slate-200">
-            <span className="text-[13px] font-semibold tracking-tight text-slate-900">Report an issue</span>
+            <span className="text-[13px] font-semibold tracking-tight text-slate-900">Report a problem</span>
             <button
               onClick={() => setOpen(false)}
               aria-label="Close"
@@ -155,8 +155,9 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
 
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label="Report an issue"
-        title="Report an issue"
+        // The pack's name for it: steps send the mentee to "Report a problem".
+        aria-label="Report a problem"
+        title="Report a problem"
         className="focus-ring w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-[0_10px_30px_-8px_rgba(79,70,229,0.7)] flex items-center justify-center transition-colors"
       >
         <Icon name={open ? "x" : "messageSquare"} size={19} />

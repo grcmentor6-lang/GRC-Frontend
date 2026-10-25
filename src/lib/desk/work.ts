@@ -1,5 +1,5 @@
 import { isFillCell, rmfTable, workKind, type Desk, type Step, type Task } from "./model";
-import { RMF, rmfFilled, rmfKey } from "./forms";
+import { ATTEST, RMF, attestDone, rmfFilled, rmfKey } from "./forms";
 import { BRIEFS, REGISTERS, briefStatus, regStatus } from "./registers";
 import { stepKey, type Progress } from "./progress";
 
@@ -35,6 +35,8 @@ export function stepAnswered(desk: Desk, p: Progress, task: Task, s: Step): bool
   const key = stepKey(task.id, s.n);
   const pick = p.picks[key];
   if (s.kind === "pick" && typeof pick !== "string") return false;
+  const att = ATTEST[task.id]?.[s.n];
+  if (att) return attestDone(p, task.id, att.code);
   if (REGISTERS[task.id]?.steps[s.n]) return regStatus(desk, p, task, s.n).ok;
   if (BRIEFS[task.id]?.steps[s.n] !== undefined) return briefStatus(p, task, s.n).ok;
   const t = rmfTable(s);

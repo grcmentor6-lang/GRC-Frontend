@@ -186,7 +186,7 @@ body {
   }
 }
 
-/* Coach-mark cursor: drifts toward the sidebar toggle and taps it, over and over. */
+/* Coach-mark cursor: drifts onto the spotlit control and taps it, over and over (guided-tour.tsx). */
 @keyframes cursorTap {
   0%,
   100% {
@@ -205,6 +205,105 @@ body {
 
 /* Indigo halo rippling out of the spotlit toggle. The second shadow is the dim over the rest of
    the app — it stays constant across keyframes so the backdrop never flickers. */
+/* The guide's "click here" cursor (guided-tour.tsx): arcs in from below-right, settles its tip on
+   the control, presses, and throws click sparks; then rests and fades before the next pass. Each
+   segment eases out, so it arrives quickly and settles rather than drifting. */
+@keyframes guidePointer {
+  0% {
+    opacity: 0;
+    transform: translate(46px, 54px) rotate(16deg) scale(1);
+  }
+  12% {
+    opacity: 1;
+  }
+  28% {
+    transform: translate(30px, 14px) rotate(7deg) scale(1);
+  }
+  44% {
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+  50% {
+    transform: translate(0, 0) rotate(0) scale(0.82);
+  }
+  58% {
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+  84% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(5px, 7px) rotate(0) scale(1);
+  }
+}
+@keyframes guideSpark {
+  0%,
+  49% {
+    opacity: 0;
+    transform: translateX(5px) scaleX(0.3);
+  }
+  54% {
+    opacity: 1;
+    transform: translateX(8px) scaleX(1);
+  }
+  72%,
+  100% {
+    opacity: 0;
+    transform: translateX(17px) scaleX(0.3);
+  }
+}
+.guide-pointer {
+  animation: guidePointer 2.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  transform-origin: 3.5px 2.3px;
+}
+.guide-spark {
+  animation: guideSpark 2.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  transform-origin: 0 50%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-pointer,
+  .guide-spark {
+    animation: none;
+  }
+  .guide-spark {
+    opacity: 0;
+  }
+}
+
+/* The mentee ID in the undertaking's address, flashed by "Show me" (undertaking.tsx). */
+@keyframes idFlash {
+  0%,
+  40% {
+    background-color: #fcd34d;
+  }
+  100% {
+    background-color: #fef3c7;
+  }
+}
+
+/* The signature written in, left to right, as the undertaking is signed (undertaking.tsx). */
+@keyframes signWrite {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* The undertaking's "Signed electronically" stamp landing on the sheet (undertaking.tsx). */
+@keyframes stampIn {
+  from {
+    opacity: 0;
+    transform: rotate(-6deg) scale(1.35);
+  }
+  to {
+    opacity: 0.9;
+    transform: rotate(-6deg) scale(1);
+  }
+}
+
 @keyframes spotlight {
   0% {
     box-shadow: 0 0 0 0 rgba(129, 140, 248, 0.65), 0 0 0 9999px rgba(2, 6, 23, 0.62);

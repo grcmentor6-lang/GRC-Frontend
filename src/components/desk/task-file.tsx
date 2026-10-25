@@ -32,6 +32,8 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
   // Watched by StepBar: while the task's own heading is on screen the condensed bar stays away.
   const headingRef = useRef<HTMLDivElement>(null);
   const stepsRef = useRef<HTMLElement>(null);
+  // The key results box: null = automatic (open on a wide sheet, folded on a narrow one).
+  const [krOpen, setKrOpen] = useState<boolean | null>(null);
 
   useEffect(() => {
     document.getElementById(`act-${focus}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -42,8 +44,29 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
     // gives the table more room instead of more margin. 10px top = StepBar's -24px top and -28px
     // bottom margins over its 42px, so the sheet starts flush with the column.
     <div className="w-full pt-[10px]">
-      <StepBar label="Task" code={task.id} eyebrow={task.title} title={task.obj} watch={headingRef} done={st === "submitted"} />
-      <FloatingChecklist task={task} focus={focus} onFocus={onFocus} watch={stepsRef} />
+      <StepBar
+        label="Task"
+        code={task.id}
+        eyebrow={task.title}
+        title={task.obj}
+        watch={headingRef}
+        done={st === "submitted"}
+        // On a narrow sheet the key results open from the bar: a handle floating over the steps
+        // covered the very step being read. Wide sheets keep the box beside the steps.
+        action={
+          <button
+            type="button"
+            onClick={() => setKrOpen(krOpen !== true)}
+            aria-label="Key results"
+            aria-expanded={krOpen === true}
+            title="Key results"
+            className={`grid h-8 w-8 shrink-0 place-items-center rounded-[9px] transition-colors focus-ring @[760px]:hidden ${krOpen === true ? "bg-[#E0F2FE] text-sky-800" : "text-sky-700 hover:bg-[#E0F2FE]"}`}
+          >
+            <Icon name="checkSquare" size={16} />
+          </button>
+        }
+      />
+      <FloatingChecklist task={task} focus={focus} onFocus={onFocus} watch={stepsRef} open={krOpen} setOpen={setKrOpen} />
 
       {/* One task sheet, as the redesign draws it: the heading, a strip of facts, the objective row,
           then the steps as a table, all cells of one object divided by 1px rules. */}
@@ -243,9 +266,15 @@ function KrChecklist({ task, focus, onFocus, onClose }: { task: Task; focus: num
  * × leaves a small handle in its place. On a narrow column it starts as the handle, since a 300px
  * box would cover most of the work.
  */
-function FloatingChecklist({ task, focus, onFocus, watch }: { task: Task; focus: number; onFocus: (n: number) => void; watch: React.RefObject<HTMLElement | null> }) {
-  // null = automatic: open on a wide column, handle on a narrow one (decided in CSS, no measuring).
-  const [open, setOpen] = useState<boolean | null>(null);
+function FloatingChecklist({ task, focus, onFocus, watch, open, setOpen }: {
+  task: Task;
+  focus: number;
+  onFocus: (n: number) => void;
+  watch: React.RefObject<HTMLElement | null>;
+  /** null = automatic: open on a wide column, folded on a narrow one (decided in CSS, no measuring). */
+  open: boolean | null;
+  setOpen: (v: boolean) => void;
+}) {
   const [atSteps, setAtSteps] = useState(false);
 
   useEffect(() => {
@@ -264,7 +293,7 @@ function FloatingChecklist({ task, focus, onFocus, watch }: { task: Task; focus:
   // take clicks under an invisible parent, which is how this box once swallowed step 1's chevron.)
   const fade = (on: boolean) => (on ? "visible pointer-events-auto translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-1 opacity-0");
   const boxOn = open === true ? "block" : open === false ? "hidden" : "hidden @[760px]:block";
-  const handleOn = open === false ? "inline-flex" : open === true ? "hidden" : "inline-flex @[760px]:hidden";
+  const handleOn = open === false ? "hidden @[760px]:inline-flex" : "hidden";
   return (
     <div className="pointer-events-none sticky top-[64px] z-20 flex h-0 justify-end pr-[52px]">
       <div className={`w-[300px] max-w-full transition-all duration-200 ease-out motion-reduce:transition-none ${boxOn} ${fade(atSteps)}`} aria-hidden={!atSteps}>

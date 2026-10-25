@@ -2,7 +2,7 @@
 
 import { useMemo, useSyncExternalStore } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
-import { readProgress, type Progress } from "@/lib/desk/progress";
+import { progressKey, readProgress, type Progress } from "@/lib/desk/progress";
 import { BADGES, capstoneStanding, standing, type BadgeStanding, type MethodBadge } from "@/lib/desk/badges";
 
 export interface MethodBadgeSummary {
@@ -36,7 +36,7 @@ export function useMethodBadges(): MethodBadgeSummary {
     subscribe,
     () => {
       try {
-        return who ? localStorage.getItem(`grc101.desk.v4.${who}`) : null;
+        return who ? localStorage.getItem(progressKey(who)) : null;
       } catch {
         return null;
       }
