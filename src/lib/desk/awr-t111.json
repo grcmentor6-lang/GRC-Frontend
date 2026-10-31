@@ -1,0 +1,391 @@
+{
+ "theme": "MFA fatigue and push-bombing",
+ "audience": "Regional Compliance & Legal",
+ "office": "Amsterdam, Netherlands",
+ "weeks": [
+  [
+   "Week 1",
+   "Lesson"
+  ],
+  [
+   "Week 2",
+   "Poster + quiz"
+  ],
+  [
+   "Week 3",
+   "Phishing simulation"
+  ],
+  [
+   "Week 4",
+   "Results + refresher"
+  ]
+ ],
+ "activities": [
+  "Lesson",
+  "Phishing simulation",
+  "Poster + quiz",
+  "Results + refresher"
+ ],
+ "cards": [
+  "A caller says he is from IT and asks for your MFA code.",
+  "You clicked a link and your screen froze.",
+  "Your phone shows 12 sign-in approval requests at midnight."
+ ],
+ "behaviours": [
+  "Never approve a request you did not start",
+  "Report it at once",
+  "Change your password"
+ ],
+ "quiz": [
+  [
+   "Approve a request you did not start?",
+   "No"
+  ],
+  [
+   "Who do you tell?",
+   "Service desk / Report"
+  ],
+  [
+   "What else?",
+   "Change password"
+  ]
+ ],
+ "lesson": [
+  [
+   "Theme",
+   "MFA fatigue and push-bombing"
+  ],
+  [
+   "Audience",
+   "Regional Compliance & Legal, Amsterdam, Netherlands"
+  ],
+  [
+   "Scenario card (step 2)",
+   ""
+  ],
+  [
+   "Three behaviours (Ref-Content)",
+   "Never approve a request you did not start · Report it at once · Change your password"
+  ]
+ ],
+ "d2": [
+  "HR only",
+  "HR, Legal and the works council",
+  "IT"
+ ],
+ "sim": [
+  [
+   "Audience",
+   "Regional Compliance & Legal, Amsterdam office"
+  ],
+  [
+   "Scenario card (step 2)",
+   ""
+  ],
+  [
+   "Week of the campaign (R31, step 1)",
+   ""
+  ],
+  [
+   "Approvals (R31, step 4)",
+   ""
+  ],
+  [
+   "Pretext",
+   "A fictional sign-in approval alert, under a fictional brand only (no real company's name or logo)"
+  ],
+  [
+   "Follow-up",
+   "A just-in-time micro-lesson for everyone who clicks; results reported by team, never by name (BKB-POL-020 Section 3.1)"
+  ]
+ ],
+ "metrics": [
+  [
+   "Click rate",
+   "Staff who clicked the simulated message ÷ staff it was sent to × 100"
+  ],
+  [
+   "Report rate",
+   "Staff who reported the simulated message ÷ staff it was sent to × 100"
+  ]
+ ],
+ "kri": [
+  [
+   "R-36-RO1-01",
+   "Ransomware disrupting Mission Critical services",
+   "6 Medium",
+   "Regional IT Manager",
+   "Mean time to restore Mission Critical system in test (target ≤ RTO)"
+  ],
+  [
+   "R-36-RO1-02",
+   "Phishing and business-email compromise leading to credential theft or fraudulent payment",
+   "12 High",
+   "Regional Finance Controller",
+   "Phishing simulation click rate (≤ 5%)"
+  ],
+  [
+   "R-36-RO1-03",
+   "Personal-data breach through misconfigured cloud / SaaS services",
+   "8 Medium",
+   "Regional Compliance Officer",
+   "Critical CSPM findings open > 7 days (target 0)"
+  ],
+  [
+   "R-36-RO1-04",
+   "Failure to meet statutory breach-notification deadlines in Netherlands",
+   "8 Medium",
+   "Regional Compliance Officer",
+   "Notifications made within statutory deadline (100%)"
+  ],
+  [
+   "R-36-RO1-05",
+   "Unlawful cross-border transfer of personal or regulated data",
+   "4 Low",
+   "Regional Compliance Officer",
+   "Data flows without documented transfer mechanism (target 0)"
+  ],
+  [
+   "R-36-RO1-06",
+   "Compromise or failure of a critical SaaS / cloud supplier",
+   "3 Low",
+   "Procurement / Vendor Risk Analyst",
+   "Critical suppliers with current assessment (100%)"
+  ],
+  [
+   "R-36-RO1-07",
+   "Misuse of privileged access by insiders or compromised administrators",
+   "4 Low",
+   "Org CISO",
+   "Standing privileged accounts (trend ↓)"
+  ],
+  [
+   "R-36-RO1-08",
+   "Exploitation of unpatched internet-facing vulnerabilities",
+   "8 Medium",
+   "Vulnerability Management Governance Analyst",
+   "KEV vulnerabilities past SLA (target 0)"
+  ],
+  [
+   "R-36-RO1-09",
+   "DDoS and hacktivist campaigns against public-facing services",
+   "3 Low",
+   "Cyber Threat Intelligence Analyst",
+   "Service availability during attack (≥ 99.9%)"
+  ],
+  [
+   "R-36-RO1-10",
+   "State-sponsored espionage and intellectual-property theft",
+   "8 Medium",
+   "Cyber Threat Intelligence Analyst",
+   "Mean time to detect (dwell time) in exercises (target ≤ 24h)"
+  ],
+  [
+   "R-36-RO1-11",
+   "Natural hazard disrupting the Amsterdam office (Coastal/river flooding (below sea level))",
+   "3 Low",
+   "Business Continuity & Resilience Analyst",
+   "Office BCP tested in last 12 months (yes)"
+  ],
+  [
+   "R-36-RO1-12",
+   "Failure of local power, telecom or internet infrastructure",
+   "2 Low",
+   "Office & Facilities Manager",
+   "Unplanned office downtime hours per quarter"
+  ],
+  [
+   "R-36-RO1-13",
+   "Regulatory change outpacing compliance programme",
+   "8 Medium",
+   "Regional Compliance Officer",
+   "Regulatory changes assessed within 30 days (100%)"
+  ],
+  [
+   "R-36-RO1-14",
+   "Loss of key security / compliance staff and skills shortage",
+   "4 Low",
+   "Regional HR Manager",
+   "Controls without assigned deputy (target 0)"
+  ],
+  [
+   "R-36-RO1-15",
+   "Data loss through endpoints, remote working and removable media",
+   "6 Medium",
+   "Regional IT Manager",
+   "Lost devices without encryption (target 0)"
+  ],
+  [
+   "R-36-RO1-16",
+   "Errors or misuse of AI agents and generative-AI tools",
+   "2 Low",
+   "Group CISO (AI governance)",
+   "AI-agent output QA pass rate (≥ 98%)"
+  ],
+  [
+   "R-36-RO1-17",
+   "Theft of research IP and student personal data",
+   "8 Medium",
+   "Org CISO",
+   "Sector-specific control test pass rate (≥ 95%)"
+  ],
+  [
+   "R-36-RO1-18",
+   "Unauthorised physical access, theft or tampering at the office",
+   "3 Low",
+   "Office & Facilities Manager",
+   "Tailgating / physical incidents per quarter"
+  ],
+  [
+   "R-36-RO1-19",
+   "Cloud-region outage or provider concentration",
+   "3 Low",
+   "Cloud & Platform Operations Lead",
+   "Mission Critical workloads single-region (target 0)"
+  ],
+  [
+   "R-36-RO1-20",
+   "Exposure of live data through mentorship-programme activities",
+   "3 Low",
+   "Cybersecurity Program Manager",
+   "Mentee access to production (target 0)"
+  ],
+  [
+   "R-36-RO1-21",
+   "Reputational crisis following a security or privacy incident",
+   "3 Low",
+   "Head of Communications",
+   "Time to first public statement in major incident (≤ 4h)"
+  ],
+  [
+   "R-36-RO1-22",
+   "Insufficient logging and detection coverage",
+   "3 Low",
+   "Incident Response & Crisis Manager",
+   "Log-source coverage of critical assets (≥ 95%)"
+  ]
+ ],
+ "competence": [
+  [
+   "Risk owner",
+   "Regional Finance Controller (R-36-RO1-02)",
+   "Can write a risk statement (R06), rate it on the 5×5 scales (R07) and decide against appetite (R08); knows the acceptance authority (R36)",
+   "Completed risk training with assessed exercise; two register entries reviewed by the Cyber Risk Manager",
+   "Risk-management e-learning completed 2026-02-10, with no assessed exercise. No register entry reviewed by the Cyber Risk Manager."
+  ],
+  [
+   "Control owner",
+   "Regional IT Manager (R-36-RO1-01)",
+   "Can describe the control, produce dated system evidence on request (R17) and close actions with evidence (R33)",
+   "Control-owner briefing attendance; one accepted evidence pack; one verified action closure",
+   "Control-owner briefing attended 2026-04-14. Evidence pack for A.8.7 accepted 2026-06-30. Corrective action closure verified 2026-09-15."
+  ],
+  [
+   "ISMS manager",
+   "Regional Compliance Officer (Amsterdam ISMS lead)",
+   "Can maintain scope, SoA, risk register and audit programme; prepare the management review; brief auditees",
+   "ISO/IEC 27001 Lead Implementer (or equivalent) certificate; management review pack produced",
+   "ISO/IEC 27001 Lead Implementer course attended 2025-11-17 to 2025-11-21; exam not yet taken. No management review pack produced yet."
+  ]
+ ],
+ "status": [
+  "Action needed",
+  "Competent"
+ ],
+ "comms": [
+  [
+   "Information security policy launch / re-issue",
+   "All staff",
+   "On approval and yearly",
+   "All-staff e-mail + intranet + attestation",
+   "Top management (CEO) with the CISO",
+   "Attestation completion %",
+   "LI-POL: the ISMS policy checked against clause 5.2 (T4.1)"
+  ],
+  [
+   "Awareness month and phishing simulation results",
+   "All staff",
+   "Yearly campaign (4 weeks)",
+   "Micro-lessons, posters, team briefings",
+   "Security Awareness & Training Specialist",
+   "Click and report rates; quiz scores",
+   "AWR-PLAN: this awareness campaign (T11.1)"
+  ],
+  [
+   "Incident notice and lessons learned",
+   "Affected teams; all staff for major incidents",
+   "Within 1 working day of closure",
+   "E-mail and team briefing",
+   "Incident Response & Crisis Manager",
+   "Questions logged; repeat incidents",
+   "BRC-PLAN: the notification plan of INC-2610-3001 (T10.2)"
+  ],
+  [
+   "Internal audit results",
+   "Control owners; top management",
+   "After each audit",
+   "Report and closing meeting",
+   "Internal Audit",
+   "Actions agreed with owners and dates",
+   "The control tests of the Amsterdam office (T8.1, T8.2)"
+  ],
+  [
+   "Management review outcomes",
+   "GRC team; control owners; Board committee",
+   "After each review (at least yearly)",
+   "Minutes and action list",
+   "CISO",
+   "Actions tracked to closure (T12.1)",
+   "LI-17: the management-review input (T12.1)"
+  ],
+  [
+   "Regulatory change brief",
+   "GRC team; affected process owners",
+   "Within 30 days of publication",
+   "Regulatory Watch › Briefing Builder",
+   "Policy & Governance Analyst",
+   "Impact actions completed on time",
+   "REG-BRIEF: the regulatory change brief (T11.2)"
+  ]
+ ],
+ "weekOpts": [
+  "W1 · Mon 05 Oct",
+  "W2 · Mon 12 Oct",
+  "W3 · Mon 19 Oct",
+  "W4 · Mon 26 Oct",
+  "W5 · Mon 02 Nov",
+  "W6 · Mon 09 Nov",
+  "W7 · Mon 16 Nov",
+  "W8 · Mon 23 Nov",
+  "W9 · Mon 30 Nov",
+  "W10 · Mon 07 Dec",
+  "W11 · Mon 14 Dec",
+  "W12 · Mon 21 Dec"
+ ],
+ "clauses": [
+  [
+   "5.1",
+   "Leadership and commitment",
+   "ACT-UPD, ACT-MRI, LI-POL",
+   "—"
+  ],
+  [
+   "7.2",
+   "Competence",
+   "AWR-PLAN, AWR-LESSON, LI-COMM",
+   "Evidence of competence"
+  ],
+  [
+   "7.3",
+   "Awareness",
+   "ADM-UND, ADM-RULES, AWR-PLAN, AWR-LESSON, LI-COMM",
+   "—"
+  ],
+  [
+   "7.4",
+   "Communication",
+   "LI-COMM",
+   "—"
+  ]
+ ]
+}

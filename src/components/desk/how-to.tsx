@@ -1,17 +1,23 @@
 "use client";
 
-import { Fragment, useEffect, useId, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { Label, press } from "./ui";
 import { QUESTIONS, qTitle, krActivities, krFor, rmfTable, splitKr, stepRefs, type QuestionKey, type Step, type Task } from "@/lib/desk/model";
-import { stepKey, type DecisionFeedback, type Progress } from "@/lib/desk/progress";
+import { decisionChecked, stepKey, type DecisionFeedback, type Progress } from "@/lib/desk/progress";
 import { api } from "@/lib/api";
-import { ATTEST, attestKey } from "@/lib/desk/forms";
+import { ATTEST, RMF, attestDone, attestKey, type Attest } from "@/lib/desk/forms";
+import { briefOf, regOf } from "@/lib/desk/registers";
+import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
+import { useAuth } from "@/components/auth/auth-provider";
+import { STEP_GUIDES } from "./step-guides";
+import { DECISION_CONTEXT } from "@/lib/desk/decision-context";
 import { FloatWindow } from "./float-window";
 import { UndertakingCard } from "./undertaking";
 import { stepAnswered, submissionText } from "@/lib/desk/work";
+import { MessageNotice } from "./chat";
 
 const REF_ICON: Record<string, IconName> = { rule: "shield", page: "table", tpl: "file", ds: "grid", doc: "book", clause: "pin" };
 
@@ -87,6 +93,9 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                 <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3730A3]">Lead Implementer · {ext.id}</span>
                 <span className="min-w-0 flex-1 text-[13.5px] font-semibold text-[#111827]">{ext.title}</span>
                 <span className="text-[12px] text-[#3F4757]">ISO/IEC 27001 {ext.clauses} · {ext.hours} h</span>
+                {/* The pack lists the extension's key result among the task's own (T3.1: "LI-01 KR — …"), and
+                    the task's time includes it: it is part of the task, handed in as its own file. */}
+                {task.krs.some((k) => k.startsWith(`${ext.id} KR`)) && <span data-li-part className="w-full text-[12.5px] text-[#3F4757]">Part of this task: its key result {ext.id} is one of {task.id}&apos;s, and its own file is handed in at the end of these steps.</span>}
                 <Link href="/app/certification" className="text-[12px] font-semibold text-[#3730A3] no-underline hover:underline focus-ring">Certification path</Link>
               </li>
             )}
@@ -199,11 +208,43 @@ export const thenOf = (s: Step) => {
   return t.charAt(0).toUpperCase() + t.slice(1); // cut from mid-sentence, so it starts lowercase
 };
 
+/** The heading of a decision's second part, naming it as its own task ("Sign the undertaking"). */
+export function thenLabel(task: Task, s: Step): string {
+  const att = ATTEST[task.id]?.[s.n];
+  if (att) return att.map((a) => a.then).join(", then ");
+  const t = rmfTable(s);
+  if (t !== null) return `Fill table ${t + 1}, “${RMF.tables[t].title}”`;
+  // A register's column: "Fill column E, “Offices (R02)”".
+  const reg = regOf(task.id, s.n);
+  // A report on the register's rows (F2.2 step 4): "Report data issue" on each item that needs it.
+  if (reg?.report?.step === s.n) return "Report any item with unmasked data (D9)";
+  if (reg?.then?.[s.n]) return reg.then[s.n];
+  const cols = reg?.steps[s.n] ?? [];
+  if (cols.length === 1) {
+    const [letter, ...name] = reg!.cols[cols[0]].h.split(" ");
+    // A template whose columns carry no letter (F2.1 CLS-RES): the column by its name.
+    return /^[A-Z]$/.test(letter) ? `Fill column ${letter}, “${name.join(" ")}”` : `Fill column “${reg!.cols[cols[0]].h}”`;
+  }
+  if (cols.length) return `Fill ${reg!.code}, “${reg!.title.split(" · ")[1] ?? reg!.title}”`;
+  // A brief's section: "Fill section 4, “Mission Critical assets”"; its hand-in names both files.
+  const b = briefOf(task.id, s.n);
+  if (b?.steps[s.n] !== undefined) {
+    const [num, ...name] = b.sections[b.steps[s.n]].h.split(" ");
+    return `Fill section ${num}, “${name.join(" ")}”`;
+  }
+  if (b?.handIn === s.n) return `Check the brief and hand in ${reg ? "both files" : "the file"}`;
+  return "Then";
+}
+
+export const LI_TAG = /^\[LI-\d+ — [^\]]+\]\s*/;
 function stepCopy(s: Step): { short: string; title: string; detail: string } {
   // "Decide:" / "Decide for each row:" is what the Type column already says, so the table drops it.
-  const lead = /^decide( for each row)?:\s*/i;
+  // The pack writes a per-row decision "DECIDE (for each item): …"; neither form is shown twice.
+  const lead = /^decide( for each row| \(for each (item|row)\))?:\s*/i;
   const short = s.kind === "do" ? s.t : s.t.replace(lead, "");
-  const body = s.w.split(/\s*Options:/)[0].replace(lead, "").trim();
+  // A Lead Implementer step's text opens with its extension ("[LI-05 — Statement of Applicability (SoA)] "),
+  // which the row's LI chip already names.
+  const body = s.w.split(/\s*Options:/)[0].replace(LI_TAG, "").replace(lead, "").trim();
   if (/(…|\.\.\.)$/.test(s.t)) return { short, title: body, detail: "" };
   const rest = body.startsWith(short) ? body.slice(short.length).replace(/^[\s.?:]+/, "").trim() : body === short ? "" : body;
   return { short, title: short, detail: rest };
@@ -225,19 +266,38 @@ function TypeChip({ each }: { each: boolean }) {
 }
 
 function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: boolean; onNext: () => void }) {
-  const { desk, progress, update, openTool } = useDesk();
+  const { desk, progress, update, openTool, start } = useDesk();
   const key = stepKey(task.id, s.n);
   const done = !!progress.done[key];
   // Editable until the task is submitted, even once the step is marked complete.
   const sealed = !!progress.submitted[task.id];
   const readOnly = locked || sealed;
   // Steps naming a tool with a screen are worked in that tool's modal; the two that name none stay here.
-  const inTool = !!s.key && !!desk.tp[s.key];
+  // A decision with no second part (its question is the whole activity, e.g. F1.2 step 5) is answered
+  // and completed here: there is nothing to do in the tool.
+  const inTool = !!s.key && !!desk.tp[s.key] && !(s.kind === "pick" && !thenOf(s) && !ATTEST[task.id]?.[s.n]);
+  // A decision's second part waits for its pick to be checked: the feedback comes first, and the
+  // forms of part 2 restate the rules the question tests.
+  const checked = s.kind !== "pick" || decisionChecked(progress, task.id, s.n);
+  // A step worked here, in its row, carries its own walk-through (a step worked in a tool runs its
+  // guide in the tool's modal). It runs the first time the step is open, and again from "Show me how".
+  const { user } = useAuth();
+  // A decision whose second part is done in a tool may carry a guide for its question, run here in the
+  // row: keyed "<task>-<n>q", since "<task>-<n>" is the tool's guide for part 2 (T3.2 step 12).
+  const guideKey = inTool ? `${task.id}-${s.n}q` : `${task.id}-${s.n}`;
+  const guide = inTool && s.kind !== "pick" ? undefined : STEP_GUIDES[guideKey];
+  const [guideAt, setGuideAt] = useState(-1);
+  // Never over another walk-through (the desk's own tour on a first visit): wait for it to close.
+  const startGuide = useCallback(() => {
+    const go = () => (document.querySelector('[aria-label^="Guide:"]') ? setTimeout(go, 800) : setGuideAt(0));
+    go();
+  }, []);
+  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && !readOnly && !done, startGuide, 1600);
   // A decision stays open once marked: completing it reveals why each option is right or wrong,
   // and moving on there and then would fold that away unread. The mentee moves on with Next step.
   const markDone = () => {
     update((p) => ({ ...p, done: { ...p.done, [key]: true } }));
-    if (s.kind !== "pick") onNext();
+    onNext();
   };
 
   return (
@@ -248,9 +308,16 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
               decision is made here, in the step, and the tool is part two. */}
           {s.kind === "pick" && (
             <>
-              <PartHead n={1} label="Decide" />
+              <div className="flex items-start justify-between gap-3">
+                <PartHead n={1} label="Decide" />
+                {guide && (
+                  <button data-guide="show-me-how" type="button" onClick={() => setGuideAt(0)} className="mt-1 inline-flex shrink-0 items-center gap-1 rounded border border-[#DDE1E8] bg-white px-2 py-1 text-[12px] font-semibold text-[#3730A3] hover:border-[#C7CBF5] hover:bg-[#EEF0FF] focus-ring">
+                    <Icon name="play" size={12} /> Show me how
+                  </button>
+                )}
+              </div>
               <Work task={task} s={s} readOnly={readOnly} bare />
-              <PartHead n={2} label="Then" />
+              <PartHead n={2} label={thenLabel(task, s)} />
               <p className="mb-2 text-[14px] leading-snug text-[#111827]">{thenOf(s)}</p>
             </>
           )}
@@ -260,8 +327,8 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
               <Icon name="grid" size={15} />
             </span>
             <span className="min-w-[11rem] flex-1">
-              <span className="block text-[12px] text-indigo-700">{done ? "Done in" : "Do this step in"}</span>
-              <span className="block text-[14px] font-semibold text-slate-900">{rmfTable(s) !== null ? `READ-ME-FIRST (01_Inputs), copying from ${s.tool}` : s.tool}</span>
+              <span className="block text-[12px] text-indigo-700">{done ? "Done in" : checked ? "Do this step in" : "Opens once you check your answer"}</span>
+              <span className="block text-[14px] font-semibold text-slate-900">{rmfTable(s) !== null ? `READ-ME-FIRST (01_Inputs), ${/checked against/.test(s.o) ? "checking against" : "copying from"} ${s.tool}` : s.tool}</span>
               <span className="block text-[12px] text-slate-500">Done when: {s.o}</span>
             </span>
             <span className="flex items-center gap-2">
@@ -281,7 +348,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
               ) : (
                 <button
                   type="button"
-                  disabled={locked}
+                  disabled={locked || !checked}
                   onClick={() => openTool(s.key)}
                   className={`inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
                 >
@@ -294,20 +361,43 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
         </>
       ) : (
         <>
-          {s.kind === "pick" ? <PartHead n={1} label="Decide" /> : <Label>{s.kind === "each" ? "Your decision for each row" : "Your work"}</Label>}
+          <div className="flex items-start justify-between gap-3">
+            {s.kind === "pick" ? <PartHead n={1} label="Decide" /> : <Label>{s.kind === "each" ? "Your decision for each row" : "Your work"}</Label>}
+            {guide && (
+              <button
+                data-guide="show-me-how"
+                type="button"
+                onClick={() => setGuideAt(0)}
+                className="inline-flex shrink-0 items-center gap-1 rounded border border-[#DDE1E8] bg-white px-2 py-1 text-[12px] font-semibold text-[#3730A3] hover:border-[#C7CBF5] hover:bg-[#EEF0FF] focus-ring"
+              >
+                <Icon name="play" size={12} /> Show me how
+              </button>
+            )}
+          </div>
           <Work task={task} s={s} readOnly={readOnly} bare />
           {thenOf(s) && (
-            <>
-              <PartHead n={2} label="Then" />
-              <p className="text-[14px] leading-snug text-[#111827]">{thenOf(s)}</p>
-              {/* The undertaking is a document, signed as a new joiner signs one; the rules are ticked here. */}
-              {ATTEST[task.id]?.[s.n]?.sign ? (
-                <UndertakingCard task={task} n={s.n} readOnly={readOnly} />
-              ) : ATTEST[task.id]?.[s.n] ? (
-                <Attestation task={task} n={s.n} readOnly={readOnly} />
-              ) : null}
-            </>
+            <div data-guide="part-two">
+              <PartHead n={2} label={thenLabel(task, s)} />
+              {checked ? (
+                <>
+                  <p className="text-[14px] leading-snug text-[#111827]">{thenOf(s)}</p>
+                  {/* The undertaking is a document, signed as a new joiner signs one; the rules are ticked here. */}
+                  {/* In order: a form opens once the one before it is saved (the rules before the undertaking). */}
+                  {(ATTEST[task.id]?.[s.n] ?? []).map((a, i, all) => {
+                    const waiting = i > 0 && !attestDone(progress, task.id, all[i - 1].code);
+                    return a.sign ? (
+                      <UndertakingCard key={a.code} task={task} a={a} readOnly={readOnly} waiting={waiting ? `Opens once you save the ${all[i - 1].title} above.` : undefined} />
+                    ) : (
+                      <Attestation key={a.code} task={task} a={a} readOnly={readOnly || waiting} />
+                    );
+                  })}
+                </>
+              ) : (
+                <p className="rounded border border-dashed border-[#C9CED8] bg-[#F7F8FA] px-3 py-2.5 text-[13px] text-[#5B6474]">Opens once you check your answer above.</p>
+              )}
+            </div>
           )}
+          {!readOnly && !done && <div className="mt-4"><MessageNotice task={task} n={s.n} /></div>}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[12.5px] text-slate-500">
               <span className="font-medium text-slate-700">Done when:</span> {s.o}
@@ -325,7 +415,8 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
               ) : (
                 <button
                   type="button"
-                  disabled={readOnly || !stepAnswered(desk, progress, task, s)}
+                  data-guide="step-complete"
+                  disabled={readOnly || !stepAnswered(desk, progress, task, s, start)}
                   onClick={markDone}
                   className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
                 >
@@ -336,7 +427,40 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
           </div>
         </>
       )}
+      {guide && (
+        <GuidedTour
+          steps={guide}
+          step={guideAt}
+          onStep={setGuideAt}
+          onClose={() => {
+            setGuideAt(-1);
+            markTourSeen(`grc101.guide.${guideKey}`, user?.email);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * A decision already checked in its step row, as one line in the tool where the step's second part is
+ * done: the question is answered once, in the row, and is not asked again here.
+ */
+export function DecisionSummary({ task, s }: { task: Task; s: Step }) {
+  const { progress } = useDesk();
+  const pick = progress.picks[stepKey(task.id, s.n)];
+  const fb = s.did ? progress.decisions?.[s.did] : undefined;
+  if (typeof pick !== "string" || !s.opt) return null;
+  return (
+    <p data-guide="decision-summary" className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded border border-[#DDE1E8] bg-[#F7F8FA] px-3 py-2 text-[13.5px] text-[#111827]">
+      <span className="text-[12px] text-[#5B6474]">Your answer</span>
+      <span><span className="mr-1 font-semibold text-slate-500">{pick}</span>{s.opt[pick.charCodeAt(0) - 65]}</span>
+      {fb?.best && (
+        <span className={`rounded-[3px] px-1.5 py-0.5 text-[11.5px] font-semibold ${fb.correct ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#FEF3C7] text-[#92400E]"}`}>
+          {fb.correct ? "Best" : `Best was ${fb.best}`}
+        </span>
+      )}
+    </p>
   );
 }
 
@@ -366,7 +490,7 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
     if (kind === "tpl") return desk.tpls[id]?.[2] ?? "Template";
     if (kind === "doc") {
       const [doc, secs] = id.split("#");
-      return `${desk.docs[doc] ?? "Library document"}${secs ? ` · §${secs.split(",").join(", §")}` : ""}`;
+      return `${desk.docs[doc] ?? "Library document"}${secs ? ` · Section ${secs.split(",").join(", Section ")}` : ""}`;
     }
     if (kind === "clause") return desk.iso[id] ? `ISO/IEC 27001 · ${desk.iso[id]}` : "ISO/IEC 27001 clause";
     if (kind === "page") return "Reference page";
@@ -376,7 +500,8 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
 
   // Short, plain answers built only from what the pack says. NOTE: a step's own `why` is the answer
   // explanation of a decision (the pack reveals it after review), so it is never shown here.
-  const taskWhy = typeof task.card["Why am I doing this"] === "string" ? firstSentence(task.card["Why am I doing this"] as string) : "";
+  const liWhy = s.li ? (desk.li[s.li] as { card?: { why?: string } } | undefined)?.card?.why : undefined;
+  const taskWhy = liWhy ?? (typeof task.card["Why am I doing this"] === "string" ? firstSentence(task.card["Why am I doing this"] as string) : "");
 
   const answer: Record<QuestionKey, ReactNode> = {
     // The open row already shows the instruction; Do adds only the owner's note, in simpler words.
@@ -472,9 +597,8 @@ export function PartHead({ n, label }: { n: number; label: string }) {
  * The data rules, done on their step: each ticked, then saved. Saving is final: it is the record that
  * the mentee knows the rules. (The undertaking is signed as a document: undertaking.tsx.)
  */
-function Attestation({ task, n, readOnly }: { task: Task; n: number; readOnly: boolean }) {
+function Attestation({ task, a, readOnly }: { task: Task; a: Attest; readOnly: boolean }) {
   const { progress, update } = useDesk();
-  const a = ATTEST[task.id][n];
   const k = attestKey(task.id, a.code);
   const g = progress.grids?.[k] ?? {};
   const set = (patch: Record<string, string>) => update((p) => ({ ...p, grids: { ...p.grids, [k]: { ...(p.grids?.[k] ?? {}), ...patch } } }));
@@ -488,7 +612,7 @@ function Attestation({ task, n, readOnly }: { task: Task; n: number; readOnly: b
         <span className="font-mono text-[12px] font-semibold text-[#111827]">{a.code}</span>
         <span className="text-[13px] font-semibold text-[#3F4757]">{a.title}</span>
         {done && (
-          <span className="ml-auto inline-flex items-center gap-1 text-[12.5px] font-medium text-emerald-700">
+          <span data-saved className="ml-auto inline-flex items-center gap-1 text-[12.5px] font-medium text-emerald-700">
             <Icon name="checkCircle" size={14} /> Saved {when}
           </span>
         )}
@@ -592,31 +716,39 @@ function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: 
   const raw = progress.picks[key];
   const pick = typeof raw === "string" ? raw : undefined;
   const done = !!progress.done[key];
+  // Checked: the pick is locked and its feedback shown, before the step's second part is done.
+  const checked = done || (progress.acks[key] ?? []).includes("checked");
   const did = s.did;
   const fb = did ? progress.decisions?.[did] : undefined;
+  const context = did ? DECISION_CONTEXT[did] : undefined;
   const [failed, setFailed] = useState(false);
   const [tries, setTries] = useState(0);
   // One radio group per copy: the same decision is drawn in the step row and in the step's window,
   // and radios sharing a name are one group to the browser, so ticking one copy unticked the other.
   const group = `${key}-${useId()}`;
 
-  // Fetched once the step is done, from whichever surface completed it; kept with the progress.
+  // Fetched once the pick is checked, from whichever surface checked it; kept with the progress.
   useEffect(() => {
-    if (!done || fb || !pick || !did) return;
+    if (!checked || fb || !pick || !did) return;
     let live = true;
     api
       .post<DecisionFeedback>("/me/desk/decision", { id: did, pick })
       .then((r) => { if (live) update((p) => ({ ...p, decisions: { ...p.decisions, [did]: r } })); })
       .catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
-  }, [done, fb, pick, did, update, tries]);
+  }, [checked, fb, pick, did, update, tries]);
+  const check = () => update((p) => ({ ...p, acks: { ...p.acks, [key]: [...(p.acks[key] ?? []).filter((x) => x !== "checked"), "checked"] } }));
 
   const best = fb?.best;
   return (
-    <fieldset className={`${bare ? "mt-2" : "mt-4"} grid gap-2`} disabled={readOnly || done}>
+    <fieldset data-guide="decision" className={`${bare ? "mt-2" : "mt-4"} grid gap-2`} disabled={readOnly || checked}>
       {!bare && <legend className="mb-2"><Label>Your decision</Label></legend>}
+      {context && (
+        // The situation the question sits in: something to reason with before choosing.
+        <p data-guide="decision-context" className="rounded border-l-2 border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2 text-[13.5px] leading-relaxed text-[#111827]">{context}</p>
+      )}
       {fb && (
-        <p className={`flex items-center gap-2 rounded px-3 py-2 text-[13.5px] font-semibold ${fb.correct === false ? "bg-[#FFFBEB] text-[#78350F]" : "bg-[#F0FDF4] text-[#14532D]"}`}>
+        <p data-guide="decision-result" className={`flex items-center gap-2 rounded px-3 py-2 text-[13.5px] font-semibold ${fb.correct === false ? "bg-[#FFFBEB] text-[#78350F]" : "bg-[#F0FDF4] text-[#14532D]"}`}>
           <Icon name={fb.correct === false ? "info" : "checkCircle"} size={16} className="shrink-0" />
           {fb.correct === true ? "You chose the best option." : fb.correct === false ? `Not the best option. The best is ${best}.` : "Your choice is recorded. The reviewer checks it against your material."}
         </p>
@@ -652,8 +784,21 @@ function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: 
         );
       })}
       {fb?.why && <p className="text-[12.5px] leading-snug text-[#5B6474]"><strong className="font-semibold text-[#3F4757]">The rule: </strong>{fb.why}</p>}
-      {!done && <p className="text-[12px] text-slate-500">Mark the activity complete to see the best option and why. Your choice is locked then.</p>}
-      {done && !fb && pick && (failed ? (
+      {!checked && (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            data-guide="check-answer"
+            disabled={readOnly || !pick}
+            onClick={check}
+            className={`h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+          >
+            Check my answer
+          </button>
+          <span className="text-[12px] text-slate-500">You see the best option and why straight away. Your choice is locked then.</span>
+        </div>
+      )}
+      {checked && !fb && pick && (failed ? (
         <p className="flex items-center gap-2 text-[12.5px] text-[#92400E]">
           Could not load the explanation.
           <button type="button" onClick={() => { setFailed(false); setTries((t) => t + 1); }} className="font-semibold underline underline-offset-2 focus-ring">Try again</button>

@@ -1,0 +1,1062 @@
+{
+ "r07": "Find the likelihood and impact descriptor in the ERM scale table (BKB-ERM-001 Section 6.2–6.4) that uses the same words as the facts. Write the descriptor number. Residual likelihood = inherent likelihood − 1 for each existing control marked \"working\" (lowest value 1). Residual impact = inherent impact. Score = likelihood × impact. Rating: 1–5 Low, 6–11 Medium, 12–19 High, 20–25 Critical.",
+ "r08": "LOW-criticality appetite = 11. Residual score ≤ 11 → Decision \"Accept and monitor\". Residual score > 11 → Decision \"Treat\"; due days from BKB-ERM-001 Section 7: Critical 30, High 90, Medium 180.",
+ "request": "2026-11-20",
+ "board": "2026-05-20",
+ "week12": "2026-12-21",
+ "register": [
+  [
+   "R-16-HQ-01",
+   "Ransomware disrupting Mission Critical services",
+   "16",
+   "9",
+   "Medium",
+   "Accept and monitor",
+   "Org CISO",
+   "Org CEO",
+   "EDR; immutable backups (3-2-1-1-0); MFA; network segmentation; IR retainer (HIGH/MEDIUM)",
+   "Because the Manila, Philippines office operates 10 Mission Critical and 81 registered assets (e.g., Treasury management system, Banking & payment files) and the Business Process Outsourcing (BPO) & KPO industry faces social-engineering of agents, credential theft and ransomware cascading into client environments, a ransomware attack may encrypt production and backup data, disrupting 'Call handling and customer query resolution' beyond RTO and triggering notification under Data Privacy Act 2012."
+  ],
+  [
+   "R-16-HQ-02",
+   "Phishing and business-email compromise leading to credential theft or fraudulent payment",
+   "16",
+   "12",
+   "High",
+   "Treat — due 90 days",
+   "CFO",
+   "Org CEO + Group CISO",
+   "Email security (DMARC p=reject, sandboxing); phishing-resistant MFA; call-back verification for payment changes; awareness",
+   "Because staff at Manila, Philippines (Finance & Treasury (Group)) receive targeted phishing and payment-diversion requests, attackers may compromise mailboxes or induce fraudulent payments, causing direct loss and data exposure."
+  ],
+  [
+   "R-16-HQ-03",
+   "Personal-data breach through misconfigured cloud / SaaS services",
+   "12",
+   "8",
+   "Medium",
+   "Accept and monitor",
+   "DPO",
+   "Org CEO",
+   "CSPM; SSO with MFA; DLP labels on Tier 3/4; vendor DPAs",
+   "Because 15 assets at Manila, Philippines hold personal or regulated data (e.g., HR Information System (HRIS), Payroll system) on 38 SaaS and 31 cloud-hosted services, misconfiguration or excessive access may expose personal data, requiring notification (72h to NPC and data subjects)."
+  ],
+  [
+   "R-16-HQ-04",
+   "Failure to meet statutory breach-notification deadlines in Philippines",
+   "6",
+   "3",
+   "Low",
+   "Accept and monitor",
+   "DPO",
+   "Risk owner",
+   "Incident Management Policy; notification matrix; DPO on-call",
+   "Because Philippines requires: 72h to NPC and data subjects, and incidents may span several jurisdictions, the office may miss the shortest notification clock, leading to enforcement by National Privacy Commission."
+  ],
+  [
+   "R-16-HQ-05",
+   "Compromise or failure of a critical SaaS / cloud supplier",
+   "12",
+   "8",
+   "Medium",
+   "Accept and monitor",
+   "Procurement / Vendor Risk Analyst",
+   "Org CEO",
+   "TPRM onboarding and annual review; SOC 2 / ISO 27001 reports; contractual notification ≤ 24h",
+   "Because 38 of the office's assets are vendor-hosted SaaS and 31 run on third-party cloud, a supplier breach or outage may expose Group data or halt services."
+  ],
+  [
+   "R-16-HQ-06",
+   "Misuse of privileged access by insiders or compromised administrators",
+   "8",
+   "4",
+   "Low",
+   "Accept and monitor",
+   "Org CISO",
+   "Risk owner",
+   "PAM; quarterly privileged-access review; logging to SIEM; background screening",
+   "Because administrators at Manila, Philippines hold privileged access to 39 Tier 4 assets, malicious or careless insiders may exfiltrate or alter restricted information."
+  ],
+  [
+   "R-16-HQ-07",
+   "Exploitation of unpatched internet-facing vulnerabilities",
+   "12",
+   "8",
+   "Medium",
+   "Accept and monitor",
+   "Vulnerability Management Governance Analyst",
+   "Org CEO",
+   "Monthly authenticated scanning; patch SLAs by band; WAF; annual pen test",
+   "Because internet-facing services supporting 'Call handling and customer query resolution' are continuously scanned by attackers, unpatched critical vulnerabilities (KEV-listed) may be exploited before remediation SLAs are met."
+  ],
+  [
+   "R-16-HQ-08",
+   "DDoS and hacktivist campaigns against public-facing services",
+   "9",
+   "6",
+   "Medium",
+   "Accept and monitor",
+   "Cyber Threat Intelligence Analyst",
+   "Org CEO",
+   "CDN / DDoS protection; WAF; incident playbooks",
+   "Because of the local threat environment (Moderate — South China Sea tensions), hacktivist or state-aligned groups may launch DDoS or defacement attacks against services delivered from Manila, Philippines."
+  ],
+  [
+   "R-16-HQ-09",
+   "State-sponsored espionage and intellectual-property theft",
+   "8",
+   "4",
+   "Low",
+   "Accept and monitor",
+   "Cyber Threat Intelligence Analyst",
+   "Risk owner",
+   "EDR; SIEM; threat intelligence; network segmentation; privileged access management",
+   "Because GlobalConnect Customer Solutions holds valuable client-delivery platforms data and Philippines has a threat level of 4/5, advanced persistent threat actors may gain long-term covert access and exfiltrate sensitive information."
+  ],
+  [
+   "R-16-HQ-10",
+   "Natural hazard disrupting the Manila office (Typhoon)",
+   "16",
+   "9",
+   "Medium",
+   "Accept and monitor",
+   "Business Continuity & Resilience Analyst",
+   "Org CEO",
+   "Office BCP; remote-working capability; cloud-hosted services; insurance",
+   "Because Manila is exposed to typhoon, earthquake, volcano (very high), an event may make the office or local infrastructure unavailable, disrupting 81 registered assets and staff operations."
+  ],
+  [
+   "R-16-HQ-11",
+   "Failure of local power, telecom or internet infrastructure",
+   "12",
+   "6",
+   "Medium",
+   "Accept and monitor",
+   "Office & Facilities Manager",
+   "Org CEO",
+   "UPS/generator; dual ISPs; cloud failover",
+   "Because local infrastructure reliability in Philippines is rated 3/5 risk, prolonged power or connectivity outages may interrupt office operations and on-premises systems."
+  ],
+  [
+   "R-16-HQ-12",
+   "Geopolitical instability, sanctions or civil unrest affecting operations",
+   "8",
+   "4",
+   "Low",
+   "Accept and monitor",
+   "Regional Managing Director",
+   "Risk owner",
+   "Crisis management; travel security; sanctions screening",
+   "Because moderate — south china sea tensions, escalation may disrupt operations, restrict data flows or payments, or endanger staff at Manila, Philippines."
+  ],
+  [
+   "R-16-HQ-13",
+   "Regulatory change outpacing compliance programme",
+   "4",
+   "2",
+   "Low",
+   "Accept and monitor",
+   "Policy & Governance Analyst",
+   "Risk owner",
+   "Monthly regulatory horizon scanning; Obligations Register",
+   "Because the regulatory environment in Philippines is evolving (DICT; Cybercrime Prevention Act 2012), new or amended obligations may take effect before controls are updated."
+  ],
+  [
+   "R-16-HQ-14",
+   "Bribery, corruption or weak contract enforceability",
+   "8",
+   "4",
+   "Low",
+   "Accept and monitor",
+   "Regional Compliance Officer",
+   "Risk owner",
+   "Code of conduct; anti-bribery policy; due diligence on intermediaries",
+   "Because the legal and institutional environment in Philippines carries elevated enforceability and integrity risk (3/5), the office may face improper demands from officials or suppliers and difficulty enforcing contracts."
+  ],
+  [
+   "R-16-HQ-15",
+   "Loss of key security / compliance staff and skills shortage",
+   "4",
+   "2",
+   "Low",
+   "Accept and monitor",
+   "CHRO",
+   "Risk owner",
+   "Group GRC AI agents; mentorship programme; succession planning",
+   "Because the head office concentrates GRC expertise in a few individuals, departures may leave controls unowned and compliance tasks undone."
+  ],
+  [
+   "R-16-HQ-16",
+   "Inadequate recovery capability for Mission Critical assets",
+   "8",
+   "3",
+   "Low",
+   "Accept and monitor",
+   "Business Continuity & Resilience Analyst",
+   "Risk owner",
+   "DR plans; HA architecture; backup testing per band",
+   "Because 10 Mission Critical assets at Manila, Philippines (e.g., Treasury management system, Banking & payment files) require near-100% availability, untested or insufficient DR may lead to outages exceeding RTO."
+  ],
+  [
+   "R-16-HQ-17",
+   "Data loss through endpoints, remote working and removable media",
+   "9",
+   "6",
+   "Medium",
+   "Accept and monitor",
+   "Regional IT Manager",
+   "Org CEO",
+   "Full-disk encryption; MDM; DLP; AUP",
+   "Because staff at Manila, Philippines work remotely and handle Tier 3/4 information, lost devices, unapproved cloud storage or removable media may leak data."
+  ],
+  [
+   "R-16-HQ-18",
+   "Errors or misuse of AI agents and generative-AI tools",
+   "4",
+   "2",
+   "Low",
+   "Accept and monitor",
+   "Group CISO (AI governance)",
+   "Risk owner",
+   "AI Use Policy; human-in-the-loop; output QA sampling; enterprise AI tools",
+   "Because GRC activities for GlobalConnect Customer Solutions are executed by AI agents and staff use generative AI, inaccurate outputs, data leakage into AI tools or unapproved automated decisions may cause compliance errors."
+  ],
+  [
+   "R-16-HQ-19",
+   "Cascading breach into client environments",
+   "15",
+   "10",
+   "Medium",
+   "Accept and monitor",
+   "Org CISO",
+   "Org CEO",
+   "Sector controls per mandatory standards; SOC monitoring; encryption",
+   "Because the office supports client-delivery platforms for GlobalConnect Customer Solutions and faces social-engineering of agents, credential theft and ransomware cascading into client environments, a breach in the delivery centre propagates into client systems and multiple client data sets."
+  ],
+  [
+   "R-16-HQ-20",
+   "Unauthorised physical access, theft or tampering at the office",
+   "6",
+   "3",
+   "Low",
+   "Accept and monitor",
+   "Office & Facilities Manager",
+   "Risk owner",
+   "Badge access; visitor management; CCTV; clear desk",
+   "Because Manila, Philippines houses on-premises infrastructure and staff handling Tier 3/4 information, tailgating, theft or tampering may compromise equipment or information."
+  ],
+  [
+   "R-16-HQ-21",
+   "Cloud-region outage or provider concentration",
+   "8",
+   "6",
+   "Medium",
+   "Accept and monitor",
+   "Cloud & Platform Operations Lead",
+   "Org CRCO",
+   "Multi-region deployment for some services; provider SLAs",
+   "Because 69 assets at Manila, Philippines depend on a small number of hyperscale and SaaS providers, a regional outage may impact many services simultaneously."
+  ],
+  [
+   "R-16-HQ-22",
+   "Exposure of live data through mentorship-programme activities",
+   "6",
+   "3",
+   "Low",
+   "Accept and monitor",
+   "Cybersecurity Program Manager",
+   "Risk owner",
+   "Mentorship Programme Conduct & Data Policy; sandbox; synthetic data",
+   "Because GRC 101 mentees perform tasks for GlobalConnect Customer Solutions (including at Manila, Philippines), use of unsanitised data or excessive access could expose live personal or confidential information."
+  ],
+  [
+   "R-16-HQ-23",
+   "Enforcement action by the lead regulator (NPC — National Privacy Commission (Philippines))",
+   "8",
+   "4",
+   "Low",
+   "Accept and monitor",
+   "Org Chief Risk & Compliance Officer",
+   "Risk owner",
+   "Compliance programme; certification; regulator liaison",
+   "Because GlobalConnect Customer Solutions is supervised by NPC — National Privacy Commission (Philippines), gaps in mandatory obligations (Registration of Data Processing Systems with NPC; Appointment of Data Protection Officer (DPO)) may lead to audits, fines or licence conditions."
+  ],
+  [
+   "R-16-HQ-24",
+   "Reputational crisis following a security or privacy incident",
+   "8",
+   "3",
+   "Low",
+   "Accept and monitor",
+   "Head of Communications",
+   "Risk owner",
+   "Crisis communication plan; media training",
+   "Because GlobalConnect Customer Solutions serves Client companies (BPO customers), NPC Philippines, a publicised incident at Manila, Philippines could erode trust and trigger customer loss."
+  ],
+  [
+   "R-16-HQ-25",
+   "Insufficient logging and detection coverage",
+   "6",
+   "3",
+   "Low",
+   "Accept and monitor",
+   "Incident Response & Crisis Manager",
+   "Risk owner",
+   "SIEM; log retention 12 months; SOC (HIGH/MEDIUM)",
+   "Because not all 81 assets at Manila, Philippines forward security logs to the SIEM, attacks may go undetected or cannot be investigated, breaching log-retention obligations."
+  ],
+  [
+   "R-16-HQ-26",
+   "Security logs deleted before an incident is investigated",
+   "12",
+   "9",
+   "Medium",
+   "Accept and monitor",
+   "Chief Information Security Officer",
+   "Org CRCO",
+   "SIEM alerting on live logs (working); monthly log-source coverage review (not working: two reviews missed in 2026)",
+   "Because of online log retention cut to 90 days, deletion of security logs before an incident found late is investigated may occur, leading to a reportable breach left uninvestigated for SIEM & log analytics platform."
+  ],
+  [
+   "R-16-HQ-27",
+   "Customer personal data exported to spreadsheets",
+   "20",
+   "20",
+   "Critical",
+   "Treat — due 30 days",
+   "Head of Customer Operations",
+   "Not acceptable",
+   "DLP labels on Tier 3/4 files (not working: the spreadsheets are created unlabelled); security awareness training (not working for this risk: no module covers exports)",
+   "Because of customer data exported to spreadsheets for manual onboarding, a spreadsheet of customer personal data sent or saved outside the CRM may occur, leading to large-scale personal-data harm to customers for Customer master data."
+  ],
+  [
+   "R-16-HQ-28",
+   "Supplier API end-of-support breaking case workflow",
+   "16",
+   "12",
+   "High",
+   "Treat — due 90 days",
+   "Chief Delivery Officer",
+   "Org CEO + Group CISO",
+   "Supplier change notices reviewed monthly (working); fallback to manual case entry (not working: never tested)",
+   "Because of the supplier's end-of-support for the API version the office uses, failure of the integration between the supplier's platform and the case workflow may occur, leading to customer cases not handled during the outage for Workflow & case management."
+  ]
+ ],
+ "log": [
+  [
+   "2026-06-08",
+   "R-16-HQ-19",
+   "Likelihood (residual)",
+   "2",
+   "3",
+   "Incident INC-2026-031: a vendor support account reached a client environment through the jump host without MFA (incident report)"
+  ],
+  [
+   "2026-06-08",
+   "R-16-HQ-19",
+   "Residual score",
+   "10",
+   "15",
+   "Follows from the row above"
+  ],
+  [
+   "2026-06-08",
+   "R-16-HQ-19",
+   "Residual rating",
+   "Medium",
+   "High",
+   "Follows from the row above"
+  ],
+  [
+   "2026-07-14",
+   "R-16-HQ-10",
+   "Likelihood (residual)",
+   "4",
+   "3",
+   "Typhoon-season drill: remote operation of the office passed (BCP drill report, July 2026)"
+  ],
+  [
+   "2026-07-14",
+   "R-16-HQ-10",
+   "Residual score",
+   "12",
+   "9",
+   "Follows from the row above"
+  ],
+  [
+   "2026-07-14",
+   "R-16-HQ-10",
+   "Residual rating",
+   "High",
+   "Medium",
+   "Follows from the row above"
+  ],
+  [
+   "2026-08-05",
+   "R-16-HQ-02",
+   "Likelihood (residual)",
+   "2",
+   "3",
+   "KRI breach: phishing simulation click rate 11 % in July 2026, target 5 %; awareness is not working for this risk (KRI report, July 2026)"
+  ],
+  [
+   "2026-08-05",
+   "R-16-HQ-02",
+   "Residual score",
+   "8",
+   "12",
+   "Follows from the row above"
+  ],
+  [
+   "2026-08-05",
+   "R-16-HQ-02",
+   "Residual rating",
+   "Medium",
+   "High",
+   "Follows from the row above"
+  ],
+  [
+   "2026-09-02",
+   "R-16-HQ-01",
+   "Likelihood (residual)",
+   "4",
+   "3",
+   "Restore test: every Mission Critical system restored from immutable backup within its RTO (restore test report, 2026-08-28)"
+  ],
+  [
+   "2026-09-02",
+   "R-16-HQ-01",
+   "Residual score",
+   "12",
+   "9",
+   "Follows from the row above"
+  ],
+  [
+   "2026-09-02",
+   "R-16-HQ-01",
+   "Residual rating",
+   "High",
+   "Medium",
+   "Follows from the row above"
+  ],
+  [
+   "2026-09-02",
+   "R-16-HQ-01",
+   "Risk owner",
+   "Regional IT Manager",
+   "Org CISO",
+   "IT reorganisation: ransomware response moves to the Org CISO (organisation chart, September 2026)"
+  ],
+  [
+   "2026-09-21",
+   "R-16-HQ-19",
+   "Likelihood (residual)",
+   "3",
+   "2",
+   "Vendor support accounts moved behind MFA on the jump host; control test passed (control test record, 2026-09-18)"
+  ],
+  [
+   "2026-09-21",
+   "R-16-HQ-19",
+   "Residual score",
+   "15",
+   "10",
+   "Follows from the row above"
+  ],
+  [
+   "2026-09-21",
+   "R-16-HQ-19",
+   "Residual rating",
+   "High",
+   "Medium",
+   "Follows from the row above"
+  ],
+  [
+   "2026-10-12",
+   "R-16-HQ-07",
+   "Likelihood (residual)",
+   "3",
+   "2",
+   "Internet-facing services moved behind the web application firewall; patch SLA met for three months (Vulnerability Management report)"
+  ],
+  [
+   "2026-10-12",
+   "R-16-HQ-07",
+   "Residual score",
+   "12",
+   "8",
+   "Follows from the row above"
+  ],
+  [
+   "2026-10-12",
+   "R-16-HQ-07",
+   "Residual rating",
+   "High",
+   "Medium",
+   "Follows from the row above"
+  ],
+  [
+   "2026-11-19",
+   "R-16-HQ-21",
+   "Likelihood (residual)",
+   "1",
+   "2",
+   "C1, your T7.1 update: KRI threshold breached for two months (KRI report, October 2026)"
+  ],
+  [
+   "2026-11-19",
+   "R-16-HQ-21",
+   "Residual score",
+   "3",
+   "6",
+   "Follows from the row above"
+  ],
+  [
+   "2026-11-19",
+   "R-16-HQ-21",
+   "Residual rating",
+   "Low",
+   "Medium",
+   "Follows from the row above"
+  ],
+  [
+   "2026-11-19",
+   "R-16-HQ-21",
+   "Acceptance authority",
+   "Risk owner",
+   "Org CRCO",
+   "Follows from the row above"
+  ],
+  [
+   "2026-11-19",
+   "R-16-HQ-12",
+   "Treatment plan",
+   "no status",
+   "overdue, 50 % complete",
+   "C2, your T7.1 update: treatment action overdue, 50 % complete (Mitigation Tracker export, 2026-11-02)"
+  ],
+  [
+   "2026-11-19",
+   "R-16-HQ-26",
+   "Residual score",
+   "— (not in the register)",
+   "9",
+   "N1, your T7.1 update: new risk added to the register"
+  ],
+  [
+   "2026-11-19",
+   "R-16-HQ-27",
+   "Residual score",
+   "— (not in the register)",
+   "20",
+   "N2, your T7.1 update: new risk added to the register"
+  ],
+  [
+   "2026-11-19",
+   "R-16-HQ-28",
+   "Residual score",
+   "— (not in the register)",
+   "12",
+   "N3, your T7.1 update: new risk added to the register"
+  ]
+ ],
+ "sowhat": {
+  "R-16-HQ-27": [
+   "If this happens, customer data is exported to spreadsheets for manual onboarding.",
+   "If this happens, a spreadsheet of customer personal data is sent or saved outside the CRM.",
+   "If this happens, customers suffer large-scale harm from the exposure of their personal data."
+  ],
+  "R-16-HQ-02": [
+   "If this happens, staff in Finance & Treasury receive targeted phishing and payment-diversion requests.",
+   "If this happens, attackers compromise mailboxes or induce fraudulent payments.",
+   "If this happens, we suffer a direct financial loss and our data is exposed."
+  ],
+  "R-16-HQ-28": [
+   "If this happens, the supplier ends support for the API version the office uses.",
+   "If this happens, the integration between the supplier's platform and our case workflow fails.",
+   "If this happens, customer cases are not handled while the outage lasts."
+  ],
+  "R-16-HQ-19": [
+   "If this happens, the office supports client-delivery platforms and its agents are targeted by social engineering.",
+   "If this happens, a breach starts in the delivery centre.",
+   "If this happens, the breach spreads into our clients' systems and their data sets."
+  ],
+  "R-16-HQ-01": [
+   "If this happens, the office runs 10 Mission Critical systems in an industry that ransomware targets.",
+   "If this happens, a ransomware attack encrypts production and backup data.",
+   "If this happens, call handling for our customers stops beyond its recovery time, and a breach must be notified under the Data Privacy Act 2012."
+  ],
+  "R-16-HQ-10": [
+   "If this happens, Manila is exposed to typhoons, earthquakes and volcanic activity.",
+   "If this happens, a natural hazard makes the office or local infrastructure unavailable.",
+   "If this happens, 81 of our systems and the staff's work at the office are disrupted."
+  ],
+  "R-16-HQ-26": [
+   "If this happens, online log retention is cut to 90 days.",
+   "If this happens, security logs are deleted before an incident found late is investigated.",
+   "If this happens, a reportable breach is left uninvestigated."
+  ],
+  "R-16-HQ-03": [
+   "If this happens, 15 systems hold personal data on many SaaS and cloud services.",
+   "If this happens, misconfiguration or excessive access exposes personal data.",
+   "If this happens, we must notify the National Privacy Commission and the people affected within 72 hours."
+  ],
+  "R-16-HQ-05": [
+   "If this happens, 38 of our systems are SaaS and 31 run on third-party cloud.",
+   "If this happens, a supplier is breached or suffers an outage.",
+   "If this happens, Group data is exposed or our services stop."
+  ],
+  "R-16-HQ-07": [
+   "If this happens, internet-facing services are scanned by attackers all the time.",
+   "If this happens, an unpatched critical vulnerability is exploited before it is fixed.",
+   "If this happens, attackers get into the services that handle customer calls and queries."
+  ]
+ },
+ "reviews": [
+  [
+   "ADM-UND",
+   "Signed undertaking",
+   "F1.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "ADM-RULES",
+   "Data rules acknowledgement",
+   "F1.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "ONB-RMF",
+   "Completed READ-ME-FIRST file",
+   "F1.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "FAM-MAP",
+   "Framework map",
+   "F1.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "CTX-BRIEF",
+   "Context brief",
+   "F1.3",
+   "Accepted",
+   "—"
+  ],
+  [
+   "CTX-IP",
+   "Interested parties",
+   "F1.3",
+   "Accepted",
+   "—"
+  ],
+  [
+   "CLS-RES",
+   "Classification worksheet",
+   "F2.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "EVQ-RES",
+   "Evidence check results",
+   "F2.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "OBL-REG",
+   "Obligations register extract",
+   "T3.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-FAM",
+   "ISO/IEC 27000-family map",
+   "T3.1",
+   "Accepted with review comments",
+   "Two rows name a standard's purpose but not the obligation it serves; add it and resubmit."
+  ],
+  [
+   "LI-SCOPE",
+   "ISMS scope statement + process list",
+   "T3.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "MAP-XW",
+   "Crosswalk",
+   "T3.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-SOA",
+   "Statement of Applicability",
+   "T3.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "POL-CUR",
+   "Currency checklist",
+   "T4.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "POL-GAP",
+   "Gap table and redlines",
+   "T4.1",
+   "Accepted with review comments",
+   "The redline for gap 3 names no owner; add the policy owner and resubmit."
+  ],
+  [
+   "LI-POL",
+   "ISMS policy check + RACI",
+   "T4.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "SOP-DOC",
+   "SOP document",
+   "T4.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-DOC",
+   "Document-control block + mandatory-documents register",
+   "T4.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "PBC-LIST",
+   "PBC request list",
+   "T5.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-CERT",
+   "Certification briefing",
+   "T5.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "EVP-IDX",
+   "Evidence index",
+   "T5.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "EVP-GAP",
+   "Coverage gap memo",
+   "T5.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "UAR-TEST",
+   "UAR test workbook",
+   "T6.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "UAR-MEMO",
+   "Test memo",
+   "T6.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LVR-REC",
+   "Reconciliation workbook",
+   "T6.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LVR-KPI",
+   "KPI statement",
+   "T6.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "RR-UPD",
+   "Updated office risk register",
+   "T7.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "RR-NOTE",
+   "Register note",
+   "T7.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-CHAIN",
+   "Asset–threat–control chains",
+   "T7.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-RTP",
+   "Risk treatment plan",
+   "T7.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "DEC-LOG",
+   "Decision log",
+   "Every task",
+   "Accepted",
+   "Recorded by the platform for every task."
+  ]
+ ],
+ "clauses": [
+  [
+   "4.1",
+   "Understanding the organisation and its context",
+   "CTX-BRIEF, CTX-IP, LI-SCOPE"
+  ],
+  [
+   "4.2",
+   "Needs and expectations of interested parties",
+   "CTX-BRIEF, CTX-IP, OBL-REG, LI-FAM, LI-SCOPE"
+  ],
+  [
+   "4.3",
+   "Scope of the ISMS",
+   "CTX-BRIEF, CTX-IP, LI-SCOPE"
+  ],
+  [
+   "4.4",
+   "Information security management system",
+   "LI-SCOPE, LI-FAM"
+  ],
+  [
+   "5.1",
+   "Leadership and commitment",
+   "ACT-UPD, ACT-MRI, LI-POL"
+  ],
+  [
+   "5.2",
+   "Information security policy",
+   "POL-CUR, POL-GAP, LI-POL"
+  ],
+  [
+   "5.3",
+   "Roles, responsibilities and authorities",
+   "LI-POL"
+  ],
+  [
+   "6.1.1",
+   "Actions to address risks and opportunities — general",
+   "LI-PLAN"
+  ],
+  [
+   "6.1.2",
+   "Information security risk assessment",
+   "RR-UPD, RR-NOTE, LI-RAM"
+  ],
+  [
+   "6.1.3",
+   "Information security risk treatment and Statement of Applicability",
+   "RR-UPD, RR-NOTE, RSK-TOP5, RSK-ACC, LI-SOA, LI-RTP"
+  ],
+  [
+   "6.2",
+   "Information security objectives and planning",
+   "LI-PLAN"
+  ],
+  [
+   "6.3",
+   "Planning of changes",
+   "LI-CHG"
+  ],
+  [
+   "7.1",
+   "Resources",
+   "LI-PLAN"
+  ],
+  [
+   "7.2",
+   "Competence",
+   "AWR-PLAN, AWR-LESSON, LI-COMM"
+  ],
+  [
+   "7.3",
+   "Awareness",
+   "ADM-UND, ADM-RULES, AWR-PLAN, AWR-LESSON, LI-COMM"
+  ],
+  [
+   "7.4",
+   "Communication",
+   "LI-COMM"
+  ],
+  [
+   "7.5",
+   "Documented information",
+   "EVQ-RES, DEC-LOG, SOP-DOC, LI-DOC, EVP-IDX, EVP-GAP"
+  ],
+  [
+   "8.1",
+   "Operational planning and control",
+   "SOP-DOC, LI-DOC, LI-RTP"
+  ],
+  [
+   "8.2",
+   "Information security risk assessment (operation)",
+   "RR-UPD, RR-NOTE, LI-RAM"
+  ],
+  [
+   "8.3",
+   "Information security risk treatment (operation)",
+   "RR-UPD, RR-NOTE, LI-RTP"
+  ],
+  [
+   "9.1",
+   "Monitoring, measurement, analysis and evaluation",
+   "VUL-TEST, VUL-MEMO, LI-KPI"
+  ],
+  [
+   "9.2",
+   "Internal audit",
+   "EVQ-RES, DEC-LOG, PBC-LIST, LI-CERT, ACT-UPD, ACT-MRI, LI-MR"
+  ],
+  [
+   "9.3",
+   "Management review",
+   "ACT-UPD, ACT-MRI, LI-MR"
+  ],
+  [
+   "10.1",
+   "Continual improvement",
+   "ACT-UPD, ACT-MRI, LI-NCR, LI-MR"
+  ],
+  [
+   "10.2",
+   "Nonconformity and corrective action",
+   "ACT-UPD, ACT-MRI, AUD-LOG, AUD-NCR, LI-NCR"
+  ]
+ ],
+ "objectives": [
+  [
+   "Leavers are de-provisioned within 4 hours",
+   "LVR-KPI from T6.2: leavers fully disabled within SLA ÷ all leavers",
+   "IAM team (RACI A: Compliance Manager)",
+   "Monthly; management review"
+  ],
+  [
+   "Critical vulnerabilities are fixed within SLA",
+   "LI-KPI from T8.1: class 1–2 findings closed in SLA ÷ all class 1–2 findings",
+   "Vulnerability team (RACI A: CISO)",
+   "Monthly; management review"
+  ],
+  [
+   "Staff complete security awareness training",
+   "AWARE completion: staff with completed annual training ÷ all staff",
+   "Security Awareness & Training Specialist",
+   "Quarterly; management review"
+  ]
+ ],
+ "obj_opts": [
+  [
+   "90 % of leavers are de-provisioned within 4 hours by 2027-06-21",
+   "95 % of leavers are de-provisioned within 4 hours by 2027-01-21",
+   "95 % of leavers are de-provisioned within 4 hours by 2027-06-21",
+   "Leavers are de-provisioned promptly by 2027-06-21"
+  ],
+  [
+   "90 % of critical vulnerabilities are fixed within SLA by 2027-01-21",
+   "90 % of critical vulnerabilities are fixed within SLA by 2027-06-21",
+   "95 % of critical vulnerabilities are fixed within SLA by 2027-06-21",
+   "Critical vulnerabilities are fixed quickly by 2027-06-21"
+  ],
+  [
+   "90 % of staff complete security awareness training by 2027-06-21",
+   "95 % of staff complete security awareness training by 2027-01-21",
+   "95 % of staff complete security awareness training by 2027-06-21",
+   "Staff are made aware of security by 2027-06-21"
+  ]
+ ],
+ "plan": [
+  [
+   "M1",
+   "Scope approved",
+   "2027-01-21",
+   "2027-02-21",
+   "CISO"
+  ],
+  [
+   "M2",
+   "Statement of Applicability approved",
+   "2027-02-21",
+   "2027-03-21",
+   "CISO"
+  ],
+  [
+   "M3",
+   "Controls implemented (treatment plan actions)",
+   "2027-03-21",
+   "2027-04-21",
+   "Control owners"
+  ],
+  [
+   "M4",
+   "Internal audit performed",
+   "2027-04-21",
+   "2027-05-21",
+   "Internal Audit"
+  ],
+  [
+   "M5",
+   "Management review held",
+   "2027-05-21",
+   "2027-06-21",
+   "CISO"
+  ],
+  [
+   "M6",
+   "Stage 1 audit",
+   "2027-06-21",
+   "2027-07-21",
+   "ISMS manager"
+  ]
+ ],
+ "isms": [
+  [
+   "ISMS risk / opportunity 1",
+   "Key person leaves (the only person who knows the SoA)",
+   "document and cross-train"
+  ],
+  [
+   "ISMS risk / opportunity 2",
+   "Management attention drops after certification",
+   "KPIs on the Board agenda"
+  ],
+  [
+   "ISMS risk / opportunity 3",
+   "Scope grows (new office or product) without a plan",
+   "change procedure (clause 6.3)"
+  ]
+ ]
+}

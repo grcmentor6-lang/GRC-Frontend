@@ -1,0 +1,680 @@
+{
+ "h": [
+  "Record",
+  "Quarter",
+  "Privileged account",
+  "Review date",
+  "Reviewer",
+  "Decision",
+  "MFA",
+  "Session recording",
+  "Revocation executed"
+ ],
+ "records": [
+  [
+   "PR-001",
+   "Q1",
+   "adm-aydın0",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-002",
+   "Q1",
+   "adm-park1",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-003",
+   "Q1",
+   "adm-haddad2",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-004",
+   "Q1",
+   "adm-smith3",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-005",
+   "Q1",
+   "adm-fernández4",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-006",
+   "Q1",
+   "adm-brown5",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-007",
+   "Q1",
+   "adm-rossi6",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-008",
+   "Q1",
+   "adm-ferreira7",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-009",
+   "Q1",
+   "adm-kim8",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-010",
+   "Q1",
+   "adm-chen9",
+   "2025-12-28",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-011",
+   "Q2",
+   "adm-mensah0",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-012",
+   "Q2",
+   "adm-reddy1",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-013",
+   "Q2",
+   "adm-garcía2",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-014",
+   "Q2",
+   "adm-brown3",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-015",
+   "Q2",
+   "adm-patel4",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-016",
+   "Q2",
+   "adm-dubois5",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-017",
+   "Q2",
+   "adm-patel6",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-018",
+   "Q2",
+   "adm-berg7",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-019",
+   "Q2",
+   "adm-petrov8",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-020",
+   "Q2",
+   "adm-costa9",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-021",
+   "Q2",
+   "adm-tanaka10",
+   "2026-04-04",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-022",
+   "Q2",
+   "adm-petrov11",
+   "2026-04-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-023",
+   "Q3",
+   "adm-patel0",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-024",
+   "Q3",
+   "adm-kim1",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-025",
+   "Q3",
+   "adm-nilsen2",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-026",
+   "Q3",
+   "adm-petrov3",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-027",
+   "Q3",
+   "adm-haddad4",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-028",
+   "Q3",
+   "adm-sharma5",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-029",
+   "Q3",
+   "adm-johnson6",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-030",
+   "Q3",
+   "adm-berg7",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-031",
+   "Q3",
+   "adm-silva8",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-032",
+   "Q3",
+   "adm-nilsen9",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-033",
+   "Q3",
+   "adm-lópez10",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-034",
+   "Q3",
+   "adm-rahman11",
+   "2026-06-29",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-035",
+   "Q4",
+   "adm-rahman0",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-036",
+   "Q4",
+   "adm-fernández1",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-037",
+   "Q4",
+   "adm-garcía2",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-038",
+   "Q4",
+   "adm-sharma3",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-039",
+   "Q4",
+   "adm-nilsen4",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-040",
+   "Q4",
+   "adm-reddy5",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-041",
+   "Q4",
+   "adm-suzuki6",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-042",
+   "Q4",
+   "adm-şahin7",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-043",
+   "Q4",
+   "adm-ferreira8",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-044",
+   "Q4",
+   "adm-jansen9",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-045",
+   "Q4",
+   "adm-nilsen10",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-046",
+   "Q4",
+   "adm-oliveira11",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-047",
+   "Q4",
+   "adm-lópez12",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ],
+  [
+   "PR-048",
+   "Q4",
+   "adm-brown13",
+   "2026-10-07",
+   "System owner (independent)",
+   "Keep",
+   "Yes",
+   "On",
+   ""
+  ]
+ ],
+ "seed": 40393416345626,
+ "quarters": [
+  [
+   "Q1",
+   "October–December 2025",
+   "2025-12-31"
+  ],
+  [
+   "Q2",
+   "January–March 2026",
+   "2026-03-31"
+  ],
+  [
+   "Q3",
+   "April–June 2026",
+   "2026-06-30"
+  ],
+  [
+   "Q4",
+   "July–September 2026",
+   "2026-09-30"
+  ]
+ ],
+ "sample": [
+  "Q2",
+  "Q4"
+ ],
+ "tolerance": 15,
+ "script": [
+  [
+   "Objective",
+   "Test whether the quarterly privileged-access review of LearnTech's Amsterdam office operated as BKB-POL-006 requires, in each quarter of the test period.",
+   "BKB-POL-006 Sections 3.1, 4 and 6.2"
+  ],
+  [
+   "Population",
+   "The review records of LearnTech's four review quarters: Q1 October–December 2025, Q2 January–March 2026, Q3 April–June 2026, Q4 July–September 2026. One record per privileged account per quarter: 48 records (dataset CT-DATA).",
+   "CT-DATA"
+  ],
+  [
+   "Sample",
+   "The quarters to test: rule R15 by the control's frequency, selected by the platform with the seed. Every record of a sampled quarter is tested.",
+   "Rule R15; Ref-Sampling"
+  ],
+  [
+   "A1 Reviewed",
+   "The record has a review date and a decision, Keep or Revoke.",
+   "Review date, Decision"
+  ],
+  [
+   "A2 On time",
+   "The review date is no later than 15 days after the end of the record's quarter.",
+   "Quarter, Review date"
+  ],
+  [
+   "A3 MFA",
+   "MFA is Yes (BKB-POL-006 Section 3.1).",
+   "MFA"
+  ],
+  [
+   "A4 Session recording",
+   "Session recording is On where the account's system is Mission Critical (BKB-POL-006 Section 4, LOW).",
+   "Session recording"
+  ],
+  [
+   "A5 Independent reviewer",
+   "The reviewer is not the privileged account's holder (BKB-POL-006 Section 6.2 step 2).",
+   "Privileged account, Reviewer"
+  ],
+  [
+   "A6 Revocation executed",
+   "Where the decision is Revoke, Revocation executed has a date.",
+   "Decision, Revocation executed"
+  ],
+  [
+   "Pass criteria",
+   "A record passes when it passes A1 to A6; a record that fails any of them is a deviation, rated with rule R26. The test concludes with rule R19.",
+   "Rules R19, R26"
+  ]
+ ],
+ "checks": [
+  [
+   "A1",
+   "Reviewed: the record has a review date and a decision, Keep or Revoke."
+  ],
+  [
+   "A2",
+   "On time: the review date is no later than 15 days after the end of the record's quarter."
+  ],
+  [
+   "A3",
+   "MFA: mFA is Yes (BKB-POL-006 Section 3.1)."
+  ],
+  [
+   "A4",
+   "Session recording: session recording is On where the account's system is Mission Critical (BKB-POL-006 Section 4, LOW)."
+  ],
+  [
+   "A5",
+   "Independent reviewer: the reviewer is not the privileged account's holder (BKB-POL-006 Section 6.2 step 2)."
+  ],
+  [
+   "A6",
+   "Revocation executed: where the decision is Revoke, Revocation executed has a date."
+  ]
+ ],
+ "reqs": [
+  "BKB-POL-006 Section 3.1: Multi-factor authentication is required for remote, privileged and Tier 3/4 access",
+  "BKB-POL-006 Section 3.1: Privileged access is held in a privileged-access management (PAM) tool, granted just in time",
+  "BKB-POL-006 Section 4 (LOW): Privileged access review — Quarterly",
+  "BKB-POL-006 Section 4 (LOW): Session recording for privileged access — Mission Critical systems",
+  "BKB-POL-006 Section 6.2 step 2: Confirm or reject each account; the reviewer is never the account holder",
+  "BKB-POL-006 Section 6.2 step 3: Remove every rejected account or role (≤ 5 working days)"
+ ],
+ "iam": "The IAM team's answer to your query on PR-022: “The Q2 review of adm-petrov11 waited for its system owner, who was on leave until 27 April 2026. Section 6.2 names no deputy reviewer, and nothing in the PAM tool reminds anyone when a quarter's review is due or overdue.”",
+ "facts": [
+  "BKB-POL-006 Section 6.2 step 2: the asset owner confirms or rejects each account, each quarter for privileged access (Section 4).",
+  "PR-022: the Q2 review of adm-petrov11 was done on 2026-04-29, 29 days after the quarter ended; the script allows 15 (A2).",
+  "Section 6.2 must name a deputy reviewer for each system and escalate any review not done 15 days after its quarter ends.",
+  "The procedure names no deputy reviewer, and nothing reminds the reviewer or escalates when a review is overdue.",
+  "The system owner did not take the deadline seriously.",
+  "The system owner who reviews adm-petrov11 was on leave until 27 April 2026, and the review waited for their return."
+ ],
+ "actions": [
+  [
+   "Correction",
+   "Correct the instance (Ref-Actions CT): PR-022's Q2 review is on record as completed late, on 2026-04-29, with the reason."
+  ],
+  [
+   "Corrective action",
+   "Add the missing step to the procedure and train the owners (L18): a deputy reviewer for each system and an escalation of any review not done 15 days after its quarter ends, in BKB-POL-006 Section 6.2."
+  ],
+  [
+   "Effectiveness check",
+   "Re-test 3 months later (L18): the next quarter's privileged-access review, with this test script."
+  ]
+ ]
+}

@@ -1,0 +1,265 @@
+{
+ "intake": [
+  [
+   "Vendor",
+   "Lumen Learner Analytics"
+  ],
+  [
+   "Service",
+   "Learner-analytics SDK powering progress dashboards"
+  ],
+  [
+   "Requested by",
+   "LearnTech Amsterdam office, Student Services"
+  ],
+  [
+   "Data the vendor receives",
+   "Learning activity, engagement analytics, pseudonymous IDs of minors"
+  ],
+  [
+   "Identifiers sent",
+   "A random learner ID that LearnTech creates for each learner. No name, e-mail address, age, school or image is sent; the table that links each ID to a learner stays in LearnTech's student data warehouse."
+  ],
+  [
+   "Volume",
+   "~800 million events/month"
+  ],
+  [
+   "Users",
+   "Teachers, learners and parents see the progress dashboards in the LearnTech learning platform."
+  ],
+  [
+   "Access / integration",
+   "Client SDK + warehouse export"
+  ],
+  [
+   "Delivery",
+   "Lumen runs the analytics application, its database and the servers under them in its own cloud account. LearnTech sets up the dashboards, who may sign in (through LearnTech's single sign-on) and which data is shared. No LearnTech code or servers run there."
+  ],
+  [
+   "Hosting location",
+   "United States"
+  ],
+  [
+   "Substitutability",
+   "Moderate"
+  ],
+  [
+   "Business criticality",
+   "Product analytics"
+  ]
+ ],
+ "tiers": [
+  "Tier 1 — Public",
+  "Tier 2 — Internal",
+  "Tier 3 — Confidential",
+  "Tier 4 — Restricted"
+ ],
+ "facts": [
+  [
+   "Highest data tier (BKB-STD-001)"
+  ],
+  [
+   "Children's data at scale"
+  ],
+  [
+   "Personal or confidential data at volume"
+  ],
+  [
+   "Customer-facing or regulatory-critical service"
+  ],
+  [
+   "Hard to replace"
+  ],
+  [
+   "Revenue-critical service"
+  ]
+ ],
+ "cloud": [
+  [
+   "Service model (L19)"
+  ],
+  [
+   "Facilities and hardware the service runs on"
+  ],
+  [
+   "The platform: operating system and runtime"
+  ],
+  [
+   "The analytics application itself, and its patches"
+  ],
+  [
+   "Identities and access: who may sign in (SSO, MFA)"
+  ],
+  [
+   "Which data is shared, and its classification"
+  ],
+  [
+   "The warehouse export and its API keys"
+  ]
+ ],
+ "fixed": [
+  [
+   "Fixed question 1",
+   "In which countries is our data stored and processed, and can we choose the region?"
+  ],
+  [
+   "Fixed question 2",
+   "Who holds the encryption keys — can we bring or manage our own keys for Tier 4 data?"
+  ],
+  [
+   "Fixed question 3",
+   "How will you return and delete our data at exit, and in what format?"
+  ],
+  [
+   "Fixed question 4",
+   "Which sub-processors and software components (SBOM) can access or handle our data?"
+  ],
+  [
+   "Fixed question 5",
+   "How do you verify the provenance and security of the software and updates you deliver to us?"
+  ]
+ ],
+ "controls": [
+  "A.5.23 Information security for use of cloud services",
+  "A.5.21 Managing information security in the ICT supply chain"
+ ],
+ "questions": [
+  [
+   "1",
+   "Governance",
+   "Do you hold a current ISO/IEC 27001 certificate or SOC 2 Type II report? Send it.",
+   "Low"
+  ],
+  [
+   "2",
+   "Governance",
+   "Name your security contact and incident contact.",
+   "Low"
+  ],
+  [
+   "3",
+   "Data",
+   "Which of our data will you store, and in which countries?",
+   "Medium"
+  ],
+  [
+   "4",
+   "Data",
+   "How is our data encrypted at rest and in transit?",
+   "Medium"
+  ],
+  [
+   "5",
+   "Access",
+   "Do all your administrators use MFA?",
+   "Medium"
+  ],
+  [
+   "6",
+   "Access",
+   "How often do you review who can access our data?",
+   "Medium"
+  ],
+  [
+   "7",
+   "Incidents",
+   "Will you tell us about a security incident within 24 hours?",
+   "Medium"
+  ],
+  [
+   "8",
+   "Sub-processors",
+   "List your sub-processors that can access our data.",
+   "High"
+  ],
+  [
+   "9",
+   "Resilience",
+   "What are your recovery time and recovery point objectives?",
+   "High"
+  ],
+  [
+   "10",
+   "Vulnerability",
+   "How fast do you fix critical vulnerabilities?",
+   "High"
+  ],
+  [
+   "11",
+   "Staff",
+   "Are your staff screened and trained every year?",
+   "High"
+  ],
+  [
+   "12",
+   "Audit",
+   "Will you allow us to audit you or accept an independent report yearly?",
+   "High"
+  ],
+  [
+   "13",
+   "Exit",
+   "How will you return and delete our data at contract end?",
+   "High"
+  ],
+  [
+   "14",
+   "Logging",
+   "Do you keep security logs for at least 12 months?",
+   "Critical"
+  ],
+  [
+   "15",
+   "Testing",
+   "Send your latest penetration-test summary.",
+   "Critical"
+  ],
+  [
+   "16",
+   "Children",
+   "If you process children's data: how do you obtain parental consent?",
+   "Critical"
+  ],
+  [
+   "17",
+   "Continuity",
+   "Send evidence of your last disaster-recovery test.",
+   "Critical"
+  ]
+ ],
+ "clauses": [
+  [
+   "Security obligations and standards",
+   "Low"
+  ],
+  [
+   "Confidentiality",
+   "Low"
+  ],
+  [
+   "Data processing agreement (GDPR Art.28 or equivalent)",
+   "Medium"
+  ],
+  [
+   "Incident notification within 24 hours",
+   "Medium"
+  ],
+  [
+   "Audit rights",
+   "High"
+  ],
+  [
+   "Sub-processor approval",
+   "High"
+  ],
+  [
+   "Exit and data return",
+   "High"
+  ],
+  [
+   "Business continuity commitments",
+   "Critical"
+  ]
+ ]
+}

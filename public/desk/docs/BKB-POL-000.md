@@ -94,7 +94,7 @@ Addenda are reviewed annually, and within 30 days of a relevant regulatory chang
 | :-: | :-: | :-: | :-: |
 | 1 | Submit exception with policy clause, reason, risk assessment, compensating controls and expiry (≤ 12 months) | Requester | Exception request |
 | 2 | Validate risk rating and compensating controls | Cyber Risk Manager | Validation |
-| 3 | Approve per delegated authority (Charter §6.1) | Approver | Decision |
+| 3 | Approve per delegated authority (Charter Section 6.1) | Approver | Decision |
 | 4 | Register exception; monitor expiry; re-assess 30 days before expiry | Policy & Governance Analyst | Exception register |
 
 7\. Policy lifecycle
@@ -113,12 +113,39 @@ Monitoring through KPIs and control testing
 
 Annual review or on trigger (incident, audit finding, regulatory change, organisational change)
 
+7.1 Document control of procedures
+
+A procedure issued as its own document (a standard operating procedure, SOP) carries a document-control block above its first step:
+
+| Field | Rule |
+| :-: | :-: |
+| Document ID | The ID of the policy it implements, then "-PR-", then the procedure's section number in that policy (BKB-POL-006 Section 6.3 → BKB-POL-006-PR-6.3) |
+| Version | 1.0 at first approval; each approved change adds 0.1 |
+| Document owner | The owner of the policy it implements (Section 3) |
+| Approved by | The approver Section 2 sets for a procedure |
+| Effective date | The date of approval |
+| Next review | 12 months after the effective date, or earlier on a trigger (Section 7) |
+| Classification | The label BKB-STD-001 gives it, in the organisation's own scheme (addendum Section 7) |
+
+Its life-cycle follows this policy's, with these roles:
+
+| Stage | Who |
+| :-: | :-: |
+| Create | Policy & Governance Analyst, from the Group template |
+| Review | Policy owner, with the roles that carry out its steps |
+| Approve | Policy owner (Section 2) |
+| Publish | Policy & Governance Analyst, on the policy portal |
+| Change | Policy owner approves each change, as a new version |
+| Retain | Policy & Governance Analyst, who keeps every superseded version (BKB-POL-018) |
+| Dispose | Policy & Governance Analyst, at the end of the retention period (BKB-POL-018) |
+
 8\. Sector overlays (guideline)
 
 | Sector obligation | Where it applies | Implementation through |
 | :-: | :-: | :-: |
 | PCI DSS v4.0.1 | Card-data environments (retail, payments, banking, BPO for financial clients) | Addendum + BKB-POL-006/009/010/011 |
 | HIPAA / health-data laws | Healthcare orgs; BPOs serving US healthcare clients | Addendum + BKB-POL-017 |
+| Data-protection laws and PII-protection standards (GDPR, KVKK, DPA 2012, DPDP Act, ISO/IEC 29151, ISO/IEC 27701) | Every organisation that processes personal data | Addendum + BKB-POL-017 |
 | NERC CIP / IEC 62443 | Energy, utilities, manufacturing, rail | BKB-POL-023 |
 | DORA | EU financial entities and their critical ICT providers | Addendum + BKB-POL-013/014/015 |
 | NIS2 / national transpositions | Essential and important entities in the EU | Addendum + BKB-POL-001/014/020 |

@@ -1,0 +1,886 @@
+{
+ "_about": "T12.1: the mentee's ACT-TRACKER (19 actions, the pack's) with ACT-EXTRA's three (platform-written from the mentee's own T6.1, T8.1 and T8.2 findings), and LI-17's inputs. Content Corrections item 74.",
+ "test": "2026-12-23",
+ "next": "2027-01-06",
+ "review": "2026-12-24",
+ "h": [
+  "Action",
+  "Source task",
+  "Issue",
+  "Owner",
+  "Raised",
+  "Due",
+  "Status (owner)",
+  "Closure evidence date",
+  "Evidence type",
+  "Re-test",
+  "Escalated"
+ ],
+ "tracker": [
+  [
+   "A-01",
+   "T5.2",
+   "Evidence missing for sampled control",
+   "Control owner",
+   "2026-11-05",
+   "2027-01-04",
+   "Open",
+   "",
+   "",
+   "—",
+   "No"
+  ],
+  [
+   "A-02",
+   "T3.2",
+   "Procedure missing for access reviews",
+   "CISO",
+   "2026-12-01",
+   "2027-01-30",
+   "Closed",
+   "2026-11-27",
+   "System export",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-03",
+   "T9.2",
+   "CUEC not implemented",
+   "IAM team",
+   "2026-10-24",
+   "2026-11-23",
+   "Closed",
+   "2026-11-05",
+   "System export",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-04",
+   "T5.2",
+   "Evidence missing for sampled control",
+   "Control owner",
+   "2026-12-03",
+   "2027-01-02",
+   "Open",
+   "",
+   "",
+   "—",
+   "No"
+  ],
+  [
+   "A-05",
+   "T11.1",
+   "Awareness module not assigned to new joiners",
+   "HR learning lead",
+   "2026-11-20",
+   "2026-12-20",
+   "Open",
+   "",
+   "",
+   "—",
+   "No"
+  ],
+  [
+   "A-06",
+   "T10.1",
+   "RoPA entry incomplete",
+   "Privacy lead",
+   "2026-10-22",
+   "2026-12-21",
+   "Closed",
+   "2026-11-09",
+   "System export",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-07",
+   "T8.2",
+   "Change implemented before approval",
+   "Change manager",
+   "2026-10-15",
+   "2026-11-14",
+   "Closed",
+   "2026-11-06",
+   "System export",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-08",
+   "T5.2",
+   "Evidence missing for sampled control",
+   "Control owner",
+   "2026-10-17",
+   "2026-12-16",
+   "Closed",
+   "2026-10-22",
+   "System export",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-09",
+   "T6.1",
+   "Leaver account still active",
+   "IAM team",
+   "2026-10-18",
+   "2026-12-17",
+   "Open",
+   "",
+   "",
+   "—",
+   "No"
+  ],
+  [
+   "A-10",
+   "T9.2",
+   "CUEC not implemented",
+   "IAM team",
+   "2026-10-16",
+   "2026-11-15",
+   "Closed",
+   "2026-10-29",
+   "System export",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-11",
+   "T10.1",
+   "RoPA entry incomplete",
+   "Privacy lead",
+   "2026-11-06",
+   "2027-01-05",
+   "Closed",
+   "",
+   "",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-12",
+   "T11.1",
+   "Awareness module not assigned to new joiners",
+   "HR learning lead",
+   "2026-11-21",
+   "2026-12-21",
+   "Open",
+   "",
+   "",
+   "—",
+   "No"
+  ],
+  [
+   "A-13",
+   "T5.2",
+   "Evidence missing for sampled control",
+   "Control owner",
+   "2026-11-25",
+   "2027-01-24",
+   "Closed",
+   "2026-12-13",
+   "System export",
+   "Fail",
+   "No"
+  ],
+  [
+   "A-14",
+   "T5.2",
+   "Evidence missing for sampled control",
+   "Control owner",
+   "2026-11-11",
+   "2026-12-11",
+   "Closed",
+   "",
+   "",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-15",
+   "T3.2",
+   "Procedure missing for access reviews",
+   "CISO",
+   "2026-11-15",
+   "2027-01-14",
+   "Open",
+   "",
+   "",
+   "—",
+   "No"
+  ],
+  [
+   "A-16",
+   "T8.1",
+   "Critical finding overdue",
+   "Infrastructure lead",
+   "2026-10-24",
+   "2026-11-23",
+   "Closed",
+   "2026-10-30",
+   "System export",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-17",
+   "T7.1",
+   "Risk treatment not started",
+   "Risk owner",
+   "2026-11-03",
+   "2027-01-02",
+   "Closed",
+   "2026-11-19",
+   "System export",
+   "Fail",
+   "No"
+  ],
+  [
+   "A-18",
+   "T4.1",
+   "Policy review overdue",
+   "Policy owner",
+   "2026-12-02",
+   "2027-01-01",
+   "Open",
+   "",
+   "",
+   "—",
+   "No"
+  ],
+  [
+   "A-19",
+   "T3.2",
+   "Procedure missing for access reviews",
+   "CISO",
+   "2026-11-24",
+   "2027-01-23",
+   "Closed",
+   "2026-12-09",
+   "System export",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-20",
+   "T6.1",
+   "Mover's access not re-validated",
+   "Line manager",
+   "2026-11-12",
+   "2026-11-19",
+   "Closed",
+   "2026-11-30",
+   "E-mail from owner: \"done\"",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-21",
+   "T8.1",
+   "Critical finding overdue",
+   "Infrastructure lead",
+   "2026-11-26",
+   "2026-12-26",
+   "Closed",
+   "2026-12-14",
+   "System export",
+   "Pass",
+   "No"
+  ],
+  [
+   "A-22",
+   "T8.2",
+   "Privileged-access review done late",
+   "CISO",
+   "2026-11-29",
+   "2026-12-29",
+   "Closed",
+   "2026-12-10",
+   "System export",
+   "Not yet run",
+   "No"
+  ]
+ ],
+ "extra": {
+  "A-20": "U-0007, U-0072, U-0117: the movers your T6.1 access review found not re-validated (U9). Ref-Actions gives U9 to the line manager, within 5 working days.",
+  "A-21": "V-0008 (Customer support / ticketing, internet-facing, Critical): open past its SLA at your T8.1 test.",
+  "A-22": "PR-022: the Q2 privileged-access review done 29 days after its quarter ended (your T8.2 test). The corrective action of your LI-NCR adds a deputy reviewer and an escalation to BKB-POL-006 Section 6.2, with a re-test three months later."
+ },
+ "readme": [
+  [
+   "Status (owner)",
+   "What the action's owner reports: Closed or Open. A claim, which the closure tests check."
+  ],
+  [
+   "Raised",
+   "The day the action was raised."
+  ],
+  [
+   "Due",
+   "The day the action must be closed by."
+  ],
+  [
+   "Closure evidence date",
+   "The date of the evidence the owner attached to close the action. Empty: none is attached."
+  ],
+  [
+   "Evidence type",
+   "What that evidence is: a system export, produced by the system, or an e-mail from the owner."
+  ],
+  [
+   "Re-test",
+   "The result when the control was tested again after the fix: Pass, Fail, or not yet run."
+  ],
+  [
+   "Escalated",
+   "Whether the action has already gone to its owner's manager."
+  ],
+  [
+   "Test date",
+   "23 December 2026: the day you run the closure tests. Days past due are counted to it (rule R33)."
+  ]
+ ],
+ "tests": [
+  [
+   "K1",
+   "Evidence attached: the action has closure evidence, with a date and a type."
+  ],
+  [
+   "K2",
+   "Dated after raising: the closure evidence is dated after the day the action was raised."
+  ],
+  [
+   "K3",
+   "System record: the evidence is a record a system produced (an export), not a statement."
+  ],
+  [
+   "K4",
+   "Re-test passed: the control was tested again after the fix, and passed."
+  ]
+ ],
+ "requests": [
+  "The closure evidence itself",
+  "Evidence dated after the action was raised",
+  "A system record of the fix, not a statement",
+  "A passing re-test of the control"
+ ],
+ "programme": [
+  [
+   "Clauses 4–10",
+   "Year 1",
+   "Every year",
+   "A-01, A-04, A-08, A-13, A-14 Evidence missing for sampled control (7.5, repeat); A-17 Risk treatment not started (6.1.3, open)"
+  ],
+  [
+   "Annex A organisational (A.5)",
+   "Year 1",
+   "Every year",
+   "A-02, A-15, A-19 Procedure missing for access reviews (A.5.18, repeat); A-03, A-10 CUEC not implemented (A.5.22, repeat); A-06, A-11 RoPA entry incomplete (A.5.34, repeat); A-09 Leaver account still active (A.5.18, open); A-18 Policy review overdue (A.5.1, open); A-20 Mover's access not re-validated (A.5.18, open)"
+  ],
+  [
+   "Annex A people (A.6)",
+   "Year 2",
+   "Every year",
+   "A-05, A-12 Awareness module not assigned to new joiners (A.6.3, repeat)"
+  ],
+  [
+   "Annex A physical (A.7)",
+   "Year 2",
+   "Once in the three years",
+   "None"
+  ],
+  [
+   "Annex A technological (A.8)",
+   "Year 3",
+   "Every year",
+   "A-16, A-21 Critical finding overdue (A.8.8, repeat); A-22 Privileged-access review done late (A.8.2, open)"
+  ]
+ ],
+ "reviews": [
+  [
+   "ADM-UND",
+   "F1.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "ADM-RULES",
+   "F1.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "ONB-RMF",
+   "F1.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "FAM-MAP",
+   "F1.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "CTX-BRIEF",
+   "F1.3",
+   "Accepted",
+   "—"
+  ],
+  [
+   "CTX-IP",
+   "F1.3",
+   "Accepted",
+   "—"
+  ],
+  [
+   "CLS-RES",
+   "F2.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "EVQ-RES",
+   "F2.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "OBL-REG",
+   "T3.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-FAM",
+   "T3.1",
+   "Accepted with review comments",
+   "Two rows name a standard's purpose but not the obligation it serves; add it and resubmit."
+  ],
+  [
+   "LI-SCOPE",
+   "T3.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "MAP-XW",
+   "T3.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-SOA",
+   "T3.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "POL-CUR",
+   "T4.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "POL-GAP",
+   "T4.1",
+   "Accepted with review comments",
+   "The redline for gap 3 names no owner; add the policy owner and resubmit."
+  ],
+  [
+   "LI-POL",
+   "T4.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "SOP-DOC",
+   "T4.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-DOC",
+   "T4.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "PBC-LIST",
+   "T5.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-CERT",
+   "T5.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "EVP-IDX",
+   "T5.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "EVP-GAP",
+   "T5.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "UAR-TEST",
+   "T6.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "UAR-MEMO",
+   "T6.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LVR-REC",
+   "T6.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LVR-KPI",
+   "T6.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "RR-UPD",
+   "T7.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "RR-NOTE",
+   "T7.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-CHAIN",
+   "T7.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-RTP",
+   "T7.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "RSK-TOP5",
+   "T7.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "RSK-ACC",
+   "T7.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-RAM",
+   "T7.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-PLAN",
+   "T7.2",
+   "Accepted with review comments",
+   "Objective 3 names no record its measure is read from: say where training completion is recorded, and resubmit."
+  ],
+  [
+   "VUL-TEST",
+   "T8.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "VUL-MEMO",
+   "T8.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-KPI",
+   "T8.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "CT-SCRIPT",
+   "T8.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "CT-MEMO",
+   "T8.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-NCR",
+   "T8.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "VEN-TIER",
+   "T9.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "VEN-Q",
+   "T9.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "VEN-CL",
+   "T9.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-CLD",
+   "T9.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "SOC-REV",
+   "T9.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "SOC-DEC",
+   "T9.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "ROPA",
+   "T10.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "DFM",
+   "T10.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "BRC-ASSESS",
+   "T10.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "BRC-PLAN",
+   "T10.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-IRBC",
+   "T10.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "AWR-PLAN",
+   "T11.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "AWR-LESSON",
+   "T11.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "AWR-SIM",
+   "T11.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-COMM",
+   "T11.1",
+   "Accepted",
+   "—"
+  ],
+  [
+   "REG-BRIEF",
+   "T11.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "LI-CHG",
+   "T11.2",
+   "Accepted",
+   "—"
+  ],
+  [
+   "DEC-LOG",
+   "Every task",
+   "Accepted",
+   "Recorded by the platform for every task."
+  ]
+ ],
+ "inputs": [
+  [
+   "a",
+   "Status of actions from previous management reviews"
+  ],
+  [
+   "b",
+   "Changes in external and internal issues relevant to the ISMS"
+  ],
+  [
+   "c (1)",
+   "Feedback on information security performance — nonconformities and corrective actions"
+  ],
+  [
+   "c (2)",
+   "Monitoring and measurement results"
+  ],
+  [
+   "c (3)",
+   "Audit results"
+  ],
+  [
+   "c (4)",
+   "Fulfilment of information security objectives"
+  ],
+  [
+   "d",
+   "Feedback from interested parties"
+  ],
+  [
+   "e",
+   "Results of risk assessment and status of the risk treatment plan"
+  ],
+  [
+   "f",
+   "Opportunities for continual improvement"
+  ],
+  [
+   "g",
+   "Changes in needs and expectations of interested parties (Amd 1:2024 adds climate-related requirements)"
+  ]
+ ],
+ "objectives": [
+  [
+   "Leavers are de-provisioned within 4 hours",
+   "LVR-KPI from T6.2: leavers fully disabled within SLA ÷ all leavers",
+   "95 %",
+   "LVR-KPI (T6.2): 18 of 29 leavers = 62.1 %"
+  ],
+  [
+   "Critical vulnerabilities are fixed within SLA",
+   "LI-KPI from T8.1: class 1–2 findings closed in SLA ÷ all class 1–2 findings",
+   "90 %",
+   "LI-KPI (T8.1): class 1 11 of 17 = 64.7 %; class 2 20 of 36 = 55.6 %"
+  ],
+  [
+   "Staff complete security awareness training",
+   "AWARE completion: staff with completed annual training ÷ all staff",
+   "95 %",
+   "—"
+  ]
+ ],
+ "mandatory": [
+  [
+   "4.3",
+   "ISMS scope",
+   "LI-SCOPE"
+  ],
+  [
+   "5.2",
+   "Information security policy",
+   "LI-POL (5.2 check)"
+  ],
+  [
+   "6.1.2",
+   "Risk assessment process (method and criteria)",
+   "LI-RAM"
+  ],
+  [
+   "6.1.3",
+   "Risk treatment process and Statement of Applicability",
+   "LI-SOA; LI-RTP"
+  ],
+  [
+   "6.2",
+   "Information security objectives",
+   "LI-PLAN (Objectives sheet)"
+  ],
+  [
+   "7.2",
+   "Evidence of competence",
+   "LI-COMM (competence matrix)"
+  ],
+  [
+   "7.5.1 b",
+   "Documented information the organisation decides is necessary",
+   "LI-DOC (metadata block)"
+  ],
+  [
+   "8.1",
+   "Evidence that processes were carried out as planned",
+   "SOP-DOC; CT-SCRIPT"
+  ],
+  [
+   "8.2",
+   "Results of risk assessments",
+   "RR-UPD"
+  ],
+  [
+   "8.3",
+   "Results of risk treatment",
+   "LI-RTP; RSK-ACC"
+  ],
+  [
+   "9.1",
+   "Monitoring and measurement results",
+   "LI-KPI; VUL-TEST; LVR-KPI"
+  ],
+  [
+   "9.2",
+   "Audit programme(s) and audit results",
+   "LI-MR (audit programme); UAR-TEST; CT-SCRIPT"
+  ],
+  [
+   "9.3",
+   "Results of management reviews",
+   "ACT-MRI; LI-MR (review pack)"
+  ],
+  [
+   "10.2",
+   "Nonconformities, actions taken and results of corrective action",
+   "LI-NCR; ACT-UPD"
+  ]
+ ]
+}

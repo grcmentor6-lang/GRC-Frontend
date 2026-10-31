@@ -76,6 +76,10 @@ export interface Org {
 }
 export interface Section { t: string; sub: string; tools: { n: string; d: string; k: string; /** Week it opens, when later than its section. */ u?: number }[] }
 export interface ToolMock { tool: string; stamp: string; kind: string; pl: Record<string, unknown>; /** Built live: "tasks" (this week's tasks) or "inbox" (the task messages). */ dyn?: "tasks" | "inbox" }
+/** A platform screen as a task sees it: a task with its own data on a shared screen has it under "<key>#<task>" (T6.2's
+ *  leavers on Access Reviews › Terminated User Check, which shows T6.1's review to every other task). */
+export const screenOf = (desk: { tp: Record<string, ToolMock> }, key: string, task?: string | null): ToolMock | undefined =>
+  (task ? desk.tp[`${key}#${task}`] : undefined) ?? desk.tp[key] ?? desk.tp[`${key.split("|")[0]}|*`];
 export interface LiExt { id: string; host: string; week: number; title: string; hours: number; clauses: string; obj: string; kr: string }
 
 export interface Desk {
@@ -114,7 +118,9 @@ export interface Desk {
 
 let cached: Promise<Desk> | null = null;
 export function loadDesk(): Promise<Desk> {
-  cached ??= fetch("/desk/sample.json").then((r) => {
+  // "no-cache": revalidate with the server on every load, so a rebuilt sample.json reaches testers at
+  // once instead of an old copy the browser kept (the file is not fingerprinted). Still a 304 when unchanged.
+  cached ??= fetch("/desk/sample.json", { cache: "no-cache" }).then((r) => {
     if (!r.ok) throw new Error(`Desk content failed to load (${r.status})`);
     return r.json();
   });
@@ -139,11 +145,13 @@ export const qTitle = (q: (typeof QUESTIONS)[number]): string => ("title" in q ?
 
 /** "KR2 — … · Activities 3–4" / "· Activity 7" / "· Activities 10–14 of T3.1" → [3, 4]. */
 export function krActivities(kr: string): number[] {
-  const m = kr.match(/Activit(?:y|ies)\s+(\d+)(?:\s*[–-]\s*(\d+))?/);
+  // "Activities 1–3, 6": a list of steps and ranges (T12.1's KR1 named step 6 after its range).
+  const m = kr.match(/Activit(?:y|ies)\s+(\d+(?:\s*[–-]\s*\d+)?(?:\s*,\s*\d+(?:\s*[–-]\s*\d+)?)*)/);
   if (!m) return [];
-  const a = Number(m[1]);
-  const b = m[2] ? Number(m[2]) : a;
-  return Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  return m[1].split(",").flatMap((part) => {
+    const [a, b = a] = part.split(/[–-]/).map((x) => Number(x.trim()));
+    return Array.from({ length: b - a + 1 }, (_, i) => a + i);
+  });
 }
 
 export function krFor(task: Task, n: number): { kr: string; index: number } | null {

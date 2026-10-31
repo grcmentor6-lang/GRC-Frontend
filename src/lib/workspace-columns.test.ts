@@ -36,7 +36,7 @@ assert.deepEqual(out.rows[0], [
   "Proves the document",
 ]);
 for (const [i, label] of out.head.entries()) {
-  const key = spec.find((c) => c.label === label)!.key;
+  const key: string = spec.find((c) => c.label === label)!.key;
   assert.equal(out.rows[0][i], rows[0][head.indexOf(key)], `${key} moved to the wrong column`);
 }
 

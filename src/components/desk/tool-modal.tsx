@@ -1,22 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
-import { PartHead, Work, thenOf } from "./how-to";
-import { BriefProgress, BriefWork, CopyWork, GridProgress, GridWork, LogWork, RegisterProgress, RegisterWork, RmfFile, RmfProgress, SubmitWork } from "./work-kinds";
-import { BRIEFS, REGISTERS, deliverableFor, stepSources } from "@/lib/desk/registers";
+import { DecisionSummary, LI_TAG, PartHead, Work, thenLabel, thenOf } from "./how-to";
+import { BriefProgress, BriefWork, CopyWork, GridProgress, GridWork, LogWork, RegisterProgress, RegisterWork, LadderWork, RmfFile, RmfProgress, RuleHelper, StudyWork, SubmitWork, TreeWork, ChecklistWork, ReportWork, SplitWork, CompareWork, ConsistencyWork } from "./work-kinds";
+import { DECIDE_FROM, LADDER, STUDY, briefOf, deliverableFor, handedIn, regOf, stepSources } from "@/lib/desk/registers";
 import { gridKey, stepAnswered } from "@/lib/desk/work";
-import { Inbox } from "./chat";
+import { Inbox, MessageNotice } from "./chat";
 import { ToolScreen } from "./viewer";
 import { FloatWindow } from "./float-window";
+import { TableView } from "./ui";
 import { DocCitation } from "./doc-text";
 import { DOC_TEXT } from "@/lib/desk/docs";
 import { OrgDetails, type OrgFull } from "./org-drawer";
-import { dmy, dueDate, fmtDay, rmfTable, testDue, workKind, type Step, type Task } from "@/lib/desk/model";
+import { dmy, dueDate, fmtDay, rmfTable, screenOf, testDue, workKind, type Desk, type Step, type Task } from "@/lib/desk/model";
 import { RMF, folders, submitCodes } from "@/lib/desk/forms";
-import { stepKey } from "@/lib/desk/progress";
+import { decisionChecked, stepKey, type Progress } from "@/lib/desk/progress";
 import { appZoom } from "@/lib/zoom";
 import { useAuth } from "@/components/auth/auth-provider";
 import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
@@ -39,8 +40,94 @@ export function ToolModal({ toolKey, onClose }: { toolKey: string | null; onClos
   return <AnimatePresence>{toolKey && <Dialog key="tool" toolKey={toolKey} onClose={onClose} />}</AnimatePresence>;
 }
 
+/** Section numbers in reading order: "2" before "2.1" before "3" before "10". */
+const bySec = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
+
 /** A tool opened for reading: a floating, resizable window with just its screen. */
-export function ToolWindow({ toolKey, index, onClose, beside, plain }: {
+/** A document from Policies › Policy Library, in its own window: the text where the platform has it
+ *  (the sections the step in hand cites marked), its headings otherwise. */
+function DocWindow({ id, index, onClose, beside }: { id: string; index: number; onClose: () => void; beside?: boolean }) {
+  const { desk, here } = useDesk();
+  const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
+  const task = here ? desk.tasks[here.task] : undefined;
+  const cites = [...((task && step ? stepSources(task, step.n, step.refs.docs) : []).find(([d]) => d === id)?.[1] ?? [])].sort(bySec);
+  const lib = desk.library.docs.find(([code]) => code === id);
+  const place = useBeside(index);
+  return (
+    <FloatWindow
+      title={`${id}${lib ? ` · ${lib[1]}` : ""}`}
+      eyebrow="Policies › Policy Library"
+      leading={<span className="grid h-7 w-7 place-items-center rounded bg-[#92400E] text-white"><Icon name="book" size={14} /></span>}
+      onClose={onClose}
+      index={index}
+      width={beside ? place.width : 720}
+      left={beside ? place.left : undefined}
+      fit={beside}
+    >
+      {DOC_TEXT.has(id) && cites.length > 0 && (
+        // The sections this step reads, one click each: a cited section can sit below long tables, and
+        // nothing else tells the learner it is further down. Stays in view while the text scrolls.
+        <nav data-guide="doc-jump" aria-label="Sections this step reads" className="sticky top-0 z-10 flex flex-wrap items-center gap-1.5 border-b border-[#E9ECF1] bg-white/95 px-4 py-2 text-[12.5px] text-[#5B6474] backdrop-blur">
+          <span>This step reads</span>
+          {cites.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={(e) => {
+                const sec = e.currentTarget.closest("section")?.querySelector<HTMLElement>(`[data-sec="${c}"]`);
+                if (!sec) return;
+                // The bar wraps to two lines in a narrow window (three sections): the heading lands below it, not under it.
+                sec.style.scrollMarginTop = `${(e.currentTarget.closest("nav")?.offsetHeight ?? 40) + 8}px`;
+                sec.scrollIntoView({ block: "start", behavior: "smooth" });
+              }}
+              className="focus-ring rounded border border-[#C7CBF5] bg-[#F7F8FF] px-2 py-0.5 font-mono text-[12px] font-semibold text-[#4338CA] hover:bg-[#EEF0FF] active:scale-[0.97]"
+            >
+              Section {c}
+            </button>
+          ))}
+        </nav>
+      )}
+      <div className="px-4 py-3">
+        {DOC_TEXT.has(id) ? (
+          <DocCitation id={id} cites={cites} />
+        ) : (
+          <ol className="grid gap-1 text-[13px] text-slate-700">
+            {(lib?.[2] ?? []).map(([n, h]) => <li key={n}><span className="inline-block w-12 text-slate-400 tabular-nums">Section {n}</span>{h}</li>)}
+          </ol>
+        )}
+      </div>
+    </FloatWindow>
+  );
+}
+
+type ToolWindowProps = { toolKey: string; index: number; onClose: () => void; beside?: boolean; plain?: boolean };
+/** A window opened from the toolbar: a document from the Policy Library ("doc|BKB-ADD-16"), or a tool's screen. */
+export function ToolWindow(props: ToolWindowProps) {
+  if (props.toolKey.startsWith("page|")) return <PageWindow id={props.toolKey.slice(5)} index={props.index} onClose={props.onClose} beside={props.beside} />;
+  return props.toolKey.startsWith("doc|") ? <DocWindow id={props.toolKey.slice(4)} index={props.index} onClose={props.onClose} beside={props.beside} /> : <ScreenWindow {...props} />;
+}
+
+/** A reference page from Learn › Reference pages, in its own window, as the pack's sheet has it. */
+function PageWindow({ id, index, onClose, beside }: { id: string; index: number; onClose: () => void; beside?: boolean }) {
+  const { desk } = useDesk();
+  const place = useBeside(index);
+  const t = desk.pages[id];
+  return (
+    <FloatWindow
+      title={id}
+      eyebrow="Learn › Reference pages"
+      leading={<span className="grid h-7 w-7 place-items-center rounded bg-[#111827] text-white"><Icon name="table" size={14} /></span>}
+      onClose={onClose}
+      index={index}
+      width={beside ? place.width : 760}
+      left={beside ? place.left : undefined}
+    >
+      <div className="bg-white">{t ? <TableView t={t} /> : <p className="p-4 text-[13.5px] text-[#5B6474]">This page is not in this release.</p>}</div>
+    </FloatWindow>
+  );
+}
+
+function ScreenWindow({ toolKey, index, onClose, beside, plain }: {
   toolKey: string;
   index: number;
   onClose: () => void;
@@ -54,22 +141,22 @@ export function ToolWindow({ toolKey, index, onClose, beside, plain }: {
   const mine = here && progress.grids?.[gridKey(here.task, toolKey)] ? here.task : null;
   // The step in hand works on the task's register or brief: the window shows that, as filled.
   const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
-  const deliverable = here && step?.key === toolKey && !plain ? deliverableFor(desk.tasks[here.task], here.n) : null;
+  // Not on a hand-in step: its tool (Home › My Tasks) is a screen of its own, opened from the toolbar. Nor on a decision
+  // not yet checked: its part 2 can record the answer by itself (T5.1 step 10: year 2 of the cycle), which would give
+  // the question away; the screen is shown instead.
+  // Nor where the task has its own data on this screen (T6.2's disable logs on Terminated User Check): opened from the
+  // toolbar, the screen is what the learner reads; the register is worked in the step's modal.
+  // Nor on a question-only step (no part 2) whose screen is not the task's own (F1.2 step 5: Learn & Grow › Glossary):
+  // the screen is what the question is read from, and the step's work is not done there.
   const sec = toolKey.split("|")[0];
-  const mock = desk.tp[toolKey] ?? desk.tp[`${sec}|*`];
-  // Beside the modal: in the gap to its left when there is one; otherwise at the right edge, over
-  // the instruction panel the mentee has already read, never over the table they are filling in.
-  // The gap is used down to 320px wide, the window narrowed to fit it.
-  const [place] = useState(() => {
-    const m = typeof document === "undefined" ? null : document.querySelector("[data-desk-modal]")?.getBoundingClientRect();
-    const off = 12 + index * 28;
-    const gap = m ? m.left / appZoom() - off - 12 : Infinity;
-    return gap >= 320 ? { left: `${off}px`, width: Math.min(420, gap) } : { left: `calc(100vw / var(--app-zoom) - ${420 + off}px)`, width: 420 };
-  });
+  const mock = screenOf(desk, toolKey, here?.task);
+  const own = !!step && (step.kind !== "pick" || !!thenOf(step) || ownView(desk.tasks[here!.task], mock?.tool));
+  const deliverable = here && step?.key === toolKey && !plain && own && !desk.tp[`${toolKey}#${here.task}`] && regOf(here.task, here.n)?.handIn?.step !== here.n && (step.kind !== "pick" || decisionChecked(progress, here.task, here.n)) ? deliverableFor(desk.tasks[here.task], here.n) : null;
+  const place = useBeside(index);
   return (
     <FloatWindow
-      title={mock?.tool ?? toolKey.replace("|", " › ")}
-      eyebrow={`${desk.sections[sec]?.t ?? sec}${mock?.stamp ? ` · ${mock.stamp}` : ""}`}
+      title={deliverable && here && ownView(desk.tasks[here.task], mock?.tool) ? desk.tasks[here.task].panel.tool : (mock?.tool ?? toolKey.replace("|", " › "))}
+      eyebrow={`${desk.sections[sec]?.t ?? sec}${toolKey === "policies|Policy Library" ? ` · ${libraryDocs(desk, progress).length} documents` : deliverable && here && ownView(desk.tasks[here.task], mock?.tool) ? ` · ${desk.tasks[here.task].panel.stamp}` : mock?.stamp ? ` · ${mock.stamp}` : ""}`}
       leading={<span className="grid h-7 w-7 place-items-center rounded bg-[#111827] text-white"><Icon name="grid" size={14} /></span>}
       onClose={onClose}
       index={index}
@@ -84,6 +171,27 @@ export function ToolWindow({ toolKey, index, onClose, beside, plain }: {
   );
 }
 
+/**
+ * Where a window opened beside the step's modal starts: in the gap to its left when there is one;
+ * otherwise at the right edge, over the instruction panel the mentee has already read, never over the
+ * table or page they are filling in. The gap is used down to 320px wide, the window narrowed to fit.
+ */
+/**
+ * The task's own view of a tool (its panel: "Evidence › Evidence Library (EVQ-6)", "2 worked + 6"),
+ * where it describes the same tool as the generic screen ("Evidence › Evidence Library (EVP-REPO)").
+ */
+const ownView = (task: Task | null, tool?: string) => !!task && !!tool && task.panel.tool.split(" (")[0] === tool.split(" (")[0];
+
+function useBeside(index: number) {
+  const [place] = useState(() => {
+    const m = typeof document === "undefined" ? null : document.querySelector("[data-desk-modal]")?.getBoundingClientRect();
+    const off = 12 + index * 28;
+    const gap = m ? m.left / appZoom() - off - 12 : Infinity;
+    return gap >= 320 ? { left: `${off}px`, width: Math.min(420, gap) } : { left: `calc(100vw / var(--app-zoom) - ${420 + off}px)`, width: 420 };
+  });
+  return place;
+}
+
 function Guard({ text }: { text: string }) {
   return (
     <p className="flex items-start gap-2 px-3.5 py-2.5 text-[12px] leading-relaxed text-[#5B6474]">
@@ -96,31 +204,37 @@ function Guard({ text }: { text: string }) {
 function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) {
   const { desk, here, progress } = useDesk();
   const sec = toolKey.split("|")[0];
-  const mock = desk.tp[toolKey] ?? desk.tp[`${sec}|*`];
+  const mock = screenOf(desk, toolKey, here?.task);
   const section = desk.sections[sec];
   const task = here ? desk.tasks[here.task] : null;
   const s = task && here ? task.steps[here.n - 1] : undefined;
-  const title = mock?.tool ?? toolKey.replace("|", " › ");
+  const s0 = task && here ? task.steps[here.n - 1] : undefined;
+  // A task's own view of the tool is titled as the task's panel names it (F2.2: "… (EVQ-6)").
+  const title = s0 && deliverableFor(task!, s0.n) && ownView(task, mock?.tool) ? task!.panel.tool : (mock?.tool ?? toolKey.replace("|", " › "));
   // The documents the step says to copy from, when their text is on the platform. The step opens on
   // its source, beside the work, so the mentee reads the value where it is written.
-  const sources = (task && s ? stepSources(task, s.n, s.refs.docs) : []).filter(([id]) => DOC_TEXT.has(id));
+  // A document that only answers the step's decision (answered in its row) is not read for this part.
+  const sources = (task && s ? stepSources(task, s.n, s.refs.docs) : []).filter(([id]) => DOC_TEXT.has(id) && !(task && s && DECIDE_FROM[task.id]?.[s.n]?.some(([x]) => x === id)));
   const deliverable = task && s ? deliverableFor(task, s.n) : null;
   // While the modal fades out, completing a step has already moved on: opening that step's sources
   // then would leave windows behind and hold the exit open.
   const present = useIsPresent();
-  // A step's first source opens beside the work by itself; the others, and a closed one, from the
-  // "Read from" strip. Kept per step, since the modal walks on to the next step in place.
-  const [toggled, setToggled] = useState<Record<string, boolean>>({});
-  const sid = (i: number | string) => `${here?.task}-${here?.n}:${i}`;
-  const isShown = (i: number | string) => toggled[sid(i)] ?? (i === 0 || i === "tool");
-  const show = (i: number | string, on: boolean) => setToggled((t) => ({ ...t, [sid(i)]: on }));
   // A step that fills READ-ME-FIRST works in the file; the screen it copies from (My Organisation,
   // My Tasks, My plan) is the source, open in its own window beside it.
   const rmf = s ? rmfTable(s) : null;
   // The step that hands READ-ME-FIRST in (F1.1 step 6): the file is what the modal shows, as on the
   // steps that fill it; My Tasks, where the folders are, opens from the toolbar like any screen.
   const handIn = !!task && !!s && submitCodes(task, s).includes("ONB-RMF");
-  const heading = rmf !== null || handIn ? RMF.file : title;
+  // A register handed in (F1.2 step 6, FAM-MAP): the file is what the modal shows, as above.
+  const regHandIn = !!task && !!s && regOf(task.id, s.n)?.handIn?.step === s.n;
+  // A brief handed in (F1.3 step 6, CTX-BRIEF with CTX-IP): both files, the brief at A4.
+  const briefHandIn = !!task && !!s && briefOf(task.id, s.n)?.handIn === s.n;
+  // Several registers handed in at once (T4.1 step 6: POL-CUR and POL-GAP): each, one under the other.
+  const regsIn = task && s ? handedIn(task.id, s.n) : [];
+  const heading = rmf !== null || handIn ? RMF.file : briefHandIn && task && s ? briefOf(task.id, s.n)!.title : regsIn.length > 1 ? [...new Set(regsIn.map((r) => r.title.split(" · ")[0]))].map((c) => `${c} · ${task!.subs.find((x) => x.code === c)?.name ?? ""}`).join(" and ") : regHandIn && task && s ? regOf(task.id, s.n)!.title : title;
+  // The task's own view of this tool, where it has one (F2.1: "Risk Register › Asset Register (CLS-6)",
+  // "2 worked + 6"): its stamp describes what the modal shows, the tool's generic one does not.
+  const stamp = task && deliverable && ownView(task, mock?.tool) ? task.panel.stamp : mock?.stamp;
   // A walk-through of the step, where one is written: it runs the first time the mentee opens the
   // step, and again from "Show me how".
   const { user } = useAuth();
@@ -148,7 +262,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
         exit={{ opacity: 0, y: 4, transition: { duration: 0.12 } }}
         transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
         data-desk-modal
-        className={`relative flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_rgba(17,24,39,0.35)]`}
+        className={`relative flex max-h-full w-full max-w-[1240px] flex-col min-[981px]:h-full overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_rgba(17,24,39,0.35)]`}
       >
         <header className="flex shrink-0 items-stretch border-b border-[#DDE1E8]">
           <span className="grid w-14 shrink-0 place-items-center bg-[#111827] text-white">
@@ -156,7 +270,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
           </span>
           <div className="min-w-0 flex-1 px-4 py-2.5">
             <p className="text-[12px] text-[#5B6474]">
-              {handIn && task ? `File · ${task.id} · 02_Working` : rmf !== null && task ? `File · ${task.id} · 01_Inputs` : `${section?.t ?? sec}${mock?.stamp ? ` · ${mock.stamp}` : ""}`}
+              {(handIn || regHandIn || briefHandIn) && task ? `File${briefHandIn || regsIn.length > 1 ? "s" : ""} · ${task.id} · 02_Working` : rmf !== null && task ? `File · ${task.id} · 01_Inputs` : `${section?.t ?? sec}${stamp ? ` · ${stamp}` : ""}`}
             </p>
             <h2 className="truncate text-[17px] font-bold text-[#111827]">{heading}</h2>
           </div>
@@ -182,46 +296,59 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
               </p>
             )}
             {sources.length > 0 && (
-              // Where to read: the step's source opens in its own window beside the work, so the
-              // mentee copies across without switching away from the tool.
-              <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2 text-[12.5px] text-[#78350F]">
-                <Icon name="book" size={14} className="shrink-0" />
-                <span className="font-semibold">Read from</span>
-                {sources.map(([id, secs], i) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => show(i, true)}
-                    className="inline-flex items-center gap-1 rounded border border-[#FCD34D] bg-white px-2 py-0.5 font-mono text-[12px] font-semibold text-[#92400E] hover:bg-[#FEF3C7] focus-ring"
-                  >
-                    {id}{secs.length ? ` §${secs.join(", §")}` : ""} <Icon name="arrowUpRight" size={12} />
-                  </button>
-                ))}
-                <span className="text-[#92400E]">opens in a window you can drag beside this one.</span>
-              </div>
+              // Where to read: named, not opened. The mentee opens it from the toolbar (Policies ›
+              // Policy Library, which carries the step's dot), the way the work is done.
+              <p data-guide="read-from" className="flex shrink-0 items-start gap-2 border-b border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2 text-[12.5px] leading-relaxed text-[#78350F]">
+                <Icon name="book" size={14} className="mt-[3px] shrink-0" />
+                <span>
+                  <span className="font-semibold">Read from </span>
+                  {sources.map(([id, secs]) => `${id}${secs.length ? ` Section ${[...secs].sort(bySec).join(", Section ")}` : ""}`).join(" and ")}
+                  <span className="text-[#92400E]">: open it from Policies › Policy Library.</span>
+                  {/* The document's "This step reads" bar jumps to each cited section: say so, by name. */}
+                  {(() => {
+                    const secs = [...new Set(sources.filter(([id]) => DOC_TEXT.has(id)).flatMap(([, x]) => x))].sort(bySec);
+                    return secs.length > 0 ? (
+                      <span data-guide="jump-hint" className="text-[#92400E]">
+                        {" "}In the document, click {secs.map((x) => `Section ${x}`).join(secs.length > 2 ? ", " : " or ").replace(/, (?=[^,]*$)/, " or ")} at the top to jump to {secs.length > 1 ? "each" : "it"}.
+                      </span>
+                    ) : null;
+                  })()}
+                  {task && s && regOf(task.id, s.n)?.readHow?.[s.n] && <span data-guide="read-how" className="mt-1 block text-[#78350F]">{regOf(task.id, s.n)!.readHow![s.n]}</span>}
+                </span>
+              </p>
             )}
-            {sources.map(([id, secs], i) =>
-              present && isShown(i) ? (
-                <FloatWindow
-                  key={sid(i)}
-                  title={`${id}${secs.length ? ` §${secs.join(", §")}` : ""}`}
-                  eyebrow="Source · read and copy from here"
-                  leading={<span className="grid h-7 w-7 place-items-center rounded bg-[#92400E] text-white"><Icon name="book" size={14} /></span>}
-                  onClose={() => show(i, false)}
-                  index={i}
-                  width={420}
-                  left={`${12 + i * 28}px`}
-                >
-                  <div className="px-4 py-3"><DocCitation id={id} cites={secs} /></div>
-                </FloatWindow>
-              ) : null,
-            )}
-            {task && s && handIn ? (
+            {task && s && briefHandIn ? (
+              <>
+                <BriefWork task={task} s={s} readOnly handIn />
+                {regOf(task.id, s.n) && <RegisterWork task={task} s={s} readOnly />}
+              </>
+            ) : task && s && handIn ? (
               <RmfFile task={task} t={0} readOnly handIn={{ name: (progress.answers[`${stepKey(task.id, s.n)}#ONB-RMF`] ?? "").trim() }} />
             ) : task && rmf !== null ? (
               <RmfFile task={task} t={rmf} readOnly={!!progress.submitted[task.id]} />
             ) : task && deliverable === "register" ? (
-              <RegisterWork task={task} s={s} readOnly={!!progress.submitted[task.id]} />
+              <>
+                {/* A compare step's calls sit over the table, so a document window opened beside the modal
+                    (at the right edge on a laptop) covers the instructions, never the calls. */}
+                {s && regOf(task.id, s.n)?.compare?.step === s.n && (
+                  <div className="shrink-0 border-b border-[#DDE1E8] bg-white px-4 pb-3">
+                    <CompareWork task={task} s={s} />
+                  </div>
+                )}
+                {regHandIn && regsIn.length > 1 ? (
+                  regsIn.map((r) => (
+                    <div key={r.code} className="shrink-0">
+                      <RegisterWork task={task} s={s} of={r} readOnly={!!progress.submitted[task.id]} />
+                    </div>
+                  ))
+                ) : (
+                  <div className="shrink-0">
+                    <RegisterWork task={task} s={s} readOnly={!!progress.submitted[task.id]} />
+                  </div>
+                )}
+                {/* A register handed in with its file's other tables (F2.1 CLS-RES: tier labels, transmission). */}
+                {regHandIn && s && briefOf(task.id, s.n) && <BriefWork task={task} s={s} readOnly />}
+              </>
             ) : task && deliverable === "brief" ? (
               <BriefWork task={task} s={s} readOnly={!!progress.submitted[task.id]} />
             ) : toolKey === "home|My Organisation" ? (
@@ -232,7 +359,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
             ) : (
               <Screen toolKey={toolKey} />
             )}
-            {desk.guard[sec] && <Guard text={desk.guard[sec]} />}
+            {desk.guard[sec] && !deliverable && <Guard text={desk.guard[sec]} />}
           </div>
           {task && s && <WorkPanel task={task} s={s} toolKey={toolKey} onClose={onClose} onGuide={guide ? startGuide : undefined} />}
           {guide && present && (
@@ -285,7 +412,7 @@ function BothOrgs() {
 function Screen({ toolKey }: { toolKey: string }) {
   const { desk, progress, here, start } = useDesk();
   const sec = toolKey.split("|")[0];
-  const mock = desk.tp[toolKey] ?? desk.tp[`${sec}|*`];
+  const mock = screenOf(desk, toolKey, here?.task);
 
   if (sec === "help")
     return (
@@ -299,6 +426,8 @@ function Screen({ toolKey }: { toolKey: string }) {
       </dl>
     );
   if (mock?.dyn === "inbox") return <div className="p-4"><Inbox /></div>;
+  if (toolKey === "policies|Policy Library") return <PolicyLibrary />;
+  if (toolKey === "learn|Reference pages") return <ReferencePages />;
   if (toolKey === "home|My plan") return <Plan />;
   if (mock?.dyn === "tasks") {
     const week = here ? desk.tasks[here.task].week : 1;
@@ -361,7 +490,7 @@ function ReadConfirm({ task, s, readOnly }: { task: Task; s: Step; readOnly: boo
 
 /** The step in hand, worked inside its tool. Editable until the task is submitted. */
 function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step; toolKey: string; onClose: () => void; /** Replays the step's walk-through. */ onGuide?: () => void }) {
-  const { desk, progress, update, openTask } = useDesk();
+  const { desk, progress, update, openTask, start } = useDesk();
   const n = s.n;
   const key = stepKey(task.id, n);
   const done = !!progress.done[key];
@@ -377,11 +506,13 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
       return;
     }
     openTask(task.id, next.n);
-    if (next.key !== toolKey) onClose(); // the next step is done elsewhere: back to the steps
+    // The next step is done elsewhere, or is a decision: back to the steps. A decision's question is
+    // answered in its row first; only then is its "Then" work opened.
+    if (next.key !== toolKey || next.kind === "pick") onClose();
   };
   const complete = () => {
     update((p) => ({ ...p, done: { ...p.done, [key]: true } }));
-    if (s.kind !== "pick") goNext(); // a decision stays put so its feedback can be read
+    goNext(); // a decision's feedback was read when its pick was checked
   };
 
   return (
@@ -394,6 +525,7 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
         {done && !sealed && <span className="ml-auto text-[12px] text-[#15803D]">{s.kind === "pick" ? "Done · decision locked" : "Done · you can still change it"}</span>}
         {onGuide && (
           <button
+            data-guide="show-me-how"
             type="button"
             onClick={onGuide}
             className={`${done && !sealed ? "" : "ml-auto"} inline-flex items-center gap-1 rounded border border-[#DDE1E8] bg-white px-2 py-1 text-[12px] font-semibold text-[#3730A3] hover:border-[#C7CBF5] hover:bg-[#EEF0FF] focus-ring`}
@@ -415,17 +547,30 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
             {/* One statement of the step: the full instruction when the title is only its start. */}
             {(() => {
               const stem = s.t.replace(/(…|\.\.\.)$/, "").trim();
-              const repeats = !s.w || s.w === s.t || s.w.startsWith(stem);
+              // A Lead Implementer step's text opens with its extension's name, which the header's step line carries.
+              const w = s.w.replace(LI_TAG, "");
+              const repeats = !w || w === s.t || w.startsWith(stem);
+              // A per-row decision: the question and its guidance; the options are the drop-downs themselves.
+              if (s.kind === "each") {
+                const [head, rest = ""] = s.w.replace(LI_TAG, "").replace(/^decide \(for each item\):\s*/i, "").split(/\s*Options:/);
+                const guidance = rest.split(/(?<=\.)\s+(?=Guidance:)/)[1] ?? "";
+                return (
+                  <>
+                    <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{head}</h3>
+                    {guidance && <p className="mt-2 text-[14px] leading-[1.55] text-[#3F4757]">{guidance.replace(/^Guidance:\s*(\w)/, (_, c: string) => c.toUpperCase())}</p>}
+                  </>
+                );
+              }
               if (s.kind === "pick") {
-                const question = s.w.split(/\s*Options:/)[0].replace(/^decide:\s*/i, "").trim();
+                const question = s.w.split(/\s*Options:/)[0].replace(LI_TAG, "").replace(/^decide:\s*/i, "").trim();
                 return <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{question}</h3>;
               }
               return repeats ? (
-                <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{s.w || s.t}</h3>
+                <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{w || s.t}</h3>
               ) : (
                 <>
                   <h3 className="text-[16px] font-bold leading-[1.35] text-[#111827]">{s.t}</h3>
-                  <p className="mt-2 text-[14px] leading-[1.55] text-[#3F4757]">{s.w}</p>
+                  <p className="mt-2 text-[14px] leading-[1.55] text-[#3F4757]">{w}</p>
                 </>
               );
             })()}
@@ -434,19 +579,45 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
             {/* A decision first; then the work the pack puts after it, in the shape that work takes. */}
             {s.kind === "pick" ? (
               <>
-                <PartHead n={1} label="Decide" />
-                <div data-guide="decision"><Work task={task} s={s} readOnly={sealed} bare /></div>
-                <PartHead n={2} label="Then" />
-                {rmfTable(s) === null && !REGISTERS[task.id]?.steps[n] && BRIEFS[task.id]?.steps[n] === undefined && (
+                {/* The question was answered and checked in the step's row (the modal opens only then):
+                    here it is one line, and the step's own work is part 2. */}
+                <PartHead n={1} label="Decided" />
+                <DecisionSummary task={task} s={s} />
+                <PartHead n={2} label={thenLabel(task, s)} />
+                {rmfTable(s) === null && !regOf(task.id, n)?.steps[n] && briefOf(task.id, n)?.steps[n] === undefined && (
                   <p className="text-[14px] leading-snug text-[#111827]">{thenOf(s)}</p>
                 )}
               </>
             ) : (
-              s.kind !== "do" && <Work task={task} s={s} readOnly={sealed} />
+              // A per-row decision made in its register is made there, once: no second list here.
+              s.kind !== "do" && !regOf(task.id, n)?.steps[n] && <Work task={task} s={s} readOnly={sealed} />
             )}
-            {REGISTERS[task.id]?.steps[n] ? (
-              <RegisterProgress task={task} s={s} />
-            ) : BRIEFS[task.id]?.steps[n] !== undefined ? (
+            {LADDER[task.id]?.[n] ? (
+              <LadderWork task={task} s={s} ladder={LADDER[task.id][n]} />
+            ) : STUDY[task.id]?.[n] ? (
+              <StudyWork task={task} s={s} prompts={STUDY[task.id][n]} />
+            ) : regOf(task.id, n)?.helper?.[n] ? (
+              <RuleHelper task={task} s={s} helper={regOf(task.id, n)!.helper![n]} />
+            ) : regOf(task.id, n)?.tree?.[n] ? (
+              <TreeWork task={task} s={s} tree={regOf(task.id, n)!.tree![n]} />
+            ) : regOf(task.id, n)?.checklist?.[n] ? (
+              <ChecklistWork task={task} s={s} chk={regOf(task.id, n)!.checklist![n]} />
+            ) : regOf(task.id, n)?.consistency?.step === n ? (
+              <ConsistencyWork task={task} s={s} />
+            ) : regOf(task.id, n)?.split?.[n] ? (
+              <SplitWork task={task} s={s} />
+            ) : regOf(task.id, n)?.compare?.step === n ? (
+              <p className="mt-3 text-[13.5px] leading-snug text-[#111827]">Compare each office on the left, above the register.</p>
+            ) : regOf(task.id, n)?.report?.step === n ? (
+              <ReportWork task={task} s={s} />
+            ) : regOf(task.id, n)?.steps[n] ? (
+              <>
+                <RegisterProgress task={task} s={s} />
+                {/* A step that fills a register and hands the files in (T6.2 step 6: the KPI, then LVR-REC and LVR-KPI):
+                    the files are named and submitted once its answers are checked. */}
+                {kind === "submit" && (!regOf(task.id, n)?.checkRows?.[n] || progress.rowChecks?.[`${task.id}-${n}`]) && <SubmitWork task={task} s={s} readOnly={sealed} />}
+              </>
+            ) : briefOf(task.id, n)?.steps[n] !== undefined ? (
               <BriefProgress task={task} s={s} />
             ) : rmfTable(s) !== null ? (
               <RmfProgress task={task} t={rmfTable(s)!} />
@@ -467,21 +638,25 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
           <p className="flex items-center gap-2 border-b border-[#DDE1E8] bg-[#F0FDF4] px-4 py-2.5 text-[13px] text-[#14532D]">
             <Icon name="checkCircle" size={15} className="shrink-0" />
             <span>
-              <strong className="font-bold">Done when</strong> {reading ? "you have read the screen and confirmed it" : s.o}
+              <strong className="font-bold">Done when</strong> {LADDER[task.id]?.[n] ? `you reach rule ${LADDER[task.id][n].rule}'s first yes for the lit row` : STUDY[task.id]?.[n] ? `you have found all ${STUDY[task.id][n].length} in ${STUDY[task.id][n][0]?.col === -1 ? "the worked section" : regOf(task.id, n)?.rows.every((r) => !regOf(task.id, n)!.mine(r, desk)) ? regOf(task.id, n)!.code : regOf(task.id, n)?.rows.some((r) => !regOf(task.id, n)!.mine(r, desk)) ? "the worked rows" : "the template"}` : reading ? "you have read the screen and confirmed it" : s.o}
             </span>
           </p>
         </motion.div>
       </AnimatePresence>
+      {!sealed && !done && <MessageNotice task={task} n={s.n} />}
       <footer className="flex shrink-0 items-stretch bg-[#F7F8FA]">
         <span className="flex flex-1 items-center px-4 py-3 text-[12px] text-[#5B6474]">
           {done ? (
             <span className="inline-flex items-center gap-1.5 font-semibold text-[#15803D]">
               <Icon name="checkCircle" size={15} /> Complete
             </span>
+          ) : next?.kind === "pick" ? (
+            // A question is answered in its row of the step list, whatever tool its second part uses.
+            `Step ${next.n} is a question, in the step list.`
           ) : next && next.key === toolKey ? (
             `Step ${next.n} is also done here.`
           ) : next ? (
-            `Step ${next.n} is done in ${next.tool}.`
+            next.key ? `Step ${next.n} is done in ${next.tool}.` : `Step ${next.n} is done in the step list.`
           ) : (
             "This is the last step."
           )}
@@ -500,7 +675,7 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
           <button
             type="button"
             data-guide="mark-complete"
-            disabled={sealed || !stepAnswered(desk, progress, task, s)}
+            disabled={sealed || !stepAnswered(desk, progress, task, s, start)}
             onClick={complete}
             className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] disabled:hover:brightness-100"
           >
@@ -589,6 +764,106 @@ function Plan() {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/**
+ * The first item the step in hand tags, scrolled into view when a list opens: BKB-POL-016 sits some twenty rows
+ * down the library, and the owner had to scroll to find it (T5.1 step 1).
+ */
+function useCitedInView() {
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    box.current?.querySelector<HTMLElement>("[data-cited]")?.scrollIntoView({ block: "center" });
+  }, []);
+  return box;
+}
+
+/** The Policy Library's documents: the group's, and the addenda of the mentee's own two organisations. */
+function libraryDocs(desk: Desk, p: Progress) {
+  const own = new Set(Object.values(desk.orgs).map((o) => (o as { addendum?: string }).addendum));
+  // A saved copy of an official source is filed once the learner has sorted the monitoring results (T11.2 step 2): listed
+  // earlier, the two copies would say which results are official. ponytail: the one task with saved sources, by name.
+  const saved = !!p.done[stepKey("T11.2", 2)] || !!p.submitted["T11.2"];
+  return desk.library.docs.filter(([code]) => (!code.startsWith("BKB-ADD-") || own.has(code)) && (saved || !code.startsWith("SRC-")));
+}
+
+/**
+ * Policies › Policy Library: the group's documents and the addenda of the mentee's two organisations,
+ * each opening in its own window. The pack's mock-up listed codes only, with nothing behind them, so
+ * a step that said "open BKB-ADD-16 Section 2" had no way in from the toolbar. A document the step in hand
+ * cites carries the step's tag, as a tool does in its menu.
+ */
+function PolicyLibrary() {
+  const { desk, here, openTool, progress } = useDesk();
+  const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
+  const task = here ? desk.tasks[here.task] : undefined;
+  const cited = new Set((task && step ? stepSources(task, step.n, step.refs.docs) : []).map(([id]) => id));
+  const docs = libraryDocs(desk, progress);
+  const box = useCitedInView();
+  const groups: [string, typeof docs][] = [
+    ["Your organisations' addenda", docs.filter(([c]) => c.startsWith("BKB-ADD-"))],
+    ["Group documents", docs.filter(([c]) => !c.startsWith("BKB-ADD-") && !c.startsWith("SRC-"))],
+    // Copies of official sources saved for a regulatory brief (T11.2): kept with the brief, as evidence of the text as read.
+    ["Saved regulatory sources", docs.filter(([c]) => c.startsWith("SRC-"))],
+  ];
+  return (
+    <div ref={box} data-guide="policy-library" className="grid gap-4 bg-white p-4">
+      {groups.map(([h, list]) => (
+        <section key={h}>
+          <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">{h}</h3>
+          <ul className="divide-y divide-[#E9ECF1] rounded border border-[#DDE1E8]">
+            {list.map(([code, title]) => (
+              <li key={code}>
+                <button
+                  type="button"
+                  data-doc={code}
+                  data-cited={cited.has(code) || undefined}
+                  onClick={() => openTool(`doc|${code}`)}
+                  className={`flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] hover:bg-[#F7F8FA] focus-ring ${cited.has(code) ? "bg-[#FFFBF2] shadow-[inset_3px_0_0_#D97706]" : ""}`}
+                >
+                  <span className="w-[104px] shrink-0 font-mono text-[12px] font-semibold text-[#111827]">{code}</span>
+                  <span className="min-w-0 flex-1 text-[#3F4757]">{title}</span>
+                  {cited.has(code) && <span className="shrink-0 rounded-[3px] bg-[#FDE7B8] px-1.5 py-0.5 text-[11px] font-semibold text-[#78350F]">Step {here?.n}</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Learn › Reference pages: the pack's reference sheets ("Ref-27000 family", "Ref-ISMS processes" …), each
+ * opening in its own window. The pages the step in hand cites carry its tag, as a cited document does in
+ * the Policy Library.
+ */
+function ReferencePages() {
+  const { desk, here, openTool } = useDesk();
+  const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
+  const cited = new Set(step?.refs.pages ?? []);
+  const box = useCitedInView();
+  return (
+    <div ref={box} data-guide="reference-pages" className="bg-white p-4">
+      <ul className="divide-y divide-[#E9ECF1] rounded border border-[#DDE1E8]">
+        {Object.keys(desk.pages).sort().map((id) => (
+          <li key={id}>
+            <button
+              type="button"
+              data-page={id}
+              data-cited={cited.has(id) || undefined}
+              onClick={() => openTool(`page|${id}`)}
+              className={`flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] hover:bg-[#F7F8FA] focus-ring ${cited.has(id) ? "bg-[#FFFBF2] shadow-[inset_3px_0_0_#D97706]" : ""}`}
+            >
+              <span className="min-w-0 flex-1 font-medium text-[#111827]">{id}</span>
+              {cited.has(id) && <span className="shrink-0 rounded-[3px] bg-[#FDE7B8] px-1.5 py-0.5 text-[11px] font-semibold text-[#78350F]">Step {here?.n}</span>}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

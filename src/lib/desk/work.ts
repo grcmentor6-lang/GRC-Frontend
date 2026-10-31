@@ -1,7 +1,8 @@
 import { isFillCell, rmfTable, workKind, type Desk, type Step, type Task } from "./model";
-import { ATTEST, RMF, attestDone, rmfFilled, rmfKey } from "./forms";
-import { BRIEFS, REGISTERS, briefStatus, regStatus } from "./registers";
+import { ATTEST, RMF, attestDone, rmfAt, rmfExpected, rmfFilled, rmfGiven, rmfKey } from "./forms";
+import { LADDER, STUDY, briefOf, briefStatus, compareDone, liveRow, regOf, regRows, regStatus, reportDone } from "./registers";
 import { stepKey, type Progress } from "./progress";
+import { waitingAt } from "./inbox";
 
 /** Where a task's register lives in progress: one per task and tool, shared by the task's steps. */
 export const gridKey = (taskId: string, toolKey: string) => `${taskId}|${toolKey}`;
@@ -31,20 +32,36 @@ export function gridStatus(desk: Desk, p: Progress, taskId: string, toolKey: str
  * Whether a step's work is in: the gate on "Mark activity complete". A decision needs its pick, and
  * then whatever work the pack puts after it ("Then: … copy into table 2", "… submitted").
  */
-export function stepAnswered(desk: Desk, p: Progress, task: Task, s: Step): boolean {
+export function stepAnswered(desk: Desk, p: Progress, task: Task, s: Step, start?: Date): boolean {
   const key = stepKey(task.id, s.n);
   const pick = p.picks[key];
-  if (s.kind === "pick" && typeof pick !== "string") return false;
+  // A colleague's message placed at this step is answered before the step closes (owner, 31 Oct).
+  if (waitingAt(desk, p, task.id, s.n).length) return false;
+  if (s.kind === "pick" && (typeof pick !== "string" || !(p.acks?.[key] ?? []).includes("checked"))) return false;
   const att = ATTEST[task.id]?.[s.n];
-  if (att) return attestDone(p, task.id, att.code);
-  if (REGISTERS[task.id]?.steps[s.n]) return regStatus(desk, p, task, s.n).ok;
-  if (BRIEFS[task.id]?.steps[s.n] !== undefined) return briefStatus(p, task, s.n).ok;
+  if (att) return att.every((a) => attestDone(p, task.id, a.code));
+  if (regOf(task.id, s.n)?.report?.step === s.n) return reportDone(desk, p, task);
+  const cons = regOf(task.id, s.n)?.consistency;
+  if (cons?.step === s.n) {
+    const reg = regOf(task.id, s.n)!;
+    return !!p.answers[`${key}#checked`] && regRows(reg, p, task.id).every((_, ri) => !cons.bad(liveRow(reg, p, task.id, ri), desk));
+  }
+  if (regOf(task.id, s.n)?.compare?.step === s.n) return compareDone(regOf(task.id, s.n)!, desk, p, task.id);
+  if (regOf(task.id, s.n)?.checkRows?.[s.n] && !p.rowChecks?.[`${task.id}-${s.n}`]) return false;
+  // A step that also hands its files in (T6.2 step 6) is done once they are submitted too.
+  if (regOf(task.id, s.n)?.steps[s.n]) return regStatus(desk, p, task, s.n).ok && (workKind(s, desk) !== "submit" || !!p.logs?.[key]);
+  if (briefOf(task.id, s.n)?.steps[s.n] !== undefined) return briefStatus(p, task, s.n, desk).ok;
   const t = rmfTable(s);
-  if (t !== null) return rmfFilled(p, task.id, t);
+  // A copy is in once it matches the screen it is copied from (KR1: an exact copy), not once typed.
+  // A pre-filled table (steps 1 and 5) is done once checked too, so the learner sees each row's verdict.
+  if (t !== null) return rmfFilled(p, task.id, t, start && rmfExpected(desk, start, t)) && (!start || !rmfGiven(desk, start, t) || !!p.grids?.[rmfKey(task.id)]?.[rmfAt(t)]);
   if (s.kind === "each") {
     const rows = task.panel.pl.r ?? [];
     return typeof pick === "object" && rows.length > 0 ? rows.every((_, i) => pick[i]) : typeof pick === "object" && Object.keys(pick).length > 0;
   }
+  if (LADDER[task.id]?.[s.n]) return (p.acks?.[key] ?? []).includes("done");
+  const study = STUDY[task.id]?.[s.n];
+  if (study) return study.every((q) => (p.acks?.[key] ?? []).includes(q.id));
   const kind = workKind(s, desk);
   if (kind === "submit") return !!p.logs?.[key];
   if (s.kind === "pick") return true;
@@ -73,13 +90,13 @@ export function submissionText(desk: Desk, p: Progress, task: Task, s: Step): st
 function workText(desk: Desk, p: Progress, task: Task, s: Step): string {
   const key = stepKey(task.id, s.n);
   const pick = p.picks[key];
-  const reg = REGISTERS[task.id];
+  const reg = regOf(task.id, s.n);
   if (reg?.steps[s.n]) {
     const g = regStatus(desk, p, task, s.n);
     const cols = reg.steps[s.n].map((ci) => reg.cols[ci].h.split(" ")[0]).join(", ");
     return g.filled ? `${reg.code} column${reg.steps[s.n].length > 1 ? "s" : ""} ${cols}: ${g.filled} of ${g.cells} cells filled` : "";
   }
-  const b = BRIEFS[task.id];
+  const b = briefOf(task.id, s.n);
   if (b?.steps[s.n] !== undefined) {
     const g = briefStatus(p, task, s.n);
     return g.filled ? `${b.code} section ${b.sections[b.steps[s.n]].h}: ${g.filled} of ${g.cells} lines filled` : "";

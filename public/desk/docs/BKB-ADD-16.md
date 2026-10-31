@@ -58,6 +58,8 @@ Omnichannel support (voice, chat, email, social)
 
 Note. Country entries were compiled in September 2026 from public sources and must be validated by local counsel before reliance. The shortest applicable notification clock governs any incident affecting multiple jurisdictions.
 
+Language. The 2018 Act in the Warsaw row is Poland's Act of 10 May 2018 on the Protection of Personal Data, published in Polish only. The Group reads it in the English translation prepared by the Warsaw office's local counsel with these entries in September 2026; the Polish text governs. A value taken from the translation is recorded with its language: "English translation; Polish text governs".
+
 2.1 Lead regulator requirements
 
 Registration of Data Processing Systems with NPC
@@ -72,28 +74,55 @@ Privacy Impact Assessment for new BPO contracts
 
 NPC BPO sector audit compliance
 
+2.2 Obligation details
+
+For the obligations register: the article or clause, the frequency or deadline, the compliance process and the evidence of compliance of each obligation of the head office and the second office in Section 2, Section 2.1 and Section 6, and of the first three Key Requirements of the organisation's customers (Organization_Profiles). An office's Section 2 breach-notification cell is listed as one row per duty.
+
+| From | Obligation | Article / clause | Frequency / deadline | Process | Evidence of compliance |
+| :-: | :-: | :-: | :-: | :-: | :-: |
+| Section 2 Manila | 72h to NPC | DPA 2012 Sec. 20(f); NPC Circular 16-03 Sec. 17 | 72h | Incident management and breach notification | NPC breach notification log with submission receipts |
+| Section 2 Manila | 72h to data subjects | DPA 2012 Sec. 20(f); NPC Circular 16-03 Sec. 18 | 72h | Incident management and breach notification | Data-subject notification letters and their send log |
+| Section 2 Warsaw | 72h to supervisory authority (GDPR Art.33) | GDPR Art.33 | 72h | Incident management and breach notification | UODO notification forms and the Art.33(5) breach register |
+| Section 2 Warsaw | without undue delay to data subjects if high risk | GDPR Art.34 | without undue delay | Incident management and breach notification | Data-subject communications and the high-risk assessment behind them |
+| Section 2.1 | Registration of Data Processing Systems with NPC | NPC Circular 2022-04 | Annual renewal | Privacy management | NPC registration certificate and renewal record |
+| Section 2.1 | Appointment of Data Protection Officer (DPO) | DPA 2012 IRR Sec. 26(a) | Ongoing | Privacy management | DPO appointment letter and NPC registration of the DPO |
+| Section 2.1 | NPC breach notification within 72 hours for serious breaches | NPC Circular 16-03 Sec. 17 | 72 hours | Incident management and breach notification | NPC breach notification log with submission receipts |
+| Section 2.1 | Annual privacy awareness training for all staff | DPA 2012 IRR Sec. 26(d) | Annual | Awareness and training | Training completion records for all staff |
+| Section 2.1 | Privacy Impact Assessment for new BPO contracts | NPC Advisory 2017-03 | Before each new contract | Privacy management | PIA report signed off by the DPO |
+| Section 2.1 | NPC BPO sector audit compliance | NPC Circular 18-02 | On NPC notice | Compliance and regulatory management | Compliance-check readiness file and the closure log of NPC findings |
+| Section 6 Payment card data | PCI DSS v4.0.1 scope must be documented and validated annually (Req. 12.5); card-data environment segmented; quarterly ASV scans. | Req. 12.5 | annually | Compliance and regulatory management | Annual scope confirmation, segmentation test report and quarterly ASV scan reports |
+| Section 6 US health information | HIPAA Security Rule safeguards and BAAs; breach notification to covered entity/HHS per 45 CFR 164.410 (≤ 60 days). | 45 CFR 164.410 | 60 days | Privacy management | Signed BAAs, the Security Rule risk analysis and breach notices to covered entities |
+| Section 6 GDPR | RoPA, DPIAs, Art.28 contracts, 72h breach notification to lead supervisory authority, SCCs/adequacy for transfers out of the EEA. | Art.28 | 72h | Privacy management | RoPA, DPIA reports, Art.28 contracts and SCCs |
+| Section 6 United States | State breach-notification laws for affected residents; SEC 8-K Item 1.05 within 4 business days if SEC registrant; sector rules (NYDFS 500 for NY financial services). | Item 1.05 | 4 business days | Incident management and breach notification | State breach notices and the Form 8-K disclosure file |
+| Key Requirements | Quality scores (CSAT, NPS) | Client contract: service-level schedule | Monthly | Compliance and regulatory management | Monthly CSAT and NPS scorecards sent to the client |
+| Key Requirements | Data security for client customer data | Client contract: data-protection agreement | Ongoing; annual client audit | Information security management | Client security questionnaires and audit reports |
+| Key Requirements | Operational uptime and staffing | Client contract: service-level schedule | Monthly | Business continuity | Monthly uptime and staffing reports |
+
 3\. Standards and regulations in scope
 
-| Standard / regulation | Type | Decomposition unit | Requirements | Operational tasks (library) |
-| :-: | :-: | :-: | :-: | :-: |
-| ISO/IEC 27001:2022 | Mandatory | Clause + Annex A control | 118 | 23600 |
-| DPA 2012 (Philippines) | Mandatory | Section / NPC requirement | 12 | 2400 |
-| PCI DSS v4.0 (for financial clients) | Mandatory | Sub-requirement | 63 | 12600 |
-| HIPAA (for US healthcare clients) | Mandatory | Standard (45 CFR 164) | 22 | 4400 |
-| GDPR (for EU client data) | Mandatory | Article | 42 | 8400 |
-| ISO 18295 (Customer Contact Centres) | Optional | Requirement area | 12 | 2400 |
-| COPC CX Standard | Optional | Category | 10 | 2000 |
-| ISO 9001 | Optional | Clause | 28 | 5600 |
-| SOC 2 Type II | Optional | Trust Services Criterion | 61 | 12200 |
+| Standard / regulation | Type | Applies to | Decomposition unit | Requirements | Operational tasks (library) |
+| :-: | :-: | :-: | :-: | :-: | :-: |
+| ISO/IEC 27001:2022 | Mandatory | All offices | Clause + Annex A control | 118 | 23600 |
+| DPA 2012 (Philippines) | Mandatory | See Section 2 | Section / NPC requirement | 12 | 2400 |
+| PCI DSS v4.0.1 (for financial clients) | Mandatory | All offices | Sub-requirement | 63 | 12600 |
+| HIPAA (for US healthcare clients) | Mandatory | See Section 2 | Standard (45 CFR 164) | 22 | 4400 |
+| GDPR (for EU client data) | Mandatory | See Section 2 | Article | 42 | 8400 |
+| ISO 18295 (Customer Contact Centres) | Optional | — | Requirement area | 12 | 2400 |
+| COPC CX Standard | Optional | — | Category | 10 | 2000 |
+| ISO 9001 | Optional | — | Clause | 28 | 5600 |
+| SOC 2 Type II | Optional | — | Trust Services Criterion | 61 | 12200 |
+
+Note. "All offices": the ISMS certification scope and the card-data environment cover the head office and every regional office, since each office handles client transaction and payment data (Section 8.1, Section 9).
 
 4\. Stakeholder requirements
 
-| Interested party group | Requirements |
-| :-: | :-: |
-| Stakeholders / customers | • Quality scores (CSAT, NPS)• Data security for client customer data• Operational uptime and staffing |
-| Employees | • DPA 2012 awareness• Clean desk and call recording policies• Performance monitoring standards |
-| Regulators | • NPC registration and compliance• DOLE labour law compliance• Client-jurisdiction data laws (GDPR, HIPAA, CCPA as applicable) |
-| Partners | • Client DPA and data sharing agreements• Telecom and connectivity SLAs• HR outsourcing provider contracts |
+| Interested party group | Requirements | Internal / External | Standard / law |
+| :-: | :-: | :-: | :-: |
+| Stakeholders / customers | • Quality scores (CSAT, NPS)• Data security for client customer data• Operational uptime and staffing | External | Client contracts (MSA and data-protection agreement) |
+| Employees | • DPA 2012 awareness• Clean desk and call recording policies• Performance monitoring standards | Internal | Labor Code of the Philippines; DPA 2012 |
+| Regulators | • NPC registration and compliance• DOLE labour law compliance• Client-jurisdiction data laws (GDPR, HIPAA, CCPA as applicable) | External | DPA 2012; Labor Code of the Philippines; GDPR; HIPAA |
+| Partners | • Client DPA and data sharing agreements• Telecom and connectivity SLAs• HR outsourcing provider contracts | External | Client data-protection agreements; supplier contracts |
+| End-customers of clients | • Privacy of their personal data• Accurate resolution of their queries• Timely handling of complaints | External | DPA 2012; GDPR (EU data subjects) |
 
 4.1 Interested parties
 
@@ -201,6 +230,19 @@ The following values are selected from the criticality-band tables of the Group 
 | On-premises assets | Cloud assets |
 | :-: | :-: |
 | • Call centre workstations and headsets• Call recording servers• CRM access terminals• PBX/telephony infrastructure• Network access control systems | • CRM platforms (Salesforce, Zendesk)• Workforce management system• QA monitoring tools• VoIP and UCaaS platforms• HR and payroll systems |
+
+9.1 System integrations
+
+Extract of the organisation's TSA Integrations sheet, in its order: each integration of the systems above, and whether it crosses the organisation's boundary.
+
+| Integration | Internal / External | Counterparty | Data exchanged |
+| :-: | :-: | :-: | :-: |
+| Workforce management system ↔ HR and payroll systems | Internal | HR & Workforce Management | Schedules, hours worked |
+| CRM platforms (Salesforce, Zendesk) ↔ client CRM tenants | External | Client companies | End-customer PII, CRM interaction history |
+| QA monitoring tools ↔ call recording servers | Internal | Quality Assurance | Call recordings, QA scores |
+| VoIP and UCaaS platforms ↔ telecom carriers | External | Telecom providers | Call audio, call detail records |
+| KYC verification service ↔ identity-check provider | External | IT vendors | Identity documents (for KYC processes) |
+| Collections platform ↔ client payment gateways | External | Client companies | Payment and financial data |
 
 10\. Mentorship programme mode
 

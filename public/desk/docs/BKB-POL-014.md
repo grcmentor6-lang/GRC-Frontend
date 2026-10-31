@@ -87,6 +87,18 @@ Minimum requirements scale with organisation criticality as defined in Organizat
 | 3 | Determine all applicable laws (by data-subject location and office) and deadlines | DPO | Notification plan |
 | 4 | Draft and submit notifications; record even if not notifiable | DPO | Breach register entry |
 
+6.3 Procedure: Which regimes apply, and their deadlines (rule R30)
+
+| Step | Action |
+| :-: | :-: |
+| 1 | List the engaged offices: the office whose systems are affected, and, for each country where affected data subjects live, the organisation's office in that country. A country with no office of its own is read with the office of its region (the addendum's Section 1). |
+| 2 | Read each engaged office's row of the addendum's Section 2. A breach-notification regime in that row applies. |
+| 3 | A cyber-incident reporting duty (Section 2's Cyber / sector law column) applies only where that office's own systems are affected. Data subjects living in the country do not engage it. |
+| 4 | A regime whose own words set a condition that the incident facts do not settle (being a registrant, the incident being material, the organisation being in a law's scope) applies if the condition is met. List it with its condition: its clock is not firm. |
+| 5 | A regime of an office that is not engaged does not apply. |
+| 6 | Deadline = discovery time (UTC) + the clock. Hours and days are calendar time, weekends included; business days skip Saturdays and Sundays. Where a cell gives a range, count from its shortest end. Write each deadline as the discovery time is written: date, time, UTC (2026-01-31 09:00 UTC). |
+| 7 | The earliest firm deadline governs the plan (Section 3.1). A conditional regime is listed with its deadline and its condition, and is not used for the earliest. |
+
 7\. Guidelines
 
 7.1 Guideline: First-hour checklist
@@ -103,7 +115,7 @@ Use out-of-band communication if email may be compromised.
 
 Compliance is measured through the KPIs below, control testing, internal audit and the GRC Operational Task Libraries.
 
-Exceptions require a documented risk assessment, compensating controls, a named owner, an expiry date (maximum 12 months) and approval per the delegated authority in the GRC Charter §6.1.
+Exceptions require a documented risk assessment, compensating controls, a named owner, an expiry date (maximum 12 months) and approval per the delegated authority in the GRC Charter Section 6.1.
 
 Violations may result in disciplinary action in accordance with local employment law, contract termination for third parties, and reporting to authorities where legally required.
 

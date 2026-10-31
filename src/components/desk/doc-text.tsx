@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { loadDoc, pick, type DocSection } from "@/lib/desk/docs";
+import { blocks, clean, docNow, loadDoc, pick, type DocSection } from "@/lib/desk/docs";
 
 /** Sections of a source document, drawn as the pack writes them: paragraphs and tables. */
 export function DocText({ sections }: { sections: DocSection[] }) {
   return (
     <div className="grid gap-5">
       {sections.map((s) => (
-        <section key={s.num} className="grid gap-2">
+        <section key={s.num} data-sec={s.num} className="grid scroll-mt-12 gap-2">
           <h3 className="text-[14.5px] font-bold text-[#111827]">
-            <span className="mr-2 font-mono text-[12.5px] text-[#4338CA]">{/^\d/.test(s.num) ? `§${s.num}` : s.num}</span>
+            <span className="mr-2 font-mono text-[12.5px] text-[#4338CA]">{/^\d/.test(s.num) ? `Section ${s.num}` : s.num}</span>
             {s.title}
           </h3>
           <Body md={s.body} />
@@ -20,32 +20,11 @@ export function DocText({ sections }: { sections: DocSection[] }) {
   );
 }
 
-const clean = (t: string) => t.replace(/\\([~.<>&#_*-])/g, "$1").replace(/\s*•\s*/g, "\n• ").trim();
-
 function Body({ md }: { md: string }) {
-  const blocks: ({ t: "p"; text: string } | { t: "table"; rows: string[][] })[] = [];
-  let open = false; // inside a table
-  for (const raw of md.split("\n")) {
-    const line = raw.trim();
-    if (!line) {
-      open = false; // a blank line ends a table, so two tables never merge
-      continue;
-    }
-    if (line.startsWith("|")) {
-      const cells = line.split("|").slice(1, -1).map((c) => c.trim());
-      if (cells.every((c) => /^:?-+:?$/.test(c))) continue; // the |:-:| rule under the header
-      const last = blocks[blocks.length - 1];
-      if (open && last?.t === "table") last.rows.push(cells);
-      else blocks.push({ t: "table", rows: [cells] });
-      open = true;
-    } else {
-      open = false;
-      blocks.push({ t: "p", text: line });
-    }
-  }
+  const parts = blocks(md);
   return (
     <div className="grid gap-2">
-      {blocks.map((b, i) =>
+      {parts.map((b, i) =>
         b.t === "p" ? (
           <p key={i} className="text-[13.5px] leading-relaxed text-[#3F4757]">{clean(b.text)}</p>
         ) : (
@@ -88,4 +67,30 @@ export function DocCitation({ id, cites }: { id: string; cites: string[] }) {
   if (!sections) return <div className="h-24 animate-pulse rounded bg-[#F3F4F7]" aria-busy="true" />;
   if (!sections.length) return <p className="text-[13.5px] text-[#5B6474]">The text of this document is not on the platform yet.</p>;
   return <DocText sections={sections} />;
+}
+
+/** A document's sections once loaded (re-renders when they arrive), for checks against the source. */
+export function useDoc(id: string): DocSection[] | null {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    let live = true;
+    if (!docNow(id)) loadDoc(id).then(() => live && setTick((t) => t + 1));
+    return () => {
+      live = false;
+    };
+  }, [id]);
+  return docNow(id);
+}
+
+/** Several documents at once (a register's checks read from more than one), re-rendering as each loads. */
+export function useDocs(ids: string[]): void {
+  const [, setTick] = useState(0);
+  const key = ids.join("|");
+  useEffect(() => {
+    let live = true;
+    for (const id of key ? key.split("|") : []) if (!docNow(id)) loadDoc(id).then(() => live && setTick((t) => t + 1));
+    return () => {
+      live = false;
+    };
+  }, [key]);
 }

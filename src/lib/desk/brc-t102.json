@@ -1,0 +1,251 @@
+{
+ "record": [
+  [
+   "Incident",
+   "INC-2610-3001"
+  ],
+  [
+   "Discovered (UTC)",
+   "2026-12-08 13:20 UTC"
+  ],
+  [
+   "Offices whose systems are affected",
+   "Amsterdam, Netherlands"
+  ],
+  [
+   "System affected",
+   "Learning platform & content (Amsterdam)"
+  ],
+  [
+   "What happened",
+   "A software release on 7 December left a report-export link of the Learning platform & content reachable without sign-in, and it was used from an unknown address to download student records. The export reads the records decrypted, so encryption at rest did not protect them. The platform was taken offline to stop the downloads."
+  ],
+  [
+   "Data-subject countries",
+   "India; Turkey; United States"
+  ],
+  [
+   "Data categories",
+   "Student names, ages and schools; Assessment scores"
+  ],
+  [
+   "Approx. records",
+   "4500"
+  ],
+  [
+   "Children's data",
+   "Yes"
+  ],
+  [
+   "Service disruption",
+   "Customer-facing outage 9 hours"
+  ],
+  [
+   "Encrypted at rest",
+   "Yes (keys not affected)"
+  ]
+ ],
+ "facts": [
+  [
+   "Discovered (UTC)",
+   "2026-12-08 13:20 UTC"
+  ],
+  [
+   "Offices whose systems are affected",
+   "Amsterdam, Netherlands"
+  ],
+  [
+   "Data-subject countries",
+   "India; Turkey; United States"
+  ]
+ ],
+ "regimes": [
+  [
+   "KVKK — notify the Board",
+   "Istanbul, Turkey",
+   "Breach notification: 72h to Board"
+  ],
+  [
+   "GDPR Art.33 (Autoriteit Persoonsgegevens)",
+   "Amsterdam, Netherlands",
+   "Breach notification: 72h to supervisory authority (GDPR Art.33)"
+  ],
+  [
+   "US state breach laws (residents affected)",
+   "New York, United States",
+   "Breach notification: All 50 states have breach laws (typically 30–60 days)"
+  ],
+  [
+   "SEC 8-K Item 1.05 (material cyber incident)",
+   "New York, United States",
+   "Breach notification: SEC 8-K within 4 business days of materiality"
+  ],
+  [
+   "DPDP — detailed report to the Board",
+   "Mumbai, India",
+   "Breach notification: Notify Board and affected principals without delay; detailed report within 72h"
+  ],
+  [
+   "CERT-In cyber-incident report",
+   "Mumbai, India",
+   "Cyber / sector law: CERT-In Directions 2022 — 6h incident reporting"
+  ]
+ ],
+ "early": "Earliest firm deadline",
+ "applies": [
+  "Applies",
+  "Applies if condition met",
+  "Does not apply"
+ ],
+ "tell": [
+  "Children's data",
+  "Health data",
+  "Financial data",
+  "Credentials",
+  "More than 1,000 people",
+  "Tell data subjects (R30)"
+ ],
+ "phases": [
+  [
+   "Plan",
+   "A.5.24",
+   "Before any incident: this policy and its playbooks, the tabletop exercises of Section 4, the IR retainer"
+  ],
+  [
+   "Detect and report",
+   "A.6.8",
+   "Section 6.1 step 1, Detect & report: the event is logged in the incident tool and given a severity"
+  ],
+  [
+   "Assess and decide",
+   "A.5.25",
+   "Section 6.1 step 2, Triage, and the notification assessment of Section 6.2: confirm, scope, rate the risk, decide who must be told"
+  ],
+  [
+   "Respond",
+   "A.5.26",
+   "Section 6.1 steps 3 to 5: Contain, Notify, Eradicate & recover"
+  ],
+  [
+   "Learn",
+   "A.5.27",
+   "Section 6.1 step 6, Post-incident review: root cause, lessons, actions"
+  ],
+  [
+   "Evidence (every phase)",
+   "A.5.28",
+   "Section 3.1 and Section 7.1: logs preserved, times in UTC, one incident timeline, chain of custody"
+  ]
+ ],
+ "phaseNames": [
+  "Plan",
+  "Detect and report",
+  "Assess and decide",
+  "Respond",
+  "Learn"
+ ],
+ "events": [
+  [
+   "E1",
+   "2026-10-14",
+   "The Amsterdam office holds its annual incident tabletop exercise, on a student-data leak, and updates its incident playbook."
+  ],
+  [
+   "E2",
+   "2026-12-08 13:05 UTC",
+   "Regional security monitoring detects an unusual number of student-record exports from the Learning platform & content to one unknown address, and reports it to the service desk."
+  ],
+  [
+   "E3",
+   "2026-12-08 13:20 UTC",
+   "The service desk logs incident INC-2610-3001 in the incident tool and gives it severity SEV2."
+  ],
+  [
+   "E4",
+   "2026-12-08 13:50 UTC",
+   "The IR team takes the Learning platform & content offline and blocks the unknown address, so that no more records can leave."
+  ],
+  [
+   "E5",
+   "2026-12-08 14:10 UTC",
+   "The Incident Response & Crisis Manager confirms that about 4,500 student records were taken, scopes the students' countries and starts the notification assessment."
+  ],
+  [
+   "E6",
+   "2026-12-08 22:50 UTC",
+   "IT closes the export link, restores the platform from a clean build and puts it back online under closer monitoring."
+  ],
+  [
+   "E7",
+   "2026-12-09 10:00 UTC",
+   "The DPO rates the risk to the students and decides which authorities and which people must be notified."
+  ],
+  [
+   "E8",
+   "2026-12-10 09:00 UTC",
+   "The DPO sends the notifications to the authorities, signed off by the General Counsel."
+  ],
+  [
+   "E9",
+   "2026-12-17",
+   "The post-incident review finds the root cause, a release that left the export link open, and gives the release checklist and the developers' training new actions."
+  ]
+ ],
+ "bcdr": [
+  [
+   "DR plan",
+   "Disaster recovery: restores ICT systems"
+  ],
+  [
+   "BC plan",
+   "Business continuity: keeps the business running"
+  ]
+ ],
+ "plan": [
+  [
+   "Incident",
+   "INC-2610-3001"
+  ],
+  [
+   "Discovered (UTC)",
+   "2026-12-08 13:20 UTC"
+  ],
+  [
+   "Data affected",
+   "Student names, ages and schools; Assessment scores; about 4,500 records; children's data"
+  ],
+  [
+   "Regimes that apply, with deadlines (UTC)",
+   ""
+  ],
+  [
+   "Listed with a condition",
+   ""
+  ],
+  [
+   "Earliest firm deadline (BKB-POL-014 Section 3.1)",
+   ""
+  ],
+  [
+   "Tell data subjects (R30)",
+   ""
+  ],
+  [
+   "Notice to schools and families (step 6)",
+   ""
+  ],
+  [
+   "Legal sign-off required",
+   ""
+  ],
+  [
+   "Breach register entry",
+   "INC-2610-3001 is recorded in LearnTech's breach register with this plan, by the DPO (BKB-POL-014 Section 6.2, step 4)."
+  ]
+ ],
+ "d4": [
+  "Hold it; legal sign-off is required first",
+  "Post it on social media",
+  "Send it — speed matters"
+ ]
+}

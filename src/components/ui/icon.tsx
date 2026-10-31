@@ -33,6 +33,7 @@ const paths: Record<string, ReactNode> = {
   chevronLeft: <path d="M15 6l-9 6 9 6" />,
   arrowRight: (<><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></>),
   arrowLeft: (<><path d="M19 12H5" /><path d="M11 18l-6-6 6-6" /></>),
+  arrowDown: (<><path d="M12 5v14" /><path d="M6 13l6 6 6-6" /></>),
   arrowUpRight: (<><path d="M7 17L17 7" /><path d="M8 7h9v9" /></>),
   check: <path d="M5 13l4 4L19 7" />,
   plus: (<><path d="M12 5v14" /><path d="M5 12h14" /></>),

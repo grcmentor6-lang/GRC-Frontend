@@ -10,11 +10,19 @@ LI-Summary is formulas over the Domain Map, so the app computes it; only its not
 Re-run it whenever the pack ships a new workbook.
 """
 import json
+import re
 import sys
 from pathlib import Path
 
 import openpyxl
 
+
+
+def desect(t: str) -> str:
+    """No section sign for the learner: §2 -> Section 2, §2–§3 -> Sections 2–3."""
+    t = re.sub(r"§§\s*", "Sections ", t)
+    t = re.sub(r"§\s*([0-9A-Za-z][\w.]*)\s*([–-])\s*§\s*([0-9A-Za-z][\w.]*)", r"Sections \1\2\3", t)
+    return re.sub(r"§\s*", "Section ", t)
 
 def rows(wb, name, skip):
     """The sheet's data rows, header rows skipped, empty rows dropped, cells as stripped strings."""
@@ -58,7 +66,7 @@ def main(src: str) -> None:
     assert len(controls) == 93, f"expected 93 Annex A controls, got {len(controls)}"
     assert len(extensions) == 18, f"expected 18 extensions, got {len(extensions)}"
     dest = Path(__file__).resolve().parent.parent / "public" / "desk" / "li.json"
-    dest.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf8")
+    dest.write_text(desect(json.dumps(out, ensure_ascii=False, separators=(",", ":"))), encoding="utf8")
     print(f"{dest} — {len(statements)} statements, {len(clauses)} clauses, {len(controls)} controls, "
           f"{len(extensions)} extensions, {len(course)} course days")
 

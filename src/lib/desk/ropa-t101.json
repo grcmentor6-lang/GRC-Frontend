@@ -1,0 +1,321 @@
+{
+ "desc": [
+  [
+   "Activity",
+   "Corporate LMS for adult learners"
+  ],
+  [
+   "Offices involved",
+   "Amsterdam, Netherlands, Mumbai, India"
+  ],
+  [
+   "Described by",
+   "Regional EdTech Manager, Amsterdam (owner of the LMS in the asset register)"
+  ],
+  [
+   "Clients",
+   "Companies that buy the corporate LMS to train their own employees, each under an LMS service agreement with a data processing agreement"
+  ],
+  [
+   "Data subjects",
+   "The clients' employees who take courses (adults, 18 or over), and the clients' training administrators and HR managers"
+  ],
+  [
+   "Personal data",
+   "Name, work e-mail, employee ID, department and job title; course enrolments, progress, completion dates and quiz answers and marks; for administrators, name, work e-mail and phone"
+  ],
+  [
+   "Special categories of data",
+   "None"
+  ],
+  [
+   "Sign-in",
+   "Learners sign in with their work account, through their employer's single sign-on"
+  ],
+  [
+   "Courses",
+   "Self-paced pages, videos to watch and quizzes. The client's training administrators assign the courses; each quiz answer is marked right or wrong against the course's answer key"
+  ],
+  [
+   "Recipients",
+   "The client's training administrators and HR managers; LearnTech's support teams in Amsterdam and Mumbai; LearnTech's cloud hosting provider (EU hosting region)"
+  ],
+  [
+   "Retention",
+   "Until 30 days after the client's contract ends; then erased, with a deletion certificate to the client"
+  ],
+  [
+   "Security measures",
+   "Encryption at rest and in transit; single sign-on; role-based access, reviewed every six months (BKB-ADD-36 Section 5: Business Critical asset)"
+  ]
+ ],
+ "purposes": [
+  "Run the onboarding and role training each client requires its employees to complete as part of their job",
+  "Keep each employee's completion record of the training a law obliges the client to give its staff (anti-bribery, data protection, health and safety), to show the client's regulators",
+  "Show each client's HR managers which employees in each department have completed which courses, to plan next year's training budget",
+  "E-mail news of new optional courses to learners who ticked “Tell me about new courses” in their LMS profile"
+ ],
+ "bases": [
+  "Contract",
+  "Legal obligation",
+  "Legitimate interests",
+  "Consent"
+ ],
+ "flows": [
+  [
+   "F1",
+   "A client's training administrator uploads the list of employees to enrol (name, work e-mail, employee ID, department and job title) into the corporate LMS, the learning management system that the Amsterdam office runs in the EU hosting region."
+  ],
+  [
+   "F2",
+   "The LMS keeps each employee's course enrolments, progress through each course, completion dates and quiz marks, and shows each client's HR managers a list of completions per department."
+  ],
+  [
+   "F3",
+   "The client's training administrators and the courses and seats the client has bought (its entitlements) are kept in the Amsterdam office's customer account records."
+  ],
+  [
+   "F4",
+   "Second-line support engineers in Mumbai open learners' LMS records, which the Amsterdam office holds in the EU hosting region, to fix sign-in and enrolment problems, and record each fix on the learner's ticket in the Mumbai office's support desk."
+  ],
+  [
+   "F5",
+   "The Mumbai office holds the lists of employees to enrol that clients in India send it, and uploads them into the LMS in the EU hosting region."
+  ],
+  [
+   "F6",
+   "Thirty days after a client's contract ends, the LMS erases everything it holds on that client's employees, and the Amsterdam office sends the client a deletion certificate."
+  ]
+ ],
+ "shapes": [
+  "Collect",
+  "System",
+  "Transfer",
+  "Delete"
+ ],
+ "systems": {
+  "F1": "Learning platform & content",
+  "F2": "Learning platform & content",
+  "F3": "Customer master data",
+  "F4": "Customer support / ticketing",
+  "F5": "Learning platform & content",
+  "F6": "Learning platform & content"
+ },
+ "assets": [
+  [
+   "Customer support / ticketing",
+   "Amsterdam, Netherlands",
+   "Customer Operations & Support",
+   "Support cases, SLAs and customer interactions.",
+   "Regional Customer Support Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Knowledge base & help centre",
+   "Amsterdam, Netherlands",
+   "Customer Operations & Support",
+   "Support articles and self-service content.",
+   "Regional Customer Support Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Customer communications & CTI",
+   "Amsterdam, Netherlands",
+   "Customer Operations & Support",
+   "Telephony, chat and contact records.",
+   "Regional Customer Support Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Customer master data",
+   "Amsterdam, Netherlands",
+   "Customer Operations & Support",
+   "Account, contact and entitlement records.",
+   "Regional Customer Support Manager",
+   "Cloud (multi-region, IaaS/PaaS)"
+  ],
+  [
+   "Student support / CRM",
+   "Amsterdam, Netherlands",
+   "Student Services",
+   "Student support cases and wellbeing data.",
+   "Regional Student Services Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Student records & welfare",
+   "Amsterdam, Netherlands",
+   "Student Services",
+   "Student welfare and support records.",
+   "Regional Student Services Manager",
+   "Cloud (multi-region, IaaS/PaaS)"
+  ],
+  [
+   "Accommodation & services data",
+   "Amsterdam, Netherlands",
+   "Student Services",
+   "Accommodation and campus services.",
+   "Regional Student Services Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Learning platform & content",
+   "Amsterdam, Netherlands",
+   "EdTech & Learning Platforms",
+   "EdTech platform, courseware and delivery.",
+   "Regional EdTech Manager",
+   "Cloud (multi-region, IaaS/PaaS)"
+  ],
+  [
+   "Learner analytics data",
+   "Amsterdam, Netherlands",
+   "EdTech & Learning Platforms",
+   "Learner engagement and performance data.",
+   "Regional EdTech Manager",
+   "Cloud (multi-region, IaaS/PaaS)"
+  ],
+  [
+   "Assessment & proctoring data",
+   "Amsterdam, Netherlands",
+   "EdTech & Learning Platforms",
+   "Online assessment and proctoring records.",
+   "Regional EdTech Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Customer support / ticketing",
+   "Mumbai, India",
+   "Customer Operations & Support",
+   "Support cases, SLAs and customer interactions.",
+   "Regional Customer Support Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Knowledge base & help centre",
+   "Mumbai, India",
+   "Customer Operations & Support",
+   "Support articles and self-service content.",
+   "Regional Customer Support Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Customer communications & CTI",
+   "Mumbai, India",
+   "Customer Operations & Support",
+   "Telephony, chat and contact records.",
+   "Regional Customer Support Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Customer master data",
+   "Mumbai, India",
+   "Customer Operations & Support",
+   "Account, contact and entitlement records.",
+   "Regional Customer Support Manager",
+   "Cloud (multi-region, IaaS/PaaS)"
+  ],
+  [
+   "Student support / CRM",
+   "Mumbai, India",
+   "Student Services",
+   "Student support cases and wellbeing data.",
+   "Regional Student Services Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Student records & welfare",
+   "Mumbai, India",
+   "Student Services",
+   "Student welfare and support records.",
+   "Regional Student Services Manager",
+   "Cloud (multi-region, IaaS/PaaS)"
+  ],
+  [
+   "Accommodation & services data",
+   "Mumbai, India",
+   "Student Services",
+   "Accommodation and campus services.",
+   "Regional Student Services Manager",
+   "SaaS (vendor-hosted)"
+  ],
+  [
+   "Learning platform & content",
+   "Mumbai, India",
+   "EdTech & Learning Platforms",
+   "EdTech platform, courseware and delivery.",
+   "Regional EdTech Manager",
+   "Cloud (multi-region, IaaS/PaaS)"
+  ],
+  [
+   "Learner analytics data",
+   "Mumbai, India",
+   "EdTech & Learning Platforms",
+   "Learner engagement and performance data.",
+   "Regional EdTech Manager",
+   "Cloud (multi-region, IaaS/PaaS)"
+  ],
+  [
+   "Assessment & proctoring data",
+   "Mumbai, India",
+   "EdTech & Learning Platforms",
+   "Online assessment and proctoring records.",
+   "Regional EdTech Manager",
+   "SaaS (vendor-hosted)"
+  ]
+ ],
+ "triggers": [
+  "Children or students",
+  "AI, analytics or profiling",
+  "Monitoring or recording",
+  "Health data",
+  "Identity checks (KYC/AML)",
+  "DPIA required (R29)"
+ ],
+ "dpia": "DPIA required (R29)",
+ "entry": [
+  [
+   "Processing activity",
+   "Corporate LMS for adult learners"
+  ],
+  [
+   "Role",
+   "Processor (contract register; step 1)"
+  ],
+  [
+   "Controllers",
+   "Companies that buy the corporate LMS to train their own employees, each under an LMS service agreement with a data processing agreement"
+  ],
+  [
+   "Offices",
+   "Amsterdam, Netherlands, Mumbai, India"
+  ],
+  [
+   "Data subjects",
+   "The clients' employees who take courses (adults, 18 or over), and the clients' training administrators and HR managers"
+  ],
+  [
+   "Personal data",
+   "Name, work e-mail, employee ID, department and job title; course enrolments, progress, completion dates and quiz answers and marks; for administrators, name, work e-mail and phone"
+  ],
+  [
+   "Special categories of data",
+   "None"
+  ],
+  [
+   "Recipients",
+   "The client's training administrators and HR managers; LearnTech's support teams in Amsterdam and Mumbai; LearnTech's cloud hosting provider (EU hosting region)"
+  ],
+  [
+   "Transfers",
+   "See DFM, flows F4 and F5, with their mechanisms (step 4)"
+  ],
+  [
+   "Retention",
+   "Until 30 days after the client's contract ends; then erased, with a deletion certificate to the client"
+  ],
+  [
+   "Security measures",
+   "Encryption at rest and in transit; single sign-on; role-based access, reviewed every six months (BKB-ADD-36 Section 5: Business Critical asset)"
+  ]
+ ]
+}

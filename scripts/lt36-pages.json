@@ -1,0 +1,624 @@
+{
+ "RA-36 Risk register (HQ Istanbul)": {
+  "h": [
+   "Risk ID",
+   "Risk title",
+   "Decision",
+   "Risk owner",
+   "ISO/IEC 27001:2022 controls"
+  ],
+  "r": [
+   [
+    "R-36-HQ-01",
+    "Ransomware disrupting Mission Critical services",
+    "Accept & monitor",
+    "Org CISO",
+    "A.8.7, A.8.13, A.5.29"
+   ],
+   [
+    "R-36-HQ-02",
+    "Phishing and business-email compromise leading to credential theft or fraudulent payment",
+    "Treat",
+    "CFO",
+    "A.6.3, A.5.14, A.8.23"
+   ],
+   [
+    "R-36-HQ-03",
+    "Personal-data breach through misconfigured cloud / SaaS services",
+    "Accept & monitor",
+    "DPO",
+    "A.5.23, A.5.34, A.8.12"
+   ],
+   [
+    "R-36-HQ-04",
+    "Failure to meet statutory breach-notification deadlines in Turkey",
+    "Accept & monitor",
+    "DPO",
+    "A.5.24, A.5.26, A.5.5"
+   ],
+   [
+    "R-36-HQ-05",
+    "Unlawful cross-border transfer of personal or regulated data",
+    "Treat",
+    "Regional Compliance Officer",
+    "A.5.14, A.5.31, A.5.34"
+   ],
+   [
+    "R-36-HQ-06",
+    "Compromise or failure of a critical SaaS / cloud supplier",
+    "Accept & monitor",
+    "Procurement / Vendor Risk Analyst",
+    "A.5.19–A.5.23"
+   ],
+   [
+    "R-36-HQ-07",
+    "Misuse of privileged access by insiders or compromised administrators",
+    "Accept & monitor",
+    "Org CISO",
+    "A.8.2, A.8.15, A.6.1"
+   ],
+   [
+    "R-36-HQ-08",
+    "Exploitation of unpatched internet-facing vulnerabilities",
+    "Accept & monitor",
+    "Vulnerability Management Governance Analyst",
+    "A.8.8, A.8.9"
+   ],
+   [
+    "R-36-HQ-09",
+    "DDoS and hacktivist campaigns against public-facing services",
+    "Accept & monitor",
+    "Cyber Threat Intelligence Analyst",
+    "A.8.20, A.5.7, A.8.14"
+   ],
+   [
+    "R-36-HQ-10",
+    "State-sponsored espionage and intellectual-property theft",
+    "Accept & monitor",
+    "Cyber Threat Intelligence Analyst",
+    "A.5.7, A.8.16, A.8.12"
+   ],
+   [
+    "R-36-HQ-11",
+    "Natural hazard disrupting the Istanbul office (Earthquake (very high))",
+    "Accept & monitor",
+    "Business Continuity & Resilience Analyst",
+    "A.5.29, A.5.30, A.7.5"
+   ],
+   [
+    "R-36-HQ-12",
+    "Failure of local power, telecom or internet infrastructure",
+    "Accept & monitor",
+    "Office & Facilities Manager",
+    "A.7.11, A.8.14"
+   ],
+   [
+    "R-36-HQ-13",
+    "Geopolitical instability, sanctions or civil unrest affecting operations",
+    "Accept & monitor",
+    "Regional Managing Director",
+    "A.5.29, A.5.31"
+   ],
+   [
+    "R-36-HQ-14",
+    "Regulatory change outpacing compliance programme",
+    "Accept & monitor",
+    "Policy & Governance Analyst",
+    "A.5.31"
+   ],
+   [
+    "R-36-HQ-15",
+    "Bribery, corruption or weak contract enforceability",
+    "Accept & monitor",
+    "Regional Compliance Officer",
+    "A.5.31, A.5.19"
+   ],
+   [
+    "R-36-HQ-16",
+    "Loss of key security / compliance staff and skills shortage",
+    "Accept & monitor",
+    "CHRO",
+    "A.6.3, 7.2"
+   ],
+   [
+    "R-36-HQ-17",
+    "Inadequate recovery capability for Mission Critical assets",
+    "Accept & monitor",
+    "Business Continuity & Resilience Analyst",
+    "A.5.30, A.8.14, A.8.13"
+   ],
+   [
+    "R-36-HQ-18",
+    "Data loss through endpoints, remote working and removable media",
+    "Accept & monitor",
+    "Regional IT Manager",
+    "A.8.1, A.6.7, A.8.12"
+   ],
+   [
+    "R-36-HQ-19",
+    "Errors or misuse of AI agents and generative-AI tools",
+    "Accept & monitor",
+    "Group CISO (AI governance)",
+    "A.5.10, A.8.12"
+   ],
+   [
+    "R-36-HQ-20",
+    "Theft of research IP and student personal data",
+    "Accept & monitor",
+    "Org CISO",
+    "A.5.31, A.8.16"
+   ],
+   [
+    "R-36-HQ-21",
+    "Unauthorised physical access, theft or tampering at the office",
+    "Accept & monitor",
+    "Office & Facilities Manager",
+    "A.7.1–A.7.7"
+   ],
+   [
+    "R-36-HQ-22",
+    "Cloud-region outage or provider concentration",
+    "Accept & monitor",
+    "Cloud & Platform Operations Lead",
+    "A.5.23, A.8.14"
+   ],
+   [
+    "R-36-HQ-23",
+    "Exposure of live data through mentorship-programme activities",
+    "Accept & monitor",
+    "Cybersecurity Program Manager",
+    "A.8.33, A.8.11"
+   ],
+   [
+    "R-36-HQ-24",
+    "Currency and economic volatility constraining security investment",
+    "Accept & monitor",
+    "Regional Finance Controller",
+    "7.1"
+   ],
+   [
+    "R-36-HQ-25",
+    "Enforcement action by the lead regulator (KVKK — Kişisel Verileri Koruma Kurumu (Turkey) & MEB)",
+    "Accept & monitor",
+    "Org Chief Risk & Compliance Officer",
+    "A.5.31, A.5.5"
+   ],
+   [
+    "R-36-HQ-26",
+    "Reputational crisis following a security or privacy incident",
+    "Accept & monitor",
+    "Head of Communications",
+    "A.5.26"
+   ],
+   [
+    "R-36-HQ-27",
+    "Insufficient logging and detection coverage",
+    "Accept & monitor",
+    "Incident Response & Crisis Manager",
+    "A.8.15, A.8.16"
+   ]
+  ],
+  "n": 27
+ },
+ "TSA-36 Control_Mapping": {
+  "h": [
+   "Control",
+   "Title",
+   "Implementing product(s)"
+  ],
+  "r": [
+   [
+    "A.5.1",
+    "Policies for information security",
+    "Policy-as-docs in Git (MkDocs + pull-request approvals) published from CISO Assistant"
+   ],
+   [
+    "A.5.3",
+    "Segregation of duties",
+    "Evolveum midPoint (IGA, HR-driven JML, certifications)"
+   ],
+   [
+    "A.5.7",
+    "Threat intelligence",
+    "MISP + OpenCTI + sector ISAC feeds"
+   ],
+   [
+    "A.5.8",
+    "Information security in project management",
+    "Atlassian Jira + Confluence Cloud Enterprise"
+   ],
+   [
+    "A.5.9",
+    "Inventory of information and other associated assets",
+    "Archi (ArchiMate modelling) + coArchi (Git collaboration); GLPI CMDB + GLPI Agent discovery + NetBox (network/IPAM source of truth) + Snipe-IT (hardware); Microsoft Purview Unified Catalog; OWASP Amass + ProjectDiscovery (subfinder, httpx, nuclei)"
+   ],
+   [
+    "A.5.10",
+    "Acceptable use of information and other associated assets",
+    "Amazon Bedrock (in-region) + AI gateway (Kong AI Gateway); Archi (ArchiMate modelling) + coArchi (Git collaboration); GLPI CMDB + GLPI Agent discovery + NetBox (network/IPAM source of truth) + Snipe-IT (hardware); OWASP Amass + ProjectDiscovery (subfinder, httpx, nuclei)"
+   ],
+   [
+    "A.5.11",
+    "Return of assets",
+    "Archi (ArchiMate modelling) + coArchi (Git collaboration); GLPI CMDB + GLPI Agent discovery + NetBox (network/IPAM source of truth) + Snipe-IT (hardware); OWASP Amass + ProjectDiscovery (subfinder, httpx, nuclei)"
+   ],
+   [
+    "A.5.12",
+    "Classification of information",
+    "Microsoft Presidio (PII detection in pipelines/logs) + Wazuh FIM content rules; Microsoft Purview DLP + Information Protection; Microsoft Purview Information Protection + DSPM; OpenMetadata (catalog + PII auto-tagging) + Microsoft Presidio scanners"
+   ],
+   [
+    "A.5.13",
+    "Labelling of information",
+    "Microsoft Presidio (PII detection in pipelines/logs) + Wazuh FIM content rules; Microsoft Purview DLP + Information Protection"
+   ],
+   [
+    "A.5.14",
+    "Information transfer",
+    "Microsoft 365 E5; Microsoft Fabric Data Factory / Azure Data Factory; Microsoft Presidio (PII detection in pipelines/logs) + Wazuh FIM content rules; Microsoft Purview DLP + Information Protection"
+   ],
+   [
+    "A.5.15",
+    "Access control",
+    "Keycloak (identity broker for non-Microsoft, Linux, OT and partner apps); Microsoft Entra ID P2"
+   ],
+   [
+    "A.5.16",
+    "Identity management",
+    "Active Directory DS (hybrid, synced to Entra ID); BloodHound Community Edition (AD/Entra attack paths) + Wazuh AD detection rules; Evolveum midPoint (IGA, HR-driven JML, certifications); FreeIPA (Linux identity, HBAC, Kerberos) alongside Active Directory; Keycloak (identity broker for non-Microsoft, Linux, OT and partner apps); Microsoft Defender for Identity + Entra ID Protection; Microsoft Entra ID P2"
+   ],
+   [
+    "A.5.17",
+    "Authentication information",
+    "Active Directory DS (hybrid, synced to Entra ID); BloodHound Community Edition (AD/Entra attack paths) + Wazuh AD detection rules; FreeIPA (Linux identity, HBAC, Kerberos) alongside Active Directory; Keycloak (Red Hat build) — CIAM with WebAuthn, brute-force detection; Keycloak (identity broker for non-Microsoft, Linux, OT and partner apps); Microsoft Defender for Identity + Entra ID Protection; Microsoft Entra ID P2; OpenBao + External Secrets Operator + Gitleaks / TruffleHog (secret scanning); YubiKey 5 FIPS / platform passkeys via Entra ID / Okta; privacyIDEA for Linux/OT/VPN MFA + FIDO2 hardware keys"
+   ],
+   [
+    "A.5.18",
+    "Access rights",
+    "Evolveum midPoint (IGA, HR-driven JML, certifications)"
+   ],
+   [
+    "A.5.19",
+    "Information security in supplier relationships",
+    "CISO Assistant third-party risk module; Coupa; Security ratings feed (BitSight / SecurityScorecard)"
+   ],
+   [
+    "A.5.20",
+    "Addressing information security within supplier agreements",
+    "CISO Assistant third-party risk module; Coupa; Icertis Contract Intelligence; Security ratings feed (BitSight / SecurityScorecard)"
+   ],
+   [
+    "A.5.21",
+    "Managing information security in the ICT supply chain",
+    "Harbor (CNCF registry: signing, scanning, replication); JFrog Artifactory (SaaS) + JFrog Curation; OWASP Dependency-Track + Syft/Grype + Trivy (SBOM, VEX)"
+   ],
+   [
+    "A.5.22",
+    "Monitoring, review and change management of supplier services",
+    "BloodHound Community Edition (AD/Entra attack paths) + Wazuh AD detection rules; CISO Assistant third-party risk module; Coupa; GLPI (ITSM: incident, problem, change, SLA); GitHub Actions + Argo CD; Microsoft Defender for Identity + Entra ID Protection; OpenTelemetry + Grafana LGTM (Loki, Grafana, Tempo, Mimir) + Prometheus; OpenTofu + Ansible AWX + Checkov (IaC scanning); Prometheus + Grafana + Alertmanager + LibreNMS (network) — or Zabbix; Security ratings feed (BitSight / SecurityScorecard)"
+   ],
+   [
+    "A.5.23",
+    "Information security for use of cloud services",
+    "AWS landing zone; Microsoft Entra Internet Access + Private Access; OpenZiti (ZTNA for admin, OT and internal apps); Prowler (CSPM & compliance) + Falco (runtime) + Kubescape + Trivy + Cloud Custodian (auto-remediation)"
+   ],
+   [
+    "A.5.24",
+    "Information security incident management planning and preparation",
+    "DFIR-IRIS + Shuffle SOAR (playbooks for phishing, malware, account compromise); GLPI (ITSM: incident, problem, change, SLA); IR retainer (Mandiant / CrowdStrike Services); Velociraptor + Timesketch + Plaso + Volatility 3 + Autopsy/The Sleuth Kit"
+   ],
+   [
+    "A.5.26",
+    "Response to information security incidents",
+    "DFIR-IRIS + Shuffle SOAR (playbooks for phishing, malware, account compromise); IR retainer (Mandiant / CrowdStrike Services); Velociraptor + Timesketch + Plaso + Volatility 3 + Autopsy/The Sleuth Kit"
+   ],
+   [
+    "A.5.27",
+    "Learning from information security incidents",
+    "IR retainer (Mandiant / CrowdStrike Services); Velociraptor + Timesketch + Plaso + Volatility 3 + Autopsy/The Sleuth Kit"
+   ],
+   [
+    "A.5.28",
+    "Collection of evidence",
+    "IR retainer (Mandiant / CrowdStrike Services); Microsoft Purview eDiscovery (Premium); Velociraptor + Timesketch + Plaso + Volatility 3 + Autopsy/The Sleuth Kit"
+   ],
+   [
+    "A.5.29",
+    "Information security during disruption",
+    "CISO Assistant (BIA & resilience) + Git-managed plans; Castellan BC Software"
+   ],
+   [
+    "A.5.30",
+    "ICT readiness for business continuity",
+    "CISO Assistant (BIA & resilience) + Git-managed plans; Castellan BC Software"
+   ],
+   [
+    "A.5.31",
+    "Legal, statutory, regulatory and contractual requirements",
+    "CUBE RegPlatform; Icertis Contract Intelligence; Microsoft Purview eDiscovery (Premium); Mitratech TeamConnect"
+   ],
+   [
+    "A.5.32",
+    "Intellectual property rights",
+    "Adobe Experience Manager Assets; Mitratech TeamConnect"
+   ],
+   [
+    "A.5.33",
+    "Protection of records",
+    "Microsoft Purview Records Management; Microsoft SharePoint Online"
+   ],
+   [
+    "A.5.34",
+    "Privacy and protection of PII",
+    "Fides (Ethyca) — data map, DSAR automation, consent"
+   ],
+   [
+    "A.5.35",
+    "Independent review of information security",
+    "Steampipe + Powerpipe (compliance benchmarks) + Prowler + compliance-trestle feeding CISO Assistant evidence"
+   ],
+   [
+    "A.5.36",
+    "Compliance with policies, rules and standards for information security",
+    "Policy-as-docs in Git (MkDocs + pull-request approvals) published from CISO Assistant; Steampipe + Powerpipe (compliance benchmarks) + Prowler + compliance-trestle feeding CISO Assistant evidence"
+   ],
+   [
+    "A.5.37",
+    "Documented operating procedures",
+    "Microsoft SharePoint Online"
+   ],
+   [
+    "A.6.1",
+    "Screening",
+    "Greenhouse; SAP SuccessFactors Employee Central"
+   ],
+   [
+    "A.6.2",
+    "Terms and conditions of employment",
+    "SAP SuccessFactors Employee Central"
+   ],
+   [
+    "A.6.3",
+    "Information security awareness, education and training",
+    "Docebo; GoPhish + Moodle courses"
+   ],
+   [
+    "A.6.5",
+    "Responsibilities after termination or change of employment",
+    "SAP SuccessFactors Employee Central"
+   ],
+   [
+    "A.6.6",
+    "Confidentiality or non-disclosure agreements",
+    "Datasite; Icertis Contract Intelligence"
+   ],
+   [
+    "A.6.7",
+    "Remote working",
+    "Fleet (osquery device visibility & compliance queries); MeshCentral (self-hosted remote support with consent & recording); Microsoft Entra Internet Access + Private Access; Microsoft Intune (+ Jamf Pro for macOS); OpenZiti (ZTNA for admin, OT and internal apps)"
+   ],
+   [
+    "A.6.8",
+    "Information security event reporting",
+    "GlobaLeaks (anonymous whistleblowing, EU Directive-ready)"
+   ],
+   [
+    "A.7.1",
+    "Physical security perimeters",
+    "Genetec Security Center (Synergis + Omnicast)"
+   ],
+   [
+    "A.7.2",
+    "Physical entry",
+    "Genetec Security Center (Synergis + Omnicast); Planon Universe + Eptura Visitor"
+   ],
+   [
+    "A.7.4",
+    "Physical security monitoring",
+    "Genetec Security Center (Synergis + Omnicast); MDR service (Microsoft Defender Experts for XDR); OpenTelemetry + Grafana LGTM (Loki, Grafana, Tempo, Mimir) + Prometheus; Prometheus + Grafana + Alertmanager + LibreNMS (network) — or Zabbix; Wazuh (all-in-one SIEM/XDR) — partner-managed; Wazuh + Sigma detection content operated by MSSP partner on the organisation-owned platform"
+   ],
+   [
+    "A.7.5",
+    "Protecting against physical and environmental threats",
+    "Genetec Security Center (Synergis + Omnicast); Siemens Desigo CC"
+   ],
+   [
+    "A.7.6",
+    "Working in secure areas",
+    "Planon Universe + Eptura Visitor"
+   ],
+   [
+    "A.7.8",
+    "Equipment siting and protection",
+    "Siemens Desigo CC"
+   ],
+   [
+    "A.7.9",
+    "Security of assets off-premises",
+    "Archi (ArchiMate modelling) + coArchi (Git collaboration); GLPI CMDB + GLPI Agent discovery + NetBox (network/IPAM source of truth) + Snipe-IT (hardware); OWASP Amass + ProjectDiscovery (subfinder, httpx, nuclei)"
+   ],
+   [
+    "A.7.10",
+    "Storage media",
+    "Amazon S3 (Object Lock) / S3 Tables; NetApp ONTAP (AFF/ASA) with Autonomous Ransomware Protection"
+   ],
+   [
+    "A.7.11",
+    "Supporting utilities",
+    "Siemens Desigo CC"
+   ],
+   [
+    "A.7.13",
+    "Equipment maintenance",
+    "Siemens Desigo CC"
+   ],
+   [
+    "A.8.1",
+    "User endpoint devices",
+    "Fleet (osquery device visibility & compliance queries); Microsoft Defender for Endpoint P2 (Defender XDR); Microsoft Intune (+ Jamf Pro for macOS); PacketFence (802.1X, posture, guest, IoT profiling); Wazuh agent + osquery (Fleet) + Velociraptor for telemetry, hunting and response; Windows 11 Enterprise (CIS L1) + macOS (CIS)"
+   ],
+   [
+    "A.8.2",
+    "Privileged access rights",
+    "Evolveum midPoint (IGA, HR-driven JML, certifications); OpenBao (credential vault, rotation, dynamic secrets) + Apache Guacamole (session brokering & recording) + Keycloak MFA"
+   ],
+   [
+    "A.8.4",
+    "Access to source code",
+    "GitHub Enterprise Cloud (data residency)"
+   ],
+   [
+    "A.8.5",
+    "Secure authentication",
+    "Active Directory DS (hybrid, synced to Entra ID); FreeIPA (Linux identity, HBAC, Kerberos) alongside Active Directory; Keycloak (Red Hat build) — CIAM with WebAuthn, brute-force detection; Keycloak (identity broker for non-Microsoft, Linux, OT and partner apps); Microsoft Entra ID P2; YubiKey 5 FIPS / platform passkeys via Entra ID / Okta; privacyIDEA for Linux/OT/VPN MFA + FIDO2 hardware keys"
+   ],
+   [
+    "A.8.6",
+    "Capacity management",
+    "Nutanix Cloud Infrastructure (AHV); OpenCost (CNCF) + Cloud Custodian cost policies; OpenTelemetry + Grafana LGTM (Loki, Grafana, Tempo, Mimir) + Prometheus; Prometheus + Grafana + Alertmanager + LibreNMS (network) — or Zabbix"
+   ],
+   [
+    "A.8.7",
+    "Protection against malware",
+    "Microsoft Defender for Endpoint P2 (Defender XDR); Wazuh agent + osquery (Fleet) + Velociraptor for telemetry, hunting and response; Windows 11 Enterprise (CIS L1) + macOS (CIS)"
+   ],
+   [
+    "A.8.8",
+    "Management of technical vulnerabilities",
+    "Foreman + Katello or Uyuni (Linux) + WinGet/Chocolatey via Ansible AWX (third-party apps); Greenbone OpenVAS (Community) + Trivy + Nuclei + DefectDojo; Microsoft Intune + Windows Autopatch (Windows endpoints); OWASP Dependency-Track + Syft/Grype + Trivy (SBOM, VEX)"
+   ],
+   [
+    "A.8.9",
+    "Configuration management",
+    "Amazon EKS; GitHub Enterprise Cloud (data residency); OpenTofu + Ansible AWX + Checkov (IaC scanning); Prowler (CSPM & compliance) + Falco (runtime) + Kubescape + Trivy + Cloud Custodian (auto-remediation); Windows 11 Enterprise (CIS L1) + macOS (CIS)"
+   ],
+   [
+    "A.8.12",
+    "Data leakage prevention",
+    "Microsoft Presidio (PII detection in pipelines/logs) + Wazuh FIM content rules; Microsoft Purview DLP + Information Protection"
+   ],
+   [
+    "A.8.13",
+    "Information backup",
+    "NetApp ONTAP (AFF/ASA) with Autonomous Ransomware Protection; Veeam Data Platform (+ Veeam Backup for Microsoft 365); Velero + restic (Kubernetes & cloud-native) + Bareos (servers)"
+   ],
+   [
+    "A.8.15",
+    "Logging",
+    "Wazuh (all-in-one SIEM/XDR) — partner-managed"
+   ],
+   [
+    "A.8.16",
+    "Monitoring activities",
+    "MDR service (Microsoft Defender Experts for XDR); Wazuh (all-in-one SIEM/XDR) — partner-managed; Wazuh + Sigma detection content operated by MSSP partner on the organisation-owned platform"
+   ],
+   [
+    "A.8.18",
+    "Use of privileged utility programs",
+    "OpenBao (credential vault, rotation, dynamic secrets) + Apache Guacamole (session brokering & recording) + Keycloak MFA"
+   ],
+   [
+    "A.8.19",
+    "Installation of software on operational systems",
+    "Harbor (CNCF registry: signing, scanning, replication); JFrog Artifactory (SaaS) + JFrog Curation; OWASP Dependency-Track + Syft/Grype + Trivy (SBOM, VEX)"
+   ],
+   [
+    "A.8.20",
+    "Networks security",
+    "Cisco Meraki; Fortinet FortiGate; Fortinet Secure SD-WAN; Microsoft Entra Internet Access + Private Access; OpenZiti (ZTNA for admin, OT and internal apps); PowerDNS Recursor with RPZ feeds + BIND 9 authoritative + Kea DHCP + NetBox IPAM; Suricata IPS for internal segmentation / OPNsense for lab & low-risk sites"
+   ],
+   [
+    "A.8.21",
+    "Security of network services",
+    "Cisco Meraki; Fortinet FortiGate; Fortinet Secure SD-WAN; Microsoft Entra Internet Access + Private Access; OpenZiti (ZTNA for admin, OT and internal apps); PowerDNS Recursor with RPZ feeds + BIND 9 authoritative + Kea DHCP + NetBox IPAM; Suricata IPS for internal segmentation / OPNsense for lab & low-risk sites"
+   ],
+   [
+    "A.8.22",
+    "Segregation of networks",
+    "Cisco Meraki; Fortinet FortiGate; Fortinet Secure SD-WAN; PowerDNS Recursor with RPZ feeds + BIND 9 authoritative + Kea DHCP + NetBox IPAM; Suricata IPS for internal segmentation / OPNsense for lab & low-risk sites"
+   ],
+   [
+    "A.8.23",
+    "Web filtering",
+    "Cloudflare Enterprise (WAF, Bot Management, CDN); OWASP Coraza + Core Rule Set at origin (defence-in-depth)"
+   ],
+   [
+    "A.8.24",
+    "Use of cryptography",
+    "Amazon Aurora PostgreSQL / Amazon RDS; Cloud KMS with customer-managed keys (Azure Key Vault Premium / AWS KMS); EJBCA Community (issuing CAs) + step-ca (internal ACME) + cert-manager (Kubernetes); HSM for CA keys; OpenBao Transit (encryption-as-a-service) for applications"
+   ],
+   [
+    "A.8.25",
+    "Secure development life cycle",
+    "Amazon EKS; GitHub Actions + Argo CD; GitHub Enterprise Cloud (data residency)"
+   ],
+   [
+    "A.8.26",
+    "Application security requirements",
+    "Apache APISIX or Kong Gateway (OSS) + OWASP Coraza; Cloudflare Enterprise (WAF, Bot Management, CDN); Kong Konnect; NowSecure Platform + Guardsquare DexGuard/iXGuard; OWASP Coraza + Core Rule Set at origin (defence-in-depth); Semgrep Community Edition + SonarQube Community Build; ZAP (authenticated scans in CI) + Nuclei"
+   ],
+   [
+    "A.8.28",
+    "Secure coding",
+    "GitHub Enterprise Cloud (data residency); Semgrep Community Edition + SonarQube Community Build"
+   ],
+   [
+    "A.8.29",
+    "Security testing in development and acceptance",
+    "Semgrep Community Edition + SonarQube Community Build; ZAP (authenticated scans in CI) + Nuclei"
+   ],
+   [
+    "A.8.31",
+    "Separation of development, test and production environments",
+    "GitHub Actions + Argo CD"
+   ],
+   [
+    "A.8.32",
+    "Change management",
+    "GLPI (ITSM: incident, problem, change, SLA); GitHub Actions + Argo CD; OpenTofu + Ansible AWX + Checkov (IaC scanning)"
+   ]
+  ],
+  "n": 74
+ },
+ "TSA-36 Roadmap": {
+  "h": [
+   "Roadmap item",
+   "Control(s)",
+   "Target",
+   "Owner"
+  ],
+  "r": [
+   [
+    "Automated purge of a student's PII within 30 days of account deletion, across the learning platform, SIS and data warehouse (BKB-ADD-36 Section 2.1)",
+    "A.8.10",
+    "2027 Q1",
+    "DPO"
+   ],
+   [
+    "Phishing-resistant MFA (passkeys) for teacher and school-administrator accounts",
+    "A.5.17, A.8.5",
+    "2027 Q1",
+    "Chief Information Security Officer"
+   ],
+   [
+    "Certified destruction service for drives and end-of-life equipment of the Istanbul data centre",
+    "A.7.14",
+    "2027 Q2",
+    "Head of Infrastructure"
+   ],
+   [
+    "Immutable copies of the student data warehouse backups",
+    "A.8.13",
+    "2027 Q2",
+    "Head of Infrastructure"
+   ],
+   [
+    "Masking of student PII in analytics and AI-model test environments",
+    "A.8.11, A.8.33",
+    "2027 Q3",
+    "DPO"
+   ]
+  ],
+  "n": 5
+ }
+}

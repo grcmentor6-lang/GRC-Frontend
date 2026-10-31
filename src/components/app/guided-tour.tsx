@@ -66,7 +66,7 @@ const swallow = (e: React.MouseEvent) => e.stopPropagation();
 /** driver.js-style placement: prefer the side with room (bottom→top→right→left); for oversized
  *  targets, float the card clear of the target (no arrow), and with no target at all, dead-centre.
  *  Returns the arrow's cross-axis offset. */
-function place(r: Box | null, th: number, zoom: number): Pos {
+function place(r: Box | null, th: number, zoom: number, avoid: Box | null = null): Pos {
   // `r` and `th` are already in the page's own (zoomed) pixels; the viewport is not, so divide.
   const vw = window.innerWidth / zoom;
   const vh = window.innerHeight / zoom;
@@ -76,7 +76,15 @@ function place(r: Box | null, th: number, zoom: number): Pos {
   if (!r) return { side: "float", top: clamp((vh - th) / 2, MARGIN, vh - th - MARGIN), left: cx, arrow: 0 };
   // Floating, take the half of the screen the target is not in: a card parked over the very thing
   // a "do it" step says to click leaves nothing to click.
-  const float: Pos = { side: "float", top: r.top + r.height / 2 > vh / 2 ? MARGIN : vh - th - 24, left: cx, arrow: 0 };
+  // A window raised over the dim for the step (`alsoShow`) sits above the card's layer, so the card
+  // must never land on it: its Next button would be under the window.
+  const hits = (top: number, left: number) =>
+    !!avoid && left < avoid.left + avoid.width && left + TIP_W > avoid.left && top < avoid.top + avoid.height && top + th > avoid.top;
+  const floatTop = r.top + r.height / 2 > vh / 2 ? MARGIN : vh - th - 24;
+  // Floating beside the raised window when the middle would land on it: the wider free side.
+  const floatLeft = !hits(floatTop, cx) || !avoid ? cx
+    : avoid.left >= vw - (avoid.left + avoid.width) ? clamp(avoid.left - TIP_W - GAP, MARGIN, vw - TIP_W - MARGIN) : clamp(avoid.left + avoid.width + GAP, MARGIN, vw - TIP_W - MARGIN);
+  const float: Pos = { side: "float", top: floatTop, left: floatLeft, arrow: 0 };
   // Only height forces a float: a full-width target (a menu row on a phone) still has room above or
   // below it, and top/bottom placement centres the card on the screen anyway.
   const space = { top: r.top, bottom: vh - (r.top + r.height), left: r.left, right: vw - (r.left + r.width) };
@@ -96,7 +104,12 @@ function place(r: Box | null, th: number, zoom: number): Pos {
     left: space.left >= TIP_W + GAP + MARGIN,
   };
   const order: Exclude<Side, "float">[] = ["bottom", "top", "right", "left"];
-  const side = order.find((s) => fits[s]);
+  // Where each side would put the card, so a side that lands on the raised window is passed over.
+  const at = (s: Exclude<Side, "float">) =>
+    s === "bottom" || s === "top"
+      ? { top: s === "bottom" ? r.top + r.height + GAP : r.top - GAP - th, left: clamp(r.left + r.width / 2 - TIP_W / 2, MARGIN, vw - TIP_W - MARGIN) }
+      : { top: clamp(r.top + r.height / 2 - th / 2, MARGIN, vh - th - MARGIN), left: s === "right" ? r.left + r.width + GAP : r.left - GAP - TIP_W };
+  const side = order.find((s) => fits[s] && !hits(at(s).top, at(s).left));
   if (!side) return float;
 
   if (side === "bottom" || side === "top") {
@@ -353,7 +366,13 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
       last.box = b;
       setBox(b);
     }
-    const p = place(r, tipRef.current?.offsetHeight ?? 170, z);
+    // The step's second window, when it is raised over the dim (it sits clear of the target): the
+    // card keeps off it.
+    const ar = s.alsoShow?.()?.getBoundingClientRect();
+    const tr = raw;
+    const clearOf = !!(ar && tr) && (ar.right <= tr.left || ar.left >= tr.left + tr.width || ar.bottom <= tr.top || ar.top >= tr.top + tr.height);
+    const avoid = ar && clearOf ? { top: ar.top / z, left: ar.left / z, width: ar.width / z, height: ar.height / z } : null;
+    const p = place(r, tipRef.current?.offsetHeight ?? 170, z, avoid);
     if (!last.pos || last.pos.side !== p.side || last.pos.top !== p.top || last.pos.left !== p.left || last.pos.arrow !== p.arrow) {
       last.pos = p;
       setPos(p);
@@ -390,6 +409,9 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
     // Taken after the scroll below has had a frame to land, so the centre point is the real one.
     let unsink = () => {};
     const sinkId = requestAnimationFrame(() => { unsink = sinkCovering(s.getEl()); });
+    // Again once a smooth scroll has settled: before it, the target may not be where it will end up
+    // (or on screen at all), and the window over its final place would be missed.
+    const resinkId = setTimeout(() => { const prev = unsink; const next = sinkCovering(s.getEl()); unsink = () => { next(); prev(); }; }, 700);
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Off screen, or on screen but partly hidden by its own pane (the last folder under the fold of
@@ -459,7 +481,7 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
     const ro = new ResizeObserver(() => reposition());
     if (el) ro.observe(el);
 
-    return () => { ro.disconnect(); thaw(); drop(); lower(); cancelAnimationFrame(sinkId); unsink(); cancelAnimationFrame(raf); clearInterval(poll); clearTimeout(showId); };
+    return () => { ro.disconnect(); thaw(); drop(); lower(); cancelAnimationFrame(sinkId); clearTimeout(resinkId); unsink(); cancelAnimationFrame(raf); clearInterval(poll); clearTimeout(showId); };
   }, [step, active, reposition, steps.length]);
 
   // A "do it" step: watch for the action and move on when it has happened.
@@ -479,7 +501,15 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
   useEffect(() => {
     const when = active ? steps[step]?.nextWhen : undefined;
     if (!when) return;
-    const id = window.setInterval(() => setReady(when()), 150);
+    // A field that cannot be typed in (read-only or disabled, e.g. after the work was submitted) can
+    // never make `when` true: Next opens then, so the guide cannot get stuck on it.
+    const locked = () => {
+      const s = steps[step];
+      const el = s?.pointAt?.() ?? s?.getEl();
+      const f = el?.matches("input, textarea, select") ? el : el?.querySelector("input, textarea, select");
+      return !!f && ((f as HTMLInputElement).readOnly || (f as HTMLInputElement).disabled);
+    };
+    const id = window.setInterval(() => setReady(when() || locked()), 150);
     return () => { clearInterval(id); setReady(false); };
   }, [active, step, steps]);
 
@@ -665,9 +695,11 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
                 Skip
               </button>
             )}
-            {!current.waitFor && <button
+            {/* A "do it" step whose target never appeared (the work is already done, or this state has no
+                such control) still gets Next, so the guide can always be finished. */}
+            {(!current.waitFor || box === OFFSCREEN) && <button
               onClick={() => (isLast ? onClose() : onStep(step + 1))}
-              disabled={!!current.nextWhen && !ready}
+              disabled={!!current.nextWhen && !ready && box !== OFFSCREEN}
               title={current.nextWhen && !ready ? current.doIt : undefined}
               className="focus-ring disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:active:scale-100 h-8 px-3.5 rounded-lg bg-[#4338CA] hover:bg-[#3730A3] active:scale-[0.97] text-white text-[12.5px] font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-[background-color,transform] duration-150"
             >

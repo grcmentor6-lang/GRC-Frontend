@@ -32,8 +32,9 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
   // Watched by StepBar: while the task's own heading is on screen the condensed bar stays away.
   const headingRef = useRef<HTMLDivElement>(null);
   const stepsRef = useRef<HTMLElement>(null);
-  // The key results box: null = automatic (open on a wide sheet, folded on a narrow one).
-  const [krOpen, setKrOpen] = useState<boolean | null>(null);
+  // The key results box: opened from the step bar only. Opening by itself on a wide sheet, it sat over the step being
+  // read (T6.1 step 6's situation, 29 Oct 2026).
+  const [krOpen, setKrOpen] = useState(false);
 
   useEffect(() => {
     document.getElementById(`act-${focus}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -51,16 +52,17 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
         title={task.obj}
         watch={headingRef}
         done={st === "submitted"}
-        // On a narrow sheet the key results open from the bar: a handle floating over the steps
-        // covered the very step being read. Wide sheets keep the box beside the steps.
+        // The key results open from the bar, at every width: a box or handle floating over the steps covered the very
+        // step being read (a handle on a narrow sheet; the box itself on a wide one, over T6.1 step 6's situation).
         action={
           <button
             type="button"
-            onClick={() => setKrOpen(krOpen !== true)}
+            data-kr-toggle
+            onClick={() => setKrOpen(!krOpen)}
             aria-label="Key results"
-            aria-expanded={krOpen === true}
+            aria-expanded={krOpen}
             title="Key results"
-            className={`grid h-8 w-8 shrink-0 place-items-center rounded-[9px] transition-colors focus-ring @[760px]:hidden ${krOpen === true ? "bg-[#E0F2FE] text-sky-800" : "text-sky-700 hover:bg-[#E0F2FE]"}`}
+            className={`grid h-8 w-8 shrink-0 place-items-center rounded-[9px] transition-colors focus-ring ${krOpen ? "bg-[#E0F2FE] text-sky-800" : "text-sky-700 hover:bg-[#E0F2FE]"}`}
           >
             <Icon name="checkSquare" size={16} />
           </button>
@@ -262,17 +264,15 @@ function KrChecklist({ task, focus, onFocus, onClose }: { task: Task; focus: num
 /**
  * The checklist floats over the work and takes no space: a zero-height sticky row at the top of the
  * task column, so it rides the column's right edge (not the window's) and follows a folded tree.
- * It surfaces once the steps reach the top, so the heading and objective are never covered.
- * × leaves a small handle in its place. On a narrow column it starts as the handle, since a 300px
- * box would cover most of the work.
+ * It shows only once the learner opens it from the step bar, and closes with ×, Escape or a click
+ * elsewhere: content the learner must read never sits under it unasked.
  */
 function FloatingChecklist({ task, focus, onFocus, watch, open, setOpen }: {
   task: Task;
   focus: number;
   onFocus: (n: number) => void;
   watch: React.RefObject<HTMLElement | null>;
-  /** null = automatic: open on a wide column, folded on a narrow one (decided in CSS, no measuring). */
-  open: boolean | null;
+  open: boolean;
   setOpen: (v: boolean) => void;
 }) {
   const [atSteps, setAtSteps] = useState(false);
@@ -289,27 +289,31 @@ function FloatingChecklist({ task, focus, onFocus, watch, open, setOpen }: {
     return () => io.disconnect();
   }, [watch, task.id]);
 
+  // A popover: a click outside it (but not on the bar's own button) or Escape closes it.
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      const t = e.target as Element | null;
+      if (t && !box.current?.contains(t) && !t.closest("[data-kr-toggle]")) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
+  }, [open, setOpen]);
+
   // Hidden means gone: invisible and click-through. (A child marked pointer-events-auto would still
   // take clicks under an invisible parent, which is how this box once swallowed step 1's chevron.)
   const fade = (on: boolean) => (on ? "visible pointer-events-auto translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-1 opacity-0");
-  const boxOn = open === true ? "block" : open === false ? "hidden" : "hidden @[760px]:block";
-  const handleOn = open === false ? "hidden @[760px]:inline-flex" : "hidden";
+  const boxOn = open ? "block" : "hidden";
   return (
     <div className="pointer-events-none sticky top-[64px] z-20 flex h-0 justify-end pr-[52px]">
-      <div className={`w-[300px] max-w-full transition-all duration-200 ease-out motion-reduce:transition-none ${boxOn} ${fade(atSteps)}`} aria-hidden={!atSteps}>
+      <div ref={box} className={`w-[300px] max-w-full transition-all duration-200 ease-out motion-reduce:transition-none ${boxOn} ${fade(atSteps)}`} aria-hidden={!atSteps}>
         <div>
           <KrChecklist task={task} focus={focus} onFocus={onFocus} onClose={() => setOpen(false)} />
         </div>
       </div>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        tabIndex={atSteps ? 0 : -1}
-        // The handle in the strip's own language: square, steel, mono.
-        className={`focus-ring h-9 items-center gap-1.5 bg-white/95 pl-2.5 pr-3.5 font-mono text-[10.5px] uppercase tracking-[0.09em] text-sky-800 shadow-[0_12px_40px_-14px_rgba(15,23,42,0.3)] ring-1 ring-slate-200 backdrop-blur-xl transition-all duration-200 ease-out hover:bg-white motion-reduce:transition-none ${handleOn} ${fade(atSteps)}`}
-      >
-        <Icon name="checkSquare" size={14} className="text-sky-700" /> Key results
-      </button>
     </div>
   );
 }

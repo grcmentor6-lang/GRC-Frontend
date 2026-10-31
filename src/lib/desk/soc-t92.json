@@ -1,0 +1,94 @@
+{
+ "report": [
+  [
+   "Vendor",
+   "Lumen Learner Analytics"
+  ],
+  [
+   "Auditor",
+   "(fictional) Morrow & Tate LLP"
+  ],
+  [
+   "Type",
+   "Type II"
+  ],
+  [
+   "Period",
+   "2026-07-27 to 2026-10-25"
+  ],
+  [
+   "Opinion",
+   "Qualified — controls over CC7.2 did not operate effectively"
+  ],
+  [
+   "Scope",
+   "Platform services excluding the Learner-analytics SDK powering progress dashboards module"
+  ],
+  [
+   "Subservice",
+   "Hyperscale cloud hosting — carve-out method"
+  ],
+  [
+   "TSC (Trust Services Criteria)",
+   "Security, Availability"
+  ],
+  [
+   "Exceptions",
+   "None noted"
+  ],
+  [
+   "CUECs",
+   "Standard: user entities manage their own user provisioning"
+  ],
+  [
+   "Report date",
+   "2026-11-24"
+  ]
+ ],
+ "review": "Friday 4 December 2026",
+ "checks": [
+  [
+   "S1",
+   "Report is SOC 2 Type I (design only) — no operating-effectiveness testing"
+  ],
+  [
+   "S2",
+   "Type II period shorter than 6 months"
+  ],
+  [
+   "S3",
+   "Period ended > 3 months ago — bridge (gap) letter required"
+  ],
+  [
+   "S4",
+   "Qualified opinion"
+  ],
+  [
+   "S5",
+   "Carve-out subservice organisation (hosting) — its own report needed"
+  ],
+  [
+   "S6",
+   "Exceptions in relevant controls (CC6/CC7) with weak management response"
+  ],
+  [
+   "S7",
+   "Confidentiality/Privacy criteria excluded although personal data is processed"
+  ],
+  [
+   "S8",
+   "CUECs requiring action by us (e.g., MFA, user reviews)"
+  ],
+  [
+   "S9",
+   "System description excludes the service being purchased"
+  ]
+ ],
+ "cuecs": [
+  "Standard: user entities manage their own user provisioning"
+ ],
+ "decision": [
+  "Decision",
+  "Onboarding decision for Lumen Learner Analytics"
+ ]
+}

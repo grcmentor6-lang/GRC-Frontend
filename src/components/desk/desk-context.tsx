@@ -24,6 +24,8 @@ export interface DeskCtx {
    * step opened with mode "work", to change it); every other opening is a floating read-only window.
    */
   openTool: (key: string, mode?: "work") => void;
+  /** Closes a floating window (the Inbox, once its message is answered). */
+  closeTool: (key: string) => void;
 }
 
 export const Ctx = createContext<DeskCtx | null>(null);

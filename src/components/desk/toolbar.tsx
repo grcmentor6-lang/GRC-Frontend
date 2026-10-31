@@ -3,14 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
+import { stepReads, stepSources } from "@/lib/desk/registers";
 import { useUnread } from "./chat";
-import { sectionOpen, toolOpen, unlockHint } from "@/lib/desk/tools";
+import { UTILITIES, sectionOpen, toolOpen, unlockHint } from "@/lib/desk/tools";
 
 const SEC_ICON: Record<string, IconName> = {
   home: "home", evidence: "paperclip", frameworks: "layers", access: "users", risk: "alertTriangle", vendors: "handshake",
   testing: "checkSquare", policies: "file", awareness: "messageSquare", regwatch: "globe", learn: "book",
 };
-const UT_ICON: Record<string, IconName> = { search: "search", add: "plus", inbox: "inbox", systems: "grid", alerts: "bell", filter: "filter", help: "help" };
+const UT_ICON: Record<string, IconName> = { inbox: "inbox", systems: "grid", help: "help" };
 /** Utilities that open straight into their screen, as in the pack's desk; the rest open a menu. */
 const DIRECT = new Set(["inbox", "help"]);
 const MENU_W = 400;
@@ -23,8 +24,9 @@ const MENU_W = 400;
  * amber dot, and its tool is the amber row of the menu.
  */
 export function Toolbar() {
-  const { desk, isOpen, here, openTool } = useDesk();
+  const { desk, isOpen, here, openTool, progress } = useDesk();
   const unread = useUnread();
+  const unreadHere = useUnread(here?.task ?? "-");
   const [pop, setPop] = useState<string | null>(null);
   const [left, setLeft] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -71,9 +73,13 @@ export function Toolbar() {
 
   const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
   const target = step?.key ?? ""; // the tool the step in hand is done in
-  const targetSec = target.split("|")[0];
+  // …and the screens it reads from: each carries the same dot, so "what this step needs" is one mark.
+  const cites = here && step ? stepSources(desk.tasks[here.task], step.n, step.refs.docs).length > 0 : false;
+  const targets = new Set([target, ...(here ? stepReads(here.task, here.n) : []), ...(cites ? ["policies|Policy Library"] : [])].filter(Boolean));
+  // The task in hand has a message waiting: the Inbox carries the same dot as a tool the step uses.
+  const targetSecs = new Set([...[...targets].map((k) => k.split("|")[0]), ...(unreadHere ? ["inbox"] : [])]);
   const sec = pop ? desk.sections[pop] : undefined;
-  const open = (key: string) => toolOpen(desk, isOpen, key);
+  const open = (key: string) => toolOpen(desk, isOpen, key, progress, here);
 
   const toggle = (k: string, el: HTMLButtonElement) => {
     if (pop === k) return setPop(null);
@@ -86,7 +92,7 @@ export function Toolbar() {
 
   const cell = (k: string, l: string, icon: IconName, unlocked: boolean, opts: { badge?: number; end?: boolean } = {}) => {
     const on = pop === k;
-    const due = unlocked && k === targetSec && !on;
+    const due = unlocked && targetSecs.has(k) && !on;
     return (
       <button
         key={k}
@@ -101,7 +107,7 @@ export function Toolbar() {
             openTool(`${k}|*`);
           } else toggle(k, e.currentTarget);
         }}
-        title={unlocked ? (due ? `${l} · your current step is done here` : l) : `${l} opens in a later week`}
+        title={unlocked ? (due ? `${l} · ${k === "inbox" ? "a message about this task is waiting" : k === target.split("|")[0] ? "your current step is done here" : "your current step reads from here"}` : l) : `${l} opens as you reach the tasks that use it`}
         className={`relative flex h-[50px] min-w-[52px] shrink-0 flex-col items-center justify-center gap-[3px] px-1.5 text-[10.5px] focus-ring lg:h-[54px] lg:min-w-[60px] lg:px-2 lg:text-[11px] ${
           opts.end ? "border-r border-[#2A2E3B]" : ""
         } ${on ? "bg-white text-[#111827]" : unlocked ? "text-[#F1F2F6] hover:bg-[#1F2330]" : "cursor-not-allowed text-[#7C8399]"}`}
@@ -139,7 +145,7 @@ export function Toolbar() {
               {sec.tools.map((t, i) => {
                 const key = `${pop}|${t.n}`;
                 const unlocked = open(key);
-                const isTarget = key === target;
+                const isTarget = targets.has(key);
                 return (
                   <li key={`${t.n}-${i}`} data-target={isTarget || undefined}>
                     <button
@@ -163,7 +169,7 @@ export function Toolbar() {
                       {isTarget ? (
                         <span className="shrink-0 rounded-[3px] bg-[#FDE7B8] px-1.5 py-0.5 text-[11px] font-semibold text-[#78350F]">Step {here?.n}</span>
                       ) : !unlocked ? (
-                        <span className="shrink-0 rounded-[3px] border border-[#E3E6EC] px-1.5 py-0.5 text-[11px] text-[#6B7280]">{unlockHint(desk, key)}</span>
+                        <span className="shrink-0 rounded-[3px] border border-[#E3E6EC] px-1.5 py-0.5 text-[11px] text-[#6B7280]">{unlockHint(desk, isOpen, key)}</span>
                       ) : null}
                     </button>
                   </li>
@@ -180,8 +186,8 @@ export function Toolbar() {
           style={{ maskImage: fadeMask, WebkitMaskImage: fadeMask }}
           className="flex max-w-full items-stretch overflow-x-auto rounded-lg border border-[#12141C] bg-[#12141C] shadow-[0_10px_28px_rgba(17,24,39,0.25)] [scrollbar-width:none]"
         >
-          {desk.secs.map((s) => (s === null ? null : cell(s.k, s.l, SEC_ICON[s.k] ?? "grid", sectionOpen(desk, isOpen, s.k), { end: ends.has(s.k) })))}
-          {desk.ut.map((u) => cell(u.k, u.l, UT_ICON[u.k] ?? "grid", true, { badge: u.k === "inbox" ? unread : undefined }))}
+          {desk.secs.map((s) => (s === null ? null : cell(s.k, s.l, SEC_ICON[s.k] ?? "grid", sectionOpen(desk, isOpen, s.k, progress, here), { end: ends.has(s.k) })))}
+          {desk.ut.filter((u) => UTILITIES.has(u.k)).map((u) => cell(u.k, u.l, UT_ICON[u.k] ?? "grid", true, { badge: u.k === "inbox" ? unread : undefined }))}
         </nav>
       </div>
     </div>

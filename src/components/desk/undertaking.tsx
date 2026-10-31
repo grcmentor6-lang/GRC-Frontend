@@ -6,7 +6,7 @@ import { Mr_Dafoe } from "next/font/google";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { press } from "./ui";
-import { ATTEST, attestKey, same } from "@/lib/desk/forms";
+import { attestKey, same, type Attest } from "@/lib/desk/forms";
 import { dmy, type Task } from "@/lib/desk/model";
 
 /** A signed record's date is its UTC date, as its time is UTC: "22-OCT-2026" from the ISO stamp. */
@@ -24,9 +24,14 @@ const hand = Mr_Dafoe({ weight: "400", subsets: ["latin"], display: "swap" });
  * Signing is final. It records name, mentee ID and the UTC time under ADM-UND, which is what
  * "Platform e-signature" means in the pack, and the step's Mark complete waits for it.
  */
-export function UndertakingCard({ task, n, readOnly }: { task: Task; n: number; readOnly: boolean }) {
+export function UndertakingCard({ task, a, readOnly, waiting }: {
+  task: Task;
+  a: Attest;
+  readOnly: boolean;
+  /** Why it cannot be opened yet (a form before it is not saved); it opens when this is undefined. */
+  waiting?: string;
+}) {
   const { progress } = useDesk();
-  const a = ATTEST[task.id][n];
   const g = progress.grids?.[attestKey(task.id, a.code)] ?? {};
   const [open, setOpen] = useState(false);
   const signed = !!g.at;
@@ -39,6 +44,7 @@ export function UndertakingCard({ task, n, readOnly }: { task: Task; n: number; 
         <span className="min-w-[12rem] flex-1">
           <span className="block text-[14px] font-semibold text-[#111827]">Mentee Undertaking</span>
           <span className="block font-mono text-[12px] text-[#5B6474]">{a.code} · from the BKB Group GRC Office</span>
+          {waiting && !signed && <span className="mt-0.5 block text-[12px] text-[#5B6474]">{waiting}</span>}
         </span>
         {signed ? (
           <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-emerald-700">
@@ -49,22 +55,22 @@ export function UndertakingCard({ task, n, readOnly }: { task: Task; n: number; 
         )}
         <button
           type="button"
+          disabled={!!waiting && !signed}
           onClick={() => setOpen(true)}
-          className={`inline-flex h-9 items-center gap-1.5 rounded px-4 text-[13px] font-semibold ${press} ${
+          className={`disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] inline-flex h-9 items-center gap-1.5 rounded px-4 text-[13px] font-semibold ${press} ${
             signed ? "border border-[#DDE1E8] bg-white text-[#3F4757] hover:border-[#C9CED8]" : "bg-[#4338CA] text-white hover:brightness-90"
           }`}
         >
           {signed ? "View signed copy" : "Open and sign"}
         </button>
       </div>
-      {open && <UndertakingSheet task={task} n={n} readOnly={readOnly} onClose={() => setOpen(false)} />}
+      {open && <UndertakingSheet task={task} a={a} readOnly={readOnly} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function UndertakingSheet({ task, n, readOnly, onClose }: { task: Task; n: number; readOnly: boolean; onClose: () => void }) {
+function UndertakingSheet({ task, a, readOnly, onClose }: { task: Task; a: Attest; readOnly: boolean; onClose: () => void }) {
   const { desk, progress, update } = useDesk();
-  const a = ATTEST[task.id][n];
   const k = attestKey(task.id, a.code);
   const g = progress.grids?.[k] ?? {};
   const set = (patch: Record<string, string>) => update((p) => ({ ...p, grids: { ...p.grids, [k]: { ...(p.grids?.[k] ?? {}), ...patch } } }));
@@ -135,7 +141,7 @@ function UndertakingSheet({ task, n, readOnly, onClose }: { task: Task; n: numbe
 
         <h2 className="mt-5 font-[family-name:var(--font-cormorant)] text-[34px] font-semibold leading-tight">Mentee Undertaking</h2>
         <p className="mt-1 text-[14px] leading-relaxed text-[#3F4757]">
-          On joining the Group GRC Office as a GRC 101 mentee, under BKB-POL-024 §3.1, I undertake that:
+          On joining the Group GRC Office as a GRC 101 mentee, under BKB-POL-024 Section 3.1, I undertake that:
         </p>
 
         <ol className="mt-5 grid gap-3">
@@ -148,8 +154,8 @@ function UndertakingSheet({ task, n, readOnly, onClose }: { task: Task; n: numbe
         </ol>
 
         <section aria-label="Why you sign" className="mt-6 border-l-2 border-[#C7CBF5] pl-4 text-[13.5px] leading-relaxed text-[#3F4757]">
-          <p>Without a signed undertaking your account is not opened for data (BKB-POL-024 §6.1 step 3).</p>
-          <p className="mt-1">A confirmed conduct breach later is an automatic fail (BKB-MEN-101 §13.2).</p>
+          <p>Without a signed undertaking your account is not opened for data (BKB-POL-024 Section 6.1 step 3).</p>
+          <p className="mt-1">A confirmed conduct breach later is an automatic fail (BKB-MEN-101 Section 13.2).</p>
         </section>
 
         {/* Signature block */}

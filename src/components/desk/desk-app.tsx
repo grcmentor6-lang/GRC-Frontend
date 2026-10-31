@@ -13,7 +13,7 @@ import { Viewer } from "./viewer";
 import { ToolModal, ToolWindow } from "./tool-modal";
 import { press } from "./ui";
 import { currentWeek, loadDesk, startOf, weekOpen, type Desk } from "@/lib/desk/model";
-import { stepKey, taskStatus, useProgress, type Progress } from "@/lib/desk/progress";
+import { decisionChecked, stepKey, taskStatus, useProgress, type Progress } from "@/lib/desk/progress";
 
 /** Midnight of the mentee's start date. They may start any day; until they choose, today. */
 
@@ -135,15 +135,20 @@ function DeskLoaded({ desk, who, startIso, preview }: { desk: Desk; who: string;
   const openTool = (key: string, mode?: "work") => {
     const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
     const t = here ? desk.tasks[here.task] : undefined;
-    const working = !!step && !!t && step.key === key && isOpen(t.week) && !progress.submitted[t.id] && (mode === "work" || !progress.done[stepKey(t.id, step.n)]);
+    // A decision is answered in its row first (Check my answer); until then its tool opens only to read.
+    const working = !!step && !!t && step.key === key && isOpen(t.week) && !progress.submitted[t.id] && (mode === "work" || !progress.done[stepKey(t.id, step.n)])
+      && (step.kind !== "pick" || decisionChecked(progress, t.id, step.n));
     // The step's own tool, already open as the modal (READ-ME-FIRST over My Organisation, say):
     // asking for it again from the toolbar opens its screen beside the work instead.
     if (working && toolKey !== key) return setToolKey(key);
-    setWindows((w) => [...w.filter((x) => x !== key), key]);
+    // A document opened from Policies › Policy Library takes the library's place: the list has done
+    // its job, and left open it covered the step's own panel. It is one click away on the toolbar.
+    setWindows((w) => [...w.filter((x) => x !== key && !(key.startsWith("doc|") && x === "policies|Policy Library") && !(key.startsWith("page|") && x === "learn|Reference pages")), key]);
   };
   // A tool asked for through the viewer opens like any other; references still open in the sheet.
   const view = (item: ViewItem) => (item.kind === "tool" ? openTool(item.id) : setViewing(item));
-  const ctx: DeskCtx = { desk, progress, update, start, isOpen, openTask, view, here, openTool };
+  const closeTool = (key: string) => setWindows((w) => w.filter((x) => x !== key));
+  const ctx: DeskCtx = { desk, progress, update, start, isOpen, openTask, view, here, openTool, closeTool };
   // A week opens on its overview; its first task still to submit becomes the task in hand.
   const openWeek = (n: number) => {
     setTaskId(desk.order.find((x) => desk.tasks[x].week === n && !progress.submitted[x]) ?? desk.order.find((x) => desk.tasks[x].week === n)!);

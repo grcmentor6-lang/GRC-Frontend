@@ -1,0 +1,1175 @@
+{
+ "topic": "EU Digital Services Act guidelines on the protection of minors online (2025)",
+ "tracker": [
+  [
+   "Istanbul, Turkey",
+   "KVKK Authority"
+  ],
+  [
+   "Amsterdam, Netherlands",
+   "Autoriteit Persoonsgegevens"
+  ],
+  [
+   "New York, United States",
+   "FERPA / COPPA (sector)"
+  ],
+  [
+   "Mumbai, India",
+   "CERT-In"
+  ]
+ ],
+ "trkOpts": [
+  "Agrees with Section 2",
+  "Differs from Section 2"
+ ],
+ "feed": [
+  [
+   "European Commission",
+   "Commission publishes guidelines on the protection of minors",
+   "https://digital-strategy.ec.europa.eu/en/library/commission-publishes-guidelines-protection-minors",
+   "14 July 2025"
+  ],
+  [
+   "EdTech Compliance Weekly (blog)",
+   "The EU's new child-safety rules: what EdTech needs to know",
+   "https://edtechcomplianceweekly.example/eu-minors-guidelines",
+   "16 July 2025"
+  ],
+  [
+   "SafeKids Age Check Ltd (age-assurance vendor)",
+   "Webinar: age assurance under the DSA guidelines",
+   "https://safekidsagecheck.example/webinars/dsa",
+   "2 September 2025"
+  ],
+  [
+   "Publications Office of the European Union (EUR-Lex)",
+   "Regulation (EU) 2022/2065 on a Single Market For Digital Services (Digital Services Act)",
+   "https://eur-lex.europa.eu/eli/reg/2022/2065/oj",
+   "27 October 2022"
+  ],
+  [
+   "Daily Tech News",
+   "EU to make teen accounts private by default",
+   "https://dailytechnews.example/eu-teen-accounts",
+   "15 July 2025"
+  ],
+  [
+   "Harbour & Lane LLP (law firm)",
+   "Client alert: ten takeaways from the DSA minors guidelines",
+   "https://harbourlane.example/insights/dsa-minors",
+   "21 July 2025"
+  ]
+ ],
+ "feedOpts": [
+  "Official source",
+  "Not an official source"
+ ],
+ "src": {
+  "s1": {
+   "doc": "SRC-EC-MINORS-2025",
+   "who": "European Commission",
+   "title": "Commission publishes guidelines on the protection of minors",
+   "url": "https://digital-strategy.ec.europa.eu/en/library/commission-publishes-guidelines-protection-minors",
+   "published": "2025-07-14",
+   "applies": "2024-02-17"
+  },
+  "s2": {
+   "doc": "SRC-EU-2022-2065",
+   "who": "EUR-Lex",
+   "title": "Regulation (EU) 2022/2065 on a Single Market For Digital Services (Digital Services Act)",
+   "url": "https://eur-lex.europa.eu/eli/reg/2022/2065/oj",
+   "published": "2022-10-27",
+   "applies": "2024-02-17"
+  }
+ },
+ "s1": [
+  [
+   "Point 1",
+   "On 14 July 2025 the European Commission published guidelines to help online platforms protect minors, under Article 28(4) of the Digital Services Act."
+  ],
+  [
+   "Point 2",
+   "The guidelines cover every online platform that is offered to people in the EU and can be used by minors (a service that stores its users' content and shows it to the public), wherever the provider is established, except micro and small enterprises (Article 19)."
+  ],
+  [
+   "Point 3",
+   "They take a risk-based approach: each platform adopts the measures that fit the risks its own service poses to minors."
+  ],
+  [
+   "Point 4",
+   "Review the risks the service poses to minors, and act on the results."
+  ],
+  [
+   "Point 5",
+   "Set minors' accounts to the most protective settings by default, so that people they are not connected with cannot see or contact them."
+  ],
+  [
+   "Point 6",
+   "Check users' age with age assurance that is accurate, reliable and non-intrusive, without collecting more personal data than the check needs; self-declaration alone is not enough."
+  ],
+  [
+   "Point 7",
+   "Give minors' explicit choices priority over behavioural signals in AI-driven recommendations, and let them choose a feed that is not based on profiling."
+  ],
+  [
+   "Point 8",
+   "Let minors block and mute any user, and never add them to a group without their explicit consent."
+  ],
+  [
+   "Point 9",
+   "Switch off by default design features that drive excessive use, such as streaks, read receipts, autoplay and push alerts."
+  ],
+  [
+   "Point 10",
+   "The Commission will review the guidelines within 12 months."
+  ]
+ ],
+ "s2": [
+  [
+   "Article 19(1)",
+   "This Section, with the exception of Article 24(3) thereof, shall not apply to providers of online platforms that qualify as micro or small enterprises as defined in Recommendation 2003/361/EC."
+  ],
+  [
+   "Article 28(1)",
+   "Providers of online platforms accessible to minors shall put in place appropriate and proportionate measures to ensure a high level of privacy, safety, and security of minors, on their service."
+  ],
+  [
+   "Article 28(2)",
+   "Providers of online platform shall not present advertisements on their interface based on profiling as defined in Article 4, point (4), of Regulation (EU) 2016/679 using personal data of the recipient of the service when they are aware with reasonable certainty that the recipient of the service is a minor."
+  ],
+  [
+   "Article 28(3)",
+   "Compliance with the obligations set out in this Article shall not oblige providers of online platforms to process additional personal data in order to assess whether the recipient of the service is a minor."
+  ],
+  [
+   "Article 28(4)",
+   "The Commission, after consulting the Board, may issue guidelines to assist providers of online platforms in the application of paragraph 1."
+  ]
+ ],
+ "dutyOpts": [
+  "Duty",
+  "Background"
+ ],
+ "headcount": "LearnTech Educational Solutions as a whole: 1,180 staff across its four offices, and an annual turnover above EUR 10 million (Global HR and Group Finance, December 2026).",
+ "offices": [
+  [
+   "Istanbul, Turkey",
+   "Turkey",
+   "Runs the learning platform for schools in Turkey, hosted in Turkey for KVKK; its learners are in Turkey. Offers no service to learners in the EU."
+  ],
+  [
+   "Amsterdam, Netherlands",
+   "Netherlands (EU)",
+   "Runs the learning platform for schools in the EU: accounts for learners aged 9 to 18, class discussion boards, and a public project gallery where learners publish their work. 46 staff."
+  ],
+  [
+   "New York, United States",
+   "United States",
+   "Runs the learning platform for US schools. Also runs CodeQuest, a coding-challenge site open to learners aged 13 to 18 worldwide, including the EU, with a public leaderboard and a public project gallery."
+  ],
+  [
+   "Mumbai, India",
+   "India",
+   "Runs the corporate e-learning service (LMS) for clients' adult employees in India and Asia-Pacific; no learners under 18, and none in the EU."
+  ]
+ ],
+ "appOpts": [
+  "Applies",
+  "Does not apply"
+ ],
+ "duties": [
+  [
+   "Point 4",
+   "Source 1",
+   "Review the risks the service poses to minors, and act on the results."
+  ],
+  [
+   "Point 5",
+   "Source 1",
+   "Set minors' accounts to the most protective settings by default, so that people they are not connected with cannot see or contact them."
+  ],
+  [
+   "Point 6",
+   "Source 1",
+   "Check users' age with age assurance that is accurate, reliable and non-intrusive, without collecting more personal data than the check needs; self-declaration alone is not enough."
+  ],
+  [
+   "Point 7",
+   "Source 1",
+   "Give minors' explicit choices priority over behavioural signals in AI-driven recommendations, and let them choose a feed that is not based on profiling."
+  ],
+  [
+   "Point 8",
+   "Source 1",
+   "Let minors block and mute any user, and never add them to a group without their explicit consent."
+  ],
+  [
+   "Point 9",
+   "Source 1",
+   "Switch off by default design features that drive excessive use, such as streaks, read receipts, autoplay and push alerts."
+  ],
+  [
+   "Article 28(1)",
+   "Source 2",
+   "Providers of online platforms accessible to minors shall put in place appropriate and proportionate measures to ensure a high level of privacy, safety, and security of minors, on their service."
+  ],
+  [
+   "Article 28(2)",
+   "Source 2",
+   "Providers of online platform shall not present advertisements on their interface based on profiling as defined in Article 4, point (4), of Regulation (EU) 2016/679 using personal data of the recipient of the service when they are aware with reasonable certainty that the recipient of the service is a minor."
+  ]
+ ],
+ "policies": [
+  "BKB-POL-006",
+  "BKB-POL-014",
+  "BKB-POL-017",
+  "BKB-POL-013",
+  "BKB-POL-010",
+  "BKB-POL-009",
+  "BKB-POL-022",
+  "BKB-POL-015",
+  "BKB-POL-018",
+  "BKB-POL-011",
+  "BKB-POL-004",
+  "BKB-POL-020",
+  "BKB-POL-008",
+  "BKB-POL-002",
+  "No BKB policy (gap)"
+ ],
+ "gap": "No BKB policy (gap)",
+ "control": {
+  "BKB-POL-006": "A.5.15–A.5.18, A.8.5",
+  "BKB-POL-014": "A.5.24–A.5.28",
+  "BKB-POL-017": "A.5.34",
+  "BKB-POL-013": "A.5.19–A.5.23",
+  "BKB-POL-010": "A.8.8",
+  "BKB-POL-009": "A.8.15, A.8.16, A.8.32",
+  "BKB-POL-022": "A.5.9, A.5.34",
+  "BKB-POL-015": "A.5.29, A.5.30, A.8.13",
+  "BKB-POL-018": "A.5.33",
+  "BKB-POL-011": "A.8.20–A.8.23",
+  "BKB-POL-004": "A.5.12, A.5.13",
+  "BKB-POL-020": "A.6.3",
+  "BKB-POL-008": "A.7.1–A.7.4",
+  "BKB-POL-002": "Clauses 6.1, 8.2, 8.3"
+ },
+ "affected": [
+  "BKB-POL-002",
+  "BKB-POL-006",
+  "BKB-POL-017",
+  "BKB-POL-022",
+  "No BKB policy (gap)"
+ ],
+ "ownerOpts": [
+  "Business Continuity & Resilience Analyst",
+  "Group CIO",
+  "Group CISO",
+  "Group CISO (with Group DPO)",
+  "Group Chief Risk Officer",
+  "Group Data Protection Officer",
+  "Group General Counsel",
+  "Group Head of Facilities",
+  "Incident Response & Crisis Manager",
+  "Policy & Governance Analyst",
+  "Security Architecture & Standards Manager",
+  "Security Awareness & Training Specialist",
+  "Vendor / Third-Party Risk Analyst",
+  "Vulnerability Management Governance Analyst"
+ ],
+ "due": "2025-08-13",
+ "types": [
+  "Privacy / data-protection law",
+  "Cyber / resilience law (NIS2-type)",
+  "Sector or market rule (media, finance, education, health)",
+  "Standard revision or new certification requirement",
+  "AI / emerging-technology rule"
+ ],
+ "notes": [
+  "AI and analytics on personal data may need a DPIA and new guardrails",
+  "Cloud hosting adds supply-chain reporting duties",
+  "Large data sets (volume, variety, velocity) raise retention and access questions",
+  "New controls for cloud, threat intelligence or data masking",
+  "Model inventory, guardrails and prompt-log retention become controls"
+ ],
+ "elements": [
+  "Scope",
+  "Risks",
+  "SoA",
+  "Objectives",
+  "Documents",
+  "Resources"
+ ],
+ "elemOpts": [
+  "Affected",
+  "Not affected"
+ ],
+ "systems": [
+  [
+   "SEC-50",
+   "Student information, admissions & learning",
+   "Protective default settings, blocking and muting, and consent before a group, on the learning platform (points 5, 8 and 9)"
+  ],
+  [
+   "IAM-07",
+   "Customer / citizen identity (CIAM)",
+   "Age assurance at sign-up (point 6)"
+  ],
+  [
+   "BUS-30",
+   "ML / AI model platform (MLOps)",
+   "The recommendation models of personalised learning (point 7)"
+  ],
+  [
+   "DAT-08",
+   "Object storage / data lake",
+   "The behavioural signals the recommendations read (point 7; Article 28(2))"
+  ],
+  [
+   "GRC-05",
+   "Privacy management (RoPA, DPIA, DSAR, consent)",
+   "The record of each learner's explicit consent (point 8)"
+  ]
+ ],
+ "layers": [
+  "Identity",
+  "Data",
+  "Application",
+  "Infrastructure",
+  "Security operations"
+ ],
+ "tsa": [
+  [
+   "BUS-01",
+   "Business systems",
+   "ERP & core finance (GL/AP/AR/FA)",
+   "Microsoft Dynamics 365 Finance",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-02",
+   "Business systems",
+   "Treasury management",
+   "Kyriba",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-03",
+   "Business systems",
+   "Financial planning & analysis (EPM)",
+   "Workday Adaptive Planning",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-04",
+   "Business systems",
+   "Tax compliance & statutory filing",
+   "Vertex Indirect Tax O Series",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-05",
+   "Business systems",
+   "Human capital management (HRIS)",
+   "SAP SuccessFactors Employee Central",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-06",
+   "Business systems",
+   "Payroll (employee)",
+   "ADP Global Payroll",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-07",
+   "Business systems",
+   "Recruitment / applicant tracking",
+   "Greenhouse",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-08",
+   "Business systems",
+   "Corporate learning (LMS) & awareness delivery",
+   "Docebo",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-09",
+   "Business systems",
+   "Procurement / source-to-pay",
+   "Coupa",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-10",
+   "Business systems",
+   "Contract lifecycle management",
+   "Icertis Contract Intelligence",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-11",
+   "Business systems",
+   "CRM (sales & account management)",
+   "HubSpot Sales Hub Enterprise",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-12",
+   "Business systems",
+   "Configure-price-quote (CPQ)",
+   "Salesforce Revenue Cloud",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-13",
+   "Business systems",
+   "Customer service & case management",
+   "Zendesk Suite",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-14",
+   "Business systems",
+   "Contact centre (CCaaS) & CTI",
+   "Genesys Cloud CX",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-15",
+   "Business systems",
+   "Marketing automation & consent",
+   "HubSpot Marketing Hub",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-16",
+   "Business systems",
+   "Digital asset management",
+   "Adobe Experience Manager Assets",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-17",
+   "Business systems",
+   "Website / web content management",
+   "Contentful",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-18",
+   "Business systems",
+   "Social & media monitoring",
+   "Brandwatch",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-19",
+   "Business systems",
+   "Email, productivity & collaboration suite",
+   "Microsoft 365 E5",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-20",
+   "Business systems",
+   "Enterprise content & document management",
+   "Microsoft SharePoint Online",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-21",
+   "Business systems",
+   "Board & executive portal",
+   "Diligent Boards",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-22",
+   "Business systems",
+   "Virtual data room (M&A / investor)",
+   "Datasite",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-23",
+   "Business systems",
+   "Project, portfolio & work management",
+   "Atlassian Jira + Confluence Cloud Enterprise",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-25",
+   "Business systems",
+   "Legal matter, litigation & IP management",
+   "Mitratech TeamConnect",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-26",
+   "Business systems",
+   "Entity & corporate governance records",
+   "Diligent Entities",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-27",
+   "Business systems",
+   "BI & reporting",
+   "Microsoft Power BI",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-28",
+   "Business systems",
+   "Enterprise data warehouse / lakehouse",
+   "Snowflake (Business Critical)",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-29",
+   "Business systems",
+   "Data catalog & governance",
+   "Microsoft Purview Unified Catalog",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-30",
+   "Business systems",
+   "ML / AI model platform (MLOps)",
+   "Amazon SageMaker AI",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-31",
+   "Business systems",
+   "Facilities, space & visitor management",
+   "Planon Universe + Eptura Visitor",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-40",
+   "Business systems",
+   "Video conferencing & unified communications",
+   "Microsoft Teams Premium + Teams Phone",
+   "CIO / business process owner"
+  ],
+  [
+   "BUS-41",
+   "Business systems",
+   "E-signature & trust services",
+   "DocuSign eSignature",
+   "CIO / business process owner"
+  ],
+  [
+   "SEC-50",
+   "Sector & core operations",
+   "Student information, admissions & learning",
+   "Own learning platform on AWS (LMS backend) + Kaltura video + Inspera Assessment",
+   "COO / line-of-business owner"
+  ],
+  [
+   "SEC-51",
+   "Sector & core operations",
+   "Research data, grants & ethics management",
+   "Figshare + Worktribe (grants & ethics)",
+   "COO / line-of-business owner"
+  ],
+  [
+   "INF-01",
+   "Infrastructure & cloud",
+   "Primary cloud landing zone (IaaS/PaaS)",
+   "AWS landing zone",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-02",
+   "Infrastructure & cloud",
+   "Sovereign / in-country / on-prem hosting anchor",
+   "Turkcell in-country cloud for Turkish learner data (KVKK)",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-03",
+   "Infrastructure & cloud",
+   "Private cloud / virtualisation",
+   "Nutanix Cloud Infrastructure (AHV)",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-04",
+   "Infrastructure & cloud",
+   "Container platform (Kubernetes)",
+   "Amazon EKS",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-05",
+   "Infrastructure & cloud",
+   "Infrastructure-as-code & configuration automation",
+   "OpenTofu + Ansible AWX + Checkov (IaC scanning)",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-06",
+   "Infrastructure & cloud",
+   "WAN / SD-WAN",
+   "Fortinet Secure SD-WAN",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-07",
+   "Infrastructure & cloud",
+   "Next-generation firewalls (perimeter & internal)",
+   "Suricata IPS for internal segmentation / OPNsense for lab & low-risk sites + Fortinet FortiGate",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-08",
+   "Infrastructure & cloud",
+   "Network access control (NAC)",
+   "PacketFence (802.1X, posture, guest, IoT profiling)",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-09",
+   "Infrastructure & cloud",
+   "Campus LAN & Wi-Fi",
+   "Cisco Meraki",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-10",
+   "Infrastructure & cloud",
+   "DNS, DHCP & IPAM (DDI) + protective DNS",
+   "PowerDNS Recursor with RPZ feeds + BIND 9 authoritative + Kea DHCP + NetBox IPAM",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-12",
+   "Infrastructure & cloud",
+   "CDN, WAF, bot & API edge protection",
+   "OWASP Coraza + Core Rule Set at origin (defence-in-depth) + Cloudflare Enterprise (WAF, Bot Management, CDN)",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-13",
+   "Infrastructure & cloud",
+   "DDoS protection",
+   "Cloudflare DDoS Protection",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-14",
+   "Infrastructure & cloud",
+   "Enterprise storage",
+   "NetApp ONTAP (AFF/ASA) with Autonomous Ransomware Protection",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-15",
+   "Infrastructure & cloud",
+   "Backup & recovery (incl. SaaS backup)",
+   "Velero + restic (Kubernetes & cloud-native) + Bareos (servers) + Veeam Data Platform (+ Veeam Backup for Microsoft 365)",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-17",
+   "Infrastructure & cloud",
+   "Unified endpoint management (UEM/MDM)",
+   "Fleet (osquery device visibility & compliance queries) + Microsoft Intune (+ Jamf Pro for macOS)",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "INF-19",
+   "Infrastructure & cloud",
+   "Endpoint OS baseline & hardening",
+   "Windows 11 Enterprise (CIS L1) + macOS (CIS)",
+   "Head of Infrastructure & Cloud"
+  ],
+  [
+   "DAT-01",
+   "Databases & data",
+   "Relational databases (application OLTP)",
+   "Amazon Aurora PostgreSQL / Amazon RDS",
+   "Chief Data Officer"
+  ],
+  [
+   "DAT-03",
+   "Databases & data",
+   "NoSQL / document & key-value stores",
+   "Amazon DynamoDB",
+   "Chief Data Officer"
+  ],
+  [
+   "DAT-04",
+   "Databases & data",
+   "Caching & in-memory data",
+   "Amazon ElastiCache (Valkey)",
+   "Chief Data Officer"
+  ],
+  [
+   "DAT-06",
+   "Databases & data",
+   "Data integration / iPaaS / ETL",
+   "Microsoft Fabric Data Factory / Azure Data Factory",
+   "Chief Data Officer"
+  ],
+  [
+   "DAT-07",
+   "Databases & data",
+   "Master data management",
+   "Informatica MDM SaaS",
+   "Chief Data Officer"
+  ],
+  [
+   "DAT-08",
+   "Databases & data",
+   "Object storage / data lake",
+   "Amazon S3 (Object Lock) / S3 Tables",
+   "Chief Data Officer"
+  ],
+  [
+   "DEV-01",
+   "DevSecOps & AppSec",
+   "Source code management",
+   "GitHub Enterprise Cloud (data residency)",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "DEV-02",
+   "DevSecOps & AppSec",
+   "CI/CD & deployment",
+   "GitHub Actions + Argo CD",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "DEV-03",
+   "DevSecOps & AppSec",
+   "Artifact & container registry",
+   "Harbor (CNCF registry: signing, scanning, replication) + JFrog Artifactory (SaaS) + JFrog Curation",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "DEV-04",
+   "DevSecOps & AppSec",
+   "Static application security testing (SAST)",
+   "Semgrep Community Edition + SonarQube Community Build",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "DEV-05",
+   "DevSecOps & AppSec",
+   "Software composition analysis & SBOM",
+   "OWASP Dependency-Track + Syft/Grype + Trivy (SBOM, VEX)",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "DEV-06",
+   "DevSecOps & AppSec",
+   "Dynamic application & API security testing (DAST)",
+   "ZAP (authenticated scans in CI) + Nuclei",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "DEV-07",
+   "DevSecOps & AppSec",
+   "Secrets management",
+   "OpenBao + External Secrets Operator + Gitleaks / TruffleHog (secret scanning)",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "DEV-08",
+   "DevSecOps & AppSec",
+   "API gateway & API security",
+   "Apache APISIX or Kong Gateway (OSS) + OWASP Coraza + Kong Konnect",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "DEV-09",
+   "DevSecOps & AppSec",
+   "Observability & APM",
+   "OpenTelemetry + Grafana LGTM (Loki, Grafana, Tempo, Mimir) + Prometheus",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "DEV-10",
+   "DevSecOps & AppSec",
+   "Mobile application security testing & RASP",
+   "NowSecure Platform + Guardsquare DexGuard/iXGuard",
+   "CTO / Head of Engineering"
+  ],
+  [
+   "IAM-01",
+   "Identity & access (IAM)",
+   "Workforce identity provider & SSO",
+   "Keycloak (identity broker for non-Microsoft, Linux, OT and partner apps) + Microsoft Entra ID P2",
+   "CISO — IAM lead"
+  ],
+  [
+   "IAM-02",
+   "Identity & access (IAM)",
+   "Phishing-resistant MFA",
+   "privacyIDEA for Linux/OT/VPN MFA + FIDO2 hardware keys + YubiKey 5 FIPS / platform passkeys via Entra ID / Okta",
+   "CISO — IAM lead"
+  ],
+  [
+   "IAM-03",
+   "Identity & access (IAM)",
+   "Identity governance & administration (IGA)",
+   "Evolveum midPoint (IGA, HR-driven JML, certifications)",
+   "CISO — IAM lead"
+  ],
+  [
+   "IAM-04",
+   "Identity & access (IAM)",
+   "Privileged access management (PAM)",
+   "OpenBao (credential vault, rotation, dynamic secrets) + Apache Guacamole (session brokering & recording) + Keycloak MFA",
+   "CISO — IAM lead"
+  ],
+  [
+   "IAM-06",
+   "Identity & access (IAM)",
+   "Directory services",
+   "FreeIPA (Linux identity, HBAC, Kerberos) alongside Active Directory + Active Directory DS (hybrid, synced to Entra ID)",
+   "CISO — IAM lead"
+  ],
+  [
+   "IAM-07",
+   "Identity & access (IAM)",
+   "Customer / citizen identity (CIAM)",
+   "Keycloak (Red Hat build) — CIAM with WebAuthn, brute-force detection",
+   "CISO — IAM lead"
+  ],
+  [
+   "IAM-08",
+   "Identity & access (IAM)",
+   "PKI & certificate lifecycle management",
+   "EJBCA Community (issuing CAs) + step-ca (internal ACME) + cert-manager (Kubernetes) + HSM for CA keys",
+   "CISO — IAM lead"
+  ],
+  [
+   "IAM-09",
+   "Identity & access (IAM)",
+   "HSM & key management (BYOK/HYOK)",
+   "OpenBao Transit (encryption-as-a-service) for applications + Cloud KMS with customer-managed keys (Azure Key Vault Premium / AWS KMS)",
+   "CISO — IAM lead"
+  ],
+  [
+   "IAM-10",
+   "Identity & access (IAM)",
+   "Identity threat detection & response (ITDR)",
+   "BloodHound Community Edition (AD/Entra attack paths) + Wazuh AD detection rules + Microsoft Defender for Identity + Entra ID Protection",
+   "CISO — IAM lead"
+  ],
+  [
+   "SOC-01",
+   "Security operations",
+   "SIEM (security analytics & log retention)",
+   "Wazuh (all-in-one SIEM/XDR) — partner-managed",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-02",
+   "Security operations",
+   "SOAR & security case management",
+   "DFIR-IRIS + Shuffle SOAR (playbooks for phishing, malware, account compromise)",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-03",
+   "Security operations",
+   "EDR / XDR (endpoint, server, cloud workload)",
+   "Wazuh agent + osquery (Fleet) + Velociraptor for telemetry, hunting and response + Microsoft Defender for Endpoint P2 (Defender XDR)",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-05",
+   "Security operations",
+   "Email security",
+   "parsedmarc (DMARC/TLS-RPT analytics) + Rspamd for inbound relays + Microsoft Defender for Office 365 P2",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-06",
+   "Security operations",
+   "Security service edge (SWG, CASB, ZTNA)",
+   "OpenZiti (ZTNA for admin, OT and internal apps) + Microsoft Entra Internet Access + Private Access",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-07",
+   "Security operations",
+   "Data loss prevention (endpoint, email, web, cloud)",
+   "Microsoft Presidio (PII detection in pipelines/logs) + Wazuh FIM content rules + Microsoft Purview DLP + Information Protection",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-08",
+   "Security operations",
+   "Data discovery, classification labelling & DSPM",
+   "OpenMetadata (catalog + PII auto-tagging) + Microsoft Presidio scanners + Microsoft Purview Information Protection + DSPM",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-09",
+   "Security operations",
+   "Vulnerability management & exposure management",
+   "Greenbone OpenVAS (Community) + Trivy + Nuclei + DefectDojo",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-10",
+   "Security operations",
+   "Patch management (OS & third-party)",
+   "Foreman + Katello or Uyuni (Linux) + WinGet/Chocolatey via Ansible AWX (third-party apps) + Microsoft Intune + Windows Autopatch (Windows endpoints)",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-12",
+   "Security operations",
+   "External attack surface management",
+   "OWASP Amass + ProjectDiscovery (subfinder, httpx, nuclei)",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-13",
+   "Security operations",
+   "Cloud-native application protection (CNAPP/CSPM/CIEM)",
+   "Prowler (CSPM & compliance) + Falco (runtime) + Kubescape + Trivy + Cloud Custodian (auto-remediation)",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-14",
+   "Security operations",
+   "Threat intelligence",
+   "MISP + OpenCTI + sector ISAC feeds",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-17",
+   "Security operations",
+   "Digital forensics & incident response tooling",
+   "Velociraptor + Timesketch + Plaso + Volatility 3 + Autopsy/The Sleuth Kit + IR retainer (Mandiant / CrowdStrike Services)",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-21",
+   "Security operations",
+   "Security awareness & phishing simulation",
+   "GoPhish + Moodle courses",
+   "CISO — SOC manager"
+  ],
+  [
+   "SOC-24",
+   "Security operations",
+   "SOC operating model (24x7 monitoring)",
+   "Wazuh + Sigma detection content operated by MSSP partner on the organisation-owned platform + MDR service (Microsoft Defender Experts for XDR)",
+   "CISO — SOC manager"
+  ],
+  [
+   "GRC-01",
+   "GRC & compliance",
+   "Integrated risk management (GRC platform)",
+   "CISO Assistant (risk, controls, audits, 100+ frameworks) + compliance-trestle (OSCAL)",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-02",
+   "GRC & compliance",
+   "Internal audit management",
+   "CISO Assistant audit module + Git-versioned workpapers",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-03",
+   "GRC & compliance",
+   "Policy management & attestation",
+   "Policy-as-docs in Git (MkDocs + pull-request approvals) published from CISO Assistant",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-04",
+   "GRC & compliance",
+   "Third-party risk management & security ratings",
+   "CISO Assistant third-party risk module + Security ratings feed (BitSight / SecurityScorecard)",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-05",
+   "GRC & compliance",
+   "Privacy management (RoPA, DPIA, DSAR, consent)",
+   "Fides (Ethyca) — data map, DSAR automation, consent",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-06",
+   "GRC & compliance",
+   "Regulatory change management",
+   "CUBE RegPlatform",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-07",
+   "GRC & compliance",
+   "Business continuity & operational resilience management",
+   "CISO Assistant (BIA & resilience) + Git-managed plans + Castellan BC Software",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-08",
+   "GRC & compliance",
+   "Continuous controls monitoring & compliance automation",
+   "Steampipe + Powerpipe (compliance benchmarks) + Prowler + compliance-trestle feeding CISO Assistant evidence",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-09",
+   "GRC & compliance",
+   "eDiscovery & legal hold",
+   "Microsoft Purview eDiscovery (Premium)",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-10",
+   "GRC & compliance",
+   "Records management & archiving",
+   "Microsoft Purview Records Management",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-11",
+   "GRC & compliance",
+   "Whistleblowing & ethics hotline",
+   "GlobaLeaks (anonymous whistleblowing, EU Directive-ready)",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-12",
+   "GRC & compliance",
+   "AI governance & model risk management",
+   "Giskard (model testing) + garak (LLM vulnerability scanning) + Credo AI",
+   "Head of GRC / CRO"
+  ],
+  [
+   "GRC-15",
+   "GRC & compliance",
+   "Enterprise architecture & technology portfolio",
+   "Archi (ArchiMate modelling) + coArchi (Git collaboration)",
+   "Head of GRC / CRO"
+  ],
+  [
+   "OPS-01",
+   "IT operations",
+   "IT service management (ITSM)",
+   "GLPI (ITSM: incident, problem, change, SLA)",
+   "Head of IT Operations"
+  ],
+  [
+   "OPS-02",
+   "IT operations",
+   "CMDB, discovery & IT asset management",
+   "GLPI CMDB + GLPI Agent discovery + NetBox (network/IPAM source of truth) + Snipe-IT (hardware)",
+   "Head of IT Operations"
+  ],
+  [
+   "OPS-03",
+   "IT operations",
+   "Infrastructure & network monitoring",
+   "Prometheus + Grafana + Alertmanager + LibreNMS (network) — or Zabbix",
+   "Head of IT Operations"
+  ],
+  [
+   "OPS-05",
+   "IT operations",
+   "Customer-facing status communication",
+   "Uptime Kuma (status pages & synthetic checks)",
+   "Head of IT Operations"
+  ],
+  [
+   "OPS-06",
+   "IT operations",
+   "Remote support",
+   "MeshCentral (self-hosted remote support with consent & recording)",
+   "Head of IT Operations"
+  ],
+  [
+   "OPS-08",
+   "IT operations",
+   "Cloud financial management (FinOps)",
+   "OpenCost (CNCF) + Cloud Custodian cost policies",
+   "Head of IT Operations"
+  ],
+  [
+   "OPS-09",
+   "IT operations",
+   "Physical access control & video surveillance",
+   "Genetec Security Center (Synergis + Omnicast)",
+   "Head of IT Operations"
+  ],
+  [
+   "OPS-10",
+   "IT operations",
+   "Building management & data-centre facilities",
+   "Siemens Desigo CC",
+   "Head of IT Operations"
+  ],
+  [
+   "AI-01",
+   "AI platforms",
+   "Enterprise generative-AI platform & AI gateway",
+   "Amazon Bedrock (in-region) + AI gateway (Kong AI Gateway)",
+   "CDO + CISO (AI governance board)"
+  ],
+  [
+   "AI-02",
+   "AI platforms",
+   "AI security (prompt injection, data leakage, model scanning)",
+   "NVIDIA NeMo Guardrails + LLM Guard + garak (LLM red-teaming) + Palo Alto Prisma AIRS",
+   "CDO + CISO (AI governance board)"
+  ]
+ ],
+ "domainLayer": [
+  [
+   "Identity & access (IAM)",
+   "Identity"
+  ],
+  [
+   "Databases & data",
+   "Data"
+  ],
+  [
+   "Business systems",
+   "Application"
+  ],
+  [
+   "Sector & core operations",
+   "Application"
+  ],
+  [
+   "GRC & compliance",
+   "Application"
+  ],
+  [
+   "AI platforms",
+   "Application"
+  ],
+  [
+   "DevSecOps & AppSec",
+   "Application"
+  ],
+  [
+   "Infrastructure & cloud",
+   "Infrastructure"
+  ],
+  [
+   "IT operations",
+   "Infrastructure"
+  ],
+  [
+   "Security operations",
+   "Security operations"
+  ]
+ ]
+}

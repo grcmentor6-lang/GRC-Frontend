@@ -60,10 +60,13 @@ Cloud providers offering services to customers shall align to ISO/IEC 27017/2701
 
 | Step | Action | Responsible | Output / SLA |
 | :-: | :-: | :-: | :-: |
-| 1 | Submit request with data classification and business case | Business owner | Request |
-| 2 | Vendor assessment (see BKB-POL-013) | Vendor / Third-Party Risk Analyst | Assessment |
-| 3 | Architecture review and shared-responsibility matrix | Security Architect | Approved design |
-| 4 | Onboard to SSO, logging and CSPM | Cloud operations | Onboarding evidence |
+| 1 | Submit request with data classification and business case | Business owner | Request — at least 15 working days before planned use |
+| 2 | Vendor assessment (see BKB-POL-013) | Vendor / Third-Party Risk Analyst | Assessment — within 10 working days of the request |
+| 3 | Architecture review and shared-responsibility matrix | Security Architect | Approved design — within 5 working days of the assessment |
+| 4 | Onboard to SSO, logging and CSPM | Cloud operations | Onboarding evidence — before first use |
+| 5 | Record the service, its assessment and its shared-responsibility matrix in the cloud service register | Cloud operations | Register entry — within 2 working days of the approved design |
+| 6 | Tell the business owner the decision and the conditions of use | Security Architect | Decision notice — within 3 working days of the approved design |
+| 7 | Escalate a request that cannot meet this policy to the escalation contact for an exception (Section 8) | Security Architect | Exception request — within 1 working day of the finding |
 
 7\. Guidelines
 
@@ -81,7 +84,9 @@ Unrestricted security groups (0.0.0.0/0 on admin ports)
 
 Compliance is measured through the KPIs below, control testing, internal audit and the GRC Operational Task Libraries.
 
-Exceptions require a documented risk assessment, compensating controls, a named owner, an expiry date (maximum 12 months) and approval per the delegated authority in the GRC Charter §6.1.
+Exceptions require a documented risk assessment, compensating controls, a named owner, an expiry date (maximum 12 months) and approval per the delegated authority in the GRC Charter Section 6.1.
+
+The escalation contact for the procedures of this policy is the policy owner, the Security Architecture & Standards Manager. An escalated request becomes an exception request under BKB-POL-000 Section 6.
 
 Violations may result in disciplinary action in accordance with local employment law, contract termination for third parties, and reporting to authorities where legally required.
 

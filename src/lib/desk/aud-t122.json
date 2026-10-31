@@ -1,0 +1,763 @@
+{
+ "period": "2025-12-21 to 2026-12-21",
+ "requests": [
+  [
+   "R-1",
+   "A.5.19",
+   "Supplier security assessments for new suppliers",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-2",
+   "10.2",
+   "Corrective-action tracker with closure evidence",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-3",
+   "A.6.3",
+   "Awareness training completion records",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-4",
+   "A.5.36",
+   "Internal compliance review results",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-5",
+   "A.5.15",
+   "Access control policy and its last review record",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-6",
+   "A.8.8",
+   "Vulnerability scan results and remediation evidence",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-7",
+   "9.3",
+   "Minutes of the last management review",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-8",
+   "A.8.32",
+   "Change records with approvals",
+   "2025-12-21 to 2026-12-21"
+  ]
+ ],
+ "followups": [
+  [
+   "R-9",
+   "6.1.2",
+   "The information security risk assessment process: the criteria risks are assessed against",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-10",
+   "A.8.2",
+   "The executed test of the quarterly privileged-access review",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-11",
+   "A.5.31",
+   "The register of legal, statutory, regulatory and contractual obligations",
+   "2025-12-21 to 2026-12-21"
+  ],
+  [
+   "R-12",
+   "6.1.3",
+   "The statement of which Annex A controls apply, with why each is included or excluded",
+   "2025-12-21 to 2026-12-21"
+  ]
+ ],
+ "index": [
+  [
+   "EV-3977",
+   "9.3",
+   "Minutes of the last management review",
+   "2025-09-28",
+   "System export",
+   "81cb707394497f1c",
+   ""
+  ],
+  [
+   "EV-4079",
+   "9.3",
+   "Minutes of the last management review",
+   "2026-08-29",
+   "System export",
+   "88ca8c1afcd89454",
+   ""
+  ],
+  [
+   "EV-7170",
+   "10.2",
+   "Corrective-action tracker with closure evidence",
+   "2026-11-11",
+   "Screenshot, no date",
+   "3f7d3dc3d656947d",
+   ""
+  ],
+  [
+   "EV-6071",
+   "10.2",
+   "Corrective-action tracker with closure evidence",
+   "2026-11-11",
+   "System export",
+   "76ac8c53ceabc014",
+   ""
+  ],
+  [
+   "EV-2224",
+   "A.5.15",
+   "Access control policy and its last review record",
+   "2025-07-23",
+   "System export",
+   "281ec598805bd270",
+   ""
+  ],
+  [
+   "EV-1056",
+   "A.5.15",
+   "Access control policy and its last review record",
+   "2026-01-23",
+   "System export",
+   "8dade40f0f1907fd",
+   ""
+  ],
+  [
+   "EV-1780",
+   "A.5.19",
+   "Supplier security assessments for new suppliers",
+   "2025-07-18",
+   "System export",
+   "eeb4ef77ac1416df",
+   ""
+  ],
+  [
+   "EV-5508",
+   "A.5.19",
+   "Supplier security assessments for new suppliers",
+   "2026-07-03",
+   "System export",
+   "1f0ecb464b826d95",
+   ""
+  ],
+  [
+   "EV-8992",
+   "A.5.36",
+   "Internal compliance review results",
+   "2025-08-13",
+   "System export",
+   "0b4fdfda8c63350c",
+   ""
+  ],
+  [
+   "EV-3392",
+   "A.5.36",
+   "Internal compliance review results",
+   "2026-11-07",
+   "System export",
+   "de2133e2a9a2caf7",
+   ""
+  ],
+  [
+   "EV-8351",
+   "A.8.8",
+   "Vulnerability scan results and remediation evidence",
+   "2025-11-26",
+   "System export",
+   "ce2364ee1e391c9e",
+   ""
+  ],
+  [
+   "EV-3336",
+   "A.8.8",
+   "Vulnerability scan results and remediation evidence",
+   "2026-04-26",
+   "System export",
+   "2aba29fe67df504a",
+   ""
+  ],
+  [
+   "EV-6790",
+   "A.8.32",
+   "Change records with approvals",
+   "2025-06-06",
+   "System export",
+   "21ed043b77be8bdb",
+   ""
+  ],
+  [
+   "EV-7410",
+   "A.8.32",
+   "Change records with approvals",
+   "2026-05-12",
+   "System export",
+   "24b10c5928c1b775",
+   ""
+  ],
+  [
+   "EV-7148",
+   "A.8.32",
+   "Sample test results for the finding period",
+   "2026-11-11",
+   "System export",
+   "cf7c3aa65fb04c44",
+   "3 of 25 samples fail"
+  ]
+ ],
+ "readme": [
+  [
+   "File",
+   "The file's ID in the repository: the ID you give the auditor."
+  ],
+  [
+   "Control",
+   "The Annex A control or ISO/IEC 27001 clause the file is filed under."
+  ],
+  [
+   "Description",
+   "What the file holds."
+  ],
+  [
+   "Date",
+   "The date the system produced the record."
+  ],
+  [
+   "Source",
+   "How the file was produced: exported from a system, or captured by hand."
+  ],
+  [
+   "SHA-256",
+   "The file's fingerprint (first 16 characters), taken when it was filed: any change to the file gives another."
+  ],
+  [
+   "Result",
+   "For a file of test results: the outcome. Empty for any other file."
+  ]
+ ],
+ "finding": [
+  "NC-1",
+  "A.8.32",
+  "Control A.8.32 did not operate during the period.",
+  "EV-7148"
+ ],
+ "versions": [
+  [
+   "ADM-UND",
+   "Signed undertaking",
+   "F1.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "ADM-RULES",
+   "Data rules acknowledgement",
+   "F1.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "ONB-RMF",
+   "Completed READ-ME-FIRST file",
+   "F1.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "FAM-MAP",
+   "Framework map",
+   "F1.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "CTX-BRIEF",
+   "Context brief",
+   "F1.3",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "CTX-IP",
+   "Interested parties",
+   "F1.3",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "CLS-RES",
+   "Classification worksheet",
+   "F2.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "EVQ-RES",
+   "Evidence check results",
+   "F2.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "OBL-REG",
+   "Obligations register extract",
+   "T3.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-FAM",
+   "ISO/IEC 27000-family map",
+   "T3.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-SCOPE",
+   "ISMS scope statement + process list",
+   "T3.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "MAP-XW",
+   "Crosswalk",
+   "T3.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-SOA",
+   "Statement of Applicability",
+   "T3.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "POL-CUR",
+   "Currency checklist",
+   "T4.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "POL-GAP",
+   "Gap table and redlines",
+   "T4.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-POL",
+   "ISMS policy check + RACI",
+   "T4.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "SOP-DOC",
+   "SOP document",
+   "T4.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-DOC",
+   "Document-control block + mandatory-documents register",
+   "T4.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "PBC-LIST",
+   "PBC request list",
+   "T5.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-CERT",
+   "Certification briefing",
+   "T5.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "EVP-IDX",
+   "Evidence index",
+   "T5.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "EVP-GAP",
+   "Coverage gap memo",
+   "T5.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "UAR-TEST",
+   "UAR test workbook",
+   "T6.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "UAR-MEMO",
+   "Test memo",
+   "T6.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LVR-REC",
+   "Reconciliation workbook",
+   "T6.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LVR-KPI",
+   "KPI statement",
+   "T6.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "RR-UPD",
+   "Updated office risk register",
+   "T7.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "RR-NOTE",
+   "Register note",
+   "T7.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-CHAIN",
+   "Asset–threat–control chains",
+   "T7.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-RTP",
+   "Risk treatment plan",
+   "T7.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "RSK-TOP5",
+   "Top-5 risk table",
+   "T7.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "RSK-ACC",
+   "Risk acceptance request",
+   "T7.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-RAM",
+   "Risk assessment method card",
+   "T7.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-PLAN",
+   "Gap analysis + objectives + plan",
+   "T7.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "VUL-TEST",
+   "SLA test workbook",
+   "T8.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "VUL-MEMO",
+   "Test memo",
+   "T8.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-KPI",
+   "Measure card",
+   "T8.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "CT-SCRIPT",
+   "Executed test script",
+   "T8.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "CT-MEMO",
+   "Test memo",
+   "T8.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-NCR",
+   "Nonconformity report",
+   "T8.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "VEN-TIER",
+   "Tiering record",
+   "T9.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "VEN-Q",
+   "Security questionnaire",
+   "T9.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "VEN-CL",
+   "Contract clause checklist",
+   "T9.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-CLD",
+   "Cloud & supply-chain addendum",
+   "T9.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "SOC-REV",
+   "SOC 2 review worksheet",
+   "T9.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "SOC-DEC",
+   "Onboarding risk decision",
+   "T9.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "ROPA",
+   "RoPA entry",
+   "T10.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "DFM",
+   "Data-flow map",
+   "T10.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "BRC-ASSESS",
+   "Notification assessment",
+   "T10.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "BRC-PLAN",
+   "Notification plan + register entry",
+   "T10.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-IRBC",
+   "Incident life-cycle and continuity decision",
+   "T10.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "AWR-PLAN",
+   "Campaign plan",
+   "T11.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "AWR-LESSON",
+   "Micro-lesson",
+   "T11.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "AWR-SIM",
+   "Phishing simulation plan",
+   "T11.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-COMM",
+   "Competence matrix + communication plan",
+   "T11.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "REG-BRIEF",
+   "Regulatory change brief",
+   "T11.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-CHG",
+   "ISMS change impact note",
+   "T11.2",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "ACT-UPD",
+   "Updated action tracker",
+   "T12.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "ACT-MRI",
+   "Management-review input: action status",
+   "T12.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ],
+  [
+   "LI-MR",
+   "Audit programme + management-review pack + readiness",
+   "T12.1",
+   "v1",
+   "Sealed: SHA-256 and UTC time recorded"
+  ]
+ ],
+ "action": [
+  "A-23",
+  "R-3",
+  "No evidence available for R-3: A.6.3, awareness training completion records, 2025-12-21 to 2026-12-21",
+  ""
+ ],
+ "owners": [
+  "Chief Information Security Officer (CISO)",
+  "Compliance Manager",
+  "Cyber Risk Manager",
+  "Cyber Threat Intelligence Analyst",
+  "Data Protection Officer (DPO)",
+  "Incident Response & Crisis Manager",
+  "Information Security Auditor",
+  "Privacy Compliance Analyst",
+  "Security Awareness & Training Specialist",
+  "Vendor / Third-Party Risk Analyst",
+  "Vulnerability Management Governance Analyst"
+ ],
+ "actOpts": [
+  "Correct the instance and add the missing step to the procedure",
+  "Repeat the review with an independent reviewer",
+  "Run a verification re-scan",
+  "Schedule the patch in the next maintenance window",
+  "None: the finding is challenged"
+ ],
+ "respOpts": [
+  "Accept and commit to corrective action",
+  "Challenge with evidence"
+ ],
+ "fupOpts": [
+  "ACT-UPD",
+  "CT-MEMO",
+  "CT-SCRIPT",
+  "EVP-IDX",
+  "LI-RAM",
+  "LI-RTP",
+  "LI-SOA",
+  "MAP-XW",
+  "OBL-REG",
+  "RR-UPD",
+  "RSK-TOP5",
+  "UAR-TEST",
+  "No evidence available"
+ ],
+ "ct": [
+  "CT",
+  "Control deviation",
+  "Correct the instance and add the missing step to the procedure",
+  "Control owner",
+  "30 days"
+ ],
+ "hashFix": [
+  [
+   "EV-8351",
+   "2aba29fe67df504a",
+   "ce2364ee1e391c9e"
+  ],
+  [
+   "EV-1780",
+   "1f0ecb464b826d95",
+   "eeb4ef77ac1416df"
+  ],
+  [
+   "EV-7170",
+   "76ac8c53ceabc014",
+   "3f7d3dc3d656947d"
+  ],
+  [
+   "EV-3977",
+   "88ca8c1afcd89454",
+   "81cb707394497f1c"
+  ],
+  [
+   "EV-8992",
+   "de2133e2a9a2caf7",
+   "0b4fdfda8c63350c"
+  ],
+  [
+   "EV-6790",
+   "24b10c5928c1b775",
+   "21ed043b77be8bdb"
+  ],
+  [
+   "EV-2224",
+   "8dade40f0f1907fd",
+   "281ec598805bd270"
+  ]
+ ]
+}

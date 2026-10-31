@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import type { Task } from "@/lib/desk/model";
+import { INJ_AT, released, waitingAt } from "@/lib/desk/inbox";
+import { api } from "@/lib/api";
+import type { DecisionFeedback } from "@/lib/desk/progress";
 
 /*
  * The task messages, read and answered in Toolbar › Inbox. Each says what kind of message it is,
@@ -78,7 +81,7 @@ const KIND: Record<string, { label: string; hint: string; chip: string; icon: "a
   },
   DECISION: {
     label: "Quick decision",
-    hint: "A colleague needs your call. Use the rule tables, then choose.",
+    hint: "A colleague needs your call. Read the guidance named below, then choose.",
     chip: "bg-amber-50 text-amber-800 ring-amber-200",
     icon: "flag",
   },
@@ -91,17 +94,31 @@ const KIND: Record<string, { label: string; hint: string; chip: string; icon: "a
 };
 
 function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean }) {
-  const { desk, progress, update } = useDesk();
+  const { desk, progress, update, here, closeTool } = useDesk();
   const m = desk.inj[id];
   const picked = progress.msgs[id];
   // Played from the start only if it has not been answered; a settled thread just shows itself.
   const [arrived, setArrived] = useState(!!picked);
+  const notice = !m?.options?.length;
+  // Once answered, the reply is checked against the message's key (POST /me/desk/message), as a decision is.
+  // A message with no key yet (404) stays answered without feedback, and says when its learning point comes.
+  const fb = progress.decisions?.[id];
+  const [nokey, setNokey] = useState(false);
+  useEffect(() => {
+    if (!m || !picked || notice || fb || nokey) return;
+    let live = true;
+    api
+      .post<DecisionFeedback>("/me/desk/message", { id, pick: picked })
+      .then((r) => { if (live) update((p) => ({ ...p, decisions: { ...p.decisions, [id]: r } })); })
+      .catch(() => { if (live) setNokey(true); });
+    return () => { live = false; };
+  }, [m, picked, notice, fb, nokey, id, update]);
   if (!m) return null;
   const kind = KIND[m.type] ?? KIND.DECISION;
-  const notice = !m.options?.length;
   // What the mentee's own bubble says: the option they took, or the pack's button label.
   const answer = !picked ? undefined : notice ? "Rows added" : picked === "report" ? "Report" : m.options[picked.charCodeAt(0) - 65];
   const reply = (v: string) => update((p) => ({ ...p, msgs: { ...p.msgs, [id]: v } }));
+  const bestText = fb?.best === "report" ? "Report" : fb?.best ? m.options[fb.best.charCodeAt(0) - 65] : undefined;
 
   return (
     <article id={`msg-${id}`} aria-label={`${kind.label} from ${m.sender}`} className="grid scroll-mt-16 gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-card sm:p-5">
@@ -181,7 +198,20 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
           </div>
         )}
 
-        {picked && <p className="text-center text-[11.5px] text-slate-500">The learning point appears after you submit {task.id}.</p>}
+        {picked && fb && (
+          <div data-guide="message-result" className={`grid gap-1 rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed ring-1 ring-inset ${fb.correct ? "bg-emerald-50 text-emerald-900 ring-emerald-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
+            <p className="font-semibold">{fb.correct ? "That was the best reply." : `Not the best reply. The best is: ${bestText}`}</p>
+            {fb.why && <p>{fb.why}</p>}
+          </div>
+        )}
+        {picked && here?.task === m.task && INJ_AT[id] === here.n && (
+          <div className="flex justify-end">
+            <button type="button" data-guide="message-back" onClick={() => closeTool("inbox|*")} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus-ring active:scale-[0.98]">
+              Back to step {here.n} <Icon name="arrowRight" size={14} />
+            </button>
+          </div>
+        )}
+        {picked && !fb && !notice && <p className="text-center text-[11.5px] text-slate-500">The learning point appears after you submit {task.id}.</p>}
       </div>
 
       <footer className="text-[11.5px] text-slate-500">
@@ -191,17 +221,42 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
   );
 }
 
+/** On a step with a message waiting: who it is from, why it matters now, and the way to it. */
+export function MessageNotice({ task, n }: { task: Task; n: number }) {
+  const { desk, progress, openTool } = useDesk();
+  const id = waitingAt(desk, progress, task.id, n)[0];
+  if (!id) return null;
+  return (
+    <div data-guide="message-notice" role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 border-y border-[#F3D08A] bg-[#FFFBF2] px-4 py-2.5">
+      <Icon name="inbox" size={16} className="shrink-0 text-[#92400E]" />
+      <p className="min-w-[180px] flex-1 text-[13px] leading-snug text-[#78350F]">
+        <strong className="font-semibold">New message from {desk.inj[id].sender}.</strong> Reply in the Inbox before you complete this step.
+      </p>
+      <button type="button" data-guide="message-open" onClick={() => openTool("inbox|*")} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded bg-[#4338CA] px-3.5 text-[13px] font-semibold text-white hover:brightness-90 focus-ring">
+        Open Inbox
+      </button>
+    </div>
+  );
+}
+
 /**
  * Toolbar › Inbox: every task message of the weeks that are open, newest week first, each played in
  * the chat language above. Unanswered ones are what the Inbox badge counts.
  */
 export function Inbox() {
-  const { desk, isOpen } = useDesk();
+  const { desk, isOpen, progress, here } = useDesk();
+  // Opens on the message the step in hand is waiting for: older weeks' threads sit around it.
+  useEffect(() => {
+    const id = here && waitingAt(desk, progress, here.task, here.n)[0];
+    if (id) document.getElementById(`msg-${id}`)?.scrollIntoView({ block: "start" });
+    // Once on opening; a reply must not move the thread being read.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const weeks = desk.weeks
-    .map((w, i) => ({ n: i + 1, ids: desk.order.filter((t) => desk.tasks[t].week === i + 1).flatMap((t) => desk.tasks[t].inj) }))
+    .map((w, i) => ({ n: i + 1, ids: desk.order.filter((t) => desk.tasks[t].week === i + 1).flatMap((t) => desk.tasks[t].inj).filter((id) => released(desk, progress, here, id)) }))
     .filter((w) => w.ids.length && isOpen(w.n))
     .reverse();
-  if (!weeks.length) return <p className="text-[13.5px] text-slate-500">Messages arrive with each week&rsquo;s tasks.</p>;
+  if (!weeks.length) return <p className="text-[13.5px] text-slate-500">Messages arrive as you start each task.</p>;
   return (
     <div className="grid gap-6">
       {weeks.map((w) => (
@@ -216,8 +271,13 @@ export function Inbox() {
   );
 }
 
-/** Messages of open weeks still waiting for an answer. */
-export function useUnread(): number {
-  const { desk, progress, isOpen } = useDesk();
-  return Object.values(desk.inj).filter((m) => isOpen(desk.tasks[m.task]?.week ?? 99) && !progress.msgs[m.id]).length;
+/**
+ * Messages still waiting for an answer. A task's messages arrive once the learner reaches the task (the one in
+ * hand, or one with work done), not when its week opens (owner, 30 Oct: things open task by task).
+ */
+export function useUnread(task?: string): number {
+  const { desk, progress, isOpen, here } = useDesk();
+  return Object.values(desk.inj).filter(
+    (m) => desk.tasks[m.task] && (!task || m.task === task) && isOpen(desk.tasks[m.task].week) && released(desk, progress, here, m.id) && !progress.msgs[m.id],
+  ).length;
 }

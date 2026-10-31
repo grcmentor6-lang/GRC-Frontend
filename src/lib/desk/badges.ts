@@ -8,7 +8,7 @@ import type { Progress } from "./progress";
  * through a task's primary method. Every task except F1.1 earns towards exactly one badge; other
  * tasks that practise the family as a supporting method are shown, not required.
  *
- * Award rule (BKB-MEN-101 §13a): earned when every earning task is submitted with a released task
+ * Award rule (BKB-MEN-101 Section 13a): earned when every earning task is submitted with a released task
  * score ≥ 65; with distinction when their average is ≥ 85 and none is below 75. The capstone is
  * awarded when all ten method badges are earned.
  */

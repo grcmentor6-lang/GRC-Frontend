@@ -38,40 +38,79 @@ export function rmfExpected(desk: Desk, start: Date, t: number): string[] {
 }
 
 /**
+ * Tables 1 and 3 arrive pre-filled by the programme office "from your enrolment record", each with
+ * planted slips, so steps 1 and 5 check a record against its source instead of retyping it (REWORK
+ * F1.1, owner 30 Oct: orientation steps done through a small real act). Each slip is a value from the
+ * row next to the right one on the same screen: another office of Org A, F1.1's owner, F1.1's due date.
+ * `why` (per row, null when the row is right) is shown only after Check my answers. Platform-written,
+ * logged in docs/GRC101_Content_Corrections.md. Table 2 (folders) stays a copy: it feeds step 6.
+ */
+export function rmfGiven(desk: Desk, start: Date, t: number): { v: string[]; why: (string | null)[] } | null {
+  const want = rmfExpected(desk, start, t);
+  const v = [...want];
+  const why: (string | null)[] = want.map(() => null);
+  const plant = (i: number, x: string | undefined, w: string) => {
+    if (x && !same(x, want[i])) { v[i] = x; why[i] = w; }
+  };
+  const { A } = desk.orgs;
+  const f11 = desk.tasks["F1.1"];
+  if (t === 0) {
+    const other = A.offices.find((o) => !same(o, A.office));
+    plant(1, other, `${other} is one of ${A.short}'s offices, but not its home office. The Overview of the Org A tab names the home office; the Offices tab marks it too.`);
+    plant(4, f11?.owner, `${f11?.owner} owns F1.1, the task above F1.2 in the task table. Each task has its own owner.`);
+    return { v, why };
+  }
+  if (t === 2) {
+    plant(0, f11 && dmy(dueDate(start, f11.dueDay)), "That is the due date of F1.1, the row above F1.2 in My plan.");
+    return { v, why };
+  }
+  return null;
+}
+/** Grid cells of a checked table: the time of the check and the rows still wrong then ("1,4"). */
+export const rmfAt = (t: number) => `${t},at`;
+export const rmfMiss = (t: number) => `${t},miss`;
+
+/**
  * The onboarding attestations, done on the F1.1 steps that ask for them: the undertaking (signed with
  * full name and mentee ID) and the four data rules (each ticked, then saved). The pack describes them
  * only in a line each, so every item below restates a line of the pack, and says which:
  *   Undertaking — "Own work, workspace files only, report outside data. E-signature." (F1.1 panel);
- *     "Accounts are personal. Sharing breaks the undertaking" (F1.1-D1, BKB-POL-024 §3.1).
- *   Data rules — "synthetic data only, own work, no AI tools for task work" (F1.1 What will I learn,
- *     BKB-POL-024 §3.1, BKB-POL-022 §7.1); "work data never leaves the platform" (F1.1-D2).
+ *     "Accounts are personal. Sharing breaks the undertaking" (F1.1-D1, BKB-POL-024 Section 3.1).
+ *   Data rules — the engine's ADM-RULES form (GRC101_Engine/p_tasks.py, F1.1 submission): "synthetic
+ *     data only; own work only; no AI tools for task work (all help is pre-written on the platform);
+ *     no Tier 3/4 data outside the platform". Tier names are BKB-STD-001 Section 3's.
+ * `then` names the step's second part, as its own task, under the decision.
  * Not yet reviewed by a GRC professional.
  */
-export const ATTEST: Record<string, Record<number, { code: string; title: string; items: string[]; sign: boolean }>> = {
-  "F1.1": {
-    2: {
-      code: "ADM-UND",
-      title: "Undertaking",
-      sign: true,
-      items: [
-        "All the work I submit is my own.",
-        "I keep task files in my workspace only.",
-        "I report any outside data I come across.",
-        "My account is personal. I do not share it.",
-      ],
-    },
-    3: {
-      code: "ADM-RULES",
-      title: "Data and AI rules",
-      sign: false,
-      items: [
-        "I use only the synthetic data the platform gives me.",
-        "All my task work is my own.",
-        "I use no AI tool for task work.",
-        "Task data never leaves the platform.",
-      ],
-    },
-  },
+export type Attest = { code: string; title: string; then: string; items: string[]; sign: boolean };
+const ADM_RULES: Attest = {
+  code: "ADM-RULES",
+  title: "Data and AI rules",
+  then: "Tick and save the data rules",
+  sign: false,
+  items: [
+    "I use only the synthetic data the platform gives me.",
+    "I do my own work only.",
+    "I use no AI tool for task work. All help is pre-written on the platform.",
+    "I keep no Tier 3 (Confidential) or Tier 4 (Restricted) data outside the platform.",
+  ],
+};
+const ADM_UND: Attest = {
+  code: "ADM-UND",
+  title: "Undertaking",
+  then: "sign the undertaking",
+  sign: true,
+  items: [
+    "All the work I submit is my own.",
+    "I keep task files in my workspace only.",
+    "I report any outside data I come across.",
+    "My account is personal. I do not share it.",
+  ],
+};
+/** Step → its forms, in the order they are done. F1.1: the undertaking is signed last, in step 3, once
+ *  both conduct questions are answered and the data rules saved, before step 4 touches data. */
+export const ATTEST: Record<string, Record<number, Attest[]>> = {
+  "F1.1": { 3: [ADM_RULES, ADM_UND] },
 };
 export const attestKey = (taskId: string, code: string) => `${taskId}|${code}`;
 /** Signed or saved: the time is set only by the form's own button. */
@@ -93,9 +132,13 @@ export function dmyToIso(v: string): string {
 
 export const same = (a: string, b: string) => a.trim().replace(/\s+/g, " ").toLowerCase() === b.trim().replace(/\s+/g, " ").toLowerCase();
 
-export function rmfFilled(p: Progress, taskId: string, t: number): boolean {
+/** Every row of table `t` filled; with `want` (what each screen shows), every row an exact copy of it. */
+export function rmfFilled(p: Progress, taskId: string, t: number, want?: string[]): boolean {
   const cells = p.grids?.[rmfKey(taskId)] ?? {};
-  return RMF.tables[t].rows.every((_, i) => (cells[`${t},${i}`] ?? "").trim());
+  return RMF.tables[t].rows.every((_, i) => {
+    const v = (cells[`${t},${i}`] ?? "").trim();
+    return !!v && (!want || same(v, want[i] ?? ""));
+  });
 }
 
 // ── Submitting a deliverable: the file name by the convention, then a receipt (hash + UTC time). ──

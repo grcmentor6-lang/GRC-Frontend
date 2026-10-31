@@ -70,20 +70,35 @@ Explicit consent for any cross-border data transfer of student data
 
 Right of erasure: upon student account deletion, all PII must be purged within 30 days
 
+2.2 Employee representation by office
+
+Employee bodies that must be consulted, or must consent, before a change that affects staff is made in the office.
+
+| Office | Works council or employee body | When it must be consulted |
+| :-: | :-: | :-: |
+| Istanbul, Turkey(Head office) | None | — |
+| Amsterdam, Netherlands(Regional office) | Ondernemingsraad (works council), elected under the Dutch Works Councils Act (WOR) | Its consent is needed before a system that can monitor staff conduct or performance is introduced or changed (WOR Art.27(1)(l)) |
+| New York, United States(Regional office) | None | — |
+| Mumbai, India(Regional office) | None | — |
+
+Note. Compiled in September 2026 from public sources; to be validated by local counsel before reliance.
+
 3\. Standards and regulations in scope
 
-| Standard / regulation | Type | Decomposition unit | Requirements | Operational tasks (library) |
-| :-: | :-: | :-: | :-: | :-: |
-| ISO/IEC 27001:2022 | Mandatory | Clause + Annex A control | 118 | 23600 |
-| KVKK (Turkey) | Mandatory | Article | 11 | 2200 |
-| GDPR (EU) | Mandatory | Article | 42 | 8400 |
-| COPPA (US) | Mandatory | Section | 9 | 1800 |
-| FERPA (US) | Mandatory | Section | 10 | 2000 |
-| ISO/IEC 29151 (PII Protection) | Mandatory | PII-protection control area | 12 | 2400 |
-| iNACOL standards | Optional | Standard | 9 | 1800 |
-| ISO/IEC 27701 | Optional | PIMS clause / Annex A-B control | 55 | 11000 |
-| NIST Privacy Framework | Optional | Category | 18 | 3600 |
-| Student Data Privacy Consortium (SDPC) standards | Optional | Agreement clause area | 11 | 2200 |
+| Standard / regulation | Type | Applies to | Decomposition unit | Requirements | Operational tasks (library) |
+| :-: | :-: | :-: | :-: | :-: | :-: |
+| ISO/IEC 27001:2022 | Mandatory | All offices | Clause + Annex A control | 118 | 23600 |
+| KVKK (Turkey) | Mandatory | See Section 2 | Article | 11 | 2200 |
+| GDPR (EU) | Mandatory | See Section 2 | Article | 42 | 8400 |
+| COPPA (US) | Mandatory | See Section 2 | Section | 9 | 1800 |
+| FERPA (US) | Mandatory | See Section 2 | Section | 10 | 2000 |
+| ISO/IEC 29151 (PII Protection) | Mandatory | All offices | PII-protection control area | 12 | 2400 |
+| iNACOL standards | Optional | — | Standard | 9 | 1800 |
+| ISO/IEC 27701 | Optional | — | PIMS clause / Annex A-B control | 55 | 11000 |
+| NIST Privacy Framework | Optional | — | Category | 18 | 3600 |
+| Student Data Privacy Consortium (SDPC) standards | Optional | — | Agreement clause area | 11 | 2200 |
+
+Note. "All offices": the ISMS certification scope covers the head office and every regional office, and every office processes student personal data (Section 8, Section 9), which ISO/IEC 29151's PII controls protect.
 
 4\. Stakeholder requirements
 
@@ -136,6 +151,10 @@ The following values are selected from the criticality-band tables of the Group 
 | BKB-POL-015 | Business Continuity and ICT Resilience Policy | BIA refresh | Every 2 years |
 | BKB-POL-015 | Business Continuity and ICT Resilience Policy | Full DR failover test | Every 2 years |
 | BKB-POL-015 | Business Continuity and ICT Resilience Policy | Crisis tabletop | Annual |
+| BKB-POL-021 | Cloud Security Policy | New cloud service approval (Section 6.1): Assessment | Within 5 working days of the request |
+| BKB-POL-021 | Cloud Security Policy | New cloud service approval (Section 6.1): Decision notice | Within 1 working day of the approved design |
+
+The two BKB-POL-021 values are set by LearnTech, not taken from a criticality band: schools adopt new cloud tools at the start of each term, and no student data may enter a service before its assessment.
 
 6\. Sector and jurisdiction overlays
 
@@ -182,6 +201,19 @@ The following values are selected from the criticality-band tables of the Group 
 | Enterprise directory & email | Istanbul, Turkey | Corporate IT & Technology | Chief Information Officer | Confidential | Hybrid — on-prem Istanbul + cloud |
 | Core network & infrastructure | Istanbul, Turkey | Corporate IT & Technology | Head of Infrastructure | Confidential | On-premises data centre — Istanbul |
 | Student information system (SIS) | Istanbul, Turkey | Admissions & Registrar | Registrar | Restricted (Research/PII) | SaaS (vendor-hosted) |
+
+8.2 Business impact analysis: critical processes of the Amsterdam office
+
+| Process | Department | Runs on (asset register) | RTO |
+| :-: | :-: | :-: | :-: |
+| Learning session delivery | EdTech & Learning Platforms | Learning platform & content | 8 hours |
+| Assessment and grading | EdTech & Learning Platforms | Learning platform & content; Assessment & proctoring data | 24 hours |
+| Progress reporting to teachers and parents | EdTech & Learning Platforms | Learner analytics data | 48 hours |
+| Student support | Student Services | Student support / CRM | 24 hours |
+| Customer support | Customer Operations & Support | Customer support / ticketing | 24 hours |
+| Regional billing | Regional Finance | Regional billing & AR records | 48 hours |
+
+RTO (recovery time objective): the longest a process may stay stopped. Business impact analysis refreshed every 2 years (Section 5); last refreshed 2026-09-15 by the Regional Managing Director. The other offices' analyses are held by their regional managing directors.
 
 9\. Processing activities and data
 

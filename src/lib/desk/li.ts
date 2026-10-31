@@ -25,7 +25,7 @@ export interface LiMap {
 
 let cached: Promise<LiMap> | null = null;
 export function loadLi(): Promise<LiMap> {
-  cached ??= fetch("/desk/li.json").then((r) => {
+  cached ??= fetch("/desk/li.json", { cache: "no-cache" }).then((r) => {
     if (!r.ok) throw new Error(`Lead Implementer map failed to load (${r.status})`);
     return r.json();
   });

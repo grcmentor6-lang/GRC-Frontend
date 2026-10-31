@@ -40,7 +40,7 @@ export function ToolScreen({ mock, flush }: { mock: Pick<ToolMock, "kind" | "pl"
       {mock.kind === "console" && <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-slate-500">Tech Lab · synthetic training data · read-only</p>}
       {!flush && table}
       {rows("i").map(([t, d, s], i) => (
-        <div key={i} className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+        <div key={i} data-term={String(t)} className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
           <div className="min-w-0">
             <div className="text-[13px] font-medium text-slate-800">{String(t)}</div>
             <div className="text-[12.5px] text-slate-500">{String(d)}</div>
@@ -64,11 +64,26 @@ export function ToolScreen({ mock, flush }: { mock: Pick<ToolMock, "kind" | "pl"
           <div className="text-slate-800">{String(v)}</div>
         </div>
       ))}
-      {rows("p").length > 0 && (
-        <div className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4 text-[13px] leading-relaxed text-slate-700">
-          {(pl.p as string[]).map((p, i) => <p key={i}><Rich s={p} /></p>)}
-        </div>
-      )}
+      {rows("p").length > 0 &&
+        ((pl.p as string[]).every((p) => /^<b>[^<]+<\/b>\s/.test(p)) ? (
+          // Every line a "<b>Name</b> meaning" entry (a reference, a set of sentence frames): a ruled
+          // two-column list, so the names line up and each meaning is read beside its name.
+          <dl className="@container divide-y divide-[#E9ECF1] rounded-lg border border-slate-200 bg-white text-[13px] leading-relaxed">
+            {(pl.p as string[]).map((p) => {
+              const [, name, text] = p.match(/^<b>([^<]+)<\/b>\s*([\s\S]*)$/)!;
+              return (
+                <div key={name} data-term={name} className="grid gap-x-4 gap-y-0.5 px-4 py-2.5 @[560px]:grid-cols-[minmax(0,180px)_1fr]">
+                  <dt className="font-semibold text-[#111827]">{name}</dt>
+                  <dd className="text-slate-700"><Rich s={text} /></dd>
+                </div>
+              );
+            })}
+          </dl>
+        ) : (
+          <div className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4 text-[13px] leading-relaxed text-slate-700">
+            {(pl.p as string[]).map((p, i) => <p key={i}><Rich s={p} /></p>)}
+          </div>
+        ))}
       {rows("b").map(([t, v, s], i) => (
         <div key={i} className="grid gap-1">
           <div className="flex justify-between gap-3 text-[12.5px]">
@@ -141,13 +156,13 @@ function Body({ item }: { item: ViewItem }): { eyebrow: string; title: string; b
       const cites = secs ? secs.split(",") : [];
       const lib = desk.library.docs.find(([code, title]) => code === doc || title === desk.docs[doc]);
       return {
-        eyebrow: cites.length ? `Library · §${cites.join(", §")}` : "Library",
+        eyebrow: cites.length ? `Library · Section ${cites.join(", Section ")}` : "Library",
         title: `${doc} · ${desk.docs[doc] ?? lib?.[1] ?? ""}`,
         body: DOC_TEXT.has(doc) ? (
           <DocCitation id={doc} cites={cites} />
         ) : lib ? (
           <ol className="grid gap-1 text-[13px] text-slate-700">
-            {lib[2].map(([n, h]) => <li key={n}><span className="inline-block w-12 text-slate-400 tabular-nums">§{n}</span>{h}</li>)}
+            {lib[2].map(([n, h]) => <li key={n}><span className="inline-block w-12 text-slate-400 tabular-nums">Section {n}</span>{h}</li>)}
           </ol>
         ) : (
           <p className="text-[13.5px] text-slate-600">The task cites this document by section. Its headings are listed in the Library drawer.</p>

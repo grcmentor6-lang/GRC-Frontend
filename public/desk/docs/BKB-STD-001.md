@@ -86,11 +86,11 @@ Four organisations (Department of Digital Services, National Security Intelligen
 
 Is the information approved for public release by an authorised owner? → Tier 1.
 
-Is it subject to a national-security marking? → apply the national scheme (§4.1).
+Is it subject to a national-security marking? → apply the national scheme (Section 4.1).
 
 Does it contain special-category personal data, PHI, cardholder data (PAN/SAD), children's data at scale, CEII/OT designs or configurations, lawful-interception or subscriber traffic data, cryptographic keys/credentials, or privileged legal matters? → Tier 4.
 
-Would unauthorised disclosure breach law, contract or cause significant financial, regulatory or reputational harm (per §3.1)? → Tier 3 (or Tier 4 if severe).
+Would unauthorised disclosure breach law, contract or cause significant financial, regulatory or reputational harm (per Section 3.1)? → Tier 3 (or Tier 4 if severe).
 
 Does it contain any personal data, client information or commercially sensitive data? → Tier 3.
 

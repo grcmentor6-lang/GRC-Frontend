@@ -27,6 +27,17 @@ export interface Progress {
   logs: Record<string, string>;
   /** Decision id ("F1.1-D1") → the feedback revealed once the pick was locked (POST /me/desk/decision). */
   decisions: Record<string, DecisionFeedback>;
+  /** "<task>-<step>" → a per-row decision's feedback, once its rows were checked (POST /me/desk/rows). */
+  rowChecks?: Record<string, RowsFeedback>;
+}
+
+export interface RowsFeedback {
+  /** Row label → the pick, the key's value, whether it matches (null: the key's value is not one of
+   *  the step's options, so it cannot be scored) and the reason, from the step's rule. */
+  rows: Record<string, { pick: string; best: string; correct: boolean | null; why: string }>;
+  note?: string | null;
+  /** When the rows were checked (ISO): T12.2 logs it as the time its files were sent. */
+  at?: string;
 }
 
 export interface DecisionFeedback {
@@ -44,34 +55,27 @@ const EMPTY: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs:
 
 /**
  * Where a mentee's desk progress is kept. The version is bumped to start everyone afresh:
- * v4 (2026-10-15) with the new work types, v5 (2026-10-20) emptied every submission by request, v6 (2026-10-21) cleared decision steps only.
+ * v4 (2026-10-15) with the new work types, v5 (2026-10-20) emptied every submission by request, v6 (2026-10-21) cleared decision steps only,
+ * v7 (2026-10-28) emptied every submission again by request, for testing the rebuilt tasks.
  */
-export const progressKey = (who: string) => `grc101.desk.v6.${who}`;
-
-/**
- * v6 (2026-10-21): decision steps gained their second half (the forms and tables after "Then:"),
- * so every decision submission is cleared, by request, and the rest of the work is kept.
- */
-function fromV5(who: string): string | null {
-  const raw = localStorage.getItem(`grc101.desk.v5.${who}`);
-  if (!raw) return null;
-  const p = JSON.parse(raw) as Partial<Progress>;
-  const decided = Object.keys(p.picks ?? {});
-  for (const k of decided) delete p.done?.[k];
-  const out = JSON.stringify({ ...p, picks: {}, decisions: {} });
-  localStorage.setItem(`grc101.desk.v6.${who}`, out);
-  localStorage.removeItem(`grc101.desk.v5.${who}`);
-  return out;
-}
+export const progressKey = (who: string) => `grc101.desk.v7.${who}`;
 
 export function useProgress(who: string) {
   const key = progressKey(who);
   // Lazy read: the desk mounts only in the browser, after its content has loaded.
   const [progress, setProgress] = useState<Progress>(() => {
     try {
-      for (const old of [`grc101.desk.${who}`, `grc101.desk.v2.${who}`, `grc101.desk.v3.${who}`, `grc101.desk.v4.${who}`]) localStorage.removeItem(old); // earlier saves, no longer read
-      const raw = localStorage.getItem(key) ?? fromV5(who);
-      return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY;
+      for (const v of ["", "v2.", "v3.", "v4.", "v5.", "v6."]) localStorage.removeItem(`grc101.desk.${v}${who}`); // earlier saves, no longer read
+      // /app/desk?reset=1 empties the signed-in person's own desk and nobody else's (owner, 31 Oct), without bumping
+      // the version above, which would start every tester afresh. The address is cleaned so a reload cannot wipe again.
+      const url = new URL(location.href);
+      if (url.searchParams.has("reset")) {
+        localStorage.removeItem(key);
+        url.searchParams.delete("reset");
+        history.replaceState(null, "", url);
+      }
+      const raw = localStorage.getItem(key);
+      return raw ? resetStaleRowChecks({ ...EMPTY, ...JSON.parse(raw) }) : EMPTY;
     } catch {
       return EMPTY; // private window or blocked storage: start empty
     }
@@ -95,6 +99,31 @@ export function useProgress(who: string) {
 }
 
 /**
+ * F1.2 step 3 was checked against a key with two unscorable rows until 2026-10-28, when they got
+ * answers. A check saved before then still carries a "not scored" row, so that step is reopened
+ * empty: its check, completion and the rows it fills (column D, rows 2 onward; row 1 is step 2's).
+ * ponytail: one hard-coded step; remove once testers have reloaded.
+ */
+function resetStaleRowChecks(p: Progress): Progress {
+  const id = "F1.2-3";
+  const chk = p.rowChecks?.[id];
+  if (!chk || !Object.values(chk.rows).some((r) => r.correct === null)) return p;
+  const rowChecks = { ...p.rowChecks };
+  const done = { ...p.done };
+  const logs = { ...p.logs };
+  delete rowChecks[id];
+  delete done[id];
+  delete logs[id];
+  const grids = Object.fromEntries(
+    Object.entries(p.grids).map(([k, cells]) => [
+      k,
+      k.startsWith("F1.2|") ? Object.fromEntries(Object.entries(cells).filter(([c]) => !/^[1-9]\d*,3$/.test(c))) : cells,
+    ]),
+  );
+  return { ...p, rowChecks, done, logs, grids };
+}
+
+/**
  * A read-only look at someone's desk progress, for pages outside the desk (Badges, Dashboard, CV,
  * Certificate). Empty for no one, or when storage is blocked.
  */
@@ -115,3 +144,7 @@ export function taskStatus(p: Progress, t: { id: string; steps: { n: number }[] 
   if (p.submitted[t.id]) return "submitted";
   return t.steps.some((s) => p.done[stepKey(t.id, s.n)]) ? "started" : "todo";
 }
+
+/** A decision's pick is checked (locked, feedback shown): its step's second part may begin. */
+export const decisionChecked = (p: Progress, taskId: string, n: number) =>
+  !!p.done[stepKey(taskId, n)] || (p.acks[stepKey(taskId, n)] ?? []).includes("checked");
