@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api } from "@/lib/api";
 
 /**
  * What the mentee has done on the desk.
  *
- * ponytail: kept in localStorage per account so the base build needs no schema change. Phase 3
- * moves it behind PUT /me/desk/progress; callers only see `progress` and `update`.
+ * Kept on the server per account (GET and PUT /me/desk/progress, table desk_progress), with a copy in
+ * localStorage so the desk opens at once and survives a dropped connection. Callers only see `progress`
+ * and `update`. ponytail: pages outside the desk (badges, CV) still read the browser's copy, so on a new
+ * device they fill in once the desk has been opened there.
  */
 export interface Progress {
   /** "T5.1-3" → completed. */
@@ -29,6 +32,8 @@ export interface Progress {
   decisions: Record<string, DecisionFeedback>;
   /** "<task>-<step>" → a per-row decision's feedback, once its rows were checked (POST /me/desk/rows). */
   rowChecks?: Record<string, RowsFeedback>;
+  /** When this copy last changed (ms): the newer of the browser's and the server's copy wins. */
+  savedAt?: number;
 }
 
 export interface RowsFeedback {
@@ -60,20 +65,33 @@ const EMPTY: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs:
  */
 export const progressKey = (who: string) => `grc101.desk.v7.${who}`;
 
+/** Pause after the last change before saving to the server; the browser's copy is written at once. */
+const SAVE_AFTER_MS = 1500;
+const save = (p: Progress) => api.put("/me/desk/progress", { data: JSON.stringify(p) }).catch(() => {
+  /* offline or signed out: the browser keeps it, and it goes up on the next load as the newer copy */
+});
+
 export function useProgress(who: string) {
   const key = progressKey(who);
+  // /app/desk?reset=1 empties the signed-in person's own desk and nobody else's (owner, 31 Oct), without bumping
+  // the version above, which would start every tester afresh. An empty copy dated now, not just a removal: it must
+  // beat the older copy on the server, which goes too. The address is cleaned so a reload cannot wipe again.
+  const [wiped] = useState(() => {
+    try {
+      const url = new URL(location.href);
+      if (!url.searchParams.has("reset")) return false;
+      localStorage.setItem(key, JSON.stringify({ ...EMPTY, savedAt: Date.now() }));
+      url.searchParams.delete("reset");
+      history.replaceState(null, "", url);
+      return true;
+    } catch {
+      return false;
+    }
+  });
   // Lazy read: the desk mounts only in the browser, after its content has loaded.
   const [progress, setProgress] = useState<Progress>(() => {
     try {
       for (const v of ["", "v2.", "v3.", "v4.", "v5.", "v6."]) localStorage.removeItem(`grc101.desk.${v}${who}`); // earlier saves, no longer read
-      // /app/desk?reset=1 empties the signed-in person's own desk and nobody else's (owner, 31 Oct), without bumping
-      // the version above, which would start every tester afresh. The address is cleaned so a reload cannot wipe again.
-      const url = new URL(location.href);
-      if (url.searchParams.has("reset")) {
-        localStorage.removeItem(key);
-        url.searchParams.delete("reset");
-        history.replaceState(null, "", url);
-      }
       const raw = localStorage.getItem(key);
       return raw ? resetStaleRowChecks({ ...EMPTY, ...JSON.parse(raw) }) : EMPTY;
     } catch {
@@ -84,16 +102,61 @@ export function useProgress(who: string) {
   const update = useCallback(
     (fn: (p: Progress) => Progress) =>
       setProgress((p) => {
-        const next = fn(p);
+        const next = { ...fn(p), savedAt: Date.now() };
         try {
           localStorage.setItem(key, JSON.stringify(next));
         } catch {
-          /* unsaved, but the session still works */
+          /* unsaved here, but the server still gets it */
         }
         return next;
       }),
     [key],
   );
+
+  // A change goes up once the learner pauses. `saved` is the copy the server already has, or the one read on opening.
+  const saved = useRef(progress.savedAt);
+  useEffect(() => {
+    if (progress.savedAt === saved.current) return;
+    const t = setTimeout(() => {
+      saved.current = progress.savedAt;
+      save(progress);
+    }, SAVE_AFTER_MS);
+    return () => clearTimeout(t);
+  }, [progress]);
+
+  // On opening: the server's copy replaces this browser's if it is newer (work done on another device);
+  // otherwise this browser's goes up, which is also how work saved before the database moves across.
+  useEffect(() => {
+    let live = true;
+    if (wiped) {
+      save({ ...EMPTY, savedAt: Date.now() });
+      return;
+    }
+    api
+      .get<{ data?: string | null }>("/me/desk/progress")
+      .then((r) => {
+        const server = r?.data ? ({ ...EMPTY, ...JSON.parse(r.data) } as Progress) : null;
+        const local = readProgress(who);
+        if (!live || local.savedAt !== saved.current) return; // the learner has already started working
+        if (server && (server.savedAt ?? 0) > (local.savedAt ?? 0)) {
+          saved.current = server.savedAt;
+          setProgress(server);
+          try {
+            localStorage.setItem(key, JSON.stringify(server));
+          } catch {
+            /* the session still works from memory */
+          }
+        } else if ((!server || local.savedAt !== server.savedAt) && (local.savedAt || Object.keys(local.done).length || Object.keys(local.grids).length || Object.keys(local.picks).length)) {
+          save(local);
+        }
+      })
+      .catch(() => {
+        /* the browser's copy stands */
+      });
+    return () => {
+      live = false;
+    };
+  }, [key, who, wiped]);
 
   return { progress, update };
 }
