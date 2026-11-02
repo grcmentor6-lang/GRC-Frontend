@@ -1,15 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "@/lib/api";
+import { useSyncExternalStore } from "react";
+import { storeFor } from "./progress-sync";
 
 /**
  * What the mentee has done on the desk.
  *
- * Kept on the server per account (GET and PUT /me/desk/progress, table desk_progress), with a copy in
- * localStorage so the desk opens at once and survives a dropped connection. Callers only see `progress`
- * and `update`. ponytail: pages outside the desk (badges, CV) still read the browser's copy, so on a new
- * device they fill in once the desk has been opened there.
+ * The server holds the only copy, per account (table desk_progress); the browser holds none. Opening does one GET,
+ * shared by every useProgress on the page (progress-sync.ts); the desk shows its skeleton until then, or Try again
+ * if it fails, so an empty desk can never overwrite real work. `update` changes memory and notes the changed keys;
+ * after a pause they go up as one PATCH of keys, one request at a time, with retries, and at once when the tab hides
+ * (keepalive). A browser's old v7 copy, if newer, is sent up once and removed. /app/desk?reset=1 replaces the
+ * person's own server copy with an empty one (PUT), without touching anyone else's.
+ * ponytail: a key is the unit of a save, so two tabs keep each other's keys but the later of two edits to the same
+ * key (one register's grid) wins, and a tab sees the other's work on reload. Unsaved work left when the connection
+ * is down lives only in the tab; the header says so and closing asks first.
  */
 export interface Progress {
   /** "T5.1-3" → completed. */
@@ -32,6 +37,10 @@ export interface Progress {
   decisions: Record<string, DecisionFeedback>;
   /** "<task>-<step>" → a per-row decision's feedback, once its rows were checked (POST /me/desk/rows). */
   rowChecks?: Record<string, RowsFeedback>;
+  /** Tech Lab id → its parts' results (POST /me/desk/lab), findings and completion. */
+  labs?: Record<string, import("./labs").LabState>;
+  /** Every Capture evidence, in order: E1, E2 …, shown on Evidence › Capture Screenshot. */
+  labCaptures?: import("./labs").LabCapture[];
   /** When this copy last changed (ms): the newer of the browser's and the server's copy wins. */
   savedAt?: number;
 }
@@ -56,148 +65,20 @@ export interface DecisionFeedback {
   reviewed: boolean;
 }
 
-const EMPTY: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs: {}, acks: {}, grids: {}, logs: {}, decisions: {} };
+export { EMPTY } from "./progress-sync";
 
-/**
- * Where a mentee's desk progress is kept. The version is bumped to start everyone afresh:
- * v4 (2026-10-15) with the new work types, v5 (2026-10-20) emptied every submission by request, v6 (2026-10-21) cleared decision steps only,
- * v7 (2026-10-28) emptied every submission again by request, for testing the rebuilt tasks.
- */
-export const progressKey = (who: string) => `grc101.desk.v7.${who}`;
-
-/** Pause after the last change before saving to the server; the browser's copy is written at once. */
-const SAVE_AFTER_MS = 1500;
-const save = (p: Progress) => api.put("/me/desk/progress", { data: JSON.stringify(p) }).catch(() => {
-  /* offline or signed out: the browser keeps it, and it goes up on the next load as the newer copy */
-});
-
+/** The signed-in person's desk work, from one shared store: every caller on the page sees the same copy. */
 export function useProgress(who: string) {
-  const key = progressKey(who);
-  // /app/desk?reset=1 empties the signed-in person's own desk and nobody else's (owner, 31 Oct), without bumping
-  // the version above, which would start every tester afresh. An empty copy dated now, not just a removal: it must
-  // beat the older copy on the server, which goes too. The address is cleaned so a reload cannot wipe again.
-  const [wiped] = useState(() => {
-    try {
-      const url = new URL(location.href);
-      if (!url.searchParams.has("reset")) return false;
-      localStorage.setItem(key, JSON.stringify({ ...EMPTY, savedAt: Date.now() }));
-      url.searchParams.delete("reset");
-      history.replaceState(null, "", url);
-      return true;
-    } catch {
-      return false;
-    }
-  });
-  // Lazy read: the desk mounts only in the browser, after its content has loaded.
-  const [progress, setProgress] = useState<Progress>(() => {
-    try {
-      for (const v of ["", "v2.", "v3.", "v4.", "v5.", "v6."]) localStorage.removeItem(`grc101.desk.${v}${who}`); // earlier saves, no longer read
-      const raw = localStorage.getItem(key);
-      return raw ? resetStaleRowChecks({ ...EMPTY, ...JSON.parse(raw) }) : EMPTY;
-    } catch {
-      return EMPTY; // private window or blocked storage: start empty
-    }
-  });
-
-  const update = useCallback(
-    (fn: (p: Progress) => Progress) =>
-      setProgress((p) => {
-        const next = { ...fn(p), savedAt: Date.now() };
-        try {
-          localStorage.setItem(key, JSON.stringify(next));
-        } catch {
-          /* unsaved here, but the server still gets it */
-        }
-        return next;
-      }),
-    [key],
-  );
-
-  // A change goes up once the learner pauses. `saved` is the copy the server already has, or the one read on opening.
-  const saved = useRef(progress.savedAt);
-  useEffect(() => {
-    if (progress.savedAt === saved.current) return;
-    const t = setTimeout(() => {
-      saved.current = progress.savedAt;
-      save(progress);
-    }, SAVE_AFTER_MS);
-    return () => clearTimeout(t);
-  }, [progress]);
-
-  // On opening: the server's copy replaces this browser's if it is newer (work done on another device);
-  // otherwise this browser's goes up, which is also how work saved before the database moves across.
-  useEffect(() => {
-    let live = true;
-    if (wiped) {
-      save({ ...EMPTY, savedAt: Date.now() });
-      return;
-    }
-    api
-      .get<{ data?: string | null }>("/me/desk/progress")
-      .then((r) => {
-        const server = r?.data ? ({ ...EMPTY, ...JSON.parse(r.data) } as Progress) : null;
-        const local = readProgress(who);
-        if (!live || local.savedAt !== saved.current) return; // the learner has already started working
-        if (server && (server.savedAt ?? 0) > (local.savedAt ?? 0)) {
-          saved.current = server.savedAt;
-          setProgress(server);
-          try {
-            localStorage.setItem(key, JSON.stringify(server));
-          } catch {
-            /* the session still works from memory */
-          }
-        } else if ((!server || local.savedAt !== server.savedAt) && (local.savedAt || Object.keys(local.done).length || Object.keys(local.grids).length || Object.keys(local.picks).length)) {
-          save(local);
-        }
-      })
-      .catch(() => {
-        /* the browser's copy stands */
-      });
-    return () => {
-      live = false;
-    };
-  }, [key, who, wiped]);
-
-  return { progress, update };
+  const s = storeFor(who);
+  const progress = useSyncExternalStore(s.subscribe, () => s.progress, () => s.progress);
+  const status = useSyncExternalStore(s.subscribe, () => s.status, () => s.status);
+  return { progress, update: s.update, status, retry: s.load };
 }
 
-/**
- * F1.2 step 3 was checked against a key with two unscorable rows until 2026-10-28, when they got
- * answers. A check saved before then still carries a "not scored" row, so that step is reopened
- * empty: its check, completion and the rows it fills (column D, rows 2 onward; row 1 is step 2's).
- * ponytail: one hard-coded step; remove once testers have reloaded.
- */
-function resetStaleRowChecks(p: Progress): Progress {
-  const id = "F1.2-3";
-  const chk = p.rowChecks?.[id];
-  if (!chk || !Object.values(chk.rows).some((r) => r.correct === null)) return p;
-  const rowChecks = { ...p.rowChecks };
-  const done = { ...p.done };
-  const logs = { ...p.logs };
-  delete rowChecks[id];
-  delete done[id];
-  delete logs[id];
-  const grids = Object.fromEntries(
-    Object.entries(p.grids).map(([k, cells]) => [
-      k,
-      k.startsWith("F1.2|") ? Object.fromEntries(Object.entries(cells).filter(([c]) => !/^[1-9]\d*,3$/.test(c))) : cells,
-    ]),
-  );
-  return { ...p, rowChecks, done, logs, grids };
-}
-
-/**
- * A read-only look at someone's desk progress, for pages outside the desk (Badges, Dashboard, CV,
- * Certificate). Empty for no one, or when storage is blocked.
- */
-export function readProgress(who: string | null | undefined): Progress {
-  if (!who || typeof window === "undefined") return EMPTY;
-  try {
-    const raw = localStorage.getItem(progressKey(who));
-    return raw ? { ...EMPTY, ...JSON.parse(raw) } : EMPTY;
-  } catch {
-    return EMPTY;
-  }
+/** Saved, saving, or not saved yet. Separate from useProgress so the note redraws alone. */
+export function useSaveState(who: string) {
+  const s = storeFor(who);
+  return useSyncExternalStore(s.subscribe, () => s.saveState, () => s.saveState);
 }
 
 export const stepKey = (taskId: string, n: number) => `${taskId}-${n}`;

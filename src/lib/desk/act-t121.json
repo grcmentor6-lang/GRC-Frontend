@@ -365,38 +365,39 @@
   "The closure evidence itself",
   "Evidence dated after the action was raised",
   "A system record of the fix, not a statement",
-  "A passing re-test of the control"
+  "A passing re-test after a further fix",
+  "The date the first re-test will run"
  ],
  "programme": [
   [
    "Clauses 4–10",
    "Year 1",
    "Every year",
-   "A-01, A-04, A-08, A-13, A-14 Evidence missing for sampled control (7.5, repeat); A-17 Risk treatment not started (6.1.3, open)"
+   ""
   ],
   [
    "Annex A organisational (A.5)",
    "Year 1",
    "Every year",
-   "A-02, A-15, A-19 Procedure missing for access reviews (A.5.18, repeat); A-03, A-10 CUEC not implemented (A.5.22, repeat); A-06, A-11 RoPA entry incomplete (A.5.34, repeat); A-09 Leaver account still active (A.5.18, open); A-18 Policy review overdue (A.5.1, open); A-20 Mover's access not re-validated (A.5.18, open)"
+   ""
   ],
   [
    "Annex A people (A.6)",
    "Year 2",
    "Every year",
-   "A-05, A-12 Awareness module not assigned to new joiners (A.6.3, repeat)"
+   ""
   ],
   [
    "Annex A physical (A.7)",
    "Year 2",
    "Once in the three years",
-   "None"
+   ""
   ],
   [
    "Annex A technological (A.8)",
    "Year 3",
    "Every year",
-   "A-16, A-21 Critical finding overdue (A.8.8, repeat); A-22 Privileged-access review done late (A.8.2, open)"
+   ""
   ]
  ],
  "reviews": [
@@ -796,13 +797,13 @@
    "Leavers are de-provisioned within 4 hours",
    "LVR-KPI from T6.2: leavers fully disabled within SLA ÷ all leavers",
    "95 %",
-   "LVR-KPI (T6.2): 18 of 29 leavers = 62.1 %"
+   "LVR-KPI (T6.2): 18 of 29 leavers"
   ],
   [
    "Critical vulnerabilities are fixed within SLA",
-   "LI-KPI from T8.1: class 1–2 findings closed in SLA ÷ all class 1–2 findings",
+   "LI-KPI from T8.1: class 1–2 findings within SLA ÷ all class 1–2 findings",
    "90 %",
-   "LI-KPI (T8.1): class 1 11 of 17 = 64.7 %; class 2 20 of 36 = 55.6 %"
+   "LI-KPI (T8.1): class 1, 11 of 17 findings; class 2, 20 of 36 findings"
   ],
   [
    "Staff complete security awareness training",
@@ -875,12 +876,62 @@
   [
    "9.3",
    "Results of management reviews",
-   "ACT-MRI; LI-MR (review pack)"
+   "Minutes of the management review"
   ],
   [
    "10.2",
    "Nonconformities, actions taken and results of corrective action",
    "LI-NCR; ACT-UPD"
   ]
- ]
+ ],
+ "areas": {
+  "Evidence missing for sampled control": [
+   "Clauses 4–10",
+   "7.5"
+  ],
+  "Risk treatment not started": [
+   "Clauses 4–10",
+   "6.1.3"
+  ],
+  "Procedure missing for access reviews": [
+   "Annex A organisational (A.5)",
+   "A.5.18"
+  ],
+  "CUEC not implemented": [
+   "Annex A organisational (A.5)",
+   "A.5.22"
+  ],
+  "RoPA entry incomplete": [
+   "Annex A organisational (A.5)",
+   "A.5.34"
+  ],
+  "Leaver account still active": [
+   "Annex A organisational (A.5)",
+   "A.5.18"
+  ],
+  "Policy review overdue": [
+   "Annex A organisational (A.5)",
+   "A.5.1"
+  ],
+  "Mover's access not re-validated": [
+   "Annex A organisational (A.5)",
+   "A.5.18"
+  ],
+  "Awareness module not assigned to new joiners": [
+   "Annex A people (A.6)",
+   "A.6.3"
+  ],
+  "Critical finding overdue": [
+   "Annex A technological (A.8)",
+   "A.8.8"
+  ],
+  "Privileged-access review done late": [
+   "Annex A technological (A.8)",
+   "A.8.2"
+  ],
+  "Change implemented before approval": [
+   "Annex A technological (A.8)",
+   "A.8.32"
+  ]
+ }
 }

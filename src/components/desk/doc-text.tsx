@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { blocks, clean, docNow, loadDoc, pick, type DocSection } from "@/lib/desk/docs";
 
 /** Sections of a source document, drawn as the pack writes them: paragraphs and tables. */
@@ -53,8 +53,9 @@ function Body({ md }: { md: string }) {
 }
 
 /** The cited sections of one document, loaded on demand. */
-export function DocCitation({ id, cites }: { id: string; cites: string[] }) {
+export function DocCitation({ id, cites, spot }: { id: string; cites: string[]; /** A table row to mark and bring into view on opening: its first cell. */ spot?: string }) {
   const [sections, setSections] = useState<DocSection[] | null>(null);
+  const box = useRef<HTMLDivElement>(null);
   const want = cites.join("|"); // a stable key: callers pass a fresh array each render
   useEffect(() => {
     let live = true;
@@ -64,9 +65,17 @@ export function DocCitation({ id, cites }: { id: string; cites: string[] }) {
       live = false;
     };
   }, [id, want]);
+  useEffect(() => {
+    if (!sections || !spot) return;
+    const tr = [...(box.current?.querySelectorAll("tr") ?? [])].find((x) => x.querySelector("td")?.textContent?.trim() === spot);
+    if (!tr) return;
+    tr.style.background = "#FFFBEB";
+    tr.dataset.spot = "";
+    tr.scrollIntoView({ block: "center" });
+  }, [sections, spot]);
   if (!sections) return <div className="h-24 animate-pulse rounded bg-[#F3F4F7]" aria-busy="true" />;
   if (!sections.length) return <p className="text-[13.5px] text-[#5B6474]">The text of this document is not on the platform yet.</p>;
-  return <DocText sections={sections} />;
+  return <div ref={box}><DocText sections={sections} /></div>;
 }
 
 /** A document's sections once loaded (re-renders when they arrive), for checks against the source. */

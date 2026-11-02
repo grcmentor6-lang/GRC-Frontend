@@ -107,7 +107,7 @@ export function Toolbar() {
             openTool(`${k}|*`);
           } else toggle(k, e.currentTarget);
         }}
-        title={unlocked ? (due ? `${l} · ${k === "inbox" ? "a message about this task is waiting" : k === target.split("|")[0] ? "your current step is done here" : "your current step reads from here"}` : l) : `${l} opens as you reach the tasks that use it`}
+        title={unlocked ? (due ? `${l} · ${k === "inbox" ? "a message about this task is waiting" : k === target.split("|")[0] && (step?.kind !== "pick" || /\bThen:/.test(step.w)) ? "your current step is done here" : "your current step reads from here"}` : l) : `${l} opens as you reach the tasks that use it`}
         className={`relative flex h-[50px] min-w-[52px] shrink-0 flex-col items-center justify-center gap-[3px] px-1.5 text-[10.5px] focus-ring lg:h-[54px] lg:min-w-[60px] lg:px-2 lg:text-[11px] ${
           opts.end ? "border-r border-[#2A2E3B]" : ""
         } ${on ? "bg-white text-[#111827]" : unlocked ? "text-[#F1F2F6] hover:bg-[#1F2330]" : "cursor-not-allowed text-[#7C8399]"}`}

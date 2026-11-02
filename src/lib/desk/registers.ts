@@ -1,6 +1,7 @@
 import type { Desk, Task } from "./model";
 import { bullets, docLines, docNow, docTable } from "./docs";
 import type { Progress } from "./progress";
+import { labFeed } from "./labs";
 import UAR from "./uar-t61.json";
 import LVR from "./lvr-t62.json";
 import RRU from "./rru-t71.json";
@@ -28,6 +29,8 @@ export interface Register {
   /** Template code, as the step names it. */
   code: string;
   title: string;
+  /** What the header says this table holds, where the task panel stamp describes another table. */
+  stamp?: string;
   /** Steps that show it in place of their tool: the ones that fill it and the ones that read it. */
   on: number[];
   cols: {
@@ -67,6 +70,12 @@ export interface Register {
     /** Rows the trimming step must remove (T3.1: the overlays that bind neither office), and why. */
     drop?: { bad: (row: string[], desk: Desk) => boolean; why: (desk: Desk) => string };
   };
+  /** Step → a column that arrives as a colleague's first draft (T3.1 step 10): written once, into empty cells only.
+   *  Such a column has no `cells` check: a live flag would point at the slips; `checkRows` judges it. */
+  draft?: Record<number, (d: Desk, p: Progress) => { col: number; v: string[] } | undefined>;
+  /** Step → cells a finding step shows as a colleague's slip, by the row's first cell, until found (T3.2 step 8). The
+   *  register's rows stay right: nothing reaches a later step. */
+  slips?: Record<number, { col: number; at: Record<string, string> }>;
   /** Step → columns shown read-only beside the ones it fills (T3.1 step 6: what each row is). */
   view?: Record<number, number[]>;
   /** Step → a line said above the step's work: where its rows come from and how many there are. */
@@ -74,6 +83,8 @@ export interface Register {
   /** Step → how to read the cited sources, said in the "Read from" banner above the table (which
    *  stays in view while a document window covers the step panel). Where to look, never the answer. */
   readHow?: Record<number, string>;
+  /** Step → the row of a cited document's table it reads (its first cell): marked and scrolled into view on opening (T5.1 step 1: the row sits below a long table). */
+  spot?: Record<number, string>;
   /** Documents the register's checks read; loaded when it is shown. */
   load?: string[];
   /** Step → rows split at rule R10's joints ("and", ";"): the rows added by `from`, in column `col`. */
@@ -189,7 +200,7 @@ const obl = {
 };
 
 /** Learn › Reference pages › Ref-27000 family: its ten document rows. */
-const fam = (d: Desk) => (d.pages["Ref-27000 family"]?.r ?? []).filter((r) => !String(r[0]).startsWith("PDCA")) as string[][];
+const fam = (d: Desk) => (d.pages["Ref-27000 family"]?.r ?? []).filter((r) => !/^(PDCA|Edition)/.test(String(r[0]))) as string[][];
 const famRow = (d: Desk, doc: string) => fam(d).find((r) => r[0] === doc);
 /** Rule L02's requirement documents: "Requirements = ISO/IEC 27001, ISO/IEC 27006-1, ISO/IEC 17021-1." */
 const l02 = (d: Desk) => (d.rules.L02?.[1].match(/Requirements = ([^.]+)\./)?.[1] ?? "").split(",").map((x) => x.trim()).filter(Boolean);
@@ -198,6 +209,8 @@ const l01 = (d: Desk, clause: number) =>
   [...(d.rules.L01?.[1] ?? "").matchAll(/[Cc]lauses? ([\d, ]+) → (\w+)/g)].find((m) => m[1].split(",").map((x) => +x.trim()).includes(clause))?.[2] ?? "";
 /** Learn › Reference pages › Ref-ISMS processes: [process, owner] rows. */
 const isms = (d: Desk) => (d.pages["Ref-ISMS processes"]?.r ?? []) as string[][];
+/** T3.1's OBL-EXTRA row in Organization_Profiles Section 3: [requirement, clause, frequency, process, evidence]. */
+const extraRow = (r: string[]) => docTable("Organization_Profiles", "3")?.find((x) => same(x[0], r[1]));
 /** The Manila departments of BKB-ADD-16 Section 8.1, in the order they first appear. */
 const depts = (d: Desk) => {
   const t = docTable(addendum(d), "8.1");
@@ -226,6 +239,8 @@ export type ChecklistSpec = {
   head?: number[];
   /** The line above the checks, where "Check each of your items against <first> to <last>" does not fit. */
   line?: string;
+  /** A line under a check's cells that is not a cell of the row (T5.2's D7: what the file's request asks for). */
+  aside?: Record<string, (row: string[], desk: Desk) => string>;
 };
 export type RowCheckSpec = {
   label: number;
@@ -233,6 +248,8 @@ export type RowCheckSpec = {
   rule?: (row: string[], desk: Desk) => { best: string; why: string };
   /** The column the key is looked up by, where it is not `label` (T3.1 step 5: a policy per Process). */
   ask?: number;
+  /** A second column judged with `col` (T10.1 step 3, shape and system): the pick sent is "<col> · <with>". */
+  with?: number;
 };
 
 /** T4.1 POL-CUR's six checks and the field of BKB-POL-006 Section 11 each copies (platform-written, item 57). */
@@ -253,6 +270,12 @@ const CL52: [string, string][] = [
   ["5.2 e) Available as documented information", "documented information"],
   ["5.2 f) Communicated within the organisation", "communicated"],
   ["5.2 g) Available to interested parties, as appropriate", "interested parties"],
+];
+
+/** T4.1 step 8: the two rows of the leadership evidence draft that are wrong, by row (platform-written, item 84). */
+const LEADERSHIP_SLIPS: [number, string][] = [
+  [1, "04_Policies/Group_Policies — BKB-POL-006 document-control table"],
+  [3, "Governance records — 9.2"],
 ];
 
 /** Distinct values, sorted: a drop-down's options never give away the order of the source. */
@@ -303,6 +326,8 @@ function sopOutput(r: string[]): { best: string; why: string } {
 /** BKB-POL-021 Section 5, Roles and responsibilities: [role, responsibility] ([] until loaded). */
 const pol021Roles = () => docTable("BKB-POL-021", "5") ?? [];
 const POL021_ROLES = ["Policy owner — Security Architecture & Standards Manager", "Org CEO", "Org CISO / CRCO / DPO", "Regional Managing Director & Compliance Officer", "Department / asset owners", "Group GRC AI agents", "Internal Audit", "All workforce"];
+/** T4.2 step 4: the slip in the colleague's RACI draft, two rows swapped: role → the role whose responsibility it was given. A swap repeats no line, so it is found only by reading. */
+const RACI_SLIPS: Record<string, string> = { "Group GRC AI agents": "Internal Audit", "Internal Audit": "Group GRC AI agents" };
 function sopResp(r: string[]): { best: string; why: string } {
   const x = pol021Roles().find((y) => y[0] === r[0]);
   return x ? { best: x[1], why: `BKB-POL-021 Section 5 gives ${r[0]}: “${x[1]}”.` } : { best: "", why: "" };
@@ -373,6 +398,13 @@ const PBC_OWNERS: Record<string, string[]> = {
   C12: [AWR, CISO_FULL, "Cyber Threat Intelligence Analyst"],
   C15: ["Incident Response & Crisis Manager", CISO_FULL, "Information Security Auditor"],
 };
+/** T5.1 step 2: the colleague's slip, two systems swapped: control → the control whose system it was given. A swap repeats no value, so it is found only by reading PBC-6. */
+const PBC_SYSTEM_SLIPS: Record<string, string> = { C11: "C12", C12: "C11" };
+/** T5.1 step 2: a request's system, by dataset PBC-6 on screen. */
+function pbcSystem(r: string[], d: Desk): { best: string; why: string } {
+  const best = pbc6(d).find((x) => x[0] === r[1])?.[2] ?? "";
+  return { best, why: best ? `Dataset PBC-6, row ${r[1]}: its records are in ${best}.` : "" };
+}
 const MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
 /** A typed date as YYYY-MM-DD ("2026-09-28", "28 September 2026", "Mon 28 Sep 2026"), or null: a format check only. */
 function isoDate(v: string): string | null {
@@ -442,61 +474,70 @@ function stageLine(r: string[], d: Desk): { best: string; why: string } {
  *  written by the platform once steps 10 and 11 have asked their questions (owner, 28 Oct: part 2 only where real). */
 const CYCLE: [string, string][] = [["Year 1", "Initial certification (Stage 1 + Stage 2)"], ["Year 2", "Surveillance audit"], ["Year 3", "Surveillance audit"], ["End of year 3, before the certificate expires", "Recertification audit"]];
 const CRITERIA = ["Accreditation by an IAF-member accreditation body to ISO/IEC 17021-1 and ISO/IEC 27006-1", "Sector experience with organisations like yours", "Auditor competence", "Languages and offices covering every site in scope", "Cost and audit-day plan"];
-/** LI-CERT's auditee briefing: the behaviours of the card's "Auditee: do" and "Auditee: do not" rows, in A–Z order. */
-const AUDITEE = ["Answer only what is asked", "Argue", "Create evidence after the request", "Escalate disagreements to the ISMS manager", "Guess", "Name the rule or clause", "Say \"I will check\" when unsure", "Share other clients' or other mentees' data", "Show the evidence file", "Sign anything you have not read"];
-const auditeeList = (d: Desk, item: string) => card(d, item).replace(/\.$/, "").split(";").map((x) => x.trim());
-function auditeeRow(r: string[], d: Desk): { best: string; why: string } {
-  for (const [item, best] of [["Auditee: do", "Do"], ["Auditee: do not", "Do not"]] as const)
-    if (auditeeList(d, item).some((x) => same(x, r[0]))) return { best, why: `The card lists it under “${item}”: ${card(d, item)}` };
-  return { best: "", why: "" };
-}
+/** T5.1 step 8: the colleague's slip, the two stages' outputs swapped: line → the line whose value it was given. */
+const STAGE_SLIPS: Record<string, string> = { "Stage 1 · What it produces": "Stage 2 · What it produces", "Stage 2 · What it produces": "Stage 1 · What it produces" };
+/** LI-CERT's auditee briefing: ten situations, each one behaviour of the card's "Auditee: do" or "Auditee: do not" row (platform-written, corrections item 86; key T5.1-12). */
+const AUDITEE = [
+  "Asked which control covers leavers, the owner names the control, stops, and waits for the next question",
+  "Unsure of the SLA for critical vulnerabilities, the owner gives a best estimate so the interview keeps moving",
+  "The review has no minutes, so the owner writes them up the evening the request arrives",
+  "Asked how the training is tracked, the owner opens the exported completion report and goes through it with the auditor",
+  "The auditor reads a control differently, and the owner stays in the interview to prove the auditor wrong",
+  "Asked why the review is annual, the owner cites the policy section that sets it",
+  "To show the process works, the owner shows the auditor a report from another GlobalConnect client",
+  "Unsure when the last test ran, the owner tells the auditor they will confirm it and come back",
+  "At the end of the day the auditor hands over an interview summary; the owner signs it to save time and will read it later",
+  "The owner thinks a finding is unfair and takes it to the ISMS manager after the interview",
+];
 
 // T5.2: dataset EVP-REPO (Datasets_M2610-00001_W05.xlsx), the 42 files, sorted by control as Evidence › Evidence Library
 // lists them: [item, evidence type, control, system, timestamp, generated by, period, query, integrity, approval,
 // content, legibility].
+// Evidence type: the record the file's request asks for, except the planted D7 traps (E-011, E-016, E-026, E-027, E-033, E-037, E-039, the pack's own words)
+// and the files the pack marks out of scope. build-desk-sample.py rework_t52() applies the same to the dataset and asserts these rows match (corrections item 87).
 const EVP_REPO: string[][] = [
-  ["E-015", "User access review campaign export", "C07", "In-scope system", "2025-09-20 00:00 UTC", "rohan.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-019", "User access review campaign export", "C07", "In-scope system", "2026-05-16 00:00 UTC", "hiro.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Shows unmasked customer e-mail addresses / a plain-text password", "Legible"],
-  ["E-021", "Supplier assessment record", "C07", "In-scope system", "2026-07-05 00:00 UTC", "mei.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Shows unmasked customer e-mail addresses / a plain-text password", "Legible"],
+  ["E-015", "Critical-vulnerability remediation export (detected and closed dates)", "C07", "In-scope system", "2025-09-20 00:00 UTC", "rohan.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-019", "Critical-vulnerability remediation export (detected and closed dates)", "C07", "In-scope system", "2026-05-16 00:00 UTC", "hiro.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Shows unmasked customer e-mail addresses / a plain-text password", "Legible"],
+  ["E-021", "Critical-vulnerability remediation export (detected and closed dates)", "C07", "In-scope system", "2026-07-05 00:00 UTC", "mei.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Shows unmasked customer e-mail addresses / a plain-text password", "Legible"],
   ["E-033", "Incident register extract", "C07", "In-scope system", "2025-06-09 00:00 UTC", "olivia.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-001", "Backup restore test record", "C11", "In-scope system", "2025-07-24 00:00 UTC", "ana.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Hand annotations and re-typed values present", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-012", "Encryption certificate inventory", "C11", "In-scope system", "2026-06-24 00:00 UTC", "elif.svc", "2025-09-05 to 2026-09-04", "", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-014", "Encryption certificate inventory", "C11", "In-scope system", "2026-05-04 00:00 UTC", "ethan.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-022", "Security objectives tracker", "C11", "In-scope system", "2025-08-17 00:00 UTC", "arjun.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-001", "Awareness training completion report", "C11", "In-scope system", "2025-07-24 00:00 UTC", "ana.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Hand annotations and re-typed values present", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-012", "Awareness training completion report", "C11", "In-scope system", "2026-06-24 00:00 UTC", "elif.svc", "2025-09-05 to 2026-09-04", "", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-014", "Awareness training completion report", "C11", "In-scope system", "2026-05-04 00:00 UTC", "ethan.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-022", "Awareness training completion report", "C11", "In-scope system", "2025-08-17 00:00 UTC", "arjun.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-027", "Policy approval minutes", "C11", "In-scope system", "2026-03-31 00:00 UTC", "mariana.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-038", "CSPM critical-findings dashboard export", "C11", "Different entity / out-of-scope system", "2026-03-23 00:00 UTC", "mariana.svc", "2025-09-05 to 2026-09-04", "", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-041", "Firewall rule review minutes", "C11", "Different entity / out-of-scope system", "2026-07-24 00:00 UTC", "bianca.svc", "2025-09-05 to 2026-01-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-002", "Asset register version history", "C12", "In-scope system", "2025-08-02 00:00 UTC", "lukas.svc", "2025-09-05 to 2026-01-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-017", "Quarterly privileged-access review sign-off sheet", "C12", "In-scope system", "2026-08-08 00:00 UTC", "fatima.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-020", "Encryption certificate inventory", "C12", "In-scope system", "", "", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-023", "EDR coverage report", "C12", "In-scope system", "2026-06-09 00:00 UTC", "diego.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-028", "Policy approval minutes", "C12", "In-scope system", "2025-12-10 00:00 UTC", "fatima.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-029", "KMS encryption configuration export", "C12", "In-scope system", "2025-09-13 00:00 UTC", "priya.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "None visible", "Masked content", "Legible"],
-  ["E-035", "Policy approval minutes", "C12", "In-scope system", "2025-12-28 00:00 UTC", "emma.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-036", "Data-subject request log", "C12", "In-scope system", "2026-01-02 00:00 UTC", "daniel.svc", "2025-09-05 to 2026-01-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-002", "Phishing campaign results", "C12", "In-scope system", "2025-08-02 00:00 UTC", "lukas.svc", "2025-09-05 to 2026-01-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-017", "Phishing campaign results", "C12", "In-scope system", "2026-08-08 00:00 UTC", "fatima.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-020", "Phishing campaign results", "C12", "In-scope system", "", "", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-023", "Phishing campaign results", "C12", "In-scope system", "2026-06-09 00:00 UTC", "diego.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-028", "Phishing campaign results", "C12", "In-scope system", "2025-12-10 00:00 UTC", "fatima.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-029", "Phishing campaign results", "C12", "In-scope system", "2025-09-13 00:00 UTC", "priya.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "None visible", "Masked content", "Legible"],
+  ["E-035", "Phishing campaign results", "C12", "In-scope system", "2025-12-28 00:00 UTC", "emma.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-036", "Phishing campaign results", "C12", "In-scope system", "2026-01-02 00:00 UTC", "daniel.svc", "2025-09-05 to 2026-01-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-039", "SIEM log-retention configuration screenshot", "C12", "In-scope system", "2026-02-11 00:00 UTC", "aylin.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-005", "New-starter access request ticket", "C14", "In-scope system", "2026-03-16 00:00 UTC", "rafael.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-006", "Awareness training completion report", "C14", "In-scope system", "2025-07-29 00:00 UTC", "rafael.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-005", "Supplier assessment record", "C14", "In-scope system", "2026-03-16 00:00 UTC", "rafael.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-006", "Supplier assessment record", "C14", "In-scope system", "2025-07-29 00:00 UTC", "rafael.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-011", "Management review minutes", "C14", "In-scope system", "2026-04-12 00:00 UTC", "lars.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-018", "Incident register extract", "C14", "In-scope system", "2026-05-03 00:00 UTC", "ethan.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-018", "Supplier assessment record", "C14", "In-scope system", "2026-05-03 00:00 UTC", "ethan.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-037", "Visitor log sample", "C14", "In-scope system", "2026-03-03 00:00 UTC", "emre.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Hand annotations and re-typed values present", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-003", "Risk register approval e-mail", "C15", "In-scope system", "", "lucía.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-003", "Incident register extract", "C15", "In-scope system", "", "lucía.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-007", "Supplier assessment record", "C15", "Different entity / out-of-scope system", "2025-08-10 00:00 UTC", "lars.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-008", "EDR coverage report", "C15", "In-scope system", "", "daniel.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-008", "Incident register extract", "C15", "In-scope system", "", "daniel.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-009", "Incident register extract", "C15", "In-scope system", "2026-07-28 00:00 UTC", "mehmet.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-010", "Business impact analysis sign-off", "C15", "Different entity / out-of-scope system", "2025-12-31 00:00 UTC", "sofia.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-013", "Leaver disable log", "C15", "In-scope system", "2025-07-16 00:00 UTC", "ana.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-013", "Incident register extract", "C15", "In-scope system", "2025-07-16 00:00 UTC", "ana.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-016", "Visitor log sample", "C15", "In-scope system", "2026-09-02 00:00 UTC", "lucía.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-031", "Exception register extract", "C15", "In-scope system", "2025-10-08 00:00 UTC", "mariana.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-032", "Management review minutes", "C15", "In-scope system", "2025-12-23 00:00 UTC", "nora.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-040", "KMS encryption configuration export", "C15", "In-scope system", "2025-12-09 00:00 UTC", "can.svc", "2025-09-05 to 2026-09-04", "", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-042", "IdP admin-console screenshot of the MFA enforcement policy", "C15", "In-scope system", "2025-06-13 00:00 UTC", "emma.svc", "2025-09-05 to 2026-01-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-004", "Security objectives tracker", "C22", "In-scope system", "2025-10-19 00:00 UTC", "", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-024", "Management review minutes", "C22", "In-scope system", "2025-10-31 00:00 UTC", "aylin.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-025", "Awareness training completion report", "C22", "In-scope system", "2025-12-30 00:00 UTC", "amara.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-031", "Incident register extract", "C15", "In-scope system", "2025-10-08 00:00 UTC", "mariana.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-032", "Incident register extract", "C15", "In-scope system", "2025-12-23 00:00 UTC", "nora.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-040", "Incident register extract", "C15", "In-scope system", "2025-12-09 00:00 UTC", "can.svc", "2025-09-05 to 2026-09-04", "", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-042", "Incident register extract", "C15", "In-scope system", "2025-06-13 00:00 UTC", "emma.svc", "2025-09-05 to 2026-01-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-004", "Data-subject request log", "C22", "In-scope system", "2025-10-19 00:00 UTC", "", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-024", "Data-subject request log", "C22", "In-scope system", "2025-10-31 00:00 UTC", "aylin.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-025", "Data-subject request log", "C22", "In-scope system", "2025-12-30 00:00 UTC", "amara.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
   ["E-026", "Visitor log sample", "C22", "In-scope system", "2025-10-25 00:00 UTC", "ananya.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-030", "Incident register extract", "C22", "In-scope system", "2026-02-09 00:00 UTC", "bianca.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
-  ["E-034", "Leaver disable log", "C22", "In-scope system", "2025-09-21 00:00 UTC", "mehmet.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-030", "Data-subject request log", "C22", "In-scope system", "2026-02-09 00:00 UTC", "bianca.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
+  ["E-034", "Data-subject request log", "C22", "In-scope system", "2025-09-21 00:00 UTC", "mehmet.svc", "2025-09-05 to 2026-09-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible"],
 ];
 /** A file's step-2 codes: the checked answer ("none" = accepted, "D4; D6" = rejected), else the learner's own. */
 const evpCodes = (p: Progress, id: string) =>
@@ -505,6 +546,22 @@ const evpCodes = (p: Progress, id: string) =>
 const FIELDWORK = (() => { const x = new Date(`${PBC_END}T00:00:00Z`); x.setUTCDate(x.getUTCDate() + 30); return x; })();
 const FOLLOW_DUE = (() => { const x = new Date(FIELDWORK); do x.setUTCDate(x.getUTCDate() - 1); while (!(x.getUTCDay() % 6)); return x; })();
 const iso = (x: Date) => x.toISOString().slice(0, 10);
+/** T5.2 step 3: the colleague's slip in the index, two files given each other's request: file → the control whose request it was given. */
+const EVP_IDX_SLIPS: Record<string, string> = { "E-023": "C15", "E-031": "C12" };
+/** The rows of a screen's T5.2 view (Audit Requests (PBC), Import Log / Report, Upload Config File). */
+const tp52 = (d: Desk, screen: string) => ((d.tp[`evidence|${screen}#T5.2`]?.pl as { r?: string[][] } | undefined)?.r ?? []);
+/** What a request asks for, from Audit Requests (PBC): [control, description, system, frequency, office, evidence requested, request]. */
+const evpAsked = (d: Desk, ctrl: string) => tp52(d, "Audit Requests (PBC)").find((x) => x[0] === ctrl);
+/** EVP-EXTRA: rule R09 on a late file, from what the two screens show: the import's metadata and the two SHA-256s. */
+function extraResult(file: string, ctrl: string, d: Desk): string {
+  const log = tp52(d, "Import Log / Report").find((x) => x[0] === file);
+  const up = tp52(d, "Upload Config File").find((x) => x[0].includes(file));
+  const req = evpAsked(d, ctrl);
+  if (!log || !up || !req) return "";
+  return !log[7] ? "D5" : log[4] !== req[2] ? "D7" : log[1] !== up[2] ? "D6" : "Accept";
+}
+/** The late files. Their cells are read on the two screens, so the sheet lists only what names them. */
+const EVP_EXTRA = [["E-043", "C07"], ["E-044", "C07"], ["E-045", "C11"], ["E-046", "C11"], ["E-047", "C15"]];
 /** Step 1: how many files EVP-REPO lists for the row's control. */
 function evpReceived(r: string[]): { best: string; why: string } {
   const f = EVP_REPO.filter((x) => x[2] === r[1]).map((x) => x[0]);
@@ -565,9 +622,9 @@ const U_CODES: string[][] = [
 const uCode = (c: string) => U_CODES.find((r) => r[0] === c);
 /** The accounts the full-population analytics list ("Run analytics"), each with the queries that listed it. */
 const UAR_LISTED: [string, string][] = [
-  ["U-0007", "HR roster: role change date"], ["U-0025", "Review decisions: decision blank"], ["U-0072", "HR roster: role change date"],
-  ["temp-user-99", "HR roster: not found"], ["U-0117", "HR roster: role change date"], ["U-0135", "Privileged accounts"],
-  ["admin01-141", "HR roster: not found"], ["U-0167", "Dormant: no login in the 90 days before the review; Review decisions: Revoke"], ["U-0190", "Privileged accounts"],
+  ["U-0007", "Terminated User Check: role change date"], ["U-0025", "Reviewer Sign-off: decision blank"], ["U-0072", "Terminated User Check: role change date"],
+  ["temp-user-99", "Terminated User Check: HR not found"], ["U-0117", "Terminated User Check: role change date"], ["U-0135", "Privilege Check"],
+  ["admin01-141", "Terminated User Check: HR not found"], ["U-0167", "Reviewer Sign-off: Revoke, and no login in the 90 days before the review"], ["U-0190", "Privilege Check"],
 ];
 const uarRow = (id: string) => UAR_X.find((r) => r[0] === id)!;
 /** Step 4's checked answer for an account, else the learner's own. */
@@ -576,10 +633,17 @@ const uarExc = (p: Progress, id: string) =>
 /** Step 5's checked type for an exception, else the learner's own. */
 const uarType = (p: Progress, id: string) =>
   p.rowChecks?.["T6.1-5"]?.rows[id]?.best ?? p.grids?.["T6.1|UAR-TEST Sheet 3"]?.[`${UAR_LISTED.findIndex(([x]) => x === id)},14`] ?? "";
-const UAR_CONC = ["Exceptions in Sheet 3", "Highest severity", "Exceptions as a share of the 216 accounts", "Test conclusion (R19)"];
+const UAR_CONC = ["Exceptions in Sheet 3", "Highest severity", "Exceptions as a share of the 216 accounts", "Test conclusion (R19)", "Items tested (memo frame)"];
 /** Step 7's checked line, else the learner's own. */
 const uarConc = (p: Progress, line: number) => p.rowChecks?.["T6.1-7"]?.rows[UAR_CONC[line]]?.best ?? p.grids?.["T6.1|UAR-MEMO Conclusion"]?.[`${line},1`] ?? "";
 const UAR_SHARE = ["5 % or less", "More than 5 %"];
+// UAR-EXTRA, J3's second system (platform-written, corrections item 88): each row's type is decided by rule from the cells the sheet shows, as EVP-EXTRA's are.
+const UAR_2 = UAR.second;
+const UAR_2_R19 = "R19";
+const uarXType = (r: string[]) =>
+  r[10] ? "U1" : r[9] === "NOT FOUND" ? (r[1] !== "Generic account" ? "U2" : r[0] === UAR_2.breakglass ? "None" : "U3") : !r[4] ? "U4" : r[7] === r[1] ? "U7" : r[6] === "Revoke" && !r[8] ? "U8" : "None";
+/** The learner's picks on UAR-EXTRA, row by row. */
+const uarXPicks = (p: Progress) => UAR_2.rows.map((_, i) => p.grids?.["T6.1|UAR-EXTRA"]?.[`${i},12`] ?? "");
 /** Step 2, rule R15 on the review: its population is the accounts it decided on, a population of records. */
 const SAMP_LINES = ["Population (accounts the review covered)", "Ref-Sampling row", "Minimum sample (R15)"];
 function uarSampling(r: string[], d: Desk): { best: string; why: string } {
@@ -613,6 +677,8 @@ const lvrCell = (id: string, sys: string) => {
 };
 /** Step 4's checked systems disabled late for a leaver, else the learner's own ("" while undecided). */
 const lvrLate = (p: Progress, id: string, own: string) => p.rowChecks?.["T6.2-4"]?.rows[id]?.best ?? own;
+/** Step 3: the two rows of a colleague's draft that are wrong. E0029's hides a late disable; E0018's would invent one (platform-written, item 89). */
+const LVR_SLA_SLIPS: Record<string, string> = { E0018: "1 hour", E0029: "4 hours" };
 const LVR_TZ = ["Already UTC", "Subtract 1 hour", "Subtract 2 hours", "Add 1 hour", "Add 2 hours"];
 const LVR_KPI = ["Numerator: leavers fully disabled within the SLA", "Denominator: all leavers", "KPI (% of leavers, one decimal)", "Meets the target of BKB-POL-006 Section 10"];
 /** Employee IDs typed as a list: each one of the leavers' IDs, joined "; ", or "none"; null for anything else. */
@@ -625,11 +691,17 @@ const lvrIds = (v: string) => {
 
 // T7.1 (desk-step-builder, 29 Oct 2026): the Manila office register update. rru-t71.json holds the pack's 25 rows with all their
 // columns and the platform-written facts of the five events (Content Corrections item 64).
-type RruNew = { ev: string; id: string; desc: string; cat: string; title: string; asset: string; facts: string; often: string; impact: string; controls: string; kri: string; owner: string; drafts: string[] };
+type RruNew = { ev: string; id: string; desc: string; cat: string; title: string; asset: string; facts: string; often: string; impact: string; controls: string; kri: string; decoy?: string; drafts: string[] };
 const RRU_NEW = RRU.new as RruNew[];
 const RRU_REG = RRU.register as string[][];
 const RRU_CHG = RRU.changes as { ev: string; row: string; desc: string; facts: string; evidence: string }[];
-const RRU_CHAIN = RRU.chain as { asset: string; risk: string; type: string; line: string; ref: string[] }[];
+const RRU_CHAIN = RRU.chain as { asset: string; risk: string; line: string }[];
+/** Ref-Chain's rows by asset type: information or supporting, threat, vulnerability, impact (the page's own text; copied once step 10's key names the type). */
+const RRU_TYPES = RRU.types as Record<string, string[]>;
+/** Risk Register › Assign Owner: the Manila assets of the pack's asset register, [asset, department, owner]. A new risk takes its asset's owner. */
+const RRU_OWNERS = RRU.owners as string[][];
+const RRU_OWNER_LIST = uniq(RRU_OWNERS.map((r) => r[2]));
+const rruOwner = (asset: string) => RRU_OWNERS.find((r) => r[0] === asset)?.[2] ?? "";
 const RRU_ACTIONS = RRU.actions as Record<string, string[]>;
 const rruNew = (id: string) => RRU_NEW.find((n) => n.id === id || n.ev === id);
 const rruBest = (p: Progress, step: number, label: string) => p.rowChecks?.[`T7.1-${step}`]?.rows[label]?.best ?? "";
@@ -641,6 +713,20 @@ const rruScores = (p: Progress, ev: string) => {
 };
 const R36_OPTS = ["Risk owner", "Org CRCO", "Org CEO + Group CISO", "Not acceptable"];
 const RRU_DEC = ["Accept and monitor", "Treat — due 30 days", "Treat — due 90 days", "Treat — due 180 days"];
+// Event N4 (message T7.1-J3): its own sheet, outside the register's 28 rows that T7.2, T11.1 and T12.1 read. No key in the browser: each line's rule runs on the sheet's own cells.
+const RRU_X = RRU.extra as Pick<RruNew, "ev" | "id" | "desc" | "asset" | "facts" | "often" | "impact" | "controls" | "drafts">;
+const RRU_X_LINES = ["Best statement (R06)", "Likelihood (inherent)", "Impact (inherent)", "Likelihood (residual)", "Risk owner", "Decision and due (R08)", "Acceptance authority (R36)", "Treatment option (L12)"];
+/** The sheet's right values, by rules R06, R07, R08, R36 and L12, read from its own cells and BKB-ERM-001's scale words. */
+const rruXWants = (): string[] => {
+  const [, cause, event, cons] = RRU_X.facts.match(/^Cause: (.+?)\. What may happen: (.+?)\. Consequence: (.+?)\.$/)!;
+  const good = `Because of ${cause}, ${event} may occur, leading to ${cons} for ${RRU_X.asset}.`;
+  const at = (x: string, scale: [string, number][]) => scale.find(([w]) => x.toLowerCase().includes(w))?.[1] ?? 0;
+  const L = at(RRU_X.often, [["several times a year", 5], ["about once a year", 4], ["once in 2–5 years", 3], ["once in 5–20 years", 2], ["less than once in 20 years", 1]]);
+  const I = at(RRU_X.impact, [["outage > 72h", 5], ["large-scale personal-data harm", 4], ["reportable breach", 3], ["minor non-compliance", 2], ["no material disruption", 1]]);
+  const Lr = Math.max(1, L - (RRU_X.controls.match(/\(working/g)?.length ?? 0));
+  const s = Lr * I, r = rruRating(s), band = ["Low", "Medium", "High", "Critical"].indexOf(r);
+  return [`Draft ${RRU_X.drafts.indexOf(good) + 1}`, String(L), String(I), String(Lr), rruOwner(RRU_X.asset), s <= 11 ? RRU_DEC[0] : RRU_DEC[r === "High" ? 2 : 1], R36_OPTS[band], s > 11 ? "Modify" : "Retain"];
+};
 const RRU_C: Record<string, string[]> = {
   C1: ["Likelihood (residual): 1 → 2", "Likelihood (inherent): 2 → 3", "Impact (residual): 3 → 4", "No field changes: the KRI breach goes in the note only"],
   C2: ["Treatment plan: no status → overdue, 50 % complete (ratings unchanged)", "Likelihood (residual): 1 → 2", "Impact (residual): 4 → 5", "Likelihood (inherent): 2 → 3"],
@@ -701,39 +787,43 @@ const RAM_ROWS: string[][] = [
   ...RAM_ONLY[9].map((x) => [x, "", "Charter Section 6.1 (rule R36)"]),
   [RAM_ONLY[10][0], "", "ISO/IEC 27001:2022 clause 8.2"],
 ];
-/** A scale's five names as BKB-ERM-001 writes them, score 1 to 5 ("5 Severe" → "Severe"); [] until it is loaded. */
-const ermScale = (sec: "6.2" | "6.3") => {
-  const t = docTable("BKB-ERM-001", sec) ?? [];
-  return t.map((r) => (sec === "6.2" ? r[1] : r[0].replace(/^\d+\s*/, ""))).filter(Boolean).reverse();
-};
-/** A typed LI-RAM value as recorded, or null when it is not BKB-ERM-001's (a copy: only the source's value is in). */
+/** A typed LI-RAM value in its recorded form, or null when it is not in the row's shape. These rows arrive as a colleague's draft (REWORK T7.2): their values are judged by Check my answers, since a flag at once would point at the slips. */
 const ramFix = (v: string, r: string[]): string | null => {
   const at = r[0];
   if (at === RAM_ONLY[7][0] || at === RAM_ONLY[7][1]) {
-    const want = ermScale(at === RAM_ONLY[7][0] ? "6.2" : "6.3");
     const got = v.split(/[;,]/).map((x) => x.trim()).filter(Boolean);
-    return want.length === 5 && got.length === 5 && got.every((x, i) => same(x, want[i])) ? want.join("; ") : null;
+    return got.length === 5 ? got.join("; ") : null;
   }
-  if (at === RAM_ONLY[8][0]) {
-    const n = parseInt((docTable("BKB-ERM-001", "4") ?? []).find((x) => x[0] === "LOW")?.[2] ?? "", 10);
-    return n && v.trim() === String(n) ? String(n) : null;
-  }
+  if (at === RAM_ONLY[8][0]) return /^\d+$/.test(v.trim()) ? v.trim() : null;
   if (at === RAM_ONLY[8][1]) {
-    const due = Object.fromEntries((docTable("BKB-ERM-001", "7") ?? []).map((x) => [x[0].split(" ")[0], parseInt(x[2], 10)] as [string, number]).filter(([, d]) => d));
-    const got = Object.fromEntries([...v.matchAll(/(critical|high|medium)\D*?(\d+)/gi)].map((m) => [cap(m[1].toLowerCase()), +m[2]]));
-    const keys = Object.keys(due);
-    return keys.length === 3 && Object.keys(got).length === 3 && keys.every((k) => got[k] === due[k]) ? keys.map((k) => `${k} ${due[k]} days`).join("; ") : null;
+    const got = [...v.matchAll(/(critical|high|medium)\D*?(\d+)/gi)];
+    return got.length === 3 ? got.map((m) => `${cap(m[1].toLowerCase())} ${m[2]} days`).join("; ") : null;
   }
   return v.trim() || null;
 };
 const RAM_HINT: Record<string, string> = {
-  [RAM_ONLY[7][0]]: "Read BKB-ERM-001 Section 6.2's Descriptor column, from score 1 up to score 5, and type the five names separated by ;.",
-  [RAM_ONLY[7][1]]: "Read the names in BKB-ERM-001 Section 6.3's Score column, from score 1 up to score 5, and type them separated by ;.",
-  [RAM_ONLY[8][0]]: "Read BKB-ERM-001 Section 4: the LOW band's Max. residual score. Type the number only.",
-  [RAM_ONLY[8][1]]: "Read BKB-ERM-001 Section 7's Due column for Critical, High and Medium, and type each rating with its days.",
+  [RAM_ONLY[7][0]]: "Five names from score 1 up to score 5, separated by ;.",
+  [RAM_ONLY[7][1]]: "Five names from score 1 up to score 5, separated by ;.",
+  [RAM_ONLY[8][0]]: "The number only.",
+  [RAM_ONLY[8][1]]: "Each of Critical, High and Medium with its days.",
 };
+/** Steps 7 to 9: LI-RAM arrives as a colleague's first pass (corrections item 91). The slips are real ones: BKB-ERM-001's next column or band, a word from the ratings; step 9's are
+ *  the Charter's MEDIUM-criticality column, whose "Org CEO" is what the register's Medium rows show. No row repeats another, so a slip is found only by reading. */
+const RAM_DRAFT: Record<string, string> = {
+  [RAM_ONLY[7][0]]: "Rare; Unlikely; Possible; Likely; Almost certain",
+  [RAM_ONLY[7][1]]: "Negligible; Minor; Moderate; Major; Critical",
+  [RAM_ONLY[8][0]]: "10",
+  [RAM_ONLY[8][1]]: "Critical 30 days; High 90 days; Medium 90 days",
+  [RAM_ONLY[9][0]]: "Risk owner",
+  [RAM_ONLY[9][1]]: "Org CEO",
+  [RAM_ONLY[9][2]]: "Group GRC Steering Committee",
+  [RAM_ONLY[9][3]]: "Not acceptable",
+};
+const ramDraft = (n: number) => () => ({ col: 1, v: RAM_ROWS.map((r) => (RAM_ONLY[n].includes(r[0]) ? RAM_DRAFT[r[0]] : "")) });
+/** Step 9 offers the authorities of the Charter's other bands too: reading the wrong column is the mistake it tests. */
+const RAM_AUTH = [...R36_OPTS, "Org CEO", "Group GRC Steering Committee"];
 /** L15's owners to choose from: each ISMS process's Accountable role (Ref-ISMS processes) and Ref-Milestones' owners. */
-const ROLES_T72 = (d: Desk) => uniq([...isms(d).filter((r) => !r[0].startsWith("Climate")).map((r) => r[1].split(" (")[0].split(";")[0].trim()), ...(TOP.plan as string[][]).map((m) => m[4])]);
+const ROLES_T72 = (d: Desk) => uniq([...isms(d).filter((r) => !r[0].startsWith("Climate")).map((r) => r[1].split(" (")[0].split(";")[0].trim()), ...(TOP.plan as string[][]).map((m) => m[4]), "Control owners"]);
 const MILES = (TOP.plan as string[][]).map((m) => `${m[0]} ${m[1]}`);
 /** Deliverable codes typed as a list ("LI-FAM; act-upd"): each one the clause's row lists, in its order, joined "; ". */
 const codesIn = (v: string, dels: string) => {
@@ -817,16 +907,49 @@ const KPI_FIELDS: string[][] = [
   ["Target and thresholds", "Class 1–2 ≥ 90 % (red < 80 %); class 3–4 ≥ 95 %"],
   ["Report to", "Management review (9.3.2 c)"],
 ];
+/** Step 2: the workbook's formula as a colleague wrote it, adding months where the rule adds days: right for classes 1 and 2, a slip on class 3's and class 4's rows (item 92). */
+const VUL_DUE_DRAFT = ["2026-07-07", "2026-10-29", "2026-09-28", "2026-09-26"];
+/** Step 9: LI-KPI as a colleague filled it from memory. Two rows differ from Ref-Measure card: the pack's old formula, which leaves open findings out and cannot reproduce VUL-TEST, and the team that collects named as the one that analyses (item 92). */
+const KPI_SLIPS: Record<string, string> = {
+  Formula: "Findings closed within SLA ÷ all findings due in the period × 100, per policy class",
+  "Who analyses": "Vulnerability team",
+};
+/** Each checked row's choices: the card's value, and what a colleague writing from memory would put. */
+const KPI_OTHER: Record<string, string[]> = {
+  "Information need": ["How many vulnerabilities does the scanner find each month?"],
+  Formula: [KPI_SLIPS.Formula],
+  "Data source": ["System owners' patch tickets"],
+  Frequency: ["Quarterly", "Annually"],
+  "Who collects": ["GRC team", "System owners"],
+  "Who analyses": ["Vulnerability team", "System owners"],
+  "Target and thresholds": ["Class 1–2 ≥ 95 % (red < 90 %); class 3–4 ≥ 90 %"],
+  "Report to": ["Internal Audit"],
+};
+/** What each field answers: ISO/IEC 27001 clause 9.1's questions, in our words. */
+const KPI_ASKS: Record<string, string> = {
+  "Information need": "9.1 a) What is measured",
+  Formula: "9.1 b) The method, so results can be compared",
+  "Data source": "9.1 b) The method: where the data comes from",
+  Frequency: "9.1 c) When it is measured",
+  "Who collects": "9.1 d) Who measures",
+  "Who analyses": "9.1 f) Who analyses the results",
+  "Target and thresholds": "What the result is judged against",
+  "Report to": "Where the result goes next",
+};
+const kpiCard = (f: string) => KPI_FIELDS.find((x) => x[0] === f)?.[1] ?? "";
 
 // T8.2 (desk-step-builder, 29 Oct 2026): the quarterly privileged-access review of LearnTech's Amsterdam office, dataset
 // CT-DATA (the pack's 48 records, variant C), with the platform-written test script, review quarters, sample of quarters,
 // IAM team's answer and 5-Whys facts (ct-t82.json, scratchpad build/T8.2/gen.py; Content Corrections item 67).
 const CT_R = CT.records as string[][];
-const CT_SAMPLE = CT_R.filter((r) => CT.sample.includes(r[1]));
-/** Sheet 3's deviations: the sampled records the test script fails (the pack's key: one). */
-const CT_DEV = ["PR-022"];
+/** CT-EXTRA: Q4's two records the CT-DATA export missed, at the foot of Sheet 2 (message T8.2-J3). */
+const CT_X = CT.extra as string[][];
+const CT_SAMPLE = [...CT_R.filter((r) => CT.sample.includes(r[1])), ...CT_X];
+/** Sheet 3's deviations: worked out from the records on screen, by A2 and A6, the only attributes this data fails. */
+const ctFails = (r: string[]) => (Date.parse(r[3]) - Date.parse((CT.quarters as string[][]).find((q) => q[0] === r[1])?.[2] ?? r[3])) / 864e5 > CT.tolerance || (r[5] === "Revoke" && !r[8]);
+const CT_DEV = CT_SAMPLE.filter(ctFails).map((r) => r[0]);
 const ctBest = (p: Progress, step: number, label: string) => p.rowChecks?.[`T8.2-${step}`]?.rows[label]?.best ?? "";
-const ctRow = (id: string) => CT_R.find((r) => r[0] === id) ?? [];
+const ctRow = (id: string) => CT_SAMPLE.find((r) => r[0] === id) ?? [];
 /** T9.1: the vendor, its tier as step 2 checked it, the facts as step 1 checked them, and whether D2 and D3 are checked. */
 const VEN_NAME = VEN.intake[0][1];
 const VEN_RANK = ["Low", "Medium", "High", "Critical"];
@@ -834,27 +957,31 @@ const venBest = (p: Progress, step: number, label: string) => p.rowChecks?.[`T9.
 const venAsked = (p: Progress, n: number) => !!p.done[`T9.1-${n}`] || (p.acks[`T9.1-${n}`] ?? []).includes("checked");
 /** VEN-CL's row for rule R27's transfer clause: named once D3 is checked, so the checklist never shows D3's answer first. */
 const VEN_TRANSFER = "Where data leaves the country (R27)";
+const VEN_PLAN = ["questions to send", "reassess every"];
 /** T9.2: Lumen's SOC 2 report, the checks S1–S9 (Ref-SOC checks), each check's result as step 2 checked it. */
 const SOC_CHECKS = SOC.checks as string[][];
 const socBest = (p: Progress, step: number, label: string) => p.rowChecks?.[`T9.2-${step}`]?.rows[label]?.best ?? "";
 const SOC_DEC = SOC.decision[0];
 /** T10.1: the corporate LMS's data-flow lines, each flow's shape as step 3 checked it, and BKB-ADD-36 Section 2's rows. */
 const DFM_FLOWS = ROPA.flows as string[][];
-const dfmShape = (p: Progress, f: string) => p.rowChecks?.["T10.1-3"]?.rows[f]?.best ?? "";
+// Step 3 checks shape and system together (`with`): the key's best is "<shape> · <system>".
+const dfmShape = (p: Progress, f: string) => p.rowChecks?.["T10.1-3"]?.rows[f]?.best.split(" · ")[0] ?? "";
 const NOT_TRANSFER = "Not a transfer";
 /** Section 2 of LearnTech's addendum: [office, …, cross-border transfer] ([] until loaded). */
 const add36Sec2 = () => docTable("BKB-ADD-36", "2") ?? [];
 const officeOf = (cell: string) => cell.split("(")[0].trim();
-/** An asset name as typed: case, spaces and "and" for "&" do not matter. */
-const assetKey = (x: string) => x.toLowerCase().replace(/\s+and\s+/g, " & ").replace(/\s+/g, " ").trim();
 const ASSET_NAMES = [...new Set((ROPA.assets as string[][]).map((a) => a[0]))];
 /** T10.2: INC-2610-3001's incident record, the regimes, R30's conditions, LI-IRBC's phases, timeline and BC/DR rows; each
  *  regime, deadline and condition as its step checked it. */
-const BRC_REC = Object.fromEntries(BRC.record as string[][]) as Record<string, string>;
 const brcBest = (p: Progress, step: number, label: string) => p.rowChecks?.[`T10.2-${step}`]?.rows[label]?.best ?? "";
 const BRC_NOT = "Does not apply";
 const BRC_COND = "Applies if condition met";
 const BRC_DISC = "Discovered (UTC)";
+const BRC_MON = "Monitor";
+/** The discovery time as the learner's step 1 recorded it. */
+const brcDisc = (p: Progress) => p.grids?.["T10.2|BRC-ASSESS Facts"]?.["0,1"] ?? "";
+/** Steps 1 and 2 arrive with the first call's draft: the head office for the systems' office, the hosting country for the smallest one. */
+const BRC_DRAFT = ["", "Istanbul, Turkey", "India; Netherlands; Turkey"];
 /** A time as typed ("2026-01-31 09:00", with or without "UTC", a "T" or a "Z") → "2026-01-31 09:00 UTC"; otherwise null. A
  *  format check: it says nothing of which time is right. */
 const utcTime = (v: string) => {
@@ -867,6 +994,10 @@ function brcPlan(field: string, p: Progress): string {
   const regs = (want: string) => (BRC.regimes as string[][]).filter((r) => brcBest(p, 3, r[0]) === want);
   const d4 = p.decisions?.["T10.2-D4"];
   switch (field) {
+    case BRC_DISC:
+      return brcDisc(p);
+    case "On watch, no clock yet":
+      return dl(BRC.early) ? regs(BRC_MON).map((r) => `${r[0]}: not yet in force, status to be checked again before the notices go out`).join("; ") || "None" : "";
     case "Regimes that apply, with deadlines (UTC)":
       return dl(BRC.early) ? regs("Applies").map((r) => `${r[0]}: ${dl(r[0])}`).join("; ") : "";
     case "Listed with a condition":
@@ -885,16 +1016,16 @@ function brcPlan(field: string, p: Progress): string {
 }
 const CT_SAMP = ["Control frequency (LearnTech)", "Minimum sample (R15)", "Sample selected"];
 const CT_CONC = ["Deviations in Sheet 3", "Highest rating (R26)", "Test conclusion (R19)"];
-const CT_MEMO = ["Scope", "Conclusion (R19)", "Deviation", "Recommendation (R25)"];
+const CT_MEMO = ["Scope", "Conclusion (R19)", "Condition", "Criteria", "Cause", "Effect", "Recommendation (R25)"];
 /** A deviation as CT-MEMO states it, once steps 3 and 4 are checked ("" before). */
 const ctDev = (p: Progress, id: string) => {
   const r = ctRow(id), a = ctBest(p, 3, id), g = ctBest(p, 4, id);
   if (!a || !g) return "";
   const name = (CT.checks as string[][]).filter(([c]) => a.split("; ").includes(c)).map(([c, t]) => `${c} ${t.split(":")[0]}`).join(", ");
-  return `${id} (${r[1]}, ${r[2]}): ${name} failed, review dated ${r[3]}; rated ${g} (R26).`;
+  return `${id} (${r[1]}, ${r[2]}): ${name} failed, review dated ${r[3]}, decision ${r[5]}; rated ${g} (R26).`;
 };
 const NCR_FIELDS: string[][] = [
-  ["Nonconformity", "The first deviation of CT-MEMO, copied by the platform."],
+  ["Nonconformity", "The first deviation under CT-MEMO's Condition, copied by the platform."],
   ["Requirement", "The requirement the deviation breaks, as its source writes it."],
   ["Evidence", "The record that shows the deviation."],
   ["Gap (days after the quarter ended)", `How many days after its quarter ended the review was done; the script allows ${CT.tolerance}.`],
@@ -939,24 +1070,24 @@ const regBest = (p: Progress, step: number, label: string) => p.rowChecks?.[`T11
 const pad2 = (n: number) => String(n).padStart(2, "0");
 /** "2025-07-14" → "14 July 2025". */
 const longDate = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-const todayIso = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
-const daysApart = (a: string, b: string) => Math.abs(Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 864e5;
-/** Step 3: a source's date, accepted only as its saved copy gives it (Accessed: today), and recorded as "14 July 2025". */
-const srcDate = (s: "s1" | "s2") => ({
+/** The date a change was logged: when step 3 was checked, a date the learner never types. */
+const regLogged = (p: Progress) => { const at = p.rowChecks?.["T11.2-3"]?.at; if (!at) return ""; const d = new Date(at); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+const plus30 = (iso: string) => new Date(Date.parse(`${iso}T00:00:00Z`) + 30 * 864e5).toISOString().slice(0, 10);
+/** Steps 7 and 8 work on what steps 4, 5 and 7 found, so that which rows are duties and policies never sits in the bundle. */
+const regDuty = (p: Progress, label: string) => (regBest(p, 4, label) || regBest(p, 5, label)) === "Duty";
+const regHit = (p: Progress, policy: string) => Object.values(p.rowChecks?.["T11.2-7"]?.rows ?? {}).some((x) => x.best === policy);
+const REG_PUB = "Source 1 · Published", REG_APPLIES = "Source 1 · Applies from";
+const REG_BRIEF = "REG-BRIEF Brief";
+const regLine = (p: Progress, ri: number) => p.grids?.[`T11.2|${REG_BRIEF}`]?.[`${ri},2`] ?? "";
+const REG_HOW = "Type it as 1 March 2024 or 2024-03-01.";
+/** Step 9: the brief's two dates, each worked out from the date beside it (rule R32). A sum on what is on screen, not a key. */
+const regDeadline = {
   fix: (v: string, row: string[]) => {
-    const iso = isoDate(v);
-    if (!iso) return null;
-    const src = REGD.src[s];
-    const ok = row[0] === "Published" ? iso === src.published : row[0] === "Applies from" ? iso === src.applies : daysApart(iso, todayIso()) <= 1;
-    return ok ? longDate(iso) : null;
+    const iso = isoDate(v), from = isoDate(row[1].split(": ")[1] ?? "");
+    return iso && from && iso === plus30(from) ? longDate(iso) : null;
   },
-  hint: (row: string[]) => {
-    const n = s === "s1" ? "source 1's" : "source 2's";
-    if (row[0] === "Published") return `Read the Published line of Section 1 of ${n} saved copy (Policies › Policy Library). Type it as 1 March 2024 or 2024-03-01.`;
-    if (row[0] === "Applies from") return s === "s1" ? "Read the Status line of Section 1 of source 1's saved copy: the date its duty applies from." : "Read Article 93 (Section 4 of source 2's saved copy): the date the Regulation applies from.";
-    return "The date you read the source: today's date.";
-  },
-});
+  hint: (_r: string[], _d: Desk, ri: number) => (ri === 2 ? `Add 30 days to the date beside it. ${REG_HOW}` : `Rule R32 (Learn › Rule tables) says what the 30 days count from once the date on the line above has passed. ${REG_HOW}`),
+};
 const GAP = REGD.gap;
 
 /** T12.1: the mentee's ACT-TRACKER with ACT-EXTRA's three actions, and LI-17's inputs (act-t121.json); each value as its step
@@ -994,7 +1125,31 @@ function actOverdue(i: number, p: Progress): string {
   return r ? `${r[0]} · ${r[2]} · ${r[3]} · ${actBest(p, 5, r[0])} days past due${actBest(p, 4, r[0]).startsWith("Escalate") ? " · escalated to the owner's manager (K5)" : ""}` : "—";
 }
 const ACT_ISSUES = [...new Set(ACT_T.map((r) => r[2]))];
-const D6_OPTS = ["The IAM manager", "Internal Audit", "The system vendor"];
+const D6_OPTS = ["The IAM manager, who knows the process best", "Internal Audit", "The Compliance Manager's team, which tested access this year"];
+/** Step 7: the actions behind each line of ACT-MRI, from the checked steps 2 to 5 ("" until all four are checked). */
+function actIds(label: string, p: Progress): string {
+  if (!actChecked(p, 2, 3, 4, 5)) return "";
+  const ids = (f: (r: string[]) => boolean) => ACT_T.filter(f).map((r) => r[0]).join(", ") || "None";
+  if (label.startsWith("Reported closed")) return ids((r) => r[6] === "Closed");
+  if (label === "Closed — verified") return ids((r) => actBest(p, 2, r[0]) === "Pass");
+  if (label === "Reopened by your closure tests") return ids((r) => actBest(p, 2, r[0]) === "Fail");
+  if (label === "Open") return ids((r) => actOpen(p, r));
+  if (label.startsWith("Past their due date")) return ids((r) => Number(actBest(p, 5, r[0])) > 0);
+  return ids((r) => actBest(p, 4, r[0]).startsWith("Escalate"));
+}
+/** Step 7: a colleague's first draft of ACT-MRI's counts, in row order; two lines left out what the tests reopened (corrections item 104). */
+const ACT_MRI_DRAFT = ["15", "8", "7", "7", "3", "1"];
+/** LI-MR's audit programme: an area's issues with open or repeat actions (rule L23), from the checked steps 2, 3 and 9. */
+function actProgramme(area: string, p: Progress): string {
+  if (!actChecked(p, 2, 3, 9)) return "";
+  const lines = ACT_ISSUES.filter((i) => (ACTD.areas as Record<string, string[]>)[i][0] === area).flatMap((i) => {
+    const on = ACT_T.filter((r) => r[2] === i);
+    const repeat = actBest(p, 9, on[0][0]) === "Repeat issue";
+    if (!repeat && actStatus(p, on[0]) === "Closed — verified") return [];
+    return [`${on.map((r) => r[0]).join(", ")} ${i} (${(ACTD.areas as Record<string, string[]>)[i][1]}, ${repeat ? "repeat" : "open"})`];
+  });
+  return lines.join("; ") || "None";
+}
 
 /** T12.2: the mentee's AUD-REQUESTS, EVIDENCE-INDEX (each file with its own SHA-256) and AUD-FINDING, the auditor's follow-up
  *  requests and the Version History of their hand-ins (aud-t122.json); each value as its step checked it. */
@@ -1004,9 +1159,18 @@ const AUD = AUDD as unknown as {
 };
 const audBest = (p: Progress, step: number, label: string) => p.rowChecks?.[`T12.2-${step}`]?.rows[label]?.best ?? "";
 const audFile = (id: string) => AUD.index.find((r) => r[0] === id);
-/** The time a step's answers were checked, as the log records it ("2026-12-14 09:30 UTC"); "" before. */
-const audAt = (p: Progress, step: number) => { const at = p.rowChecks?.[`T12.2-${step}`]?.at; return at ? `${at.slice(0, 16).replace("T", " ")} UTC` : ""; };
+/** When a step's files went, as the log records it: the simulated fieldwork day, by rule R16 the 30th after the audit period ends
+ *  (step 4; follow-ups, step 5, the day after), at the time the answers were checked (decision, 1 Nov). "" before. */
+const audAt = (p: Progress, step: number) => { const at = p.rowChecks?.[`T12.2-${step}`]?.at; return at ? `${step === 4 ? "2027-01-20" : "2027-01-21"} ${at.slice(11, 16)} UTC` : ""; };
 const AUD_NOEV = "No evidence available";
+/** Step 4: a colleague's hand-keyed fingerprint of the file sent, worked out here so the bundle holds no step 3 answer. R-2 has the
+ *  other file of its control's, R-7 two characters transposed (platform-written, item 105). */
+const audHashDraft = (p: Progress, id: string) => {
+  const sent = audFile(audBest(p, 3, id));
+  if (!sent) return "";
+  if (id === "R-2") return AUD.index.find((r) => r[1] === sent[1] && r[0] !== sent[0])?.[5] ?? "";
+  return id === "R-7" ? sent[5].slice(0, 8) + sent[5][9] + sent[5][8] + sent[5].slice(10) : sent[5];
+};
 const isFollowUp = (id: string) => AUD.followups.some((r) => r[0] === id);
 /** Step 4: a SHA-256 as the index shows it, 16 characters; null for anything else. A format check, not the answer. */
 const audHash = { fix: (v: string) => (/^[0-9a-f]{16}$/i.test(v.trim()) ? v.trim().toLowerCase() : null), hint: () => "Type the SHA-256 exactly as Evidence › Evidence Library shows it: 16 letters and digits, from the row of the file sent." };
@@ -1195,7 +1359,7 @@ export const REGISTERS: Record<string, Register> = {
     ],
     mine: (r) => !r[5],
     // 2: path and tier, by walking the tree · 3: the R05 floor check. 4 and 5 fill the sheet's two
-    // tables (BRIEFS["F2.1"]); 6 hands it in.
+    // tables (REGISTERS["F2.1 LAB"], BRIEFS["F2.1"]); 6 hands it in.
     steps: { 2: [5, 6], 3: [7] },
     tree: { 2: { doc: "BKB-STD-001", sec: "5", path: 5, tier: 6 } },
     // Every tier was reached with R05 (its first sentence is "walk the Section 5 tree"); the column records it
@@ -1213,6 +1377,33 @@ export const REGISTERS: Record<string, Register> = {
     // Step 2's walk shows Section 5's questions beside the table; what is left to read is Section 3, the tiers and
     // their impact criteria (Section 3.1), which question 4 decides by ("per Section 3.1").
     extra: { 2: [["BKB-STD-001", ["3"]]] },
+  },
+  // Table 1 of CLS-RES (Ref-Templates T-CLS: "organisation label"), one sample item per Group tier: GlobalConnect's
+  // label is applied to an item, not copied from BKB-ADD-16 Section 7 (REWORK, owner: step 4 stays, as a small real
+  // act). "Owner classifies" (BKB-STD-001 Section 2) is why the tier is given. The items are written from BKB-STD-001
+  // Section 3 and the addendum's Section 9 (Content Corrections item 79). "Confidential" and "Restricted" are the
+  // Group's words, which the learner must not stop at.
+  "F2.1 LAB": {
+    code: "CLS-RES Labels",
+    title: "CLS-RES · 1 Organisation labels, from BKB-ADD-16 Section 7",
+    stamp: "4 items",
+    on: [4],
+    cols: [
+      { h: "Item", w: 220 },
+      { h: "Group tier (set by the asset owner)", wrap: true },
+      { h: "GlobalConnect label", wrap: true, opts: ["Public", "Internal", "Confidential", "Client-Confidential", "Restricted", "Client-Restricted"] },
+    ],
+    rows: [
+      ["Monthly quality-monitoring report for a client", "Tier 3 — Confidential", ""],
+      ["Manila office induction procedure", "Tier 2 — Internal", ""],
+      ["Cardholder data export from the collections platform", "Tier 4 — Restricted", ""],
+      ["Company profile published on the GlobalConnect website", "Tier 1 — Public", ""],
+    ],
+    mine: () => true,
+    steps: { 4: [2] },
+    ident: [0, 1],
+    checkRows: { 4: { label: 0, col: 2 } },
+    handIn: { step: 6, cols: [2], ident: [0, 1] },
   },
   "F2.2": {
     code: "EVQ-RES",
@@ -1232,13 +1423,14 @@ export const REGISTERS: Record<string, Register> = {
       { h: "Legibility" },
       { h: "Accept/Reject" },
       { h: "Defect code", opts: ["D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10"] },
-      { h: "Fix", wrap: true, w: 240 },
+      { h: "Fix", wrap: true, w: 240, opts: (d) => ((d.pages["Ref-Defect codes"]?.r ?? []) as string[][]).map((x) => x[2]) },
       { h: "Rule" },
     ],
     // Dataset EVQ-6 (Datasets_M2610-00001_W02.xlsx): the columns the checks D1–D10 read (GRC101_Engine
     // datasets.py evidence_rows), then T-EVQ's own (p_tasks.py F2.2: Item | Accept/Reject | Defect code |
     // Fix | Rule). Control is "—" on every row and no check reads it. E-001 and E-002 are worked, their
-    // decision and code as the pack gives them.
+    // decision and code as the pack gives them. E-008's Content note is platform-written (item 80): the pack's
+    // sample had no D9 item, so step 4 could only ever record none.
     rows: [
       ["E-001", "Quarterly privileged-access review sign-off sheet", "In-scope system", "2025-11-04 00:00 UTC", "tomás.svc", "2025-10-05 to 2026-10-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible", "Accept", "none", "", ""],
       ["E-002", "Visitor log sample", "In-scope system", "", "ananya.svc", "2025-10-05 to 2026-10-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible", "Reject", "D1", "", ""],
@@ -1247,11 +1439,11 @@ export const REGISTERS: Record<string, Register> = {
       ["E-005", "Business impact analysis sign-off", "In-scope system", "2025-11-08 00:00 UTC", "lars.svc", "2025-10-05 to 2026-10-04", "Filter and date range shown in export header", "Hand annotations and re-typed values present", "Approver name + date visible", "Masked content", "Legible", "", "", "", ""],
       ["E-006", "Supplier assessment record", "In-scope system", "2026-05-20 00:00 UTC", "lea.svc", "2025-10-05 to 2026-10-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible", "", "", "", ""],
       ["E-007", "Business impact analysis sign-off", "In-scope system", "2026-04-22 00:00 UTC", "nora.svc", "2025-10-05 to 2026-10-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible", "", "", "", ""],
-      ["E-008", "New-starter access request ticket", "In-scope system", "2026-08-06 00:00 UTC", "grace.svc", "2025-10-05 to 2026-10-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Masked content", "Legible", "", "", "", ""],
+      ["E-008", "New-starter access request ticket", "In-scope system", "2026-08-06 00:00 UTC", "grace.svc", "2025-10-05 to 2026-10-04", "Filter and date range shown in export header", "Unmodified system export", "Approver name + date visible", "Shows a plain-text password", "Legible", "", "", "", ""],
     ],
     mine: (r) => !r[11],
-    // 2: Accept/Reject, by walking R09's checks · 3: a rejected item's code (and its fix, which the pack
-    // does not give) · 4: D9 items reported (`report`) · 5: handed in.
+    // 2: Accept/Reject, by walking R09's checks · 3: a rejected item's code and its fix, chosen
+    // from the list's Fix column · 4: D9 items reported (`report`) · 5: handed in.
     steps: { 2: [11], 3: [12, 13] },
     checklist: { 2: { page: "Ref-Defect codes", col: 11, reads: { D1: 3, D2: 4, D3: 5, D4: 3, D5: 6, D6: 7, D7: 2, D8: 8, D9: 9, D10: 10 }, pass: "Accept", fail: "Reject" } },
     report: { step: 4, col: 9, clean: "Masked content" },
@@ -1260,7 +1452,7 @@ export const REGISTERS: Record<string, Register> = {
       14: { from: [11], value: (v) => (v(11) ? "R09" : "") },
       // An accepted item has no defect: "none", as the worked E-001 shows. A rejected one's is chosen.
       12: { from: [11], value: (v) => (v(11) === "Accept" ? "none" : null) },
-      // No fix for an accepted item; a rejected item's fix is copied from Ref-Defect codes (below).
+      // No fix for an accepted item; a rejected item's is chosen from Ref-Defect codes (below).
       13: { from: [11], value: (v) => (v(11) === "Accept" ? "—" : null) },
     },
     cells: {
@@ -1275,13 +1467,13 @@ export const REGISTERS: Record<string, Register> = {
           const want = (d.pages["Ref-Defect codes"]?.r as string[][] | undefined)?.find((x) => x[0] === r[12])?.[2];
           return want && same(v, want) ? want : null;
         },
-        hint: (r) => (r[12] && r[12] !== "none" ? `Copy the Fix of ${r[12]} from Evidence › Defect Codes, word for word.` : "Choose the item's defect code first."),
+        hint: (r) => (r[12] && r[12] !== "none" ? `That is not the Fix of ${r[12]}: read it in Evidence › Defect Codes.` : "Choose the item's defect code first."),
       },
     },
     ident: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     handIn: { step: 5, cols: [11, 12, 13, 14], ident: [0, 1] },
-    // Evidence › Defect Codes says what each code means and its fix: step 1 finds E-002's, step 3 chooses the rest.
-    reads: { 1: ["evidence|Defect Codes"], 3: ["evidence|Defect Codes"] },
+    // Evidence › Defect Codes says what each code means and its fix: step 1 finds E-002's, step 3 chooses the rest, step 5's message (F2.2-J1) is answered from it.
+    reads: { 1: ["evidence|Defect Codes"], 3: ["evidence|Defect Codes"], 5: ["evidence|Defect Codes"] },
     // Accept/Reject (step 2) and the defect code (step 3) are checked against the key once every item is
     // in (keys "F2.2-2", "F2.2-3"). An accepted item's "none" is checked too: it says the item has no defect.
     checkRows: { 2: { label: 0, col: 11 }, 3: { label: 0, col: 12 } },
@@ -1321,7 +1513,7 @@ export const REGISTERS: Record<string, Register> = {
     },
     split: { 2: { col: 1, from: 1 } },
     compare: { step: 7, col: 9 },
-    then: { 2: "Split the rows with rule R10", 4: "Add the 3 contract rows", 5: "Link each row to its BKB policy", 7: "Compare the clocks with BKB-ERM-001 Annex A" },
+    then: { 2: "Split the rows with rule R10", 4: "The first three Key Requirements", 5: "Link each row to its BKB policy", 7: "Compare the clocks with BKB-ERM-001 Annex A" },
     // Type is checked where a document says what kind of instrument the row comes from: a Section 2 row's
     // source is the office's Data-protection law; a Section 2.1 line is a requirement of the lead regulator.
     // Section 6's overlays mix laws, regulators' rules and standards, and the pack says nothing: not scored.
@@ -1397,7 +1589,8 @@ export const REGISTERS: Record<string, Register> = {
         hint: () => "Copy the Evidence of compliance of this obligation's row in BKB-ADD-16 Section 2.2.",
       },
       9: {
-        fix: (v, r, d, _ri, by) => obl.detailRows(d, r, by).find((x) => same(x[3], v))?.[3] ?? null,
+        // Step 7 writes the addendum's and Annex A's values on the row that differs (compareOffices `note`).
+        fix: (v, r, d, _ri, by) => (v.endsWith(DIFFERS) ? v : (obl.detailRows(d, r, by).find((x) => same(x[3], v))?.[3] ?? null)),
         hint: () => "Copy the Frequency / deadline of this obligation's row in BKB-ADD-16 Section 2.2.",
       },
       11: {
@@ -1423,14 +1616,57 @@ export const REGISTERS: Record<string, Register> = {
       6: () =>
         "Steps 1 to 4 give 17 rows; the register holds 15. Keep the 3 contract rows, which KR2 needs, and remove the two rows that bind neither of your two offices.",
     },
-    reads: { 3: ["learn|Framework Quick Reference"], 4: ["policies|Policy Library"] },
+    // 6: BKB-POL-016 Section 3.1, the Guidance line of the message placed there.
+    reads: { 3: ["learn|Framework Quick Reference"], 4: ["policies|Policy Library"], 6: ["policies|Policy Library"] },
     extra: {
       // Section 1 names the head office and its lead regulator, Section 2 each office's laws (with Section 2.1 and Section 2.2), Section 3 where a standard applies.
       3: [["BKB-ADD-16", ["1", "2", "3", "6"]]],
       4: [["Organization_Profiles", ["1"]], ["BKB-ADD-16", ["2.2"]]],
       5: [["BKB-POL-000", ["3"]], ["BKB-ADD-16", ["2.2"]]],
       7: [["BKB-ERM-001", ["Annex A"]]],
+      // 8: the rows of OBL-REG's second sheet, and the index that names their policies.
+      8: [["Organization_Profiles", ["3"]], ["BKB-POL-000", ["3"]]],
     },
+  },
+  // OBL-REG's second sheet: the rows inject J3 brings (Organization_Profiles Section 3, OBL-EXTRA; platform-written,
+  // corrections item 81). Same columns as the register. They stay outside its 15 rows, so step 6's count and the
+  // row-based checks are untouched; they are worked at the hand-in, where J3 arrives. Nothing here is a key: frequency and
+  // evidence read Section 3, and the policy is the one whose title names the row's process.
+  "T3.1 X": {
+    code: "OBL-EXTRA",
+    title: "OBL-REG · Sheet 2: OBL-EXTRA rows, new client (outside the 15-row extract)",
+    on: [],
+    cols: [
+      { h: "Obl. ID" },
+      { h: "Obligation (plain English)", wrap: true, w: 240 },
+      { h: "Source instrument", wrap: true },
+      { h: "Article/clause", wrap: true },
+      { h: "Type" },
+      { h: "Office(s)" },
+      { h: "Process", wrap: true, w: 170 },
+      { h: "Owner role", wrap: true, w: 150 },
+      { h: "Evidence of compliance", wrap: true, w: 240 },
+      { h: "Frequency / deadline", wrap: true, w: 130 },
+      { h: "Linked BKB policy", wrap: true, w: 240, opts: () => obl.policies().map(([id, t]) => `${id} ${t}`) },
+      { h: "Evidence ref" },
+    ],
+    rows: [
+      ["OBL-16", "Notify the client of any security incident affecting its data", "Client contract", "Security schedule, clause 4", "contract", "Manila", "Incident management and breach notification", "", "", "", "", "Organization_Profiles Section 3"],
+      ["OBL-17", "Send the client a root-cause report after each such incident", "Client contract", "Security schedule, clause 4", "contract", "Manila", "Incident management and breach notification", "", "", "", "", "Organization_Profiles Section 3"],
+      ["OBL-18", "Give the client the summary of the annual penetration test", "Client contract", "Security schedule, clause 7", "contract", "Manila", "Vulnerability and patch management", "", "", "", "", "Organization_Profiles Section 3"],
+    ],
+    mine: () => true,
+    steps: { 8: [8, 9, 10] },
+    ident: [0, 1, 6],
+    load: ["BKB-POL-000", "Organization_Profiles"],
+    derived: { 7: { from: [10], value: (v) => (v(10) ? (obl.policies().find(([id]) => v(10).startsWith(id))?.[2] ?? "") : "") } },
+    cells: {
+      8: { fix: (v, r) => { const w = extraRow(r)?.[4]; return w && same(v, w) ? w : null; }, hint: () => "Copy the Evidence of compliance of this row in Organization_Profiles Section 3." },
+      9: { fix: (v, r) => { const w = extraRow(r)?.[2]; return w && same(v, w) ? w : null; }, hint: () => "Copy the Frequency / deadline of this row in Organization_Profiles Section 3." },
+      // The policy whose title names the row's process (BKB-POL-000 Section 3).
+      10: { fix: (v, r) => (v.toLowerCase().includes(r[6].toLowerCase()) ? v : null), hint: () => "Read the row's Process, then find the policy in BKB-POL-000 Section 3 whose title names it." },
+    },
+    handIn: { step: 8, cols: [7, 8, 9, 10], ident: [0, 1, 6] },
   },
   // T3.1's Lead Implementer extension LI-01: template T-LI-FAM, its 10 documents listed (MenteePack
   // Ref-Templates: "10 documents pre-listed; Requirements/Guidance drop-down; PDCA diagram"). Every value
@@ -1452,8 +1688,16 @@ export const REGISTERS: Record<string, Register> = {
     // 9: whether each can be certified against, and who uses it · 10: its purpose · 11: rule L02.
     steps: { 9: [3, 4], 10: [1], 11: [2] },
     ident: [0],
+    // Step 10 arrives as a colleague's draft with two pairs swapped, the pairs people really confuse (corrections item 81):
+    // every sentence is still there once, so only reading the page finds them. Key "T3.1-10".
+    draft: {
+      10: (d) => {
+        const swap: Record<string, string> = { "ISO/IEC 27002:2022": "ISO/IEC 27003", "ISO/IEC 27003": "ISO/IEC 27002:2022", "ISO/IEC 27007": "ISO 19011", "ISO 19011": "ISO/IEC 27007" };
+        return { col: 1, v: fam(d).map((r) => famRow(d, swap[r[0]] ?? r[0])?.[1] ?? "") };
+      },
+    },
+    checkRows: { 10: { label: 0, col: 1 } },
     cells: {
-      1: { fix: (v, r, d) => (same(v, famRow(d, r[0])?.[1] ?? " ") ? v : null), hint: (r) => `Not the purpose Ref-27000 family gives ${r[0]}.` },
       2: {
         // Rule L02 names the three requirement documents; every other listed document is guidance.
         fix: (v, r, d) => (v === (l02(d).some((x) => r[0].startsWith(x)) ? "Requirements" : "Guidance") ? v : null),
@@ -1465,10 +1709,37 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 14, cols: [1, 2, 3, 4], ident: [0] },
     note: {
       9: () => "Learn › Reference pages › Ref-27000 family describes all 10 documents. For each one, record whether an organisation can be certified against it, and who uses it.",
-      10: () => "Match each document with its purpose, as Ref-27000 family states it.",
+      10: () => "A colleague drafted this column from memory and nobody has checked it. Compare each sentence with Ref-27000 family and correct any that is not the document's own.",
       11: () => "Rule L02 (Learn › Rule tables) names the requirement documents. Choose for each document.",
     },
-    reads: { 9: ["learn|Reference pages"], 10: ["learn|Reference pages"], 11: ["learn|Rule tables"] },
+    reads: { 9: ["learn|Reference pages"], 10: ["learn|Reference pages"], 11: ["learn|Rule tables"], 12: ["learn|Rule tables"] },
+  },
+  // LI-FAM's edition check (REWORK, owner: step 13 stays, as a small real act). Four undated maps, each told apart by what
+  // the last rows of Ref-27000 family give (platform-written, corrections item 81). Key "T3.1-13". The amendment's note needs no
+  // line of its own: it is in the ISO/IEC 27001 row's purpose, on the map since step 10.
+  "T3.1 ED": {
+    code: "T-LI-FAM Editions",
+    title: "LI-FAM · Edition check: which edition of ISO/IEC 27001 each map describes",
+    stamp: "4 maps",
+    on: [13],
+    cols: [
+      { h: "Map" },
+      { h: "What the map says", wrap: true, w: 360 },
+      { h: "Edition it describes", wrap: true, w: 200, opts: ["ISO/IEC 27001:2013", "ISO/IEC 27001:2022", "ISO/IEC 27001:2022 + Amd 1:2024"] },
+    ],
+    rows: [
+      ["Map A", "Annex A: 93 controls in four themes. Clause 4.1: external and internal issues. Clause 4.2: interested parties and their requirements.", ""],
+      ["Map B", "Annex A: 93 controls in four themes. Clause 4.1 also asks whether climate change is a relevant issue.", ""],
+      ["Map C", "Annex A: 114 controls in 14 domains, A.5 to A.18. Clauses 4.1 and 4.2 say nothing about climate change.", ""],
+      ["Map D", "Clause 4.2 also notes that interested parties can have requirements about climate change. Annex A: 93 controls in four themes.", ""],
+    ],
+    mine: () => true,
+    steps: { 13: [2] },
+    ident: [0, 1],
+    checkRows: { 13: { label: 0, col: 2 } },
+    handIn: { step: 14, cols: [2], ident: [0, 1] },
+    note: { 13: () => "Four family maps from earlier projects are on the shared drive, none dated. Before anyone reuses one, work out which edition of ISO/IEC 27001 it describes. The last three rows of Ref-27000 family tell the editions apart." },
+    reads: { 13: ["learn|Reference pages"] },
   },
   // T3.2 MAP-XW, template T-MAP (GRC101_Engine/p_guided.py T3.2: "Req. ID | Standard | Requirement title |
   // ISO/IEC 27001 control(s) | BKB policy + clause | Procedure section or "none" | Coverage (R11) | Gap
@@ -1558,22 +1829,26 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 1: { label: 0, col: 4 }, 2: { label: 0, col: 3 }, 4: { label: 0, col: 6, rule: r11 } },
     then: { 5: "Write the gap sentence of every Partial or None row (R12)" },
     note: {
-      1: () => "Start with BKB-POL-000 Section 8, then read the requirement: a Crosswalk View key word points to a narrower policy only where that policy's title (Section 3) is about what the requirement asks.",
+      1: () => "Start with BKB-POL-000 Section 8, then read the requirement: a key word in Policies › Map to Framework points to a narrower policy only where that policy's title (Section 3) is about what the requirement asks.",
       2: () => "Each requirement offers three candidate controls. Frameworks › Crosswalk View gives the controls of the policy you chose in step 1; read the requirement to choose among them.",
       3: () => "Each policy's Section 6 lists its procedures by name. Open the row's policy in Policies › Policy Library. A number that is not one of its procedures is flagged; which procedure fits is your call, and an assessor reviews it at checkpoint HC2.",
-      5: () => "Each owner is checked against BKB-POL-000 Section 3 as you type. What you name as missing is reviewed by an assessor at checkpoint HC2.",
+      5: () => "The Gap frame is in Learn & Grow › Sentence frames. Each owner is checked against BKB-POL-000 Section 3 as you type. What you name as missing is reviewed by an assessor at checkpoint HC2.",
       4: (d) => `Rule R11: ${d.rules.R11?.[1] ?? ""}`,
       6: () => "Evidence ref says where a reader can check the row: its BKB policy and the section you read. A policy other than the row's, or a section it does not have, is flagged; the section you cite is reviewed at checkpoint HC2.",
     },
     reads: {
-      1: ["frameworks|Crosswalk View", "policies|Policy Library"],
+      1: ["policies|Map to Framework", "policies|Policy Library"],
       2: ["frameworks|Crosswalk View"],
       3: ["policies|Policy Library"],
+      4: ["learn|Rule tables"],
+      5: ["learn|Sentence frames"],
       6: ["policies|Policy Library"],
+      7: ["policies|Map to Framework", "frameworks|Crosswalk View", "policies|Policy Library", "learn|Rule tables"],
     },
     // BKB-POL-000: Section 3 lists every policy by title, Section 8 which policy carries each sector obligation (COPPA,
     // FERPA …); Section 3 gives each policy's owner, whom the gap sentence names.
-    extra: { 1: [["BKB-POL-000", ["3", "8"]]], 5: [["BKB-POL-000", ["3"]]] },
+    // Step 7: the requirement J3 brings (sheet "T3.2 X") reads its policy's procedures and mapping.
+    extra: { 1: [["BKB-POL-000", ["3", "8"]]], 5: [["BKB-POL-000", ["3"]]], 7: [["BKB-POL-000", ["3", "8"]], ["BKB-POL-014", ["6.1", "6.2", "6.3", "9"]]] },
   },
   // T3.2's Lead Implementer extension LI-05: template T-LI-SOA, "pre-filled with the 93 control IDs and
   // titles" (LI-05 inputs), with applicability (L06), justification (L06), implementation status (L07) and
@@ -1586,7 +1861,7 @@ export const REGISTERS: Record<string, Register> = {
       { h: "Control" },
       { h: "Title", wrap: true, w: 240 },
       { h: "Applicable (L06)", wrap: true, opts: ["Applicable", "Not applicable"] },
-      { h: "Justification (L06)", wrap: true, w: 240, opts: (d) => [...riskRows(d).map((r) => r[0]), BASELINE] },
+      { h: "Justification (L06)", wrap: true, w: 240, opts: (d) => [...riskRows(d).map((r) => r[0]), ...soaReason(d), BASELINE] },
       { h: "Implemented (L07)", wrap: true, opts: ["Yes", "Planned", "No"] },
       { h: "Cybersecurity concept (L05)", wrap: true, opts: (d) => [...new Set(attrs(d).map((r) => r[5]))].sort() },
     ],
@@ -1597,6 +1872,15 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 9: [2, 3], 10: [4], 11: [5], 12: [2] },
     ident: [0, 1],
     only: { 10: (r) => DEEP_DIVE.includes(r[0]), 11: (r) => DEEP_DIVE.includes(r[0]) },
+    // Step 8: a colleague rolled the template forward from an older SoA and two titles kept their 2013 wording (real titles
+    // of ISO/IEC 27001:2013, A.6.2.2 and A.12.2.1). Corrections item 82.
+    slips: { 8: { col: 1, at: { "A.6.7": "Teleworking", "A.8.7": "Controls against malware" } } },
+    // Steps 10 and 11 arrive as a colleague's draft, right on ten rows; the two slips of each are the mistakes people really
+    // make. Keys T3.2-10, T3.2-11. Corrections item 82.
+    draft: {
+      10: (d) => ({ col: 4, v: ANNEX_A.map(([id]) => (DEEP_DIVE.includes(id) ? ({ "A.7.14": "Yes", "A.8.13": "Planned" } as Record<string, string>)[id] ?? l07(d, id) : "")) }),
+      11: (d) => ({ col: 5, v: ANNEX_A.map(([id]) => (DEEP_DIVE.includes(id) ? (id === "A.7.11" || id === "A.8.13" ? "Protect" : (attrs(d).find((r) => r[0] === id)?.[5] ?? "")) : "")) }),
+    },
     derived: {
       // L07 and L05 are asked for the 12 deep-dive controls only.
       4: { from: [0], value: (v) => (DEEP_DIVE.includes(v(0)) ? null : "—") },
@@ -1609,17 +1893,19 @@ export const REGISTERS: Record<string, Register> = {
     cells: {
       3: {
         fix: (v, r, d) => (v && v === justification(d, r[0]) ? v : null),
-        hint: (r) => `Rule L06: look for ${r[0]} in the controls column of RA-36 Risk register (HQ Istanbul), top down; a range such as A.7.1–A.7.7 includes the controls between. If no risk lists it, go on down L06's order.`,
+        hint: (r) => `Rule L06: first see whether Ref-SoA exclusions lists ${r[0]}, and copy the justification shown there. If not, look for it in the controls column of RA-36 Risk register (HQ Istanbul), top down; a range such as A.7.1–A.7.7 includes the controls between. If no risk lists it, go on down L06's order.`,
       },
     },
     consistency: {
       step: 12,
       col: 2,
       // L06: Not applicable only where Ref-SoA exclusions lists the control, and never for a control a
-      // risk treatment uses (ISO/IEC 27001 clause 6.1.3).
-      bad: (r, d) => r[2] === "Not applicable" && (!soaExcluded(d).includes(r[0]) || !!usedBy(d, r[0])),
+      // risk treatment uses (ISO/IEC 27001 clause 6.1.3). A listed control marked Applicable breaks it too.
+      bad: (r, d) => (r[2] === "Not applicable" ? !soaExcluded(d).includes(r[0]) || !!usedBy(d, r[0]) : r[2] === "Applicable" && soaExcluded(d).includes(r[0])),
       why: (r, d) =>
-        usedBy(d, r[0])
+        r[2] === "Applicable"
+          ? "Marked Applicable, but Ref-SoA exclusions lists it."
+          : usedBy(d, r[0])
           ? `Marked Not applicable, but risk ${usedBy(d, r[0])} in RA-36 Risk register (HQ Istanbul) uses it as a treatment.`
           : "Marked Not applicable, but Ref-SoA exclusions does not list it.",
     },
@@ -1627,14 +1913,16 @@ export const REGISTERS: Record<string, Register> = {
     then: { 12: "Check consistency (L06)" },
     handIn: { step: 13, cols: [2, 3, 4, 5], ident: [0, 1] },
     note: {
+      8: () => "A colleague rolled T-LI-SOA forward from an older SoA. Compare its Title column with Ref-27002 attributes (Learn › Reference pages), theme by theme, and click each title that is not the standard's.",
       9: () =>
-        "Rule L06 starts from Ref-SoA exclusions (Learn › Reference pages): decide each control against it, row by row. " +
+        "Rule L06 starts from Ref-SoA exclusions (Learn › Reference pages): decide each control against it, row by row, and a control it lists takes the justification shown there. " +
         "Justification: the first source in L06's order. RA-36 Risk register (HQ Istanbul), in Learn › Reference pages, lists the controls each risk's treatment uses (the regional sheets repeat these risks). " +
         "A law in BKB-ADD-36 Section 2 or a contract in Organization_Profiles would come next, but neither names an Annex A control; otherwise “Group baseline (BKB-POL-001)”.",
-      10: (d) => `Rule L07: ${d.rules.L07?.[1] ?? ""} Both sheets are in Learn › Reference pages: TSA-36 Control_Mapping and TSA-36 Roadmap.`,
-      11: () => `Your 12 deep-dive controls: ${DEEP_DIVE.join(", ")}. Rule L05: copy each one's cybersecurity concept from Ref-27002 attributes (Learn › Reference pages).`,
+      10: (d) => `A colleague drafted this column. Check every row. Rule L07: ${d.rules.L07?.[1] ?? ""} Both sheets are in Learn › Reference pages: TSA-36 Control_Mapping and TSA-36 Roadmap.`,
+      11: () => `A colleague drafted this column from memory. Check every row against Ref-27002 attributes (Learn › Reference pages), which rule L05 copies from. Your 12 deep-dive controls: ${DEEP_DIVE.join(", ")}.`,
     },
     reads: {
+      8: ["learn|Reference pages"],
       9: ["learn|Reference pages"],
       10: ["learn|Reference pages"],
       11: ["learn|Reference pages"],
@@ -1698,6 +1986,8 @@ export const REGISTERS: Record<string, Register> = {
       ["Q4", "Access must be granted on least privilege and approved by the asset owner.", "ISO/IEC 27001 A.5.15 / SOC 2 CC6.3"],
       ["Q5", "AI agents must have dedicated identities with scoped permissions.", "BKB-POL-022"],
       ["Q6", "Shared accounts are prohibited except controlled break-glass accounts.", "ISO/IEC 27001 A.5.16"],
+      // Not in the dataset: message T4.1-J3 brings it, at step 2, the one gap that names an office (platform-written, item 84).
+      ["Q7", "Phoenix office: sessions on healthcare client systems must log off automatically after a set period of inactivity.", "HIPAA Security Rule, 45 CFR 164.312(a)(2)(iii)"],
     ].map((r) => [...r, "", "", "", "", ""]),
     mine: () => true,
     // 2: the clause · 3: coverage (R13) · 4: where the fix belongs (R13) · 5: the redline · 6: handed in.
@@ -1729,16 +2019,17 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 2: { label: 0, col: 3 }, 3: { label: 0, col: 4 }, 4: { label: 0, col: 5, rule: fixWhere } },
     handIn: { step: 6, cols: [3, 4, 5, 6, 7], ident: [0, 1] },
     note: {
-      2: () => "Search BKB-POL-006 and BKB-ADD-16 for each requirement's action words, and choose the clause that holds them, or none. A bullet of Section 3.1 is counted from the top: the first is bullet 1.",
-      3: (d) => `Rule R13: ${(d.rules.R13?.[1] ?? "").split(" Where to fix")[0]} Your clause from step 2 is beside each row.`,
-      4: (d) => `Rule R13: ${(d.rules.R13?.[1] ?? "").match(/Where to fix:[^.]*\./)?.[0] ?? ""} Addenda may only add or tighten (BKB-POL-000 Section 5). A covered row has no gap: it shows —.`,
-      5: () => "Write a redline for each row you rated Partly or Not covered: “<Role> shall <action> within <time limit>.” The role is one BKB-POL-006 Section 5 or Section 6 names. A redline that would make a Group value weaker is “Exception needed” (BKB-POL-000 Section 6). The frame and the role are checked as you type; what each redline says is reviewed at checkpoint HC2.",
+      2: () => "Search BKB-POL-006 and BKB-ADD-16 for each requirement's action words, and choose the clause that holds them, or none. A bullet of Section 3.1 is counted from the top: the first is bullet 1. Q7 is the Compliance Manager's, from the Inbox.",
+      3: () => "Rule R13, in Learn & Grow › Rule tables, sets the three ratings. Your clause from step 2 is beside each row.",
+      4: () => "Rule R13, in Learn & Grow › Rule tables, says where a fix belongs; BKB-POL-000 Section 5 says what an addendum may do. A covered row has no gap: it shows —.",
+      5: () => "Write a redline for each row you rated Partly or Not covered: “<Role> shall <action> within <time limit>.” Learn & Grow › Sentence frames holds the frame. The role is one BKB-POL-006 Section 5 or Section 6 names. A redline that would make a Group value weaker is “Exception needed” (BKB-POL-000 Section 6). The frame and the role are checked as you type; what each redline says is reviewed at checkpoint HC2.",
     },
-    reads: { 3: ["learn|Rule tables"], 4: ["learn|Rule tables"], 5: ["learn|Rule tables"] },
+    reads: { 3: ["learn|Rule tables"], 4: ["learn|Rule tables"], 5: ["learn|Rule tables", "learn|Sentence frames"] },
     extra: {
       3: [["BKB-POL-006", ["3", "4", "6", "7"]], ["BKB-ADD-16", ["5", "6"]]],
       4: [["BKB-POL-000", ["5"]]],
-      5: [["BKB-POL-006", ["5", "6"]], ["BKB-POL-000", ["2", "6"]]],
+      // Section 5: message T4.1-J2's Guidance line is read here; a document window shows only the step's cited sections.
+      5: [["BKB-POL-006", ["5", "6"]], ["BKB-POL-000", ["2", "5", "6"]]],
     },
   },
   // T4.1's Lead Implementer extension LI-06, template T-LI-POL: "5.2 checklist (…) with evidence | leadership evidence
@@ -1771,28 +2062,21 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 10, cols: [2, 3], ident: [0, 1] },
     note: { 7: () => "Rule L08: search BKB-POL-001 (Policies › Policy Library) for each item's key word. Found: type the number of the section it is in. Not found: Gap." },
   },
-  // Sheet 2: the leadership evidence list, copied from Learn › Reference pages › Ref-Leadership, row for row.
+  // Sheet 2: the leadership evidence list. Its Where column arrives as a colleague's draft, right on three rows; the two slips are
+  // errors a colleague really makes (corrections item 84): the policy under review for the ISMS policy, and clause 9.2 for 9.3.
   "T4.1 LI-POL-L": {
     code: "LI-POL Leadership",
     title: "LI-POL · Leadership evidence, clause 5.1 (template T-LI-POL)",
     on: [8, 10],
-    cols: [{ h: "Leadership evidence item (5.1)", wrap: true, w: 280 }, { h: "Where it is stored", wrap: true, w: 300 }],
-    rows: Array.from({ length: 5 }, () => ["", ""]),
+    cols: [{ h: "Leadership evidence item (5.1)", wrap: true, w: 280 }, { h: "Where it is stored", wrap: true, w: 300, opts: (d) => uniq([...leadership(d).map((r) => r[1]), ...LEADERSHIP_SLIPS.map(([, v]) => v)]) }],
+    rows: ["Charter approved by the Board", "Information security policy signed by top management", "Budget line for the ISMS and the GRC Office", "Management review minutes with decisions", "Risk acceptances signed by the delegated authority"].map((x) => [x, ""]),
     mine: () => true,
-    steps: { 8: [0, 1] },
-    ident: [],
-    cells: {
-      0: {
-        fix: (v, _r, d, ri) => { const want = leadership(d)[ri]?.[0]; return want && same(v, want) ? want : null; },
-        hint: (_r, _d, ri) => `Row ${ri + 1} takes ${ordinal(ri)} item of Ref-Leadership, as written there.`,
-      },
-      1: {
-        fix: (v, _r, d, ri) => { const want = leadership(d)[ri]?.[1]; return want && same(v, want) ? want : null; },
-        hint: (_r, _d, ri) => `Copy where ${ordinal(ri)} item of Ref-Leadership is stored, as written there.`,
-      },
-    },
-    handIn: { step: 10, cols: [0, 1] },
-    note: { 8: () => "Learn › Reference pages › Ref-Leadership lists five items that show top management's commitment (clause 5.1), and where each is stored. Copy them in its order, one row each, as written." },
+    steps: { 8: [1] },
+    ident: [0],
+    draft: { 8: (d) => ({ col: 1, v: leadership(d).map((r, i) => LEADERSHIP_SLIPS.find(([ri]) => ri === i)?.[1] ?? r[1]) }) },
+    checkRows: { 8: { label: 0, col: 1 } },
+    handIn: { step: 10, cols: [1], ident: [0] },
+    note: { 8: () => "A colleague drafted the Where column from memory. Read each row against Learn › Reference pages › Ref-Leadership and choose the right place where it differs. An auditor asks for each item by name and goes straight to where this list says it is." },
     reads: { 8: ["learn|Reference pages"] },
   },
   // Sheet 3: the RACI. Rule L09 copies it "from the Charter table for the 10 ISMS processes (rule L04)"; L04 names
@@ -1859,7 +2143,7 @@ export const REGISTERS: Record<string, Register> = {
   // The SOP's RACI: "Copy the RACI roles from the policy RACI table", BKB-POL-021 Section 5 (Roles and responsibilities).
   "T4.2 RACI": {
     code: "SOP-DOC RACI",
-    title: "SOP-DOC · RACI from the policy (template T-SOP)",
+    title: "SOP-DOC · RACI checked against the policy (template T-SOP)",
     on: [4, 6],
     cols: [{ h: "Role", wrap: true, w: 220 }, { h: "Responsibility (BKB-POL-021 Section 5)", wrap: true, w: 320, opts: () => uniq(pol021Roles().map((r) => r[1])) }],
     rows: POL021_ROLES.map((x) => [x, ""]),
@@ -1867,9 +2151,11 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 4: [1] },
     ident: [0],
     load: ["BKB-POL-021"],
+    // Arrives as a colleague's draft, two rows wrong: the policy's roles written from memory (corrections item 85).
+    draft: { 4: () => { const t = pol021Roles(); return t.length ? { col: 1, v: POL021_ROLES.map((x) => t.find((y) => y[0] === (RACI_SLIPS[x] ?? x))?.[1] ?? "") } : undefined; } },
     checkRows: { 4: { label: 0, col: 1, rule: sopResp } },
     handIn: { step: 6, cols: [1], ident: [0] },
-    note: { 4: () => "BKB-POL-021 Section 5 is the policy's roles table: one row per role. For each role, choose its responsibility as Section 5 writes it." },
+    note: { 4: () => "A colleague drafted this RACI from memory. Read every row against BKB-POL-021 Section 5 and choose Section 5's responsibility where the row differs. Check my answers then shows each row's answer." },
   },
   // T4.2's Lead Implementer extension LI-07, template T-LI-DOC: "SOP metadata block | life-cycle (create, review, approve,
   // publish, change, retain, dispose) | register: clause | documented information | document vs record | BKB location"
@@ -1890,7 +2176,8 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 7: { label: 0, col: 1, rule: metaValue } },
     then: { 7: "Fill the SOP's document-control block" },
     handIn: { step: 10, cols: [1], ident: [0] },
-    note: { 7: () => "BKB-POL-000 Section 7.1 sets each field of the block. Where it points to Section 2 or Section 3, read the role there. The classification records your answer to the question above." },
+    note: { 7: () => "BKB-POL-000 Section 7.1 sets each field of the block. Where it points to Section 2 or Section 3, read the role there. Policies › Version History shows whether this SOP has an approved version yet. The classification records your answer to the question above." },
+    reads: { 7: ["policies|Version History"] },
   },
   "T4.2 LI-DOC-L": {
     code: "LI-DOC Life-cycle",
@@ -1904,7 +2191,7 @@ export const REGISTERS: Record<string, Register> = {
     load: ["BKB-POL-000"],
     checkRows: { 8: { label: 0, col: 1, rule: lifeWho } },
     handIn: { step: 10, cols: [1], ident: [0] },
-    note: { 8: () => "BKB-POL-000 Section 7.1's second table names who does each stage. Where it says Policy owner, choose the role that owns BKB-POL-021: BKB-POL-000 Section 3 lists it." },
+    note: { 8: () => "Before the SOP is routed, record who does each stage. BKB-POL-000 Section 7.1's second table names them. Where it says Policy owner, choose the role that owns BKB-POL-021: BKB-POL-000 Section 3 lists it." },
   },
   // The 14 rows of Ref-Locations (rule L10), clause and documented information given. Document or record is checked
   // against the key (T4.2-9), which Ref-Locations no longer shows; 7.5.1 b, either by the standard, is a worked row.
@@ -1946,7 +2233,7 @@ export const REGISTERS: Record<string, Register> = {
       { h: "Control" },
       { h: "Description", wrap: true, w: 190 },
       { h: "Evidence requested", wrap: true, w: 220, opts: PBC_EVIDENCE },
-      { h: "System" },
+      { h: "System", w: 170, opts: (d) => uniq(pbc6(d).map((x) => x[2])).sort() },
       { h: "Population / query", wrap: true, w: 170 },
       { h: "Period", wrap: true },
       { h: "Sample (R15)", wrap: true, opts: "step" },
@@ -1960,8 +2247,11 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 1: [3], 2: [4], 3: [7], 4: [8] },
     // T5.1 step 1 gave no way in: the owner, trying it, did not know what to read or what to look for (30 Oct).
     readHow: {
-      1: "For each control, read its Description and ask: what record does this control leave in its system each time it runs? That record is its evidence. BKB-POL-016 Section 6.2, the table under the procedure, row Evidence requested, is the test: a policy, a report about a different activity, or a statement that the control works is not evidence of it.",
+      1: "What to read: the row Evidence requested, marked in the document. What to choose: for each control, read its Description and pick from the list the one record that control leaves each time it runs. The list also holds records of other work.",
     },
+    spot: { 1: "Evidence requested", 4: "Owner" },
+    // Arrives as a colleague's first pass, two systems swapped (corrections item 86).
+    draft: { 2: (d) => ({ col: 4, v: PBC_CONTROLS.map(([c]) => pbc6(d).find((x) => x[0] === (PBC_SYSTEM_SLIPS[c] ?? c))?.[2] ?? "") }) },
     // The description names the row and stays in view when the table scrolls sideways (on a phone the evidence and
     // the owner are chosen against it); the control's ID beside it.
     ident: [2, 1],
@@ -1975,21 +2265,15 @@ export const REGISTERS: Record<string, Register> = {
       // The evidence-request frame of Evidence › Request Evidence, "Please send ___ for ___ covering ___ by ___.", from the row.
       11: { from: [10], value: (v) => (v(10) && v(9) && v(3) ? `Please send the ${v(3).charAt(0).toLowerCase()}${v(3).slice(1)} for ${v(1)} ${v(2)}, covering ${v(6)}, by ${v(9)}.` : "") },
     },
-    cells: {
-      4: {
-        fix: (v, r, d) => { const want = pbc6(d).find((x) => x[0] === r[1])?.[2]; return want && same(v, want) ? want : null; },
-        hint: (r) => `Find ${r[1]} in dataset PBC-6 (Evidence › Audit Requests (PBC)) and copy its System as written.`,
-      },
-    },
-    checkRows: { 1: { label: 1, col: 3 }, 3: { label: 1, col: 7, rule: pbcSample }, 4: { label: 1, col: 8 } },
+    checkRows: { 1: { label: 1, col: 3 }, 2: { label: 1, col: 4, rule: pbcSystem }, 3: { label: 1, col: 7, rule: pbcSample }, 4: { label: 1, col: 8 } },
     handIn: { step: 7, cols: [3, 4, 5, 6, 7, 8, 9, 10, 11], ident: [0, 1] },
     note: {
-      1: () => "BKB-POL-016 Section 6.2 (Policies › Policy Library) says what a request asks for: the record the control produces each time it operates, exported from its system. Read each control's description, then choose its evidence.",
-      2: () => `Copy each control's System from dataset PBC-6: open Evidence › Audit Requests (PBC) from the toolbar. Population and Period are written for you: every occurrence in that system, over the audit period ${PBC_PERIOD}.`,
+      2: () => `A colleague filled in System from memory. Read every row against dataset PBC-6 (Evidence › Audit Requests (PBC)) and choose the dataset's system where the row differs. Population and Period are written for you: every occurrence in that system, over the audit period ${PBC_PERIOD}.`,
       3: (d) => `Rule R15: ${(d.rules.R15?.[1] ?? "").split(". ")[0]}. Each control's frequency is in dataset PBC-6 (Evidence › Audit Requests (PBC)); Ref-Sampling is in Learn › Reference pages.`,
       4: () => "BKB-POL-016 Section 6.2: a request goes to the role Responsible (R) for the control's process in the RACI of the GRC Charter, Section 16 (Policies › Policy Library). The legend under the RACI gives each column's full role. Each row shortlists three roles.",
     },
-    reads: { 3: ["learn|Reference pages"] },
+    reads: { 3: ["learn|Reference pages"], 7: ["learn|Reference pages"] },
+    extra: { 7: [["Charter", ["16"]]] },
   },
   // Step 5's second part: rule R16 worked out in its two calculations, from the audit period's end. The list's Due
   // column takes the learner's own due date (one date for the whole list, so it is not typed six times).
@@ -2006,8 +2290,8 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 5: { label: 0, col: 1, rule: pbcTimeline } },
     then: { 5: "Work out the request timeline (R16)" },
     handIn: { step: 7, cols: [1], ident: [0] },
-    note: { 5: (d) => `Rule R16 (Learn › Rule tables): ${d.rules.R16?.[1] ?? ""} The audit period of your list is ${PBC_PERIOD}. Working days are Monday to Friday. The due date goes on every request of the list.` },
-    reads: { 5: ["learn|Rule tables"] },
+    note: { 5: () => `Rule R16 is in Evidence › Request Evidence. The audit period of your list is ${PBC_PERIOD}. Working days are Monday to Friday. The due date goes on every request of the list.` },
+    reads: { 5: ["evidence|Request Evidence"] },
   },
   // T5.1's Lead Implementer extension LI-08, template T-LI-CERT: "Stage 1 vs Stage 2 table | 3-year cycle | certification-body
   // selection criteria | auditee briefing (do/don't)" (GRC101_Engine/p_li.py), one register per part, handed in at step 13.
@@ -2021,9 +2305,11 @@ export const REGISTERS: Record<string, Register> = {
     mine: () => true,
     steps: { 8: [1] },
     ident: [0],
+    // Arrives as a colleague's draft, the two outputs swapped (corrections item 86).
+    draft: { 8: (d) => ({ col: 1, v: STAGE_LINES.map((x) => stageAt(d, STAGE_SLIPS[x] ?? x)[0]) }) },
     checkRows: { 8: { label: 0, col: 1, rule: stageLine } },
     handIn: { step: 13, cols: [1], ident: [0] },
-    note: { 8: () => "Learn › Reference pages › Ref-Certification card has a row for each stage: what the auditor does (before the colon), where, and the stage's output. Choose the card's words for each line." },
+    note: { 8: () => "A colleague drafted this table from memory. Read every line against the Ref-Certification card (Learn › Reference pages), which has a row for each stage: what the auditor does (before the colon), where, and the stage's output. Choose the card's words where a line differs." },
     reads: { 8: ["learn|Reference pages"] },
   },
   "T5.1 LI-CERT-A": {
@@ -2068,14 +2354,14 @@ export const REGISTERS: Record<string, Register> = {
     code: "LI-CERT Briefing",
     title: "LI-CERT · Auditee briefing for control owners (template T-LI-CERT)",
     on: [12, 13],
-    cols: [{ h: "Behaviour", wrap: true, w: 200 }, { h: "Do or do not", opts: ["Do", "Do not"] }],
+    cols: [{ h: "Situation", wrap: true, w: 320 }, { h: "Do or do not", opts: ["Do", "Do not"] }],
     rows: AUDITEE.map((x) => [x, ""]),
     mine: () => true,
     steps: { 12: [1] },
     ident: [0],
-    checkRows: { 12: { label: 0, col: 1, rule: auditeeRow } },
+    checkRows: { 12: { label: 0, col: 1 } },
     handIn: { step: 13, cols: [1], ident: [0] },
-    note: { 12: () => "The Ref-Certification card's last two rows (Learn › Reference pages) list what an auditee does, and does not do, when an auditor asks. Record each behaviour of the briefing as one or the other." },
+    note: { 12: () => "Each row is something a control owner did in front of the auditor. The Ref-Certification card's last two rows (Learn › Reference pages) list what an auditee does, and does not do. Match each situation to the card and record Do or Do not." },
     reads: { 12: ["learn|Reference pages"] },
   },
   // T5.2 (desk-step-builder, 29 Oct 2026). EVP-IDX, template T-EVP ("Evidence ID | File | PBC req. | Control | Date | Source
@@ -2106,7 +2392,13 @@ export const REGISTERS: Record<string, Register> = {
     rows: EVP_REPO.map((r) => [...r, "", "", ""]),
     mine: () => true,
     steps: { 2: [12, 13], 3: [14] },
-    checklist: { 2: { page: "Ref-Defect codes", col: 12, codes: 13, reads: { D1: 4, D2: 5, D3: 6, D4: 4, D5: 7, D6: 8, D7: 3, D8: 9, D9: 10, D10: 11 }, pass: "Accept", fail: "Reject" } },
+    checklist: { 2: {
+      page: "Ref-Defect codes", col: 12, codes: 13, reads: { D1: 4, D2: 5, D3: 6, D4: 4, D5: 7, D6: 8, D7: [3, 1], D8: 9, D9: 10, D10: 11 }, pass: "Accept", fail: "Reject",
+      // Scope is testable: the System cell says "In-scope system" of anything inside the audit, not that it is what this request asked for.
+      aside: { D7: (r, d) => { const q = evpAsked(d, r[2]); return q ? `${r[2]}'s request asks for: ${q[5]}, from the ${q[2]}` : ""; } },
+    } },
+    // Arrives as a colleague's index, two files with each other's request (corrections item 87).
+    draft: { 3: () => ({ col: 14, v: EVP_REPO.map((r) => evpRequest([r[0], r[1], EVP_IDX_SLIPS[r[0]] ?? r[2]]).best) }) },
     // Only accepted files are indexed (step 3 shows those); a rejected file's request is "—".
     only: { 3: (r, p) => evpCodes(p, r[0]) === "none" },
     derived: { 14: { from: [], value: (v, p) => { const c = evpCodes(p, v(0)); return c && c !== "none" ? "—" : null; } } },
@@ -2115,10 +2407,10 @@ export const REGISTERS: Record<string, Register> = {
     // Step 2 is checked on the codes: "none" is Accept, any code is Reject, so the codes carry the decision too.
     checkRows: { 2: { label: 0, col: 13 }, 3: { label: 0, col: 14, rule: evpRequest } },
     note: {
-      2: () => `The audit period of your PBC list is ${PBC_PERIOD}: checks D3 and D4 compare each file with it. Rule R09: walk D1 to D10 for each file and mark every check that fails.`,
-      3: () => "PBC-LIST has one request per control, PBC-01 to PBC-06: Evidence › Audit Requests (PBC) gives each control's request. Only the files accepted in step 2 are indexed, so only they are listed here.",
+      2: () => `The audit period of your PBC list is ${PBC_PERIOD}: checks D3 and D4 compare each file with it. Rule R09: walk D1 to D10 for each file and mark every check that fails. Scope can fail two ways: System says where the file came from, and BKB-POL-016 Section 7.1 also asks that it is the record its request asks for. Check D7 shows both.`,
+      3: () => "A colleague filled in PBC req. from memory. PBC-LIST has one request per control, PBC-01 to PBC-06: read each file's Control against Evidence › Audit Requests (PBC) and choose the right request where it differs. Only the files accepted in step 2 are indexed, so only they are listed here.",
     },
-    reads: { 3: ["evidence|Audit Requests (PBC)"] },
+    reads: { 2: ["evidence|Defect Codes"], 3: ["evidence|Audit Requests (PBC)"], 6: ["evidence|Import Log / Report", "evidence|Upload Config File"] },
     handIn: { step: 6, cols: [12, 13, 14], ident: [0, 1, 2] },
   },
   // EVP-GAP, the coverage gap memo ("Controls with gaps, follow-up requests, owner, due date"): one row per PBC-LIST request.
@@ -2155,9 +2447,9 @@ export const REGISTERS: Record<string, Register> = {
     note: {
       1: () => "Open Evidence › Evidence Library from the toolbar: dataset EVP-REPO lists the files the control owners sent, sorted by control. Count each control's files.",
       4: (d) => `Rule R18 (Learn › Rule tables): ${(d.rules.R18?.[1] ?? "").split(". For")[0]}. Each row lists its control's files with the decision step 2 checked.`,
-      5: (d) => `Rule R18: ${(d.rules.R18?.[1] ?? "").split(". ").slice(1).join(". ")} The audit period is ${PBC_PERIOD}. BKB-POL-016 Section 6.2 says by when the missing files are due; rule R16 (Learn › Rule tables) says when fieldwork starts. Controls without a gap need no request.`,
+      5: (d) => `Rule R18: ${(d.rules.R18?.[1] ?? "").split(". ").slice(1).join(". ")} The audit period is ${PBC_PERIOD}. BKB-POL-016 Section 6.2 says by when the missing files are due; rule R16 (Evidence › Request Evidence) says when fieldwork starts. Controls without a gap need no request.`,
     },
-    reads: { 1: ["evidence|Evidence Library"], 5: ["learn|Rule tables"] },
+    reads: { 1: ["evidence|Evidence Library"], 5: ["evidence|Request Evidence"] },
     handIn: { step: 6, cols: [3, 5, 6], ident: [0, 1, 7] },
   },
   // T6.1 (desk-step-builder, 29 Oct 2026). UAR-TEST, template T-UAR: "Sheet 1 fixed test plan; Sheet 2 sample + A1–A6
@@ -2195,7 +2487,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     checkRows: { 2: { label: 0, col: 1, rule: uarSampling } },
     note: { 2: (d) => `Rule R15 (Learn › Rule tables): ${(d.rules.R15?.[1] ?? "").split(". ")[0]}. A user access review is tested on its decisions, one per account, so what you sample is accounts. The review's facts are on Access Reviews › Start Review; Ref-Sampling is in Learn › Reference pages.` },
-    reads: { 2: ["access|Start Review", "learn|Reference pages"] },
+    reads: { 2: ["access|Start Review", "learn|Reference pages"], 8: ["learn|Reference pages", "testing|Record Result", "systems|AppAdmin (business SaaS)", "evidence|Capture Screenshot"] },
     handIn: { step: 8, cols: [1], ident: [0] },
   },
   "T6.1 S2": {
@@ -2223,7 +2515,7 @@ export const REGISTERS: Record<string, Register> = {
     on: [4, 5, 8],
     cols: [
       // Listed by and Name read as lines under the row on a phone (`list`), so the row is read without scrolling sideways.
-      { h: "User ID" }, { h: "Listed by", wrap: true, w: 190, list: true }, { h: "Name", wrap: true, list: true }, { h: "Role / entitlement", wrap: true }, { h: "Privileged" }, { h: "Approval ticket" },
+      { h: "User ID" }, { h: "Listed by", wrap: true, w: 190, list: true, prose: true }, { h: "Name", wrap: true, list: true }, { h: "Role / entitlement", wrap: true }, { h: "Privileged" }, { h: "Approval ticket" },
       { h: "Last login" }, { h: "Review decision", wrap: true }, { h: "Reviewer", wrap: true }, { h: "Revocation executed", wrap: true }, { h: "HR status" },
       { h: "Termination date", wrap: true }, { h: "Role change date", wrap: true }, { h: "Exception?", opts: ["Exception", "Not an exception"] },
       { h: "Type (U1–U10)", opts: U_CODES.map(([c]) => c) }, { h: "Severity" }, { h: "Action (R20)", wrap: true, w: 240 }, { h: "Owner", wrap: true }, { h: "Due", wrap: true },
@@ -2242,13 +2534,13 @@ export const REGISTERS: Record<string, Register> = {
       18: { from: [14], quiet: true, value: (v) => (v(14) === "—" ? "—" : uCode(v(14))?.[5] ?? "") },
     },
     ident: [0],
-    view: { 4: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 5: [1, 2] },
+    view: { 4: [1, 2], 5: [1, 2] },
     checkRows: { 4: { label: 0, col: 13 }, 5: { label: 0, col: 14 } },
     note: {
-      4: () => `The platform ran the analytics on all ${UAR_X.length} accounts of the review of ${UAR_REVIEW} and listed these ${UAR_LISTED.length}. A listed account is a lead, not yet an exception: it is an exception only if it fails an attribute of the test plan (Learn › Reference pages › Ref-UAR test plan).`,
+      4: () => `The platform ran the analytics on all ${UAR_X.length} accounts of the review of ${UAR_REVIEW} and listed these ${UAR_LISTED.length}. A listed account is a lead, not yet an exception: it is an exception only if it fails an attribute of the test plan (Learn › Reference pages › Ref-UAR test plan). Listed by names the Access Reviews screen that holds it. Each screen checks every one of the ${UAR_X.length}, so an account another screen does not list has passed what that screen checks.`,
       5: () => "Ref-UAR codes (Learn › Reference pages) names each exception type. Choose the type of each exception; its severity is copied from the same page. Access Reviews › Start Review says which break-glass accounts are registered for this system.",
     },
-    reads: { 4: ["learn|Reference pages"], 5: ["learn|Reference pages", "access|Start Review"] },
+    reads: { 4: ["access|Terminated User Check", "access|Privilege Check", "access|Reviewer Sign-off", "learn|Reference pages"], 5: ["learn|Reference pages", "access|Start Review"] },
     handIn: { step: 8, cols: [13, 14, 15, 16, 17, 18], ident: [0, 1] },
   },
   "T6.1 CONC": {
@@ -2257,7 +2549,7 @@ export const REGISTERS: Record<string, Register> = {
     on: [7, 8],
     cols: [
       { h: "Line", wrap: true, w: 200 },
-      { h: "Your answer", wrap: true, w: 220, opts: (_d, r) => (r[0] === UAR_CONC[1] ? ["High", "Medium", "Low"] : r[0] === UAR_CONC[2] ? UAR_SHARE : r[0] === UAR_CONC[3] ? ["Effective", "Effective with exceptions", "Not effective"] : undefined) },
+      { h: "Your answer", wrap: true, w: 220, opts: (_d, r) => (r[0] === UAR_CONC[1] ? ["High", "Medium", "Low"] : r[0] === UAR_CONC[2] ? UAR_SHARE : r[0] === UAR_CONC[3] ? ["Effective", "Effective with exceptions", "Not effective"] : r[0] === UAR_CONC[4] ? [String(UAR_SAMPLE.length), String(UAR_X.length)] : undefined) },
     ],
     rows: UAR_CONC.map((x) => [x, ""]),
     mine: () => true,
@@ -2266,12 +2558,12 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     checkRows: { 7: { label: 0, col: 1 } },
     note: {
-      7: (d, p) => {
-        const ex = UAR_LISTED.filter(([id]) => uarExc(p, id) === "Exception").map(([id]) => { const t = uarType(p, id); return `${id} ${t} (${uCode(t)?.[2] ?? "?"})`; });
-        return `Rule R19 (Learn › Rule tables): ${d.rules.R19?.[1] ?? ""} Sheet 3's exceptions, as steps 4 and 5 checked them: ${ex.join("; ") || "none yet"}. The population is the ${UAR_X.length} accounts of the review.`;
+      7: (_d, p) => {
+        const ex = UAR_LISTED.filter(([id]) => uarExc(p, id) === "Exception").map(([id]) => `${id} ${uarType(p, id)}`);
+        return `Rule R19 is on Control Testing › Record Result, each type's severity on Ref-UAR codes (Learn › Reference pages), and the memo's sentence on Learn & Grow › Sentence frames. Sheet 3's exceptions, as steps 4 and 5 checked them: ${ex.join("; ") || "none yet"}. The population is the ${UAR_X.length} accounts of the review. Sheet 2 walked ${UAR_SAMPLE.length} of them through all six attributes; the analytics ran on all ${UAR_X.length}, and Sheet 3 comes from them.`;
       },
     },
-    reads: { 7: ["learn|Rule tables"] },
+    reads: { 7: ["testing|Record Result", "learn|Sentence frames", "learn|Reference pages"] },
     handIn: { step: 8, cols: [1], ident: [0] },
   },
   // The memo's three parts, written by the platform from the checked answers: the R19 frame, the counts by type, and the
@@ -2281,16 +2573,22 @@ export const REGISTERS: Record<string, Register> = {
     title: "UAR-MEMO · Test memo",
     on: [8],
     cols: [{ h: "Part", wrap: true, w: 150 }, { h: "Text", wrap: true, w: 460 }],
-    rows: ["Conclusion (memo frame, R19)", "Exceptions by type", "Actions (R20)"].map((x) => [x, ""]),
+    rows: ["Conclusion (memo frame, R19)", "Exceptions by type", "Actions (R20)", `Second system: ${UAR_2.system}`, "Tenant check (Tech Lab, AppAdmin)"].map((x) => [x, ""]),
     mine: () => true,
     steps: {},
     derived: {
       1: {
         from: [],
         value: (v, p) => {
+          if (v(0).startsWith("Tenant check")) return labFeed(p, "T6.1") || "No tenant check recorded with this memo.";
           const types = UAR_LISTED.filter(([id]) => uarExc(p, id) === "Exception").map(([id]) => uarType(p, id)).filter(Boolean);
           const by = U_CODES.filter(([c]) => types.includes(c)).map(([c, , sev, act, own, due]) => ({ c, n: types.filter((t) => t === c).length, sev, act, own, due }));
-          if (v(0).startsWith("Conclusion")) return uarConc(p, 3) ? `The control “User access review of Mitratech TeamConnect” is ${uarConc(p, 3).toLowerCase()} (rule R19). We found ${uarConc(p, 0)} exceptions in ${UAR_X.length} items tested.` : "";
+          if (v(0).startsWith("Second")) {
+            const picks = uarXPicks(p).filter((x) => x && x !== "None");
+            const end = p.grids?.["T6.1|UAR-EXTRA"]?.[`${UAR_2.rows.length},12`];
+            return end ? `The control “User access review of ${UAR_2.system}” is ${end.toLowerCase()} (rule R19). We found ${picks.length} exceptions in ${UAR_2.rows.length} items tested: ${picks.join(", ")}.${picks.includes("U1") ? " The login after termination goes to the incident process (BKB-POL-006 Section 6.3)." : ""}` : "";
+          }
+          if (v(0).startsWith("Conclusion")) return uarConc(p, 3) ? `The control “User access review of Mitratech TeamConnect” is ${uarConc(p, 3).toLowerCase()} (rule R19). We found ${uarConc(p, 0)} exceptions in ${uarConc(p, 4) || UAR_X.length} items tested.` : "";
           if (v(0).startsWith("Exceptions")) return by.map((x) => `${x.c} × ${x.n} (${x.sev})`).join("; ");
           return by.map((x) => `${x.c}: ${x.act} — ${x.own}, ${x.due}`).join(". ");
         },
@@ -2298,6 +2596,33 @@ export const REGISTERS: Record<string, Register> = {
     },
     ident: [0],
     handIn: { step: 8, cols: [1], ident: [0] },
+  },
+  // UAR-TEST's fourth sheet: the second system J3 brings (platform-written, corrections item 88). It stays apart from the checked sheets and is worked at the hand-in, where J3 arrives.
+  "T6.1 X": {
+    code: "UAR-EXTRA",
+    title: `UAR-TEST · Sheet 4: UAR-EXTRA, the ${UAR_2.rows.length} accounts of ${UAR_2.system} (registered break-glass account: ${UAR_2.breakglass}). Review date ${UAR_REVIEW}. Test plan and types: Learn › Reference pages`,
+    on: [],
+    cols: [
+      { h: "User ID" }, { h: "Name", wrap: true }, { h: "Role / entitlement", wrap: true }, { h: "Privileged" }, { h: "Approval ticket" }, { h: "Last login" },
+      { h: "Review decision", wrap: true }, { h: "Reviewer", wrap: true }, { h: "Revocation executed", wrap: true }, { h: "HR status" }, { h: "Termination date", wrap: true }, { h: "Role change date", wrap: true },
+      { h: "Type, or R19 on the last line", wrap: true, w: 170, opts: (_d, r) => (r[0] === UAR_2_R19 ? ["Effective", "Effective with exceptions", "Not effective"] : ["None", ...U_CODES.map(([c]) => c)]) },
+    ],
+    rows: [...UAR_2.rows.map((r) => [...r, ""]), [UAR_2_R19, `Conclusion for ${UAR_2.system}`, ...Array<string>(10).fill("—"), ""]],
+    mine: () => true,
+    steps: { 8: [12] },
+    ident: [0],
+    cells: {
+      12: {
+        fix: (v, r) => {
+          if (!v) return null;
+          if (r[0] !== UAR_2_R19) return v === uarXType(r) ? v : null;
+          const xs = UAR_2.rows.map(uarXType).filter((x) => x !== "None").map((x) => uCode(x)?.[2]);
+          return v === (!xs.length ? "Effective" : xs.includes("High") || xs.length / UAR_2.rows.length > 0.05 ? "Not effective" : "Effective with exceptions") ? v : null;
+        },
+        hint: (r) => (r[0] === UAR_2_R19 ? "Apply rule R19 (Control Testing › Record Result) to this sheet's exceptions, on its own ten accounts." : "Walk A1 to A6 on this row against Ref-UAR test plan, then read the type in Ref-UAR codes (Learn › Reference pages)."),
+      },
+    },
+    handIn: { step: 8, cols: [12], ident: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
   },
   // T6.2 (desk-step-builder, 29 Oct 2026). LVR-REC, template T-LVR ("leaver × system rows; UTC times; hours; SLA met
   // (R21); action (R20)"), as a workbook of two sheets: Sheet 1, one row per system log (its time zone, step 1; the leavers
@@ -2352,11 +2677,12 @@ export const REGISTERS: Record<string, Register> = {
     cols: [
       { h: "Employee ID" }, { h: "Leaver type" }, { h: "Termination (UTC)", wrap: true }, { h: "SLA (R21)", opts: "step" },
       ...LVR_SYS.map((x) => ({ h: x, wrap: true, w: 170 })),
-      { h: "Timeliness (R21)", wrap: true }, { h: "Disabled late in", wrap: true, w: 190 }, { h: "Fully disabled within SLA", wrap: true }, { h: "Action (R20)", wrap: true, w: 260 },
+      { h: "Timeliness (R21)", wrap: true }, { h: "Disabled late in", wrap: true, w: 190 }, { h: "Fully disabled within SLA", wrap: true },
     ],
-    rows: LVR_LEAVERS.map(([id, type, term]) => [id, type, term, "", ...LVR_SYS.map(() => ""), "", "", "", ""]),
+    rows: LVR_LEAVERS.map(([id, type, term]) => [id, type, term, "", ...LVR_SYS.map(() => ""), "", "", ""]),
     mine: () => true,
     steps: { 3: [3], 4: [9, 10] },
+    draft: { 3: () => ({ col: 3, v: LVR_LEAVERS.map(([id, type]) => LVR_SLA_SLIPS[id] ?? (type === "Voluntary" ? "4 hours" : "1 hour")) }) },
     derived: {
       // Written once steps 1 and 2 are checked: the log's time in UTC and the time after termination (the template's
       // "hours"); a system with no line for the leaver, "Still active".
@@ -2367,19 +2693,6 @@ export const REGISTERS: Record<string, Register> = {
           const late = lvrLate(p, v(0), v(10));
           if (!late || !lvrMatched(p)) return "";
           return late === "none" && LVR_SYS.every((x) => lvrLine(v(0), x)) ? "Yes" : "No";
-        },
-      },
-      // Rule R20, once step 5's question is answered: Ref-Actions U1 for an account still active. A late disable is already
-      // closed and has no code in Ref-Actions (Content Corrections item 63).
-      12: {
-        from: [],
-        quiet: true,
-        value: (v, p) => {
-          if (!(p.acks?.["T6.2-5"] ?? []).includes("checked") || !lvrMatched(p)) return "";
-          const active = LVR_SYS.filter((x) => !lvrLine(v(0), x));
-          if (active.length) return `U1 (${active.join(", ")}): ${U_CODES[0][3]}. ${U_CODES[0][4]}, ${U_CODES[0][5]}.`;
-          const late = lvrLate(p, v(0), v(10));
-          return late && late !== "none" ? "No R20 action: every account is disabled. The late disable is counted in LVR-KPI." : "—";
         },
       },
     },
@@ -2401,11 +2714,32 @@ export const REGISTERS: Record<string, Register> = {
     },
     checkRows: { 3: { label: 0, col: 3 }, 4: { label: 0, col: 10 } },
     note: {
-      3: () => "Rule R21 (Learn › Rule tables) sets each leaver's SLA from the leaver type HR recorded.",
+      3: () => "A colleague filled in the SLA column from memory. Rule R21 (Learn › Rule tables) sets each leaver's SLA from the leaver type HR recorded: compare every row with it, and correct any SLA that differs.",
       4: () => "The disable times are in UTC, converted with your step 1 answers, and the time after termination is worked out for you. A system shown Still active was found in step 2: mark only the systems disabled after the leaver's SLA.",
     },
     reads: { 3: ["learn|Rule tables"] },
-    handIn: { step: 6, cols: [3, 4, 5, 6, 7, 8, 10, 11, 12], ident: [0, 1, 2] },
+    handIn: { step: 6, cols: [3, 4, 5, 6, 7, 8, 10, 11], ident: [0, 1, 2] },
+  },
+  // REWORK T6.2 (1 Nov 2026). Sheet 3: the accounts steps 2 and 4 found, each with its last sign-in (platform-written, item 89). The pack's "copy the R20 action" is a
+  // judgment now: a code by kind of exception (U1, LV), and an incident where the account was used after termination. Part 2 of step 5.
+  "T6.2 ACT": {
+    code: "LVR-REC Sheet 3",
+    title: "LVR-REC · Sheet 3 · Exceptions and actions (R20)",
+    on: [5],
+    cols: [
+      { h: "Account", wrap: true, w: 170 }, { h: "Termination (UTC)", wrap: true, prose: true }, { h: "Disabled (UTC)", wrap: true, prose: true }, { h: "Last sign-in (UTC)", wrap: true, prose: true },
+      { h: "Action (R20)", wrap: true, w: 150, opts: ["U1", "U1 and incident", "LV", "LV and incident"] },
+    ],
+    rows: (LVR.exceptions as string[][]).map((r) => [...r, ""]),
+    mine: () => true,
+    steps: { 5: [4] },
+    ident: [0],
+    view: { 5: [1, 2, 3] },
+    checkRows: { 5: { label: 0, col: 4 } },
+    then: { 5: "Choose each exception's action (LVR-REC Sheet 3)" },
+    note: { 5: () => "These are the accounts steps 2 and 4 found, with each one's last sign-in from the IAM team's export. Access Reviews › Track Remediation gives the code for each kind of exception. Read Last sign-in against Termination, and BKB-POL-006 Section 6.3 (Policies › Policy Library) for what follows." },
+    reads: { 5: ["access|Track Remediation"] },
+    handIn: { step: 6, cols: [4], ident: [0, 1, 2, 3] },
   },
   // T7.1 (desk-step-builder, 29 Oct 2026). RR-UPD is the office register (the pack's 25 rows, worked, and the three new rows)
   // with its change log, filled through two working sheets (the R06 drafts, the R07 ratings); RR-NOTE goes with it. LI-CHAIN
@@ -2463,7 +2797,7 @@ export const REGISTERS: Record<string, Register> = {
       { h: "Risk ID" }, { h: "Category", wrap: true, w: 150, prose: true }, { h: "Risk title", wrap: true, w: 200, prose: true }, { h: "Risk statement (R06)", wrap: true, w: 280 },
       { h: "Likelihood (inherent)", wrap: true }, { h: "Impact (inherent)", wrap: true }, { h: "Inherent score", wrap: true }, { h: "Inherent rating", wrap: true },
       { h: "Existing controls", wrap: true, w: 240 }, { h: "Likelihood (residual)", wrap: true }, { h: "Impact (residual)", wrap: true }, { h: "Residual score", wrap: true },
-      { h: "Residual rating", wrap: true }, { h: "Decision and due (R08)", wrap: true, w: 180, opts: RRU_DEC }, { h: "Risk owner", wrap: true, w: 160 },
+      { h: "Residual rating", wrap: true }, { h: "Decision and due (R08)", wrap: true, w: 180, opts: RRU_DEC }, { h: "Risk owner", wrap: true, w: 190, opts: RRU_OWNER_LIST },
       { h: "Acceptance authority (R36)", wrap: true, w: 170, opts: "step" }, { h: "KRI", wrap: true, w: 220 },
       { h: "ISO/IEC 27001:2022 controls", wrap: true, w: 180, opts: (d) => ((d.pages["Ref-Keywords"]?.r ?? []) as string[][]).map((r) => String(r[2])) },
       { h: "Treatment plan", wrap: true, w: 260 },
@@ -2476,7 +2810,8 @@ export const REGISTERS: Record<string, Register> = {
     ],
     mine: (r) => !!rruNew(r[0]),
     worked: "The grey rows are the register's existing risks: the rules decide your rows, not the values in theirs.",
-    steps: { 4: [15], 5: [17], 6: [13] },
+    steps: { 4: [14, 15], 5: [17], 6: [13] },
+    cells: { 14: { fix: (v, r) => { const n = rruNew(r[0]); return n && v === rruOwner(n.asset) ? v : null; }, hint: (r) => `Find ${rruNew(r[0])?.asset ?? "the asset"} on Risk Register › Assign Owner and read its owner.` } },
     derived: Object.fromEntries([3, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 16, 18].map((ci) => [ci, {
       from: [], quiet: true,
       value: (v: (c: number) => string, p: Progress) => {
@@ -2486,7 +2821,7 @@ export const REGISTERS: Record<string, Register> = {
         const n = rruNew(id);
         if (!n || ci === 15) return null;
         if (ci === 3) { const b = rruBest(p, 2, n.ev); return b ? n.drafts[+b.slice(-1) - 1] : ""; }
-        if (ci === 14) return n.owner;
+        if (ci === 14) return p.rowChecks?.["T7.1-4"] ? rruOwner(n.asset) : null;
         if (ci === 16) return n.kri;
         if (ci === 18) return rruBest(p, 15, n.id);
         const x = rruScores(p, n.ev);
@@ -2498,11 +2833,11 @@ export const REGISTERS: Record<string, Register> = {
     view: { 4: [2, 11, 12], 5: [1, 2], 6: [2, 11, 12] },
     checkRows: { 4: { label: 0, col: 15 }, 5: { label: 0, col: 17 }, 6: { label: 0, col: 13 } },
     note: {
-      4: (d) => `Rule R36 (Learn › Rule tables): ${d.rules.R36?.[1] ?? ""} Your three rows' residual ratings are worked out from step 3.`,
+      4: (d) => `The owner: a new risk takes the owner of the asset it names, on Risk Register › Assign Owner, whoever raised the event. The assets: ${RRU_NEW.map((n) => `${n.id}, ${n.asset}`).join("; ")}. Who may accept it: rule R36 (Learn › Rule tables): ${d.rules.R36?.[1] ?? ""} Your three rows' residual ratings are worked out from step 3.`,
       5: () => "Ref-Keywords (Learn › Reference pages) gives, for each group of key words, the BKB policy and the Annex A controls. Find the row whose key words the risk's category uses.",
       6: (d) => `Rule R08 (Learn › Rule tables): ${d.rules.R08?.[1] ?? ""}`,
     },
-    reads: { 4: ["learn|Rule tables"], 5: ["learn|Reference pages"], 6: ["learn|Rule tables"] },
+    reads: { 4: ["risk|Assign Owner", "learn|Rule tables"], 5: ["learn|Reference pages"], 6: ["learn|Rule tables"], 9: ["risk|Assign Owner", "learn|Rule tables"] },
     handIn: { step: 9, cols: [3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 17], ident: [0, 2] },
   },
   "T7.1 LOG": {
@@ -2536,8 +2871,8 @@ export const REGISTERS: Record<string, Register> = {
     view: { 7: [2] },
     checkRows: { 7: { label: 0, col: 3 } },
     then: { 7: "Apply C1 and C2 (change log, R22)" },
-    note: { 7: (d) => `Rule R22 (Learn › Rule tables): ${d.rules.R22?.[1] ?? ""} Rule R07 says what a control's state changes. Each row's current values are on Risk Register › Score Risk. Choose the change each event makes; once checked, the platform writes its fields, and the rows that follow from it.` },
-    reads: { 7: ["risk|Score Risk", "learn|Rule tables"] },
+    note: { 7: (d) => `Rule R22 (Learn › Rule tables): ${d.rules.R22?.[1] ?? ""} Rule R07 says what a control's state changes. Each row's current values are on Risk Register › Score Risk, and treatment actions on Risk Register › Mitigation Tracker. Choose the change each event makes; once checked, the platform writes its fields, and the rows that follow from it.` },
+    reads: { 7: ["risk|Score Risk", "risk|Mitigation Tracker", "learn|Rule tables"] },
     handIn: { step: 9, cols: [3, 4, 5, 6, 7], ident: [0, 1] },
   },
   "T7.1 NOTE": {
@@ -2553,7 +2888,7 @@ export const REGISTERS: Record<string, Register> = {
         from: [], quiet: true,
         value: (v, p) => {
           const at = NOTE_LINES.indexOf(v(0));
-          if (at === 0) return `${RRU_NEW.map((n) => n.id).join(", ")} (events N1 to N3)`;
+          if (at === 0) return `${RRU_NEW.map((n) => n.id).join(", ")} (events N1 to N3)${p.msgs["T7.1-J3"] ? `. ${RRU_X.id} (event N4) is held on sheet N4 for the next update` : ""}`;
           if (at === 1) return rruC1(p) ? "R-16-HQ-21 (C1): residual likelihood 1 → 2, so residual 6 (Medium) and acceptance by the Org CRCO. R-16-HQ-12 (C2): treatment action overdue, 50 % complete; ratings unchanged." : "";
           if (at === 4) {
             if (!p.rowChecks?.["T7.1-8"]) return "Written once your two lists are checked.";
@@ -2580,6 +2915,26 @@ export const REGISTERS: Record<string, Register> = {
     reads: { 8: ["risk|Score Risk", "learn|Rule tables"] },
     handIn: { step: 9, cols: [1], ident: [0] },
   },
+  "T7.1 X": {
+    code: "RR-UPD N4",
+    title: `RR-UPD · Sheet N4: event ${RRU_X.ev}, risk ${RRU_X.id}, held for the next register update. ${RRU_X.desc} Asset: ${RRU_X.asset}.`,
+    on: [],
+    cols: [
+      { h: "Line", wrap: true, w: 120 }, { h: "Read", wrap: true, w: 380, prose: true },
+      { h: "Your answer", wrap: true, w: 200, opts: (_d, r) => { const at = RRU_X_LINES.indexOf(r[0]); return at === 0 ? ["Draft 1", "Draft 2", "Draft 3"] : at < 4 ? ["1", "2", "3", "4", "5"] : at === 4 ? RRU_OWNER_LIST : at === 5 ? RRU_DEC : at === 6 ? R36_OPTS : ["Modify", "Retain", "Avoid", "Share"]; } },
+    ],
+    rows: RRU_X_LINES.map((x, i) => [x, [`${RRU_X.facts} ${RRU_X.drafts.map((d, k) => `Draft ${k + 1}: ${d}`).join(" ")}`, RRU_X.often, RRU_X.impact, `Existing controls: ${RRU_X.controls}.`, `Asset: ${RRU_X.asset}. Risk Register › Assign Owner gives its owner.`, "Compare the residual score, likelihood × impact, with the appetite (R08).", "On the residual rating (R07's bands, R36).", "On the residual score (L12)."][i], ""]),
+    mine: () => true,
+    steps: { 9: [2] },
+    ident: [0],
+    cells: {
+      2: {
+        fix: (v, r) => (v && v === rruXWants()[RRU_X_LINES.indexOf(r[0])] ? v : null),
+        hint: (r) => `Read this line again: ${["rule R06, each part of the frame in its place, and the asset as the register names it", "rule R07 and BKB-ERM-001 Section 6.2", "rule R07 and BKB-ERM-001 Section 6.3", "rule R07: count the controls marked working", "Risk Register › Assign Owner", "rule R08 on the residual score", "rule R36 on the residual rating", "rule L12 on the residual score"][RRU_X_LINES.indexOf(r[0])]}.`,
+      },
+    },
+    handIn: { step: 9, cols: [2], ident: [0] },
+  },
   "T7.1 CHAIN": {
     code: "LI-CHAIN",
     title: "LI-CHAIN · Asset–threat–control chains (template T-LI-CHAIN)",
@@ -2597,7 +2952,7 @@ export const REGISTERS: Record<string, Register> = {
     mine: () => true,
     steps: { 10: [3], 11: [9], 12: [10], 13: [11, 12, 13] },
     derived: {
-      ...Object.fromEntries([4, 5, 6, 7].map((ci) => [ci, { from: [], quiet: true, value: (v: (c: number) => string, p: Progress) => { const c = RRU_CHAIN.find((x) => x.asset === v(0)); return c && rruBest(p, 10, c.asset) ? c.ref[ci - 3] : ""; } }])),
+      ...Object.fromEntries([4, 5, 6, 7].map((ci) => [ci, { from: [], quiet: true, value: (v: (c: number) => string, p: Progress) => { const c = RRU_CHAIN.find((x) => x.asset === v(0)); return (c && RRU_TYPES[rruBest(p, 10, c.asset)]?.[ci - 4]) ?? ""; } }])),
       8: { from: [], quiet: true, value: (v, p) => { const n = rruNew(v(2)), x = n && rruScores(p, n.ev); return x ? String(x.rs) : ""; } },
     },
     cells: {
@@ -2612,12 +2967,14 @@ export const REGISTERS: Record<string, Register> = {
     },
     ident: [0],
     view: { 10: [1], 11: [2, 8], 12: [3, 5], 13: [10] },
+    // Arrives as a colleague's draft: the two authentication controls swapped, the mix-up people really make. A swap repeats no line.
+    draft: { 12: () => ({ col: 10, v: ["A.8.15 Logging", "A.5.17 Authentication information", "A.8.5 Secure authentication"] }) },
     checkRows: { 10: { label: 0, col: 3 }, 11: { label: 0, col: 9 }, 12: { label: 0, col: 10 } },
     then: { 13: "Tag each control with its ISO/IEC 27002 attributes (L05)" },
     note: {
-      10: () => "Ref-Chain (Learn › Reference pages) lists asset types, each information or a supporting asset, with its typical threat, vulnerability, impact and Annex A control. Each asset's line here is from the asset register. Choose each asset's type; once checked, the platform copies the type's threat, vulnerability and impact.",
+      10: () => "Ref-Chain (Learn › Reference pages) lists asset types, each information or a supporting asset, with its typical threat, vulnerability, impact and Annex A control. Each asset's line here is from the asset register. Choose each asset's type; once checked, the platform copies the type's typical threat, vulnerability and impact: the baseline for that kind of asset, which the risk's own event, in RR-UPD, sits beside.",
       11: (d) => `Rule L12 (Learn › Rule tables): ${(d.rules.L12?.[1] ?? "").split(" Controls = ")[0]} Each risk's residual score is from RR-UPD.`,
-      12: () => "Ref-Chain (Learn › Reference pages): the Annex A control is on the row of each asset's type, beside its threat. Type its ID; its title is added for you.",
+      12: () => "A colleague filled this column from memory and nobody has checked it. Compare each row with its asset type's row in Ref-Chain (Learn › Reference pages), where the Annex A control sits beside the threat, and type the ID there wherever the row differs; its title is added for you.",
       13: (d) => `Rule L05 (Learn › Rule tables): ${d.rules.L05?.[1] ?? ""}`,
     },
     reads: { 10: ["learn|Reference pages"], 11: ["learn|Rule tables"], 12: ["learn|Reference pages"], 13: ["learn|Reference pages"] },
@@ -2630,7 +2987,7 @@ export const REGISTERS: Record<string, Register> = {
     cols: [
       { h: "Risk ID" }, { h: "Risk statement", wrap: true, w: 280, prose: true }, { h: "Residual (now)", wrap: true }, { h: "Option (L12)", wrap: true },
       { h: "Action", wrap: true, w: 300, opts: (_d, r) => [...(RRU_ACTIONS[r[0]] ?? [])].sort() },
-      { h: "Control (SoA ID)", wrap: true, w: 250, opts: (d, r) => { const n = rruNew(r[0]); return n ? [...annexIn(keywordsOf(d, n.cat)), RTP_NONE] : undefined; } },
+      { h: "Control (SoA ID)", wrap: true, w: 250, opts: (d, r) => { const n = rruNew(r[0]); return n ? [...annexIn(keywordsOf(d, n.cat)), ...(n.decoy ? [n.decoy] : []), RTP_NONE] : undefined; } },
       { h: "Owner", wrap: true, w: 160 }, { h: "Due (R08)", wrap: true }, { h: "Expected residual", wrap: true }, { h: "Residual accepted by (R36)", wrap: true, w: 170, opts: R36_OPTS },
       { h: "Owner approval", wrap: true, w: 220 },
     ],
@@ -2641,8 +2998,8 @@ export const REGISTERS: Record<string, Register> = {
       1: { from: [], quiet: true, value: (v, p) => { const n = rruNew(v(0)), b = n && rruBest(p, 2, n.ev); return n && b ? n.drafts[+b.slice(-1) - 1] : ""; } },
       2: { from: [], quiet: true, value: (v, p) => { const n = rruNew(v(0)), x = n && rruScores(p, n.ev); return x ? `${x.rs} (${x.Lr} × ${x.I}, ${rruRating(x.rs)})` : ""; } },
       3: { from: [], quiet: true, value: (v, p) => { const c = chainOf(v(0)); return c ? rruBest(p, 11, c.asset) : ""; } },
-      6: { from: [], quiet: true, value: (v) => rruNew(v(0))?.owner ?? "" },
-      10: { from: [], quiet: true, value: (v, p) => (p.rowChecks?.["T7.1-19"] ? `Approved by the ${rruNew(v(0))?.owner ?? "risk owner"}, ${RRU.plan} (simulated)` : "") },
+      6: { from: [], quiet: true, value: (v) => rruOwner(rruNew(v(0))?.asset ?? "") },
+      10: { from: [], quiet: true, value: (v, p) => (p.rowChecks?.["T7.1-19"] ? `Approved by the ${rruOwner(rruNew(v(0))?.asset ?? "") || "risk owner"}, ${RRU.plan} (simulated)` : "") },
     },
     cells: {
       7: { fix: (v) => (/^\s*none\s*$/i.test(v) ? "none" : isoDate(v)), hint: () => "Type a date, as 2027-01-31 or 31 January 2027, or none." },
@@ -2653,12 +3010,12 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 15: { label: 0, col: 4 }, 16: { label: 0, col: 5 }, 17: { label: 0, col: 7 }, 18: { label: 0, col: 8 }, 19: { label: 0, col: 9 } },
     note: {
       15: () => "Each risk's statement and option are copied from RR-UPD and step 11. Its event's facts, cause first, are in RRU-EVENTS on Risk Register › New Risk. Choose the action that carries out the option at the risk's cause.",
-      16: (d) => `Rule L12 (Learn › Rule tables): ${(d.rules.L12?.[1] ?? "").split(". ").slice(-1)[0]} Each row offers the controls of its category's row in Ref-Keywords (Learn › Reference pages), with their titles. Choose the one the action puts in place.`,
+      16: (d) => `Rule L12 (Learn › Rule tables): ${(d.rules.L12?.[1] ?? "").split(". ").slice(-1)[0]} Only the controls on the category's row of Ref-Keywords (Learn › Reference pages) count. The categories: ${RRU_NEW.map((n) => `${n.id}, ${n.cat}`).join("; ")}. Choose the one the action puts in place.`,
       17: (d) => `Rule R08 (Learn › Rule tables): ${d.rules.R08?.[1] ?? ""} The plan is dated ${RRU.plan}: count calendar days from it. The owner is the risk's owner in RR-UPD.`,
       18: (d) => `Rule R07 (Learn › Rule tables): ${(d.rules.R07?.[1] ?? "").split(" Rating: ")[0]} Count the action's control as working; a retained risk has no new control.`,
       19: (d) => `Rule R36 (Learn › Rule tables): ${d.rules.R36?.[1] ?? ""} Rate the expected residual with R07's bands: 1–5 Low, 6–11 Medium, 12–19 High, 20–25 Critical.`,
     },
-    reads: { 15: ["risk|New Risk"], 16: ["learn|Rule tables"], 17: ["learn|Rule tables"], 18: ["learn|Rule tables"], 19: ["learn|Rule tables"] },
+    reads: { 15: ["risk|New Risk"], 16: ["learn|Rule tables", "learn|Reference pages"], 17: ["learn|Rule tables"], 18: ["learn|Rule tables"], 19: ["learn|Rule tables"] },
     handIn: { step: 20, cols: [3, 4, 5, 6, 7, 8, 9, 10], ident: [0] },
   },
   "T7.2": {
@@ -2683,11 +3040,11 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 1: { label: 0, col: 1 }, 2: { label: 0, col: 6 }, 3: { label: 0, col: 10 } },
     then: { 1: "Rank the Top-5 (R23)", 3: "Choose each risk's “so what” line (R23)" },
     note: {
-      1: (d) => `Rule R23 (Learn › Rule tables): ${(d.rules.R23?.[1] ?? "").split(" Trend:")[0]} Where the residual and the inherent scores are both equal, R23's own tie-break for the acceptance applies: the lower Risk ID first. The updated register, 28 risks, is on Risk Register › Score Risk.`,
+      1: (d) => `Rule R23 (Learn › Rule tables): ${(d.rules.R23?.[1] ?? "").split(" Trend:")[0]} The updated register, 28 risks, is on Risk Register › Score Risk.`,
       2: () => `Rule R23: score went up ↑, down ↓, no change →. Compare each risk's residual score now with its score at the last board report, ${TOP.board}; Risk Register › Heat Map with KRIs lists what moved since then. A risk added since that report had no score then: its score went up.`,
-      3: (d) => `Rule R23 (Learn › Rule tables): ${(d.rules.R23?.[1] ?? "").match(/"So what" frame: "[^"]+"/)?.[0] ?? ""} Each risk's statement is under its row.`,
+      3: (d) => `Rule R23 (Learn › Rule tables): ${(d.rules.R23?.[1] ?? "").match(/"So what" frame: "[^"]+"/)?.[0] ?? ""} Each risk's statement is under its row. Learn & Grow › Business Risk Translator takes one statement apart, on a risk outside your Top-5.`,
     },
-    reads: { 1: ["risk|Score Risk", "learn|Rule tables"], 3: ["learn|Rule tables"] },
+    reads: { 1: ["risk|Score Risk", "learn|Rule tables"], 3: ["learn|Rule tables", "learn|Business Risk Translator"], 5: ["learn|Rule tables"] },
     handIn: { step: 5, cols: [1, 6, 10], ident: [0, 2] },
   },
   "T7.2 ACC": {
@@ -2733,24 +3090,24 @@ export const REGISTERS: Record<string, Register> = {
     code: "LI-RAM",
     title: "LI-RAM · Risk assessment method card (template T-LI-RAM)",
     on: [7, 8, 9, 10, 11],
-    cols: [{ h: "Element", wrap: true, w: 190 }, { h: "What the card says", wrap: true, w: 320, opts: (_d, r) => (RAM_ONLY[9].includes(r[0]) ? R36_OPTS : r[0] === RAM_ONLY[10][0] ? RAM_REC : undefined) }, { h: "BKB source", wrap: true, w: 170 }],
+    cols: [{ h: "Element", wrap: true, w: 190 }, { h: "What the card says", wrap: true, w: 320, opts: (_d, r) => (RAM_ONLY[9].includes(r[0]) ? RAM_AUTH : r[0] === RAM_ONLY[10][0] ? RAM_REC : undefined) }, { h: "BKB source", wrap: true, w: 170 }],
     rows: RAM_ROWS,
     mine: () => true,
     steps: { 7: [1], 8: [1], 9: [1], 10: [1] },
     only: Object.fromEntries(Object.entries(RAM_ONLY).map(([n, xs]) => [n, (r: string[]) => xs.includes(r[0])])),
-    load: ["BKB-ERM-001"],
+    draft: { 7: ramDraft(7), 8: ramDraft(8), 9: ramDraft(9) },
     cells: { 1: { fix: (v, r) => ramFix(v, r), hint: (r) => RAM_HINT[r[0]] ?? "" } },
     ident: [0],
     view: { 7: [2], 8: [2], 9: [2], 10: [2] },
-    checkRows: { 9: { label: 0, col: 1 }, 10: { label: 0, col: 1 } },
-    then: { 7: "Copy the scale names into LI-RAM" },
+    checkRows: { 7: { label: 0, col: 1 }, 8: { label: 0, col: 1 }, 9: { label: 0, col: 1 }, 10: { label: 0, col: 1 } },
+    then: { 7: "Check the scale names in LI-RAM" },
     note: {
-      7: () => "LI-RAM is the method card another assessor follows to reach comparable results. Copy the names of each scale from BKB-ERM-001 (Policies › Policy Library), from score 1 up to score 5, separated by ;.",
-      8: () => "BKB-ERM-001 (Policies › Policy Library): Section 4 gives the appetite of each criticality band; GlobalConnect is a LOW-criticality organisation. Section 7 gives the due days of each residual rating.",
-      9: (d) => `Rule R36 (Learn › Rule tables): ${d.rules.R36?.[1] ?? ""}`,
+      7: () => "LI-RAM is the method card another assessor follows to reach comparable results. A colleague filled these two rows from memory. Read each against BKB-ERM-001 (Policies › Policy Library), from score 1 up to score 5, and correct any name that differs. Keep the names separated by ;.",
+      8: () => "A colleague filled these two rows from memory. In BKB-ERM-001 (Policies › Policy Library), Section 4 gives the appetite of each criticality band; GlobalConnect is a LOW-criticality organisation. Section 7 gives the due days of each residual rating. Correct any value that differs.",
+      9: () => "A colleague filled these four rows and nobody has checked them. Read each against the Charter's delegation table, Section 6.1 (Policies › Policy Library), in the column for GlobalConnect's criticality band, and choose the authority it names where the row differs.",
       10: () => "Ref-Clause map (Learn › Reference pages), row 8.2: the documented information clause 8.2 requires, and the deliverables that evidence it.",
     },
-    reads: { 9: ["learn|Rule tables"], 10: ["learn|Reference pages"] },
+    reads: { 10: ["learn|Reference pages"] },
     handIn: { step: 11, cols: [1], ident: [0] },
   },
   "T7.2 OBJ": {
@@ -2782,7 +3139,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 14: [1, 2, 3] },
     checkRows: { 14: { label: 0, col: 4 } },
-    note: { 14: (d) => `Rule L15 (Learn › Rule tables): ${d.rules.L15?.[1] ?? ""} The Accountable role of each ISMS process is in Ref-ISMS processes (Learn › Reference pages), column Owner (Accountable): the role it names first. A milestone no ISMS process covers keeps the owner Ref-Milestones gives; the Stage 1 audit is the certification body's (T5.1), not an internal audit. Start and end are worked out for you from week 12 (${TOP.week12}, Home › Calendar).` },
+    note: { 14: (d) => `Rule L15 (Learn › Rule tables): ${d.rules.L15?.[1] ?? ""} Ref-Milestones (Learn › Reference pages) names the owner itself where no ISMS process covers the milestone. Elsewhere it names the process: read that process's Accountable role in Ref-ISMS processes, column Owner (Accountable), the role it names first. Start and end are worked out for you from week 12 (${TOP.week12}, Home › Calendar).` },
     reads: { 14: ["learn|Rule tables", "learn|Reference pages"] },
     handIn: { step: 16, cols: [4], ident: [0] },
   },
@@ -2821,7 +3178,7 @@ export const REGISTERS: Record<string, Register> = {
   },
   "T8.1 DUE": {
     code: "VUL-TEST Due-date check",
-    title: "VUL-TEST · Due-date check, one finding of each class",
+    title: "VUL-TEST · Due-date formula check, one finding of each class",
     on: [2],
     cols: [{ h: "Finding" }, { h: "Class (R24)", wrap: true }, { h: "First detected", wrap: true }, { h: "Due date", wrap: true }],
     rows: VUL_DUE.map((id) => [id, "", vulRow(id)![8], ""]),
@@ -2832,7 +3189,9 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 2: [1, 2] },
     checkRows: { 2: { label: 0, col: 3 } },
-    note: { 2: () => "Rule R24: due = first detected + the class's SLA in days. Each finding's class is the one your step 1 gave its kind. Count calendar days, across the end of a month." },
+    // Arrives as what the colleague's formula gives (corrections item 92). A wrong row is a formula fault, found only by working the date out.
+    draft: { 2: () => ({ col: 3, v: VUL_DUE_DRAFT }) },
+    note: { 2: () => "A colleague wrote the workbook's due-date formula, and nobody has checked it. Due date shows what it gives. Rule R24: due = first detected + the class's SLA in days. Each finding's class is the one your step 1 gave its kind. Work out each date by hand, in calendar days, and correct any date that differs." },
   },
   "T8.1": {
     code: "VUL-TEST Findings",
@@ -2873,10 +3232,10 @@ export const REGISTERS: Record<string, Register> = {
     mine: () => true,
     steps: { 4: [5] },
     ident: [0],
-    view: { 4: [1, 2, 3, 4] },
+    view: { 4: [1] },
     checkRows: { 4: { label: 0, col: 5 } },
-    note: { 4: (d) => `Rule R24 (Learn › Rule tables): ${(d.rules.R24?.[1] ?? "").match(/Exception valid.*$/)?.[0] ?? ""} The test date is ${VUL_TEST}.` },
-    reads: { 4: ["learn|Rule tables"] },
+    note: { 4: (d) => `Rule R24 (Learn › Rule tables): ${(d.rules.R24?.[1] ?? "").match(/Exception valid.*$/)?.[0] ?? ""} The test date is ${VUL_TEST}. Who approved each exception, its compensating control and its expiry are in the exception register: Policies › Policy Exceptions.` },
+    reads: { 4: ["policies|Policy Exceptions", "learn|Rule tables"] },
     handIn: { step: 8, cols: [5], ident: [0] },
   },
   "T8.1 COMP": {
@@ -2925,12 +3284,28 @@ export const REGISTERS: Record<string, Register> = {
     code: "LI-KPI",
     title: "LI-KPI · Measure card (template T-LI-KPI)",
     on: [9, 12],
-    cols: [{ h: "Field", wrap: true, w: 150 }, { h: "What the card says", wrap: true, w: 320 }],
-    rows: KPI_FIELDS,
+    cols: [
+      { h: "Field", wrap: true, w: 110 },
+      { h: "What the card says", wrap: true, w: 300, opts: (_d, r) => (KPI_OTHER[r[0]] ? [kpiCard(r[0]), ...KPI_OTHER[r[0]]].sort() : undefined) },
+      { h: "What it answers", wrap: true, w: 150 },
+    ],
+    rows: KPI_FIELDS.map((f) => [f[0], "", KPI_ASKS[f[0]] ?? ""]),
     mine: () => true,
-    steps: {},
-    derived: { 1: { from: [], quiet: true, value: (v, p) => (v(0) === "Who evaluates" ? ((p.acks?.["T8.1-10"] ?? []).includes("checked") ? "CISO" : "") : null) } },
+    steps: { 9: [1] },
+    // Name is fixed and Who evaluates is step 10's question. A learner past step 9 under the old read-only card keeps the card's values.
+    derived: {
+      1: {
+        from: [], quiet: true,
+        value: (v, p) => (v(0) === "Who evaluates" ? ((p.acks?.["T8.1-10"] ?? []).includes("checked") ? "CISO" : "") : v(0) === "Name" || (p.done?.["T8.1-9"] && !p.rowChecks?.["T8.1-9"]) ? kpiCard(v(0)) : null),
+      },
+    },
+    only: { 9: (r) => !!KPI_OTHER[r[0]] },
     ident: [0],
+    view: { 9: [2] },
+    draft: { 9: () => ({ col: 1, v: KPI_FIELDS.map((f) => (KPI_OTHER[f[0]] ? (KPI_SLIPS[f[0]] ?? f[1]) : "")) }) },
+    checkRows: { 9: { label: 0, col: 1 } },
+    note: { 9: () => "A colleague filled LI-KPI from memory, and nobody has checked it. Read each row against Ref-Measure card (Learn › Reference pages) and choose the card's value where the row differs. What it answers says what each field is for: most are questions ISO/IEC 27001 clause 9.1 asks of every measure." },
+    reads: { 9: ["learn|Reference pages"] },
     handIn: { step: 12, cols: [1], ident: [0] },
   },
   "T8.1 RES": {
@@ -2979,8 +3354,8 @@ export const REGISTERS: Record<string, Register> = {
     derived: { 1: { from: [], value: (v, p) => (v(0) === CT_SAMP[2] ? (p.rowChecks?.["T8.2-2"] ? `${CT.sample.join(" and ")}: systematic, every 2nd quarter from quarter ${CT.sample[0].slice(1)} (seed ${CT.seed}, mod 4 = ${CT.seed % 4}). Their ${CT_SAMPLE.length} records are all tested, in Sheet 2.` : "") : null) } },
     ident: [0],
     checkRows: { 2: { label: 0, col: 1 } },
-    note: { 2: (d) => `Rule R15 (Learn › Rule tables): ${(d.rules.R15?.[1] ?? "").split(". ")[0]}. The control is LearnTech's privileged-access review: its frequency for LearnTech is in BKB-ADD-36 Section 5 (Policies › Policy Library). Ref-Sampling is in Learn › Reference pages.` },
-    reads: { 2: ["learn|Reference pages"] },
+    note: { 2: (d) => `Rule R15 (Learn › Rule tables): ${(d.rules.R15?.[1] ?? "").split(". ")[0]}. Control Testing › Restore Test Review shows which of the card's three controls is assigned to you, and what it holds; its frequency for LearnTech is in BKB-ADD-36 Section 5 (Policies › Policy Library). Ref-Sampling is in Learn › Reference pages.` },
+    reads: { 2: ["testing|Restore Test Review", "learn|Reference pages"] },
     handIn: { step: 7, cols: [1], ident: [0] },
   },
   "T8.2 S2": {
@@ -2996,7 +3371,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 3: [9, 10] },
     checklist: { 3: { page: "", checks: () => CT.checks as string[][], col: 9, codes: 10, reads: { A1: [3, 5], A2: [1, 3], A3: 6, A4: 7, A5: [2, 4], A6: [5, 8] }, pass: "Pass", fail: "Fail" } },
     checkRows: { 3: { label: 0, col: 10 } },
-    note: { 3: () => `The script's quarters (Sheet 1): ${(CT.quarters as string[][]).filter(([q]) => CT.sample.includes(q)).map(([q, m]) => `${q} ${m}`).join(", ")}. A2 allows ${CT.tolerance} days after a quarter ends. The platform selected ${CT.sample.join(" and ")} (seed ${CT.seed}): every record of both quarters is tested.` },
+    note: { 3: () => `The script's quarters (Sheet 1): ${(CT.quarters as string[][]).filter(([q]) => CT.sample.includes(q)).map(([q, m]) => `${q} ${m}`).join(", ")}. A2 allows ${CT.tolerance} days after a quarter ends. The platform selected ${CT.sample.join(" and ")} (seed ${CT.seed}): every record of both quarters is tested, with CT-EXTRA's ${CT_X.map((r) => r[0]).join(" and ")} at the foot of the sheet.` },
     ident: [0],
     handIn: { step: 7, cols: [9, 10], ident: [0, 1] },
   },
@@ -3004,15 +3379,15 @@ export const REGISTERS: Record<string, Register> = {
     code: "CT-SCRIPT Sheet 3",
     title: "CT-SCRIPT · Sheet 3 · Deviations (R26)",
     on: [4, 7],
-    cols: [{ h: "Record" }, { h: "Quarter" }, { h: "Privileged account", wrap: true }, { h: "Review date", wrap: true }, { h: "Attributes failed", wrap: true }, { h: "Rating (R26)", wrap: true, opts: "step" }],
-    rows: CT_DEV.map((id) => { const r = ctRow(id); return [id, r[1], r[2], r[3], "", ""]; }),
+    cols: [{ h: "Record" }, { h: "Quarter" }, { h: "Privileged account", wrap: true }, { h: "Review date", wrap: true }, { h: "Attributes failed", wrap: true }, { h: "Rating (R26)", wrap: true, opts: "step" }, { h: "IAM team's answer to your query", wrap: true, w: 240, prose: true }],
+    rows: CT_DEV.map((id) => { const r = ctRow(id); return [id, r[1], r[2], r[3], "", "", (CT.queries as Record<string, string>)[id]]; }),
     mine: () => true,
     steps: { 4: [5] },
     derived: { 4: { from: [], quiet: true, value: (v, p) => ctBest(p, 3, v(0)) } },
     ident: [0],
-    view: { 4: [1, 2, 3, 4] },
+    view: { 4: [1, 2, 3, 4, 6] },
     checkRows: { 4: { label: 0, col: 5 } },
-    note: { 4: (d) => `Rule R26 (Learn › Rule tables): ${d.rules.R26?.[1] ?? ""} Read its ratings in order and take the first that fits. The records are of the privileged accounts of LearnTech's Amsterdam office; BKB-ADD-36 Section 8 (Policies › Policy Library) gives each office's Mission Critical assets.` },
+    note: { 4: () => `Rule R26 is in Learn › Rule tables: read its ratings in order and take the first that fits. The records are of the privileged accounts of LearnTech's Amsterdam office; BKB-ADD-36 Section 8 (Policies › Policy Library) gives each office's Mission Critical assets. The last column is what the IAM team answered when you queried each deviation.` },
     reads: { 4: ["learn|Rule tables"] },
     handIn: { step: 7, cols: [5], ident: [0] },
   },
@@ -3031,25 +3406,30 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     checkRows: { 5: { label: 0, col: 1 } },
     note: {
-      5: (d, p) => {
+      5: (_d, p) => {
         const dev = CT_DEV.map((id) => `${id} ${ctBest(p, 3, id)} (${ctBest(p, 4, id) || "?"})`);
-        return `Rule R19 (Learn › Rule tables): ${d.rules.R19?.[1] ?? ""} Sheet 3's deviations, as steps 3 and 4 checked them: ${dev.join("; ")}. ${CT_SAMPLE.length} records were tested.`;
+        return `Rule R19 is the first row of Control Testing › Record Result: read all of it. Sheet 3's deviations, as steps 3 and 4 checked them: ${dev.join("; ")}. ${CT_SAMPLE.length} records were tested.`;
       },
     },
+    reads: { 5: ["testing|Record Result"] },
     handIn: { step: 7, cols: [1], ident: [0] },
   },
   "T8.2 MEMO": {
     code: "CT-MEMO",
     title: "CT-MEMO · Test memo",
     on: [6, 7],
-    cols: [{ h: "Part", wrap: true, w: 110 }, { h: "What the memo says", wrap: true, w: 230, opts: (d, r) => (r[0] === CT_MEMO[3] ? ((d.pages["Ref-Actions"]?.r ?? []) as string[][]).map((x) => `${x[0]}: ${x[2]}`) : undefined) }],
+    cols: [{ h: "Part", wrap: true, w: 110 }, { h: "What the memo says", wrap: true, w: 230, opts: (d, r) => (r[0] === "Effect" ? (CT.effects as string[]) : r[0] === CT_MEMO[6] ? ((d.pages["Ref-Actions"]?.r ?? []) as string[][]).map((x) => `${x[0]}: ${x[2]}`) : undefined) }],
     rows: CT_MEMO.map((x) => [x, x === "Scope" ? `The quarterly privileged-access review of LearnTech's Amsterdam office, October 2025 to September 2026: the ${CT_SAMPLE.length} review records of ${CT.sample.join(" and ")}, tested against CT-SCRIPT A1 to A6.` : ""]),
     mine: () => true,
     steps: { 6: [1] },
+    // Raise Finding's 5C: Condition, Criteria and Cause are written from the checked sheets; Effect and Recommendation are the learner's.
+    only: { 6: (r) => !["Scope", "Criteria", "Cause"].includes(r[0]) },
     derived: {
       1: {
         from: [], quiet: true,
         value: (v, p) => {
+          if (v(0) === "Criteria") { const f = new Set(CT_DEV.flatMap((id) => ctBest(p, 3, id).split("; "))); return ctBest(p, 3, CT_DEV[0]) ? `CT-SCRIPT Sheet 1: ${(CT.checks as string[][]).filter(([c]) => f.has(c)).map(([c, t]) => `${c} ${t.split(":")[0]}`).join(", ")}.` : ""; }
+          if (v(0) === "Cause") return p.rowChecks?.["T8.2-6"] ? "Control deviation (Ref-Actions CT). Why it happened goes in LI-NCR's root cause." : "";
           if (v(0) === CT_MEMO[1]) { const c = CT_CONC.map((x) => ctBest(p, 5, x)); return c[2] ? `The control privileged-access review is ${c[2]} (rule R19). We found ${c[0]} deviation${c[0] === "1" ? "" : "s"} in ${CT_SAMPLE.length} items tested.` : ""; }
           if (v(0) === CT_MEMO[2]) return CT_DEV.map((id) => ctDev(p, id)).join(" ");
           return null;
@@ -3058,9 +3438,9 @@ export const REGISTERS: Record<string, Register> = {
     },
     ident: [0],
     checkRows: { 6: { label: 0, col: 1 } },
-    then: { 6: "Write the memo's recommendation (R25)" },
-    note: { 6: (d) => `Rule R25 (Learn › Rule tables): ${d.rules.R25?.[1] ?? ""} Ref-Actions (Learn › Reference pages) names each deviation type and its action. Your test found one deviation type, so the memo has one recommendation.` },
-    reads: { 6: ["learn|Reference pages"] },
+    then: { 6: "Write the memo's finding: its effect and recommendation" },
+    note: { 6: (d) => `The memo states its finding in the five parts of Control Testing › Raise Finding. The platform writes what your checked sheets settle; two parts are yours. Effect: take PR-022, the first deviation: read its line under Condition, and say what it shows was exposed. Recommendation: rule R25 (Learn › Rule tables): ${d.rules.R25?.[1] ?? ""} Ref-Actions (Learn › Reference pages) names each deviation type and its action. Both of your deviations fall under one row, so the memo has one recommendation.` },
+    reads: { 6: ["testing|Raise Finding", "learn|Reference pages"] },
     handIn: { step: 7, cols: [1], ident: [0] },
   },
   "T8.2 NCR": {
@@ -3099,8 +3479,9 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 9: { label: 0, col: 2 }, 10: { label: 0, col: 2 } },
     note: {
       9: () => `The requirement is one of BKB-POL-006's (Policies › Policy Library); the quarters are in CT-SCRIPT Sheet 1: ${(CT.quarters as string[][]).map(([q, m]) => `${q} ${m}`).join(", ")}.`,
-      10: (d) => `Rule L17 (Learn › Rule tables): ${d.rules.L17?.[1] ?? ""} Your test: ${CT_SAMPLE.length} records of ${CT.sample.join(" and ")} tested, ${CT_DEV.length} deviation (Sheet 3).`,
+      10: () => `Rule L17 is in Learn › Rule tables. Your test: ${CT_SAMPLE.length} records of ${CT.sample.join(" and ")} tested, ${CT_DEV.length} deviations (Sheet 3).`,
     },
+    reads: { 10: ["learn|Rule tables"] },
     handIn: { step: 12, cols: [2], ident: [0] },
   },
   "T8.2 WHY": {
@@ -3141,13 +3522,33 @@ export const REGISTERS: Record<string, Register> = {
     title: "VEN-TIER · Tiering record · Vendor tier (R35)",
     on: [2, 5],
     cols: [{ h: "Vendor", wrap: true, w: 180 }, { h: "Tier (R35)", wrap: true, w: 140, opts: "step" }],
-    rows: [[VEN_NAME, ""]],
+    rows: VEN.vendors.map((v) => [v, ""]),
     mine: () => true,
     steps: { 2: [1] },
     ident: [0],
     checkRows: { 2: { label: 0, col: 1 } },
-    note: { 2: (d, p) => `Rule R35 (Learn › Rule tables): ${d.rules.R35?.[1] ?? ""} Your facts, as step 1 checked them: ${VEN.facts.map(([f]) => `${f}: ${venBest(p, 1, f) || "not checked yet"}`).join("; ")}.` },
+    note: { 2: (d, p) => `Rule R35 (Learn › Rule tables): ${d.rules.R35?.[1] ?? ""} Lumen's facts, as step 1 checked them: ${VEN.facts.map(([f]) => `${f}: ${venBest(p, 1, f) || "not checked yet"}`).join("; ")}. Two more forms came in: Quill's and MathMind's are below Lumen's in Vendors › Vendor Intake. Read their facts the same way, with BKB-POL-013 Section 3.1.` },
+    reads: { 2: ["vendors|Vendor Intake"] },
     handIn: { step: 5, cols: [1], ident: [0] },
+  },
+  // REWORK (2 Nov 2026): what each vendor's tier sets, part 2 of step 3: the questions sent (R27 on the bank) and the cycle (Reassessment Reminder).
+  // One column per row kind, as step 1's facts, so one check judges both and a Critical vendor's "all 17" is not the only reading of R27 the learner meets.
+  "T9.1 PLAN": {
+    code: "VEN-TIER Plan",
+    title: "VEN-TIER · Tiering record · What each tier sets",
+    on: [3, 5],
+    cols: [{ h: "Item", wrap: true, w: 280 }, { h: "Tier (step 2)", wrap: true, w: 90 }, { h: "Your answer", wrap: true, w: 160, opts: (_d, r) => (r[0].endsWith(VEN_PLAN[0]) ? VEN.counts : VEN.cycles) }],
+    rows: VEN_PLAN.flatMap((x) => VEN.vendors.map((v) => [`${v}: ${x}`, "", ""])),
+    mine: () => true,
+    steps: { 3: [2] },
+    derived: { 1: { from: [], value: (v, p) => venBest(p, 2, v(0).split(":")[0]) } },
+    ident: [0],
+    checkRows: { 3: { label: 0, col: 2 } },
+    view: { 3: [1] },
+    then: { 3: "Work out what each vendor's tier sets" },
+    note: { 3: () => "A tier sets two things here. Questions to send: count the questions rule R27 includes for that tier in the bank, Vendors › Send Questionnaire. Reassess every: read that tier's line in Vendors › Reassessment Reminder." },
+    reads: { 3: ["vendors|Reassessment Reminder"] },
+    handIn: { step: 5, cols: [2], ident: [0] },
   },
   "T9.1 Q": {
     code: "VEN-Q",
@@ -3166,19 +3567,22 @@ export const REGISTERS: Record<string, Register> = {
     code: "VEN-CL",
     title: "VEN-CL · Contract clause checklist (Ref-Clauses, rule R27)",
     on: [4, 5],
-    cols: [{ h: "Clause", wrap: true, w: 220 }, { h: "Include from tier", wrap: true }, { h: "In VEN-CL (R27)", wrap: true, w: 120, opts: ["Yes", "No"] }],
-    rows: [...VEN.clauses.map(([c, t]) => [c, t, ""]), ["", VEN_TRANSFER, ""]],
+    cols: [{ h: "Clause", wrap: true, w: 190 }, { h: "Include from tier", wrap: true, w: 80 }, { h: "In VEN-CL (R27)", wrap: true, w: 80 }, { h: "Lumen's draft says", wrap: true, w: 280, prose: true }, { h: "Result", wrap: true, w: 120, opts: ["Covered", "Falls short", "Missing"] }],
+    rows: [...VEN.clauses.map(([c, t]) => [c, t, "", (VEN.draft as Record<string, string>)[c], ""]), ["", VEN_TRANSFER, "", VEN.transfer, ""]],
     mine: () => true,
-    steps: { 4: [2] },
+    steps: { 4: [4] },
+    // REWORK (2 Nov 2026): a Critical vendor takes every clause, so In VEN-CL is the platform's and the work is reading Lumen's draft against what each must say.
     derived: {
       0: { from: [], value: (v, p) => (v(1) === VEN_TRANSFER ? (venAsked(p, 4) ? "Transfer mechanism" : "") : null) },
-      2: { from: [], value: (v, p) => (v(1) === VEN_TRANSFER ? (venAsked(p, 4) ? "Yes" : "") : null) },
+      2: { from: [], value: (v, p) => { if (!venAsked(p, 4)) return ""; const t = venBest(p, 2, VEN_NAME); return v(1) === VEN_TRANSFER || VEN_RANK.indexOf(v(1)) <= VEN_RANK.indexOf(t) ? "Yes" : "No"; } },
+      4: { from: [], value: (v, p) => (v(1) === VEN_TRANSFER ? (venAsked(p, 4) ? "Missing" : "") : null) },
     },
     ident: [0, 1],
-    checkRows: { 4: { label: 0, col: 2 } },
-    then: { 4: "Mark VEN-CL's clauses for the tier (R27)" },
-    note: { 4: (d, p) => `Rule R27 (Learn › Rule tables): ${d.rules.R27?.[1] ?? ""} Ref-Clauses' clauses are listed with the tier each is included from. Lumen's tier, as step 2 checked it: ${venBest(p, 2, VEN_NAME) || "not checked yet"}. The transfer clause is added by your answer.` },
-    handIn: { step: 5, cols: [0, 2], ident: [0] },
+    checkRows: { 4: { label: 0, col: 4 } },
+    view: { 4: [3] },
+    then: { 4: "Read Lumen's draft against VEN-CL" },
+    note: { 4: (d, p) => `Rule R27 (Learn › Rule tables): ${d.rules.R27?.[1] ?? ""} Lumen's tier, as step 2 checked it: ${venBest(p, 2, VEN_NAME) || "not checked yet"}, so the checklist's In VEN-CL column is written for you. Lumen sent its own draft contract: read each line against what BKB-POL-013 Section 6.3 says that clause must say. The transfer row comes from your answer.` },
+    handIn: { step: 5, cols: [0, 4], ident: [0] },
   },
   "T9.1 CLD": {
     code: "VEN-Q LI-CLD",
@@ -3209,6 +3613,26 @@ export const REGISTERS: Record<string, Register> = {
   },
   // T9.2 (desk-step-builder, 30 Oct 2026). SOC-REV, template T-SOC: the checklist S1–S9 read against the report's lines
   // (1, STUDY), each check's result (2), the CUECs' owners (3); SOC-DEC: R28 on the failed checks, and the decision (4).
+  // SOC-EXTRA (REWORK, 2 Nov): what came in after the decision. Listed first: step 5 works on it, and a step's register is the first that names it.
+  "T9.2 X": {
+    code: "SOC-EXTRA",
+    title: "SOC-REV · Sheet 3: SOC-EXTRA, what Lumen sent after your decision",
+    on: [5],
+    cols: [
+      { h: "Item", w: 64 },
+      { h: "What arrived", wrap: true, w: 300, prose: true },
+      { h: "Failed check", w: 70, prose: true },
+      { h: "What it does", wrap: true, w: 200, opts: (_d, r) => (r[0] === SOC_DEC ? ["Stays Reject", "Changes to Approve with conditions", "Changes to Approve"] : ["Clears the check", "Changes nothing"]) },
+    ],
+    rows: [...SOC.extra.map((x) => [...x, ""]), [SOC_DEC, "The onboarding decision, once X1 to X4 are read", "—", ""]],
+    mine: () => true,
+    steps: { 5: [3] },
+    ident: [0, 1, 2],
+    checkRows: { 5: { label: 0, col: 3 } },
+    note: { 5: (d) => `Read each item against Vendors › Flag Risk and the paragraph under the table in BKB-POL-013 Section 7.1 (Policies › Policy Library), then say what it does to the failed check beside it. Rule R28: ${d.rules.R28?.[1] ?? ""}` },
+    reads: { 5: ["vendors|Flag Risk"] },
+    handIn: { step: 5, cols: [3], ident: [0, 1, 2] },
+  },
   "T9.2 CHK": {
     code: "SOC-REV Checklist",
     title: "SOC-REV · SOC 2 review worksheet · Checks S1–S9 (Ref-SOC checks)",
@@ -3244,8 +3668,8 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 3: [1] },
     ident: [0],
     checkRows: { 3: { label: 0, col: 1 } },
-    note: { 3: () => "Each row is a CUEC from the CUECs line of Lumen's report: a control Lumen expects LearnTech to run. Ref-Conditions (Learn › Reference pages) names the internal owner of each kind of CUEC." },
-    reads: { 3: ["learn|Reference pages"] },
+    note: { 3: () => "Each row is a CUEC from the CUECs line of Lumen's report: a control Lumen expects LearnTech to run. Vendors › Flag Risk names the internal owner of each kind of CUEC." },
+    reads: { 3: ["vendors|Flag Risk", "learn|Reference pages"] },
     handIn: { step: 5, cols: [1], ident: [0] },
   },
   "T9.2 DEC": {
@@ -3265,8 +3689,8 @@ export const REGISTERS: Record<string, Register> = {
     derived: { 2: { from: [], value: (v, p) => (v(0) !== SOC_DEC && socBest(p, 2, v(0)) === "Pass" ? "Passed: no effect" : null) } },
     ident: [0, 1],
     checkRows: { 4: { label: 0, col: 2 } },
-    note: { 4: (d, p) => `Rule R28 (Learn › Rule tables): ${d.rules.R28?.[1] ?? ""} The rows are the checks step 2 found failing${socBest(p, 2, "S1") ? "" : " (once step 2 is checked)"}; the last row is the decision. Ref-Conditions (Learn › Reference pages) gives each check's condition.` },
-    reads: { 4: ["learn|Reference pages"] },
+    note: { 4: (d, p) => `Rule R28 (Learn › Rule tables): ${d.rules.R28?.[1] ?? ""} The rows are the checks step 2 found failing${socBest(p, 2, "S1") ? "" : " (once step 2 is checked)"}; the last row is the decision. Vendors › Flag Risk gives each check's condition.` },
+    reads: { 4: ["vendors|Flag Risk"] },
     handIn: { step: 5, cols: [2], ident: [0] },
   },
   // T10.1 (desk-step-builder, 30 Oct 2026). ROPA, template T-ROPA: the record (hand-in), each purpose's lawful basis (2),
@@ -3279,6 +3703,8 @@ export const REGISTERS: Record<string, Register> = {
     rows: ROPA.entry as string[][],
     mine: () => true,
     steps: {},
+    // The role as D1 was checked: the bundle holds no answer.
+    derived: { 1: { from: [], value: (v, p) => { if (v(0) !== "Role") return null; const b = p.decisions?.["T10.1-D1"]?.best; return b ? (ROPA.roles["ABC".indexOf(b)] ?? "") : ""; } } },
     ident: [0],
     handIn: { step: 6, cols: [1], ident: [0] },
   },
@@ -3286,13 +3712,13 @@ export const REGISTERS: Record<string, Register> = {
     code: "ROPA",
     title: "ROPA · RoPA entry (template T-ROPA) · Purposes and lawful basis",
     on: [2, 6],
-    cols: [{ h: "Purpose (client's instructions)", wrap: true, w: 300 }, { h: "Lawful basis", wrap: true, w: 170, opts: "step" }],
+    cols: [{ h: "Purpose (client's instructions)", wrap: true, w: 300 }, { h: "Client's stated lawful basis", wrap: true, w: 170, opts: "step" }],
     rows: ROPA.purposes.map((x) => [x, ""]),
     mine: () => true,
     steps: { 2: [1] },
     ident: [0],
     checkRows: { 2: { label: 0, col: 1 } },
-    note: { 2: () => "Each row is a purpose from the client's processing instructions. BKB-POL-017 Section 3.1 (Policies › Policy Library) gives the lawful-basis questions, asked in order: the first yes gives the basis." },
+    note: { 2: () => "Each row is a purpose from the client's processing instructions. GDPR Art.30(2) does not require a processor's record to hold a lawful basis: the controller decides it and answers for it. The Group records the basis each client states all the same (BKB-POL-017 Section 3.1), so that the DPO can handle a data-subject request and spot an instruction with no basis. Work out each basis with Section 3.1's questions, asked in order: the first yes gives the basis. The client confirms it in the data processing agreement." },
     handIn: { step: 6, cols: [1], ident: [0] },
   },
   "T10.1 DPIA": {
@@ -3305,7 +3731,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 5: [1] },
     ident: [0],
     checkRows: { 5: { label: 0, col: 1 } },
-    note: { 5: (d) => `Rule R29 (Learn › Rule tables): ${d.rules.R29?.[1] ?? ""} For each trigger, is it involved in the processing: Yes or No? The last row records whether a DPIA is required. The processing description is in Regulatory Watch › RoPA & Data Flows; BKB-POL-017 Section 6.2 (Policies › Policy Library) says what each trigger means.` },
+    note: { 5: () => "For each trigger, is it involved in the processing: Yes or No? The processing description is in Regulatory Watch › RoPA & Data Flows; BKB-POL-017 Section 6.2 (Policies › Policy Library) says what each trigger means. The last row records whether a DPIA is required: rule R29 in Learn › Rule tables says how that follows." },
     handIn: { step: 6, cols: [1], ident: [0] },
   },
   "T10.1 DFM": {
@@ -3314,10 +3740,10 @@ export const REGISTERS: Record<string, Register> = {
     on: [3, 4, 6],
     cols: [
       { h: "Flow", w: 56 },
-      { h: "What happens", wrap: true, w: 300, prose: true },
-      { h: "Shape", w: 120, opts: ROPA.shapes },
-      { h: "System (asset register)", wrap: true, w: 190 },
-      { h: "Transfer mechanism (BKB-ADD-36 Section 2)", wrap: true, w: 240 },
+      { h: "What happens", wrap: true, w: 250, prose: true },
+      { h: "Shape", w: 180, opts: ROPA.shapes },
+      { h: "System (asset register)", wrap: true, w: 215, opts: ASSET_NAMES },
+      { h: "Transfer safeguard", wrap: true, w: 260, opts: ROPA.safeguards },
       { h: "Evidence ref", wrap: true, w: 170 },
     ],
     rows: DFM_FLOWS.map(([f, x]) => [f, x, "", "", "", ""]),
@@ -3327,27 +3753,15 @@ export const REGISTERS: Record<string, Register> = {
     only: { 4: (r, p) => dfmShape(p, r[0]) === "Transfer" },
     derived: {
       4: { from: [], value: (v, p) => { const s = dfmShape(p, v(0)); return s && s !== "Transfer" ? NOT_TRANSFER : null; } },
-      // The section row the mechanism was copied from: written by the platform, never typed.
-      5: { from: [4], quiet: true, value: (v) => { const m = v(4); if (!m) return ""; if (m === NOT_TRANSFER) return "—"; const r = add36Sec2().find((x) => same(x[5] ?? "", m)); return r ? `BKB-ADD-36 Section 2, ${officeOf(r[0])}` : ""; } },
-    },
-    cells: {
-      // A copy of the asset register: only the name of the system the line describes, as the register writes it.
-      3: {
-        fix: (v, _r, _d, ri) => { const want = (ROPA.systems as Record<string, string>)[DFM_FLOWS[ri]?.[0]] ?? ""; return want && assetKey(v) === assetKey(want) ? want : null; },
-        hint: (r) => (ASSET_NAMES.some((a) => assetKey(a) === assetKey(r[3] ?? "")) ? "That asset is not where this line happens: read the Description column of Risk Register › Asset Register again." : "Copy the Asset name as Risk Register › Asset Register writes it."),
-      },
-      // A copy of a Cross-border transfer cell of BKB-ADD-36 Section 2, word for word. Which office's row is checked with the rest.
-      4: {
-        fix: (v) => add36Sec2().find((x) => same(x[5] ?? "", v))?.[5] ?? null,
-        hint: () => "Copy a Cross-border transfer cell of BKB-ADD-36 Section 2 word for word, from the row of the office the data leaves.",
-      },
+      // Where the safeguard was read: Section 2's row of the office, or Section 6.1 for a safeguard Section 2 does not name. Written by the platform, never typed.
+      5: { from: [4], quiet: true, value: (v) => { const m = v(4); if (!m) return ""; if (m === NOT_TRANSFER) return "—"; const r = add36Sec2().find((x) => same(x[5] ?? "", m)); return r ? `BKB-ADD-36 Section 2, ${officeOf(r[0])}` : "BKB-ADD-36 Section 6.1"; } },
     },
     load: ["BKB-ADD-36"],
     ident: [0, 1],
-    checkRows: { 3: { label: 0, col: 2 }, 4: { label: 0, col: 4 } },
+    checkRows: { 3: { label: 0, col: 2, with: 3 }, 4: { label: 0, col: 4 } },
     note: {
-      3: () => "T-ROPA's four shapes: Collect, personal data comes into LearnTech from outside (a client or a person); System, it is kept or used in a LearnTech system; Transfer, it leaves the country of the office that holds it (BKB-POL-017 Section 3.1 says what counts); Delete, it is erased. The system names are in Risk Register › Asset Register, which lists LearnTech's Amsterdam and Mumbai assets.",
-      4: (_d, p) => `BKB-POL-017 Section 3.1: personal data leaves the country of the office that holds it only under the mechanism BKB-ADD-36 Section 2 names for that office, the office the data leaves. The rows are the flows step 3 found to be transfers${dfmShape(p, "F1") ? "" : " (once step 3 is checked)"}. Section 2 is in Policies › Policy Library.`,
+      3: () => "T-ROPA's four shapes: Collect, personal data comes into LearnTech from outside (a client or a person); System, it is kept or used in a LearnTech system; Transfer, it leaves the country of the office that holds it (BKB-POL-017 Section 3.1 says what counts); Delete, it is erased. Choose each flow's system from Risk Register › Asset Register, which lists LearnTech's Amsterdam and Mumbai assets: the asset whose description fits what happens in the flow.",
+      4: (_d, p) => `BKB-POL-017 Section 3.1: start from the Cross-border transfer cell of BKB-ADD-36 Section 2, in the row of the office the data leaves. A chapter of a law is not a safeguard: where the cell names one, Section 6.1 of the addendum says how the safeguard is found. The rows are the flows step 3 found to be transfers${dfmShape(p, "F1") ? "" : " (once step 3 is checked)"}. Both are in Policies › Policy Library.`,
     },
     reads: { 3: ["risk|Asset Register"] },
     handIn: { step: 6, cols: [2, 3, 4, 5], ident: [0] },
@@ -3366,22 +3780,14 @@ export const REGISTERS: Record<string, Register> = {
     only: { 1: (r) => r[0] === BRC_DISC, 2: (r) => r[0] !== BRC_DISC },
     // Where each value was read: the same record on every row, so written by the platform.
     derived: { 2: { from: [1], quiet: true, value: (v) => (v(1) ? "BRC-FACTS (incident record)" : "") } },
-    cells: {
-      // A copy of the incident record's line: only its value; a time in any of the usual forms, a list in any order.
-      1: {
-        fix: (v, r) => {
-          const want = BRC_REC[r[0]] ?? "";
-          if (r[0] === BRC_DISC) return utcTime(v) === want ? want : null;
-          return want && sameParts(v, want) ? want : null;
-        },
-        hint: (r) => (r[0] === BRC_DISC ? "Copy the incident record's Discovered (UTC) line (Regulatory Watch › Breach Clock Calculator): its date, time and UTC." : `Copy the incident record's line ${r[0]} (Regulatory Watch › Breach Clock Calculator): every item, separated by ";".`),
-      },
-    },
+    // A format check on the time only: which time, and which offices and countries, Check my answers says (keys T10.2-1, T10.2-2).
+    cells: { 1: { fix: (v, r) => (r[0] === BRC_DISC ? utcTime(v) : v), hint: () => "Write the time as date, time, UTC (2026-01-31 09:00 UTC)." } },
     ident: [0],
-    checkRows: { 2: { label: 0, col: 1 } },
+    checkRows: { 1: { label: 0, col: 1 }, 2: { label: 0, col: 1 } },
+    draft: { 2: () => ({ col: 1, v: BRC_DRAFT }) },
     note: {
-      1: () => "The incident record is in Regulatory Watch › Breach Clock Calculator; open it from the toolbar. Copy its discovery time as written, with the date and UTC: every deadline in step 4 counts from it.",
-      2: () => "Copy the incident record's two lines (Regulatory Watch › Breach Clock Calculator): every office and every country, separated by \";\". In step 3, rule R30 looks up the regimes from them.",
+      1: () => "The incident record (Regulatory Watch › Breach Clock Calculator) gives its times in Amsterdam time. BKB-POL-014 Section 6.3, step 6 (Policies › Policy Library) says which one is the discovery time. Record it in UTC: every deadline in step 4 counts from it.",
+      2: () => "The Incident Response & Crisis Manager filled in both lines during the first call, before the record was complete. Check each against the incident record (Regulatory Watch › Breach Clock Calculator): whose systems are hit, and where the people whose records were taken live. Correct what the record does not support. Write offices as BKB-ADD-36 Section 2 writes them, and separate items with \";\". In step 3, rule R30 looks up the regimes from these lines.",
     },
     handIn: { step: 7, cols: [1, 2], ident: [0] },
   },
@@ -3400,19 +3806,20 @@ export const REGISTERS: Record<string, Register> = {
     mine: () => true,
     steps: { 3: [3], 4: [4] },
     // Step 3 decides the regimes; step 4 dates the ones step 3 found to apply, and the earliest firm deadline.
-    only: { 3: (r) => r[0] !== BRC.early, 4: (r, p) => r[0] === BRC.early || (!!brcBest(p, 3, r[0]) && brcBest(p, 3, r[0]) !== BRC_NOT) },
+    only: { 3: (r) => r[0] !== BRC.early, 4: (r, p) => r[0] === BRC.early || ["Applies", BRC_COND].includes(brcBest(p, 3, r[0])) },
     derived: {
       3: { from: [], value: (v) => (v(0) === BRC.early ? "—" : null) },
-      4: { from: [], value: (v, p) => (brcBest(p, 3, v(0)) === BRC_NOT ? "None: does not apply" : null) },
+      4: { from: [], value: (v, p) => (brcBest(p, 3, v(0)) === BRC_NOT ? "None: does not apply" : brcBest(p, 3, v(0)) === BRC_MON ? "None: no clock yet" : null) },
     },
     cells: { 4: { fix: (v) => utcTime(v), hint: () => "Write a deadline as the discovery time is written: date, time, UTC (2026-01-31 09:00 UTC)." } },
     ident: [0, 1, 2],
     checkRows: { 3: { label: 0, col: 3 }, 4: { label: 0, col: 4 } },
+    reads: { 3: ["regwatch|Regulation Tracker"] },
     note: {
-      3: () => "Each row is a regime of BKB-ADD-36 Section 2: the office whose row it is in, and the column and words of its cell. BKB-POL-014 Section 6.3 (Policies › Policy Library) says which offices the incident engages and which of their regimes apply. The offices and countries are the ones you copied in step 2, from the incident record (Regulatory Watch › Breach Clock Calculator).",
+      3: (_d, p) => `Each row is a regime of BKB-ADD-36 Section 2: the office whose row it is in, and the column and words of its cell. BKB-POL-014 Section 6.3 (Policies › Policy Library) says which offices the incident engages and which of their regimes apply. Regulatory Watch › Regulation Tracker gives each law's status. From your step 2: offices whose systems are affected: ${p.grids?.["T10.2|BRC-ASSESS Facts"]?.["1,1"] ?? ""}. Data-subject countries: ${p.grids?.["T10.2|BRC-ASSESS Facts"]?.["2,1"] ?? ""}.`,
       4: (_d, p) => {
         const cond = (BRC.regimes as string[][]).filter((r) => brcBest(p, 3, r[0]) === BRC_COND).map((r) => r[0]);
-        return `Discovered: ${BRC_REC[BRC_DISC]}. Each deadline is the discovery time plus the clock in the row's Section 2 words; BKB-POL-014 Section 6.3, step 6 (Policies › Policy Library) says how to count. The rows are the regimes step 3 found to apply${cond.length ? `; ${cond.join(", ")} applies only if its condition is met, so its clock is not firm` : " (once step 3 is checked)"}. The last row is the earliest firm deadline.`;
+        return `Discovered: ${brcDisc(p)}. Each deadline is the discovery time plus the clock in the row's Section 2 words; BKB-POL-014 Section 6.3, step 6 (Policies › Policy Library) says how to count. The rows are the regimes step 3 found to apply${cond.length ? `; ${cond.join(", ")} applies only if its condition is met, so its clock is not firm` : " (once step 3 is checked)"}. The last row is the earliest firm deadline.`;
       },
     },
     handIn: { step: 7, cols: [3, 4], ident: [0] },
@@ -3490,9 +3897,11 @@ export const REGISTERS: Record<string, Register> = {
     rows: (AWRD.weeks as string[][]).map(([wk]) => [wk, ""]),
     mine: () => true,
     steps: { 1: [1] },
+    // A colleague's first draft: checked against R31, not typed from it. It names no answer: the key is on the server.
+    draft: { 1: () => ({ col: 1, v: AWRD.draftWeeks }) },
     ident: [0],
     checkRows: { 1: { label: 0, col: 1 } },
-    note: { 1: () => `The campaign on “${AWRD.theme}” for ${AWRD.audience}, ${AWRD.office}, runs four weeks. Rule R31 (Learn › Rule tables) sets what each week carries, in order.` },
+    note: { 1: () => `The campaign on “${AWRD.theme}” for ${AWRD.audience}, ${AWRD.office}, runs four weeks. A colleague has drafted AWR-PLAN from memory. Rule R31 (Learn › Rule tables) sets what each week carries: compare each week with it, and change any that differs.` },
     reads: { 1: ["learn|Rule tables"] },
     handIn: { step: 6, cols: [1], ident: [0] },
   },
@@ -3512,13 +3921,13 @@ export const REGISTERS: Record<string, Register> = {
     code: "AWR-LESSON Quiz",
     title: "AWR-LESSON · Micro-lesson and newsletter post · Check questions (Ref-Content)",
     on: [3, 6],
-    cols: [{ h: "Question", wrap: true, w: 230 }, { h: "Answer (Ref-Content)", wrap: true, w: 170 }, { h: "Behaviour it checks", wrap: true, w: 260, opts: [...(AWRD.behaviours as string[])].sort() }],
+    cols: [{ h: "Question", wrap: true, w: 230 }, { h: "Answer (Ref-Content)", wrap: true, w: 170 }, { h: "Behaviour it checks", wrap: true, w: 260, opts: [...(AWRD.behaviours as string[])].sort().concat(AWRD.quizNone) }],
     rows: (AWRD.quiz as string[][]).map(([q, a]) => [q, a, ""]),
     mine: () => true,
     steps: { 3: [2] },
     ident: [0],
     checkRows: { 3: { label: 0, col: 2 } },
-    note: { 3: (_d, p) => `Scenario card (step 2): “${awrPick(p, "T11.1-D1", AWRD.cards) || "once step 2 is checked"}”. Each question checks one of the theme's three behaviours, the choices of each row. Ref-Content (Learn › Reference pages) gives each question with its answer in brackets, in the row of “${AWRD.theme}”.` },
+    note: { 3: (_d, p) => `Scenario card (step 2): “${awrPick(p, "T11.1-D1", AWRD.cards) || "once step 2 is checked"}”. A colleague has drafted four questions, but a micro-lesson ends with three, each testing one of the theme's behaviours. Ref-Content (Learn › Reference pages) gives the theme's own questions with their answers in brackets, in the row of “${AWRD.theme}”: choose the behaviour each question checks, or say it is not one of the theme's questions.` },
     reads: { 3: ["learn|Reference pages"] },
     handIn: { step: 6, cols: [1, 2], ident: [0] },
   },
@@ -3538,16 +3947,22 @@ export const REGISTERS: Record<string, Register> = {
     code: "AWR-SIM Metrics",
     title: "AWR-SIM · Phishing simulation plan · Metrics and targets (the campaign's measures)",
     on: [5, 6],
-    cols: [{ h: "Metric", w: 110 }, { h: "Target", w: 130 }, { h: "How it is measured (BKB-POL-020 Section 7.1)", wrap: true, w: 300, prose: true }],
-    rows: (AWRD.metrics as string[][]).map(([m, f]) => [m, "", f]),
+    cols: [{ h: "Metric", w: 110 }, { h: "Target", w: 130 }, { h: "Last campaign's rate", wrap: true, w: 130 }, { h: "Against target", wrap: true, w: 110 }, { h: "How it is measured (BKB-POL-020 Section 7.1)", wrap: true, w: 300, prose: true }],
+    rows: (AWRD.metrics as string[][]).map(([m, f]) => [m, "", "", "", f]),
     mine: () => true,
-    steps: { 5: [1] },
+    steps: { 5: [1, 2] },
+    view: { 5: [4] },
     ident: [0],
-    cells: { 1: { fix: (v) => pctTarget(v), hint: () => "Write a target as its source writes it: “≤” or “≥”, the number and “%” (you may type <= or >=)." } },
-    checkRows: { 5: { label: 0, col: 1 } },
-    note: { 5: () => "Click rate: its target is the KRI of the Amsterdam register's phishing risk (Risk Register › Heat Map with KRIs). Report rate: its target is in BKB-POL-020 Section 7.1 (Policies › Policy Library). Write each as its source writes it: “≤” or “≥”, the number and “%”. The formulas are written for you." },
+    // Worked out from the two values on the row, so the hand-in says whether last campaign met each target.
+    derived: { 3: { from: [1, 2], quiet: true, value: (v) => { const t = v(1).match(/^(≤|≥) ([\d.]+)/), r = parseFloat(v(2)); if (!t || Number.isNaN(r)) return ""; return (t[1] === "≤" ? r <= +t[2] : r >= +t[2]) ? "Met" : "Not met"; } } },
+    cells: {
+      1: { fix: (v) => pctTarget(v), hint: () => "Write a target as its source writes it: “≤” or “≥”, the number and “%” (you may type <= or >=)." },
+      2: { fix: (v) => { const m = v.trim().match(/^(\d+(?:[.,]\d+)?)\s*%?$/); return m ? `${m[1].replace(",", ".")} %` : null; }, hint: () => "Write the rate as a number and “%”." },
+    },
+    checkRows: { 5: { label: 0, col: 1, with: 2 } },
+    note: { 5: () => "Target. Click rate: the KRI of the Amsterdam register's phishing risk (Risk Register › Heat Map with KRIs). Report rate: BKB-POL-020 Section 7.1 (Policies › Policy Library). Write each as its source writes it: “≤” or “≥”, the number and “%”. Last campaign's rate: work it out from the counts on Awareness › Campaign Results, with the formula in the row." },
     reads: { 5: ["risk|Heat Map with KRIs"] },
-    handIn: { step: 6, cols: [1, 2], ident: [0] },
+    handIn: { step: 6, cols: [1, 2, 3], ident: [0] },
   },
   "T11.1 CL": {
     code: "Ref-Clause map",
@@ -3596,9 +4011,11 @@ export const REGISTERS: Record<string, Register> = {
     rows: (AWRD.comms as string[][]).map((r) => [...r, ""]),
     mine: () => true,
     steps: { 9: [7] },
+    // A colleague's first draft: checked against the calendar, not looked up from nothing.
+    draft: { 9: () => ({ col: 7, v: AWRD.draftComms }) },
     ident: [0, 2, 6],
     checkRows: { 9: { label: 0, col: 7 } },
-    note: { 9: () => "Rule L21: the six ISMS communications are copied from Ref-Communications for you. Date each by the week of its programme event: Home › Calendar gives the tasks of each week and the day it opens." },
+    note: { 9: () => "Rule L21: the six ISMS communications are copied from Ref-Communications for you, and a colleague has drafted each one's week. A communication goes out in the week of its programme event: Home › Calendar gives the tasks of each week and the day it opens. Compare each row with it, and change any week that differs." },
     reads: { 9: ["home|Calendar"] },
     handIn: { step: 10, cols: [1, 2, 3, 4, 5, 6, 7], ident: [0] },
   },
@@ -3634,25 +4051,51 @@ export const REGISTERS: Record<string, Register> = {
     then: { 2: "Sort the monitoring results" },
     note: { 2: () => `This month's monitoring results for “${REGD.topic}”. For each, decide whether it is an official source: the body that issued the rule or its guidance, or the official journal that publishes it.` },
   },
+  // Listed before the other sheets: a step's register is the first that names it. T-REG's lines; two dates are the learner's.
+  "T11.2 BRIEF": {
+    code: REG_BRIEF,
+    title: "REG-BRIEF · The brief (Regulatory Watch › Briefing Builder)",
+    on: [9],
+    cols: [{ h: "Line", wrap: true, w: 110 }, { h: "Worked from", wrap: true, w: 210, prose: true }, { h: "What the brief says", wrap: true, w: 215 }],
+    rows: ["What changed", "Who it affects", "30 days from publication", "Deadline", "Found late", "What we must do", "Source"].map((x) => [x, "", ""]),
+    mine: () => true,
+    steps: { 9: [2] },
+    ident: [0],
+    view: { 9: [1] },
+    reads: { 9: ["learn|Rule tables"] },
+    derived: {
+      1: { from: [], value: (v, p) => (v(0) === "30 days from publication" ? `Source 1 published: ${regBest(p, 3, REG_PUB)}` : v(0) === "Deadline" ? `Logged on: ${regLogged(p) ? longDate(regLogged(p)) : ""}` : "") },
+      2: {
+        from: [],
+        value: (v, p) => {
+          if (v(0) === "What changed") return `${REGD.src.s1.who} guidelines on Article 28(1) of the Digital Services Act, published ${regBest(p, 3, REG_PUB)}. The duty has applied since ${regBest(p, 3, REG_APPLIES)}.`;
+          if (v(0) === "Who it affects") return `${(REGD.offices as string[][]).filter(([o]) => regBest(p, 6, o) === "Applies").map(([o]) => o).join("; ")}.`;
+          if (v(0) === "Found late") return regLine(p, 2) && regLine(p, 3) && regLogged(p) ? `Yes: its 30 days ended on ${regLine(p, 2)}, before it was logged on ${longDate(regLogged(p))}.` : "";
+          if (v(0) === "What we must do") return `${Object.keys(p.rowChecks?.["T11.2-8"]?.rows ?? {}).length} actions, each with its owner, on the Actions sheet.`;
+          if (v(0) === "Source") return (["s1", "s2"] as const).map((k) => `${REGD.src[k].title}, ${REGD.src[k].url}, read on ${regLogged(p) ? longDate(regLogged(p)) : ""}.`).join(" ");
+          return null;
+        },
+      },
+    },
+    cells: { 2: regDeadline },
+    note: { 9: () => "The brief's own page. The platform has written it from your checked steps, except two dates: work out 30 days from publication, then the deadline of the brief's actions, with rule R32 (Learn › Rule tables). The actions take that date." },
+    handIn: { step: 9, cols: [2], ident: [0] },
+  },
   "T11.2 SRC": {
     code: "REG-BRIEF Sources",
     title: "REG-BRIEF · Sources (logged on Regulatory Watch › Add Update)",
+    stamp: "Change log · 2 sources",
     on: [3, 9],
-    cols: [{ h: "Field", w: 130 }, { h: "Source 1 (European Commission)", wrap: true, w: 260, prose: true }, { h: "Source 2 (EUR-Lex)", wrap: true, w: 260, prose: true }],
-    rows: [
-      ["Title", REGD.src.s1.title, REGD.src.s2.title],
-      ["Web address", REGD.src.s1.url, REGD.src.s2.url],
-      ["Published", "", ""],
-      ["Applies from", "", ""],
-      ["Accessed", "", ""],
-    ],
+    cols: [{ h: "Entry", w: 200 }, { h: "Date in the log", wrap: true, w: 220, opts: REGD.dates }],
+    rows: (REGD.logged as string[][]).map(([l]) => [l, ""]),
     mine: () => true,
-    steps: { 3: [1, 2] },
+    steps: { 3: [1] },
     ident: [0],
-    cells: { 1: srcDate("s1"), 2: srcDate("s2") },
-    note: { 3: () => "Source 1 is the European Commission's page, source 2 the Regulation on EUR-Lex; their saved copies are in Policies › Policy Library. Titles and addresses are written for you. Type each date as 1 March 2024 or 2024-03-01; Accessed is the date you read the source, today." },
-    readHow: { 3: "Section 1 of each saved copy: the Published line, and the line that says when the duties apply." },
-    handIn: { step: 9, cols: [1, 2], ident: [0] },
+    draft: { 3: () => ({ col: 1, v: (REGD.logged as string[][]).map(([, x]) => x) }) },
+    checkRows: { 3: { label: 0, col: 1 } },
+    note: { 3: () => `A colleague logged these dates from memory. Source 1 is “${REGD.src.s1.title}”, source 2 is “${REGD.src.s2.title}”. Compare each date with the source's saved copy (Policies › Policy Library), and change any that differs. The platform records today as the date logged and read.` },
+    readHow: { 3: "Section 1 of each saved copy: the Published line, and the line that says when the duties apply. Source 2's Article 93 is in its Section 4." },
+    handIn: { step: 9, cols: [1], ident: [0] },
   },
   "T11.2 OB1": {
     code: "REG-BRIEF Source 1",
@@ -3705,7 +4148,8 @@ export const REGISTERS: Record<string, Register> = {
       { h: "BKB policy (Ref-Keywords)", wrap: true, w: 200, opts: REGD.policies },
       { h: "Annex A / clause (Ref-Keywords)", wrap: true, w: 170 },
     ],
-    rows: (REGD.duties as string[][]).map(([k, , t]) => [k, t, "", ""]),
+    rows: ([...REGD.s1, ...REGD.s2] as string[][]).map(([k, t]) => [k, t, "", ""]),
+    only: { 7: (r, p) => regDuty(p, r[0]), 9: (r, p) => regDuty(p, r[0]) },
     reads: { 7: ["learn|Reference pages"] },
     mine: () => true,
     steps: { 7: [2] },
@@ -3720,14 +4164,15 @@ export const REGISTERS: Record<string, Register> = {
     title: "REG-BRIEF · What we must do: actions (rule R32)",
     on: [8, 9],
     cols: [{ h: "Affected policy", wrap: true, w: 170 }, { h: "Owner (BKB-POL-000)", wrap: true, w: 230, opts: REGD.ownerOpts }, { h: "Action (R32)", wrap: true, w: 360, prose: true }],
-    rows: (REGD.affected as string[]).map((x) => [x, "", ""]),
+    rows: (REGD.policies as string[]).map((x) => [x, "", ""]),
+    only: { 8: (r, p) => regHit(p, r[0]), 9: (r, p) => regHit(p, r[0]) },
     mine: () => true,
     steps: { 8: [1] },
     ident: [0],
     checkRows: { 8: { label: 0, col: 1 } },
     then: { 8: "Choose each action's owner" },
-    derived: { 2: { from: [1], value: (v) => (!v(1) ? "" : v(0) === GAP ? `${v(1)} drafts a policy statement for the duty no BKB policy covers, by ${longDate(REGD.due)}` : `${v(1)} updates ${v(0)} by ${longDate(REGD.due)}`) } },
-    note: { 8: () => `Each policy the Impact Log found (step 7) gets one action. Rule R32 dates every action from source 1's publication date (${longDate(REGD.src.s1.published)}): ${longDate(REGD.due)}, already past, so the brief reports these actions as overdue. Choose each owner from BKB-POL-000 (Policies › Policy Library): Section 3 gives each policy's owner, Section 7 who drafts a new statement.` },
+    derived: { 2: { from: [1], value: (v, p) => { const by = regLine(p, 3) || "the brief's deadline"; return !v(1) ? "" : v(0) === GAP ? `${v(1)} drafts a policy statement for the duty no BKB policy covers, by ${by}` : `${v(1)} updates ${v(0)} by ${by}`; } } },
+    note: { 8: () => "Each policy the Impact Log found (step 7) gets one action, and so does a duty no policy covers. Choose each owner from BKB-POL-000 (Policies › Policy Library): Section 3 gives each policy's owner, Section 7 who drafts a new statement. The platform writes the action; its date comes from the brief's Deadline line, at the hand-in." },
     readHow: { 8: "BKB-POL-000 Section 3: the Owner column of each policy. Section 7: who drafts." },
     handIn: { step: 9, cols: [1, 2], ident: [0] },
   },
@@ -3755,8 +4200,9 @@ export const REGISTERS: Record<string, Register> = {
     mine: () => true,
     steps: { 11: [1] },
     ident: [0],
+    draft: { 11: () => ({ col: 1, v: REGD.elemDraft as string[] }) },
     checkRows: { 11: { label: 0, col: 1 } },
-    note: { 11: (_d, p) => `Topic type (step 10): “${regBest(p, 10, REGD.topic) || "once step 10 is checked"}”. Rule L22: mark as affected each ISMS element its row of Ref-Change types (Learn › Reference pages) lists.` },
+    note: { 11: (_d, p) => `Topic type (step 10): “${regBest(p, 10, REGD.topic) || "once step 10 is checked"}”. A colleague marked these from memory. Rule L22: an element is affected when its type's row of Ref-Change types (Learn › Reference pages) lists it. Compare each, and change any that differs.` },
     handIn: { step: 14, cols: [1], ident: [0] },
   },
   "T11.2 LAYER": {
@@ -3778,16 +4224,16 @@ export const REGISTERS: Record<string, Register> = {
     code: "LI-CHG New technology",
     title: "LI-CHG · New-technology note (rule L22)",
     on: [13, 14],
-    cols: [{ h: "Change", wrap: true, w: 200 }, { h: "Topic type (step 10)", wrap: true, w: 220, prose: true }, { h: "New-technology note (Ref-Change types)", wrap: true, w: 320, opts: REGD.notes }],
-    rows: [[REGD.topic, "", ""]],
+    cols: [{ h: "Change", wrap: true, w: 180 }, { h: "Topic type (step 10)", wrap: true, w: 180, prose: true }, { h: "New-technology note (Ref-Change types)", wrap: true, w: 280, opts: REGD.notes }, { h: "Raised on", wrap: true, w: 230, opts: (REGD.systems as string[][]).map(([c, n]) => `${c} ${n}`) }],
+    rows: [[REGD.topic, "", "", ""]],
     reads: { 13: ["learn|Reference pages"] },
     mine: () => true,
-    steps: { 13: [2] },
+    steps: { 13: [2, 3] },
     ident: [0, 1],
-    checkRows: { 13: { label: 0, col: 2 } },
+    checkRows: { 13: { label: 0, col: 2, with: 3 } },
     derived: { 1: { from: [], value: (_v, p) => regBest(p, 10, REGD.topic) } },
-    note: { 13: (_d, p) => `Topic type (step 10): “${regBest(p, 10, REGD.topic) || "once step 10 is checked"}”. LI-CHG records the new-technology note Ref-Change types (Learn › Reference pages) lists in that type's row.` },
-    handIn: { step: 14, cols: [1, 2], ident: [0] },
+    note: { 13: (_d, p) => `Topic type (step 10): “${regBest(p, 10, REGD.topic) || "once step 10 is checked"}”. LI-CHG records the new-technology note Ref-Change types (Learn › Reference pages) lists in that type's row, and raises it on the one affected system on the layer that holds what the note is about (BKB-TECH-000 Section 3, What it holds; Policies › Policy Library). Your layers from step 12: ${(REGD.systems as string[][]).map(([c]) => `${c} ${regBest(p, 12, c)}`).join("; ")}.` },
+    handIn: { step: 14, cols: [1, 2, 3], ident: [0] },
   },
 
   // T12.1 (desk-step-builder, 30 Oct 2026). All in Risk Register › Mitigation Tracker. T-ACT's read-me (1, STUDY); the closure
@@ -3860,7 +4306,7 @@ export const REGISTERS: Record<string, Register> = {
     view: { 4: [1, 3, 4, 5], 5: [4], 6: [2, 3] },
     ident: [0],
     derived: {
-      3: { from: [], value: (v, p) => { const r = actRow(v(0)); return r[6] === "Open" ? "Open (owner reports)" : actStatus(p, r); } },
+      3: { from: [], value: (v, p) => { const r = actRow(v(0)); const s = actStatus(p, r); return r[6] === "Open" ? "Open (owner reports)" : s.endsWith("K4") ? `${s} · re-test: ${r[9]}` : s; } },
       8: { from: [7], value: (v) => (v(7) ? actNext : "") },
       9: { from: [], value: (v, p) => { const r = actRow(v(0)); return r[6] === "Open" || actBest(p, 2, r[0]) === "Pass" ? "—" : null; } },
       10: { from: [9], value: (v) => (v(9) === "—" ? "—" : actRequest(v(0), v(2), v(9))) },
@@ -3870,9 +4316,9 @@ export const REGISTERS: Record<string, Register> = {
     note: {
       4: (_d, p) => (p.rowChecks?.["T12.1-3"] ? "Every action open after your tests: those their owners report Open, and those your tests reopened. Rule R33: an open action more than 14 days past its due date at the test date, 23 December 2026, and not escalated yet, goes to the owner's manager (K5)." : "This step opens once steps 2 and 3 are checked."),
       5: (_d, p) => (p.rowChecks?.["T12.1-3"] ? `Type the days from each open action's due date to the test date, 23 December 2026: 0 where the due date has not passed. The next check date is the test date + 14 days (rule R33), ${actNext}, written for you.` : "This step opens once steps 2 and 3 are checked."),
-      6: (_d, p) => (p.rowChecks?.["T12.1-3"] ? "Each action your tests reopened goes back to its owner. Choose what the owner must send: what the test it failed needs. The request is written for you in the Evidence request frame (Learn & Grow › Sentence frames), due by the next check date." : "This step opens once steps 2 and 3 are checked."),
+      6: (_d, p) => (p.rowChecks?.["T12.1-3"] ? "Each action your tests reopened goes back to its owner. Choose what the owner must send: what the test it failed needs. For a K4, read where its re-test stands, in the Status cell: what closes it depends on that. The request is written for you in the Evidence request frame (Learn & Grow › Sentence frames), due by the next check date." : "This step opens once steps 2 and 3 are checked."),
     },
-    reads: { 4: ["learn|Rule tables"], 6: ["learn|Rule tables"] },
+    reads: { 4: ["learn|Rule tables"], 6: ["learn|Rule tables", "learn|Sentence frames"] },
   },
   "T12.1 ALL": {
     code: "ACT-UPD",
@@ -3897,19 +4343,23 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 9: { label: 0, col: 10 } },
     then: { 9: "Mark the repeat issues" },
     note: { 9: () => `ACT-UPD, the updated tracker: all ${ACT_T.length} actions. Read down the Issue column and mark each action whose issue is on another action too, whatever its status.` },
+    reads: { 10: ["learn|Rule tables"] },
     handIn: { step: 10, cols: [5, 6, 7, 8, 9, 10], ident: [0] },
   },
   "T12.1 MRI": {
     code: "ACT-MRI Counts",
     title: "ACT-MRI · Management-review input: action status (counts)",
     on: [7],
-    cols: [{ h: "Line", wrap: true, w: 260 }, { h: "Count", w: 90 }],
-    rows: [["Reported closed by their owners", String(ACT_CLOSED.length)], ["Closed — verified", ""], ["Reopened by your closure tests", ""], ["Open", ""], ["Past their due date at 23 December 2026", ""], ["Escalated to the owner's manager (K5)", ""]],
-    mine: () => false,
-    steps: {},
+    cols: [{ h: "Line", wrap: true, w: 220 }, { h: "Actions (your checked steps 2 to 5)", wrap: true, w: 300, prose: true }, { h: "Count", w: 90 }],
+    rows: ["Reported closed by their owners", "Closed — verified", "Reopened by your closure tests", "Open", "Past their due date at 23 December 2026", "Escalated to the owner's manager (K5)"].map((l) => [l, "", ""]),
+    mine: () => true,
+    steps: { 7: [2] },
     ident: [0],
-    derived: { 1: { from: [], value: (v, p) => actCount(v(0), p) } },
-    note: { 7: (_d, p) => (actChecked(p, 2, 3, 4, 5) ? `ACT-MRI's counts, refreshed from your checked steps 2 to 5: the tracker as your tests found it on ${longDate(ACTD.test)}, not as the owners report it.` : "The counts fill in once steps 2 to 5 are checked.") },
+    view: { 7: [1] },
+    derived: { 1: { from: [], value: (v, p) => actIds(v(0), p) } },
+    checkRows: { 7: { label: 0, col: 2 } },
+    draft: { 7: () => ({ col: 2, v: ACT_MRI_DRAFT }) },
+    note: { 7: (_d, p) => (actChecked(p, 2, 3, 4, 5) ? `The tracker as your tests found it on ${longDate(ACTD.test)}, not as the owners report it.` : "This step opens once steps 2 to 5 are checked.") },
   },
   "T12.1 MRIH": {
     code: "ACT-MRI Counts (hand-in)",
@@ -3975,7 +4425,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 13: [1, 2, 3] },
     checkRows: { 13: { label: 0, col: 4 } },
-    note: { 13: () => "The three objectives of your LI-PLAN (Ref-Objectives), with the latest result of each measure: your T6.2 and T8.1 results. Met: the latest result reaches the target. Not met: it is below the target. Too early: no result has been measured yet." },
+    note: { 13: () => "The three objectives of your LI-PLAN, with the latest result of each measure: your T6.2 and T8.1 counts. Work each result out as a percentage, the way its Measure says, then compare it with the target. Met: the result reaches the target. Not met: it is below the target. Too early: no result has been measured yet." },
     handIn: { step: 15, cols: [4], ident: [0] },
   },
   "T12.1 S1": {
@@ -3983,7 +4433,7 @@ export const REGISTERS: Record<string, Register> = {
     title: "LI-MR · Stage 1 readiness: mandatory documented information (rule L24)",
     on: [14, 15],
     cols: [
-      { h: "Clause", w: 70 }, { h: "Documented information", wrap: true, w: 230, prose: true }, { h: "Held in (Ref-Locations)", wrap: true, w: 200, prose: true },
+      { h: "Clause", w: 70 }, { h: "Documented information", wrap: true, w: 230, prose: true }, { h: "Held in", wrap: true, w: 200, prose: true },
       { h: "Present?", wrap: true, w: 150, opts: (_d, r) => (r[0] === "Ready for the Stage 1 audit (L24)" ? ["Yes", "No"] : ["Present", "Not present"]) },
     ],
     rows: [...(ACTD.mandatory as string[][]).map((r) => [...r, ""]), ["Ready for the Stage 1 audit (L24)", "All 14 items present?", "—", ""]],
@@ -3991,9 +4441,22 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 14: [3] },
     ident: [0, 1, 2],
     checkRows: { 14: { label: 0, col: 3 } },
-    note: { 14: () => "The 14 items of your LI-DOC register, with the artefacts that hold each (Ref-Locations). Present: every one is accepted in your review records (Home › Waiting On), or is this task's own (ACT-UPD, ACT-MRI, LI-MR); accepted with review comments, or not in the records yet, is not present yet. Rule L24: ready for the Stage 1 audit only if all 14 are present." },
+    note: { 14: () => "The 14 items of your LI-DOC register, with the record that holds each. Present: every one is accepted in your review records (Home › Waiting On), or is this task's own file (ACT-UPD, ACT-MRI, LI-MR); accepted with review comments, or not in the records yet, is not present yet. Rule L24: ready for the Stage 1 audit only if all 14 are present." },
     reads: { 14: ["home|Waiting On"] },
     handIn: { step: 15, cols: [3], ident: [0] },
+  },
+  // Rule L24: "otherwise No and list the missing ones". Written from step 14's checked rows.
+  "T12.1 MISS": {
+    code: "LI-MR Missing items",
+    title: "LI-MR · Stage 1 readiness: missing items (rule L24)",
+    on: [],
+    cols: [{ h: "Line", w: 150 }, { h: "Items not present", wrap: true, w: 420, prose: true }],
+    rows: [["Missing items (L24)", ""]],
+    mine: () => true,
+    steps: {},
+    ident: [0],
+    derived: { 1: { from: [], value: (_v, p) => (actChecked(p, 14) ? (ACTD.mandatory as string[][]).filter((r) => actBest(p, 14, r[0]) === "Not present").map((r) => `${r[0]} ${r[1]}`).join("; ") || "None" : "") } },
+    handIn: { step: 15, cols: [1], ident: [0] },
   },
   "T12.1 AP": {
     code: "LI-MR Audit programme",
@@ -4004,8 +4467,11 @@ export const REGISTERS: Record<string, Register> = {
     mine: () => true,
     steps: {},
     ident: [0],
-    derived: { 4: { from: [], value: (_v, p) => { const b = p.decisions?.["T12.1-D6"]?.best; return b ? (D6_OPTS["ABC".indexOf(b)] ?? "") : ""; } } },
-    handIn: { step: 15, cols: [4], ident: [0] },
+    derived: {
+      3: { from: [], value: (v, p) => actProgramme(v(0), p) },
+      4: { from: [], value: (_v, p) => { const b = p.decisions?.["T12.1-D6"]?.best; return b ? (D6_OPTS["ABC".indexOf(b)] ?? "") : ""; } },
+    },
+    handIn: { step: 15, cols: [3, 4], ident: [0] },
   },
 
   // T12.2 (desk-step-builder, 31 Oct 2026). All in Evidence › Audit Requests (PBC). The index's read-me (1, STUDY); D1 (2, no part
@@ -4035,7 +4501,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 3: [1, 2] },
     checkRows: { 3: { label: 0, col: 3 } },
-    note: { 3: () => `The audit period is ${AUD.period}. Rule R34 (Learn › Rule tables): answer each request with one file of the index (Evidence › Evidence Library), under the same control or clause, dated inside the audit period, from a system. BKB-POL-016 Section 6.2: the file is the record the control produces, not a report about it. If no file qualifies, the answer is No evidence available.` },
+    note: { 3: () => `The audit period is ${AUD.period}. Rule R34 (Learn › Rule tables): answer each request with one file of the index (Evidence › Evidence Library), the record the auditor asks for, under the same control or clause, dated inside the audit period, from a system. BKB-POL-016 Section 6.2: the file is the record the control produces, not a report about it. If no file qualifies, the answer is No evidence available.` },
     reads: { 3: ["evidence|Evidence Library", "learn|Rule tables"] },
   },
   "T12.2 HASH": {
@@ -4051,8 +4517,9 @@ export const REGISTERS: Record<string, Register> = {
     view: { 4: [1, 2, 4] },
     derived: { 2: { from: [], value: (v, p) => audBest(p, 3, v(0)) }, 4: { from: [], value: (_v, p) => audAt(p, 4) } },
     cells: { 3: audHash },
+    draft: { 4: (_d, p) => ({ col: 3, v: AUD.requests.map((r) => audHashDraft(p, r[0])) }) },
     checkRows: { 4: { label: 0, col: 3 } },
-    note: { 4: (_d, p) => (p.rowChecks?.["T12.2-3"] ? "Each request your step 3 answered with a file, with the file sent. Copy each file's SHA-256 from its own row of Evidence › Evidence Library: the fingerprint the repository took when it was filed, which the auditor checks the file they receive against. Sent (UTC) is recorded when your answers are checked." : "This step opens once step 3's answers are checked.") },
+    note: { 4: (_d, p) => (p.rowChecks?.["T12.2-3"] ? "One row for each request your step 3 answered with a file. The fingerprints here were keyed by hand, so set each beside its file's row of the index and compare all 16 characters. Sent (UTC) is stamped for the first day of fieldwork, 30 days after the audit period ends (rule R16), when your answers are checked." : "This step opens once step 3's answers are checked.") },
     reads: { 4: ["evidence|Evidence Library"] },
   },
   "T12.2 FUP": {
@@ -4066,7 +4533,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 5: [1, 2] },
     checkRows: { 5: { label: 0, col: 3 } },
-    note: { 5: () => `Follow-up requests from the first day of fieldwork. Each asks for a record the Group GRC Office produced this year: one of your own hand-ins, from F1.1 to T12.1. Policies › Version History lists them by code and name, each sealed when you submitted it, inside the audit period (${AUD.period}). Choose the deliverable that is the record asked for, or No evidence available.` },
+    note: { 5: () => `Follow-up requests from the first day of fieldwork. Each asks for a record the Group GRC Office produced this year: one of your own hand-ins, from F1.1 to T12.1. Policies › Version History lists them by code and name, each sealed when you submitted it. Choose the deliverable that is the record asked for, or No evidence available.` },
     reads: { 5: ["policies|Version History"] },
   },
   "T12.2 ACT": {
@@ -4082,6 +4549,7 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 6: { label: 0, col: 3 } },
     then: { 6: "Choose R-3's owner" },
     note: { 6: () => "R-3 is answered No evidence available, and an action is raised in the corrective-action tracker you updated in T12.1 (ACT-UPD, A-01 to A-22): A-23. It goes to the role Responsible (R) for the control's process in the GRC Charter's RACI (Section 16), as each request of your PBC-LIST did in T5.1: the role that runs the control holds its records." },
+    reads: { 6: ["learn|Rule tables"] },
   },
   "T12.2 LOG": {
     code: "AUD-LOG",
@@ -4102,6 +4570,7 @@ export const REGISTERS: Record<string, Register> = {
       6: { from: [], value: (v, p) => (v(0) === AUD.action[1] ? (audBest(p, 6, AUD.action[0]) ? `${AUD.action[0]} · ${audBest(p, 6, AUD.action[0])}` : "") : "—") },
     },
     handIn: { step: 8, cols: [3, 4, 5, 6], ident: [0, 1] },
+    reads: { 8: ["learn|Framework Quick Reference"] },
   },
   "T12.2 NCR": {
     code: "AUD-NCR",
@@ -4116,8 +4585,8 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     derived: { 1: { from: [], value: (v, p) => (v(0) !== "Owner and due (Ref-Actions)" ? null : !p.rowChecks?.["T12.2-7"] ? "" : audBest(p, 7, "Corrective action (Ref-Actions)") === AUD.ct[2] ? `${AUD.ct[3]} · ${AUD.ct[4]}` : "—") } },
     checkRows: { 7: { label: 0, col: 1 } },
-    note: { 7: () => `NC-1, the auditor's finding (AUD-FINDING), raised against ${AUD.finding[1]}: “${AUD.finding[2]}” Evidence file to check: ${AUD.finding[3]}. Find that file in Evidence › Evidence Library. Rule R34 (Learn › Rule tables) says how that file decides the response. If you accept, the corrective action is the one Ref-Actions (Learn › Reference pages) gives for the kind of deviation; if you challenge, there is none.` },
-    reads: { 7: ["evidence|Evidence Library", "learn|Rule tables", "learn|Reference pages"] },
+    note: { 7: () => `NC-1, the auditor's finding (AUD-FINDING), a nonconformity (Learn › Glossary) raised against ${AUD.finding[1]}: “${AUD.finding[2]}” Evidence file to check: ${AUD.finding[3]}. Find that file in Evidence › Evidence Library. Rule R34 (Learn › Rule tables) says how that file decides the response. If you accept, the corrective action is the one Ref-Actions (Learn › Reference pages) gives for the kind of deviation; if you challenge, there is none.` },
+    reads: { 7: ["evidence|Evidence Library", "learn|Rule tables", "learn|Reference pages", "learn|Glossary"] },
     handIn: { step: 8, cols: [1], ident: [0] },
   },
   "T12.2 EV": {
@@ -4143,6 +4612,144 @@ export const REGISTERS: Record<string, Register> = {
     derived: { 1: { from: [], value: (v, p) => audFrame(v(0), p) } },
     handIn: { step: 12, cols: [1], ident: [0] },
   },
+};
+
+// MAP-XW's second sheet: the requirement J3 brings (M9; platform-written, corrections item 82). Same columns as MAP-XW. It stays
+// outside the 8 dataset rows, so KR1 and the row keys are untouched; it is worked at the hand-in, where J3 arrives. The policy, control
+// and procedure are read on screen: the policy whose title names the requirement, the control Crosswalk View gives that policy,
+// the procedure whose heading names it; coverage is R11 on the row.
+const MAP = REGISTERS["T3.2"];
+REGISTERS["T3.2 X"] = {
+  code: "MAP-EXTRA",
+  title: "MAP-XW · Sheet 2: MAP-EXTRA, requirement M9 (outside the 8 dataset rows)",
+  on: [],
+  cols: MAP.cols.map((c, ci) => (ci === 6 ? { ...c, opts: ["Full", "Partial", "None"] } : c)),
+  rows: [["Art.33", "GDPR", "Notification of a personal data breach to the supervisory authority", "", "", "", "", "", "", ""]],
+  mine: () => true,
+  steps: { 7: [3, 4, 5, 6, 7, 9] },
+  ident: [0, 1, 2],
+  load: ["BKB-POL-000"],
+  derived: MAP.derived,
+  cells: {
+    ...MAP.cells,
+    3: { fix: (v) => (v.startsWith("A.5.26 ") ? v : null), hint: () => "Choose the row's policy, then read that policy's controls in Frameworks › Crosswalk View." },
+    4: { fix: (v) => (/breach notification/i.test(v) ? v : null), hint: () => "Find the requirement's key word in Policies › Map to Framework, then read that policy's title in BKB-POL-000 Section 3." },
+    5: {
+      fix: (v, r, d) => {
+        const n = v.trim().replace(/^(\u00a7|sections?)\s*/i, "");
+        return (d.library.docs.find(([c]) => c === polId(r))?.[2] ?? []).some(([x, h]) => x === n && /^Procedure:.*notification/i.test(h)) ? `Section ${n}` : null;
+      },
+      hint: (r) => (polId(r) ? `Read the “Procedure:” headings of ${polId(r)} Section 6 (Policies › Policy Library): which one is about what the requirement asks?` : "Choose the row's BKB policy first."),
+    },
+    6: { fix: (v, r) => (v === r11(r).best ? v : null), hint: () => "Rule R11 (Learn › Rule tables): count what the row holds, a control, a policy and a procedure." },
+  },
+  handIn: { step: 7, cols: [3, 4, 5, 6, 7, 8, 9], ident: [0, 1, 2] },
+};
+
+// PBC-LIST's second sheet: the control J3 brings (platform-written, corrections item 86). It stays outside the six of dataset PBC-6, so KR1, the row keys and T5.2's
+// index are untouched; it is worked at the hand-in, where J3 arrives. The sample is read from Ref-Sampling by the row's frequency, the owner from the Charter's RACI.
+REGISTERS["T5.1 X"] = {
+  code: "PBC-EXTRA",
+  title: "PBC-LIST · Sheet 2: PBC-EXTRA, the seventh control (outside the six of PBC-6)",
+  on: [],
+  cols: [
+    { h: "Req. no." },
+    { h: "Control" },
+    { h: "Description", wrap: true, w: 190 },
+    { h: "System" },
+    { h: "Frequency" },
+    { h: "Evidence requested", wrap: true, w: 190 },
+    { h: "Sample (R15)", wrap: true, opts: () => ["1", "2", "5", "20", "25", "40"] },
+    { h: "Owner", wrap: true, w: 220, opts: () => ["Chief Information Security Officer (CISO)", "Cyber Threat Intelligence Analyst", "Vulnerability Management Governance Analyst"] },
+    { h: "Due (R16)", wrap: true },
+    { h: "Request", wrap: true, w: 340 },
+  ],
+  rows: [["PBC-07", "C06", "Vulnerability scanning of internet-facing assets", "VM platform", "Weekly", "Vulnerability scan summary export", "", "", "", ""]],
+  mine: () => true,
+  steps: { 7: [6, 7] },
+  ident: [0, 1],
+  derived: {
+    8: { from: [], value: (_v, p) => p.grids?.[regKey("T5.1", "PBC-LIST Timeline")]?.["2,1"] ?? "" },
+    9: { from: [], value: (v) => (v(8) ? `Please send the ${v(5).charAt(0).toLowerCase()}${v(5).slice(1)} for ${v(1)} ${v(2)}, covering ${PBC_PERIOD}, by ${v(8)}.` : "") },
+  },
+  cells: {
+    6: {
+      fix: (v, r, d) => (v && v === String((d.pages["Ref-Sampling"]?.r as string[][] | undefined)?.find((x) => x[0] === r[4])?.[2] ?? "") ? v : null),
+      hint: (r) => `Find the frequency ${r[4]} in Ref-Sampling (Learn › Reference pages) and read its minimum sample.`,
+    },
+    7: {
+      fix: (v) => (v === "Vulnerability Management Governance Analyst" ? v : null),
+      hint: () => "Find the process this control belongs to in the GRC Charter Section 16 RACI, then the role marked R in that row. The legend gives its full name.",
+    },
+  },
+  handIn: { step: 7, cols: [3, 4, 5, 6, 7, 8, 9], ident: [0, 1] },
+};
+
+// EVP-IDX's second sheet: the five late files J3 brings (platform-written, corrections item 87). It stays apart from the 42 files steps 2 to 4 have checked and
+// is worked at the hand-in, where J3 arrives. Each file's cells are read on Import Log / Report and Upload Config File, and each value is worked out from them by rule.
+REGISTERS["T5.2 X"] = {
+  code: "EVP-EXTRA",
+  title: "EVP-IDX · Sheet 2: EVP-EXTRA, the five late files (read them in Evidence › Import Log / Report and Upload Config File)",
+  on: [],
+  cols: [
+    { h: "Item" },
+    { h: "Control" },
+    { h: "Accepted at step 2", wrap: true },
+    { h: "Result (R09)", wrap: true, opts: () => ["Accept", ...Array.from({ length: 10 }, (_, i) => `D${i + 1}`)] },
+    { h: "PBC req.", opts: () => PBC_CONTROLS.map((_, i) => `PBC-${String(i + 1).padStart(2, "0")}`) },
+    { h: "Gap now (R18)", wrap: true, opts: () => ["Gap", "No gap"] },
+  ],
+  rows: EVP_EXTRA.map(([f, c]) => [f, c, "", "", "", ""]),
+  mine: () => true,
+  steps: { 6: [3, 4, 5] },
+  ident: [0, 1, 2],
+  derived: {
+    2: { from: [], value: (v, p) => String(EVP_REPO.filter((x) => x[2] === v(1) && evpCodes(p, x[0]) === "none").length) },
+    4: { from: [3], value: (v) => (v(3) && v(3) !== "Accept" ? "—" : null) },
+  },
+  cells: {
+    3: {
+      fix: (v, r, d) => (v && v === extraResult(r[0], r[1], d) ? v : null),
+      hint: () => "Read the file's row in Evidence › Import Log / Report against its request in Evidence › Audit Requests (PBC), and compare its SHA-256 with Evidence › Upload Config File. Then walk D1 to D10.",
+    },
+    4: {
+      fix: (v, r) => (v === "—" || v === `PBC-${String(PBC_CONTROLS.findIndex(([c]) => c === r[1]) + 1).padStart(2, "0")}` ? v : null),
+      hint: () => "Evidence › Audit Requests (PBC) gives each control's request.",
+    },
+    5: {
+      fix: (v, r, d) => {
+        const n = Number(r[2]) + EVP_EXTRA.filter(([f, c]) => c === r[1] && extraResult(f, c, d) === "Accept").length;
+        return v === (n < 2 ? "Gap" : "No gap") ? v : null;
+      },
+      hint: () => "Rule R18: add the files of this control that this sheet accepts to its Accepted at step 2, then apply the rule.",
+    },
+  },
+  handIn: { step: 6, cols: [3, 4, 5], ident: [0, 1, 2] },
+};
+
+// SOP-DOC's third sheet: the records J3 brings (platform-written, corrections item 85). It stays apart from the step table, whose outputs are checked at
+// step 5, and is worked at the hand-in, where J3 arrives. The keeper is read on screen: BKB-POL-021 Section 6.1's line and the note under its table, and
+// BKB-POL-000 Section 6 for the exception register.
+const RECORD_LINE: Record<string, number> = { Request: 1, Assessment: 5, "Approved design": 3, "Shared-responsibility matrix": 5, "Onboarding evidence": 4 };
+const exceptionKeeper = () => docTable("BKB-POL-000", "6")?.find((r) => r[1].startsWith("Register exception"))?.[2] ?? "";
+const recordKeeper = (r: string[]) => (r[0] === "Exception request" ? exceptionKeeper() : pol021().find((x) => x[0] === String(RECORD_LINE[r[0]]))?.[2] ?? "");
+REGISTERS["T4.2 X"] = {
+  code: "SOP-EXTRA",
+  title: "SOP-DOC · Sheet 3: Records (SOP-EXTRA)",
+  on: [],
+  cols: [{ h: "Record", wrap: true, w: 240 }, { h: "Kept by", wrap: true, w: 300, opts: () => uniq([...pol021().map((r) => r[2]), exceptionKeeper()]) }],
+  rows: [...Object.keys(RECORD_LINE), "Exception request"].map((x) => [x, ""]),
+  mine: () => true,
+  steps: { 6: [1] },
+  ident: [0],
+  load: ["BKB-POL-021", "BKB-POL-000"],
+  cells: {
+    1: {
+      fix: (v, r) => (v && v === recordKeeper(r) ? v : null),
+      hint: (r) => (r[0] === "Exception request" ? "BKB-POL-021 Section 8 says what an escalated request becomes. Read that procedure in BKB-POL-000 Section 6: which line registers it?" : "Find the BKB-POL-021 Section 6.1 line that produces this record, then read the note under the table: does any line place it in a register?"),
+    },
+  },
+  handIn: { step: 6, cols: [1], ident: [0] },
 };
 
 /** A field of BKB-POL-006's document-control table (Section 11), as the document gives it ("" until loaded). */
@@ -4241,7 +4848,11 @@ const CANDIDATES: Record<string, string[]> = {
   "Art.16": ["A.5.5", "A.5.9", "A.5.34"],
   "99.37": ["A.5.12", "A.5.15", "A.5.34"],
   "Art.19": ["A.5.24", "A.5.26", "A.5.34"],
+  "Art.33": ["A.5.14", "A.5.26", "A.8.16"],
 };
+/** Rule L07 on the two TSA-36 sheets of Learn › Reference pages. */
+const l07 = (d: Desk, id: string) =>
+  (d.pages["TSA-36 Control_Mapping"]?.r ?? []).some((r) => r[0] === id) ? "Yes" : (d.pages["TSA-36 Roadmap"]?.r ?? []).some((r) => String(r[1]).split(", ").includes(id)) ? "Planned" : "No";
 /** LearnTech's risk register, sheet HQ Istanbul (Learn › Reference pages): [Risk ID, title, decision, owner, controls]. */
 const RISK_PAGE = "RA-36 Risk register (HQ Istanbul)";
 const riskRows = (d: Desk) => (d.pages[RISK_PAGE]?.r ?? []) as string[][];
@@ -4256,13 +4867,14 @@ const usedBy = (d: Desk, id: string) => riskRows(d).find((r) => riskControls(r[4
 const BASELINE = "Group baseline (BKB-POL-001)";
 /** Rule L06's justification for an applicable control: the first risk that uses it, else the Group baseline
  *  (no law in BKB-ADD-36 Section 2 and no contract in Organization_Profiles names an Annex A control). */
-const justification = (d: Desk, id: string) => usedBy(d, id) ?? BASELINE;
-/** The controls Ref-SoA exclusions lists for Org B ("None — all 93 … applicable" lists none). */
+const justification = (d: Desk, id: string) => (soaExcluded(d).includes(id) ? soaReason(d)[0] : (usedBy(d, id) ?? BASELINE));
+/** The controls Ref-SoA exclusions lists for Org B ("None — all 93 … applicable" lists none), and the justification it shows. */
+const soaRow = (d: Desk) => (d.pages["Ref-SoA exclusions"]?.r ?? []).find((r) => r[0] === d.orgs.B.name);
 const soaExcluded = (d: Desk) => {
-  const row = (d.pages["Ref-SoA exclusions"]?.r ?? []).find((r) => r[0] === d.orgs.B.name);
-  const ids: string[] = String(row?.[1] ?? "").match(/A\.\d+\.\d+/g) ?? [];
+  const ids: string[] = String(soaRow(d)?.[1] ?? "").match(/A\.\d+\.\d+/g) ?? [];
   return ids;
 };
+const soaReason = (d: Desk) => (soaExcluded(d).length ? [String(soaRow(d)?.[2] ?? "")] : []);
 
 export const regKey = (taskId: string, code: string) => `${taskId}|${code}`;
 
@@ -4356,7 +4968,7 @@ export function cellOk(reg: Register, desk: Desk, p: Progress, taskId: string, _
 export function regEmpty(desk: Desk, p: Progress, task: Task, n: number, reg = regOf(task.id, n)): string[] {
   if (!reg?.handIn) return [];
   const rows = regRows(reg, p, task.id);
-  return rows.flatMap((r, ri) => (reg.mine(r, desk) ? reg.handIn!.cols.filter((ci) => !reg.awaiting?.[ci]?.(liveRow(reg, p, task.id, ri), ri, addedBy(reg, p, task.id, ri)) && !cellOk(reg, desk, p, task.id, rows, ri, ci)).map((ci) => `${ri},${ci}`) : []));
+  return rows.flatMap((r, ri) => (reg.mine(r, desk) && (!reg.only?.[n] || reg.only[n](r.map(String), p)) ? reg.handIn!.cols.filter((ci) => !reg.awaiting?.[ci]?.(liveRow(reg, p, task.id, ri), ri, addedBy(reg, p, task.id, ri)) && !cellOk(reg, desk, p, task.id, rows, ri, ci)).map((ci) => `${ri},${ci}`) : []));
 }
 
 /** Rule R10's joints in an obligation: each " and " or ";" that joins two duties. */
@@ -4385,6 +4997,7 @@ export function splitRow(cells: Record<string, string>, ri: number, col: number,
 }
 /** A compare step's offices (T3.1 step 7): each office of the rows copied from Section 2, with its clock there and
  *  the matrix's for its country, and what the mentee recorded. Null until both documents are loaded. */
+const DIFFERS = "Differs — addendum governs";
 export function compareOffices(reg: Register, desk: Desk, p: Progress, taskId: string) {
   const rows = regRows(reg, p, taskId).map((_, ri) => ri).filter((ri) => [1, 2].includes(addedBy(reg, p, taskId, ri)));
   const offices = [...new Set(rows.map((ri) => cellValue(reg, p, taskId, ri, 5)).filter(Boolean))];
@@ -4396,12 +5009,23 @@ export function compareOffices(reg: Register, desk: Desk, p: Progress, taskId: s
     const ours = obl.row(desk, city)?.[3] ?? "";
     const theirs = annex.find((r) => r[0] === country)?.[2] ?? "";
     const got = p.grids?.[regKey(taskId, reg.code)]?.[`cmp:${city}`] ?? "";
-    return { city, country, ours, theirs, differs: !same(ours, theirs), got, rows: rows.filter((ri) => cellValue(reg, p, taskId, ri, 5) === city) };
+    // Where the office's clock differs, the row it differs on: the Annex A part with the same party and another clock.
+    const parts = theirs.split(";").map((x) => x.trim());
+    const party = (x: string) => x.toLowerCase().replace(/^\d+h to /, "").trim();
+    const details = rows.filter((ri) => cellValue(reg, p, taskId, ri, 5) === city).map((ri) => {
+      const ob = cellValue(reg, p, taskId, ri, 1);
+      const was = cellValue(reg, p, taskId, ri, 9);
+      const clock = parts.find((x) => party(x) === party(ob))?.split(" ")[0];
+      const differs = !!clock && clock !== ours.split(" ")[0];
+      return { ri, ob, differs, note: was.endsWith(DIFFERS) ? was : `${was} (${addendum(desk)}); ${clock} (BKB-ERM-001 Annex A). ${DIFFERS}` };
+    });
+    const row = p.grids?.[regKey(taskId, reg.code)]?.[`cmp:${city}:row`] ?? "";
+    return { city, country, ours, theirs, differs: !same(ours, theirs), got, rows: details.map((d) => d.ri), details, row };
   });
 }
 export const compareDone = (reg: Register, desk: Desk, p: Progress, taskId: string) => {
   const c = compareOffices(reg, desk, p, taskId);
-  return !!c?.length && c.every((o) => o.got === (o.differs ? "differs" : "same"));
+  return !!c?.length && c.every((o) => o.got === (o.differs ? "differs" : "same") && (!o.differs || !!o.details.find((d) => String(d.ri) === o.row)?.differs));
 };
 
 /** Grid cells with a row added (stamped with the step that added it) or one removed and the rest moved up. */
@@ -4437,10 +5061,8 @@ export const DECIDE_FROM: Record<string, Record<number, [string, string[]][]>> =
   // T4.2-2 (the policy's time limit or the addendum's): how an addendum stands against Group policy, BKB-POL-000 Section 5.
   // T4.2-7 (the SOP's label): the tiers (BKB-STD-001 Section 3, the tree Section 5) and LearnTech's labels (BKB-ADD-36 Section 7).
   "T4.2": { 2: [["BKB-POL-000", ["5"]]], 7: [["BKB-STD-001", ["3", "5"]], ["BKB-ADD-36", ["7"]]] },
-  // T6.2-5 (a leaver's account used after termination): the leaver procedure, BKB-POL-006 Section 6.3.
-  "T6.2": { 5: [["BKB-POL-006", ["6.3"]]] },
   // T7.1-8 (which risks are above appetite): BKB-ERM-001 Section 4, the appetite as a maximum residual score.
-  "T7.1": { 8: [["BKB-ERM-001", ["4"]]] },
+  "T7.1": { 8: [["BKB-ERM-001", ["4"]], ["BKB-POL-017", ["3.1"]]], 9: [["BKB-ERM-001", ["6.2", "6.3"]]] },
   // T11.2-8 (D5: when the impact assessment is due): BKB-POL-016 Section 3.1 and the procedure, Section 6.1.
   "T11.2": { 8: [["BKB-POL-016", ["3.1", "6.1"]]] },
 };
@@ -4475,6 +5097,9 @@ export interface BriefSection {
   want?: (desk: Desk) => string[] | null;
   /** A list whose order the source does not fix (the rows of a table, filtered). */
   anyOrder?: boolean;
+  /** The section arrives as a colleague's first draft to check against its source (F1.3 steps 2 and 3): the
+   *  drafted values, and per value why it is wrong (null when right). Nothing is flagged until Check my answers. */
+  draft?: (desk: Desk) => { v: string[]; why: (string | null)[] } | null;
 }
 export interface Brief {
   code: string;
@@ -4492,6 +5117,15 @@ export interface Brief {
 }
 
 const office = (desk: Desk) => desk.orgs.A.office;
+/** The source's values with planted slips: [index, drafted value, why it is wrong]. */
+const drafted = (want: string[], slips: [number, string, string][]) => {
+  const v = [...want];
+  const why: (string | null)[] = want.map(() => null);
+  for (const [i, x, w] of slips) { v[i] = x; why[i] = w; }
+  return { v, why };
+};
+const dataHandled = (d: Desk) => { const t = docTable(addendum(d), "9"); return t ? bullets(t[0][1]) : null; };
+const legalRow = (d: Desk) => docTable(addendum(d), "2")?.find((r) => r[0].startsWith(office(d)))?.slice(1, 6) ?? null;
 export const BRIEFS: Record<string, Brief> = {
   "F1.3": {
     code: "T-CTX",
@@ -4500,7 +5134,20 @@ export const BRIEFS: Record<string, Brief> = {
     sections: [
       { h: "1 Services", given: ["BKB-ADD-16", "1.1"] },
       // Section 9 "Processing activities and data": its "Client data handled" list (step 2 says "Data handled").
-      { h: "2 Data handled", src: (d) => `${addendum(d)} Section 9`, want: (d) => { const t = docTable(addendum(d), "9"); return t ? bullets(t[0][1]) : null; } },
+      {
+        h: "2 Data handled",
+        src: (d) => `${addendum(d)} Section 9`,
+        want: dataHandled,
+        // A first draft with two slips, each a real way a list like this goes wrong (REWORK F1.3, corrections item 78):
+        // a line cut short, and an asset from Section 9's next table in place of the data it holds.
+        draft: (d) => {
+          const w = dataHandled(d);
+          return w && drafted(w, [
+            [0, w[0].replace(/, [^,)]*\)$/, ")"), "The draft cut the bracket short. Nothing is shortened: a reader of the brief must see every kind of data the office holds."],
+            [3, "Call recording servers", "That is an asset, listed under On-premises assets lower in Section 9. Section 2 lists the data, not the systems that hold it."],
+          ]);
+        },
+      },
       // The office's row of Section 2; each line is one of its columns, in order.
       {
         h: "3 Legal environment",
@@ -4512,7 +5159,17 @@ export const BRIEFS: Record<string, Brief> = {
           { l: "Transfer rule", col: "Cross-border transfer" },
         ].map((x) => ({ ...x, at: `Section 2 column: ${x.col}` })),
         src: (d) => `${addendum(d)} Section 2`,
-        want: (d) => docTable(addendum(d), "2")?.find((r) => r[0].startsWith(office(d)))?.slice(1, 6) ?? null,
+        want: legalRow,
+        // A first draft with two slips: the next office's breach clock (the pack: "a wrong office row here becomes a
+        // wrong breach clock in T10.2") and a cell cut to one of its two parts (corrections item 78).
+        draft: (d) => {
+          const w = legalRow(d);
+          const next = docTable(addendum(d), "2")?.find((r) => !r[0].startsWith(office(d)));
+          return w && next ? drafted(w, [
+            [2, next[3], `That is the ${next[0].split("(")[0]} row's Breach notification, the row below yours in Section 2. Each office has its own clock: a wrong row here becomes a wrong breach clock in T10.2.`],
+            [3, w[3].split(";").pop()!.trim(), "The draft kept one part of the cell and dropped the other. Your row's cell names an agency and an Act, and the brief carries both."],
+          ]) : null;
+        },
       },
       // Information_Asset_Register_by_Department.xlsx is not on the platform (its Risk › Asset Register
       // screen is F2.1's 12-asset sample); BKB-ADD-16 Section 8.1 is the register's Mission Critical assets by
@@ -4523,19 +5180,12 @@ export const BRIEFS: Record<string, Brief> = {
     steps: { 2: 1, 3: 2, 4: 3 },
     handIn: 6,
   },
-  // CLS-RES's two small tables (Ref-Templates T-CLS: "… tier; organisation label; transmission rule
-  // (Tier 3 and Tier 4)"): the organisation's label for each Group tier, and how Tier 3 and Tier 4 may
-  // be sent. The asset rows are REGISTERS["F2.1"]; both are handed in together at step 6.
+  // Table 2 of CLS-RES (Ref-Templates T-CLS: "transmission rule (Tier 3 and Tier 4)"): how Tier 3 and Tier 4
+  // may be sent. The asset rows are REGISTERS["F2.1"], table 1 REGISTERS["F2.1 LAB"]; all go in together at step 6.
   "F2.1": {
     code: "T-CLS",
-    title: "CLS-RES · Tier labels and transmission (template T-CLS)",
+    title: "CLS-RES · Transmission rule (template T-CLS)",
     sections: [
-      {
-        h: "1 Organisation labels",
-        lines: ["Tier 1 (Public)", "Tier 2 (Internal)", "Tier 3 (Confidential)", "Tier 4 (Restricted)"].map((t) => ({ l: t, col: t })),
-        src: (d) => `${addendum(d)} Section 7`,
-        want: (d) => docTable(addendum(d), "7")?.slice(0, 4).map((r) => r[1]) ?? null,
-      },
       // Section 6 has no "Transmission" column: its rows are Internal and External transmission. Sending a
       // file to a partner (the step's question) is external (Content Corrections item 32).
       {
@@ -4549,10 +5199,10 @@ export const BRIEFS: Record<string, Brief> = {
       },
     ],
     // 6: shown, read-only, under CLS-RES when it is handed in.
-    on: [4, 5, 6],
-    steps: { 4: 0, 5: 1 },
+    on: [5, 6],
+    steps: { 5: 0 },
   },
-  // The PDCA diagram of LI-FAM: clauses 4–10 placed with rule L01, and the note on Amendment 1:2024.
+  // The PDCA diagram of LI-FAM: clauses 4–10 placed with rule L01.
   "T3.1 LI-FAM": {
     code: "T-LI-FAM-PDCA",
     title: "LI-FAM · PDCA diagram of clauses 4–10 (template T-LI-FAM)",
@@ -4565,17 +5215,10 @@ export const BRIEFS: Record<string, Brief> = {
         src: () => "Rule L01",
         want: (d) => [4, 5, 6, 7, 8, 9, 10].map((n) => l01(d, n)),
       },
-      {
-        h: "2 Amendment 1:2024",
-        lines: [{ l: "Note", col: "the ISO/IEC 27001 row", at: "Ref-27000 family, ISO/IEC 27001 row" }],
-        src: () => "Ref-27000 family",
-        // The ISO/IEC 27001 row's purpose: "…; the amendment adds climate change to clauses 4.1 and 4.2."
-        want: (d) => [(famRow(d, "ISO/IEC 27001:2022 + Amd 1:2024")?.[1] ?? "").split("; ").slice(1).join("; ")],
-      },
     ],
-    on: [12, 13, 14],
-    steps: { 12: 0, 13: 1 },
-    reads: { 12: ["learn|Rule tables"], 13: ["learn|Reference pages"] },
+    on: [12, 14],
+    steps: { 12: 0 },
+    reads: { 12: ["learn|Rule tables"] },
   },
   // T3.1's Lead Implementer extension LI-02: template T-LI-SCOPE ("Scope frame; in / out / interfaces;
   // climate row; 10 ISMS processes"), filled with rules L03 and L04.
@@ -4619,6 +5262,15 @@ export const BRIEFS: Record<string, Brief> = {
         lines: ["Risk assessment and treatment", "Statement of Applicability", "Document control", "Competence and training", "Awareness and communication", "Incident management and breach notification", "Supplier and third-party risk", "Internal audit", "Management review", "Nonconformity and corrective action"].map((x) => ({ l: x, col: x })),
         src: () => "Ref-ISMS processes",
         want: (d) => { const r = isms(d).filter((x) => !/^Climate/.test(x[0])); return r.length ? r.map((x) => x[1]) : null; },
+        // A first draft with two slips, each a real RACI error (REWORK, corrections item 81): an audited process owner named over
+        // internal audit, and a shared duty cut at its ";", which drops the DPO.
+        draft: (d) => {
+          const w = isms(d).filter((x) => !/^Climate/.test(x[0])).map((x) => x[1]);
+          return w.length ? drafted(w, [
+            [5, w[5].split(";")[0].trim(), "The draft cut the cell at its “;” and lost the DPO, who answers for this process on personal data."],
+            [7, w[9], "That is the owner of Nonconformity and corrective action. Internal audit must be independent of the processes it audits."],
+          ]) : null;
+        },
       },
     ],
     on: [15, 16, 17, 18],
@@ -4678,7 +5330,8 @@ export function briefStatus(p: Progress, task: Task, n: number, desk?: Desk) {
   const flags = desk ? (S.lines ? briefFlags(desk, S, S.lines.map((_, li) => v[`${sec},${li}`] ?? "")) : briefFlags(desk, S, list)) : null;
   const want = desk ? (S.want?.(desk)?.length ?? 0) : 0;
   const right = !!desk && !!flags && flags.every((f) => !f) && briefSrcOk(desk, S, v[`${sec},src`] ?? "") && (!!S.lines || list.length === want);
-  return { ok: filled === keys.length && (!desk || right), filled, cells: keys.length, right, items: list.length, want };
+  const checked = !S.draft || !!v[`${sec},at`];
+  return { ok: filled === keys.length && (!desk || right) && checked, filled, cells: keys.length, right, items: list.length, want };
 }
 
 /**
@@ -4793,33 +5446,25 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
     ],
   },
-  // T3.2 step 8 (LI-05): "Open T-LI-SOA. The 93 controls are listed." Checked against Annex A's themes:
-  // the template ends each theme where the standard does. Each answer is a control ID on screen.
+  // T3.2 step 8 (LI-05): T-LI-SOA arrives from a colleague with two titles in their 2013 wording (Register.slips). Each answer
+  // is a cell on screen that differs from Ref-27002 attributes.
   "T3.2": {
     8: [
       {
-        id: "org",
-        ask: "Click the last Organisational control: the last of the A.5 rows.",
-        why: "Annex A of ISO/IEC 27001:2022 groups its 93 controls in four themes. The Organisational theme is A.5.1 to A.5.37: 37 controls.",
-        hint: "Scroll down the Control column to where A.5 ends and A.6 begins.",
-        col: 0,
-        row: (r) => r[0] === "A.5.37",
+        id: "t1",
+        ask: "Click the first title, top to bottom, that is not the title Ref-27002 attributes gives that control.",
+        why: "A.6.7 is Remote working in the 2022 edition. “Teleworking” was the 2013 wording: an SoA that quotes it was not rebuilt from the current Annex A, and an auditor reads that as a stale document. The template now carries the standard's title.",
+        hint: "Compare again, control by control, against Ref-27002 attributes. The numbers match; it is the words that differ.",
+        col: 1,
+        row: (r) => r[0] === "A.6.7",
       },
       {
-        id: "people",
-        ask: "Click the last People control: the last of the A.6 rows.",
-        why: "The People theme is A.6.1 to A.6.8: 8 controls, about screening, employment terms, awareness and reporting.",
-        hint: "It is just above the first A.7 row.",
-        col: 0,
-        row: (r) => r[0] === "A.6.8",
-      },
-      {
-        id: "physical",
-        ask: "Click the last Physical control: the last of the A.7 rows.",
-        why: "The Physical theme is A.7.1 to A.7.14: 14 controls; the Technological theme is A.8.1 to A.8.34: 34. 37 + 8 + 14 + 34 = 93, so the template lists every control once. A Statement of Applicability decides every control: no row is added or removed.",
-        hint: "It is just above the first A.8 row.",
-        col: 0,
-        row: (r) => r[0] === "A.7.14",
+        id: "t2",
+        ask: "Now the next one down.",
+        why: "A.8.7 is Protection against malware. “Controls against malware” was the 2013 wording too. With both corrected, the template lists A.5 to A.8 as the standard does: 37 + 8 + 14 + 34 = 93. A Statement of Applicability decides every control: no row is added or removed.",
+        hint: "Keep comparing further down the list, against Ref-27002 attributes.",
+        col: 1,
+        row: (r) => r[0] === "A.8.7",
       },
     ],
   },
@@ -4914,35 +5559,6 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
     ],
   },
-  // T8.1 step 9 (LI-11): the measure card read against ISO/IEC 27001 clause 9.1's questions, in our words.
-  "T8.1": {
-    9: [
-      {
-        id: "when",
-        ask: "Clause 9.1 c) asks when the measuring is done. Click the value of the card that answers it.",
-        why: "Monthly: the measure is taken on a fixed rhythm, so each month's result can be compared with the last and a trend seen.",
-        hint: "Read down the Field column for the field about timing, then click its value.",
-        col: 1,
-        row: (r) => r[0] === "Frequency",
-      },
-      {
-        id: "who",
-        ask: "Clause 9.1 d) asks who measures. Click the value of the card that answers it.",
-        why: "The vulnerability team, who run the scans, collect the data. Analysing and evaluating it are separate fields, given to other people.",
-        hint: "Read down the Field column for the field about gathering the data, then click its value.",
-        col: 1,
-        row: (r) => r[0] === "Who collects",
-      },
-      {
-        id: "how",
-        ask: "Clause 9.1 b) asks for the method, so that results are valid and can be compared. Click the value of the card that says how the result is worked out.",
-        why: "The formula fixes the numerator, the denominator and the unit, so two people get the same result from the same data.",
-        hint: "Read down the Field column for the field that gives the calculation, then click its value.",
-        col: 1,
-        row: (r) => r[0] === "Formula",
-      },
-    ],
-  },
   // T8.2: step 1 reads the fixed test script (CT-SCRIPT Sheet 1); step 8 reads LI-NCR's fields against clause 10.2.
   "T8.2": {
     1: [
@@ -4974,7 +5590,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
     8: [
       {
         id: "react",
-        ask: "Clause 10.2 a) asks the organisation to react to the nonconformity: to control and correct it. Click the field of LI-NCR that records that.",
+        ask: "Clause 10.2 a) asks the organisation to react to the nonconformity and correct it. For PR-022, the late review must now be put right on the record. Click the field of LI-NCR that holds that.",
         why: "The correction fixes the case in front of you. It is not yet a corrective action, which removes the cause.",
         hint: "Read the What it holds column for the field that fixes this one case.",
         col: 0,
@@ -4982,7 +5598,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
       {
         id: "cause",
-        ask: "Clause 10.2 b) asks it to find out why the nonconformity happened, so that its cause can be removed. Click the field that records that.",
+        ask: "Clause 10.2 b) asks it to find out why the nonconformity happened. The control owner asks where your report says what made PR-022's review late. Click that field.",
         why: "The root cause is the last answer of the 5-Whys form; the corrective action is chosen to remove it.",
         hint: "Read the What it holds column for the field about why it happened.",
         col: 0,
@@ -4990,7 +5606,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
       {
         id: "review",
-        ask: "Clause 10.2 d) asks it to review whether the corrective action taken worked. Click the field that records that.",
+        ask: "Clause 10.2 d) asks it to review whether the corrective action worked. An auditor asks how anyone will know the fix held. Click the field that answers.",
         why: "The effectiveness check says how and when the corrective action is shown to work: a re-test, three months later (rule L18).",
         hint: "Read the What it holds column for the field about whether the action worked.",
         col: 0,
@@ -5084,7 +5700,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
     ],
   },
-  // T12.1 step 1: "Open ACT-TRACKER" made into reading T-ACT's read-me; step 7: "Click Refresh counts" into reading ACT-MRI's counts.
+  // T12.1 step 1: "Open ACT-TRACKER" made into reading T-ACT's read-me.
   "T12.1": {
     1: [
       {
@@ -5110,32 +5726,6 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
         hint: "Read the What it records column for a date the tracker's own rows do not hold.",
         col: 1,
         row: (r) => r[0] === "Test date",
-      },
-    ],
-    7: [
-      {
-        id: "conf",
-        ask: "Owners reported 15 actions closed. Click the count of those your closure tests confirmed.",
-        why: "Closed — verified: the closures whose evidence passed all four tests of R33. The others of the 15 were reopened.",
-        hint: "Read the Line column for the closures your tests confirmed.",
-        col: 1,
-        row: (r) => r[0] === "Closed — verified",
-      },
-      {
-        id: "held",
-        ask: "Click the count that tells the review how many owners' closures did not hold.",
-        why: "Reopened by your closure tests: the owners reported them Closed, and their evidence did not support it. Top management reads it beside the owners' own count.",
-        hint: "Read the Line column for the actions your tests opened again.",
-        col: 1,
-        row: (r) => r[0] === "Reopened by your closure tests",
-      },
-      {
-        id: "esc",
-        ask: "Click the count of actions that have gone to their owner's manager.",
-        why: "Escalated (K5): an open action more than 14 days past its due date goes to the owner's manager, and the review hears of it.",
-        hint: "Read the Line column for the code K5.",
-        col: 1,
-        row: (r) => r[0] === "Escalated to the owner's manager (K5)",
       },
     ],
   },
@@ -5239,4 +5829,6 @@ export function reportDone(desk: Desk, p: Progress, task: Task): boolean {
 }
 
 /** The screens a step reads from besides its own tool (see `reads`). */
-export const stepReads = (taskId: string, n: number): string[] => regOf(taskId, n)?.reads?.[n] ?? briefOf(taskId, n)?.reads?.[n] ?? [];
+/** A question answered in its row, with no register of its own to carry `reads`. */
+const ROW_READS: Record<string, string[]> = { "T8.1-10": ["learn|Reference pages"], "T11.1-4": ["awareness|Phishing Campaign Planner"], "T12.1-8": ["learn|Rule tables"], "T12.1-11": ["learn|Rule tables"], "T12.2-2": ["learn|Rule tables"], "T12.2-9": ["learn|Framework Quick Reference"], "T12.2-11": ["learn|Rule tables", "learn|Framework Quick Reference"] };
+export const stepReads = (taskId: string, n: number): string[] => regOf(taskId, n)?.reads?.[n] ?? briefOf(taskId, n)?.reads?.[n] ?? ROW_READS[`${taskId}-${n}`] ?? [];

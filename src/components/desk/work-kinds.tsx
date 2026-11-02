@@ -8,7 +8,7 @@ import { isDecideCell, isFillCell, type Desk, type Step, type Task } from "@/lib
 import { stepKey, type Progress, type RowsFeedback } from "@/lib/desk/progress";
 import { api } from "@/lib/api";
 import { gridKey, gridStatus } from "@/lib/desk/work";
-import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
+import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
 import { useDoc, useDocs } from "./doc-text";
 import { RMF, dmyToIso, fileExts, fileNameOk, isDateRow, isoToDmy, openBefore, receiptHash, rmfAt, rmfExpected, rmfGiven, rmfKey, rmfMiss, same, submitCodes } from "@/lib/desk/forms";
 
@@ -374,6 +374,13 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
   const full = !!reg.grow && rows.length >= (reg.grow.cap ?? reg.grow.target);
   const edit = (fn: (c: Record<string, string>) => Record<string, string>) => update((p) => ({ ...p, grids: { ...p.grids, [gk]: fn(p.grids?.[gk] ?? {}) } }));
   const set = (cell: string, v: string) => edit((c) => ({ ...c, [cell]: v }));
+  // A column that arrives as a draft: in its empty cells, once, when the step opens.
+  const draft = s && !readOnly ? reg.draft?.[s.n]?.(desk, progress) : undefined;
+  useEffect(() => {
+    if (draft) edit((c) => ({ ...Object.fromEntries(draft.v.flatMap((x, ri) => (x ? [[`${ri},${draft.col}`, x]] : []))), ...c }));
+    // Once per step.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s?.n, !!draft]);
   // A value the column reads (`cells`) is recorded in its proper form once the mentee leaves the cell.
   const tidy = (ri: number, ci: number) => {
     const v = cellValue(reg, progress, task.id, ri, ci);
@@ -471,7 +478,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
   const filledBy = new Set([...Object.values(reg.steps).flat(), ...Object.keys(reg.derived ?? {}).map(Number)]);
   const firstFill = Math.min(...Object.keys(reg.steps).map(Number));
   return (
-    <div data-guide="register" className="overflow-x-auto border-b border-[#DDE1E8] bg-white">
+    <div data-guide="register" data-reg={reg.code} className="overflow-x-auto border-b border-[#DDE1E8] bg-white">
       <p className="sticky left-0 flex items-center gap-2 border-b border-[#E9ECF1] bg-[#F7F8FA] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">
         <span>
           {reg.title}
@@ -539,8 +546,9 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                 <tr key={ri} data-guide={lit ? "ladder-row" : undefined} className={lit ? "bg-[#F7F8FF] shadow-[inset_3px_0_0_#4338CA]" : ""}>
                   {reg.cols.map((c, ci) => {
                     if (studyHide(ci)) return null;
-                    const v = cellValue(reg, progress, task.id, ri, ci);
                     const cell = `${ri},${ci}`;
+                    const slip = s && reg.slips?.[s.n]?.col === ci && !foundAt.has(cell) ? reg.slips[s.n].at[r[0]] : undefined;
+                    const v = slip ?? cellValue(reg, progress, task.id, ri, ci);
                     const tone = foundAt.has(cell) || (lit && ladderDone && ci === ladder!.col) ? "bg-[#DCFCE7] text-[#14532D] font-semibold shadow-[inset_0_0_0_2px_#16A34A]" : missAt === cell ? "bg-[#FEF3C7] shadow-[inset_0_0_0_2px_#F59E0B]" : ladder ? "" : "hover:bg-[#EEF0FF]";
                     return (
                       // The row's name stays in view when the table scrolls sideways.
@@ -853,7 +861,7 @@ export function RegisterProgress({ task, s }: { task: Task; s: Step }) {
           ) : cols.length === reg.cols.length ? (
             <>Fill <strong>every column</strong> of each row in {reg.code}.</>
           ) : (
-            <>Fill {names} on every row of the register.</>
+            <>{reg.draft?.[s.n] ? "Check" : "Fill"} {names} on every row of the register.</>
           )}
           {auto.length > 0 && (auto.every((x) => /^[A-Z]$/.test(x)) ? ` Column ${auto.join(", ")} records the rule by itself as you fill it.` : ` ${autoCols.join(", ")} fills itself from your choice.`)}
           {reg.rows.some((r) => !reg.mine(r, desk) && cols.some((ci) => r[ci])) && ` ${reg.worked ?? "The grey rows are worked examples to copy the pattern from."}`}
@@ -896,6 +904,17 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
   const cur = readOnly || !s || handIn ? -1 : (b.steps[s.n] ?? -1);
   const set = (k: string, x: string) => update((p) => ({ ...p, grids: { ...p.grids, [gk]: { ...(p.grids?.[gk] ?? {}), [k]: x } } }));
   useDoc(addendumOf(desk)); // the copies are compared with it
+  // A section that arrives as a first draft: on the page once its source is loaded, once.
+  const curSec = cur >= 0 ? b.sections[cur] : undefined;
+  const draft = curSec?.draft?.(desk);
+  useEffect(() => {
+    if (!draft || !curSec) return;
+    const cells: [string, string][] = curSec.lines ? draft.v.map((x, li) => [`${cur},${li}`, x]) : [[`${cur},0`, draft.v.join("\n")]];
+    if (cells.some(([k]) => v[k] !== undefined)) return;
+    update((p) => ({ ...p, grids: { ...p.grids, [gk]: { ...(p.grids?.[gk] ?? {}), ...Object.fromEntries(cells) } } }));
+    // Once, when the draft is first available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!draft, cur]);
   const given = b.sections.find((x) => x.given);
   useDoc(given?.given?.[0] ?? addendumOf(desk));
   // A section copied from a Group document (F2.1: BKB-STD-001 Section 6) is compared with it too.
@@ -958,7 +977,8 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
               const src = (v[`${i},src`] ?? "").trim();
               const srcOff = !!src && !briefSrcOk(desk, sec, src);
               const list = (v[`${i},0`] ?? "").split("\n");
-              const flags = sec.lines ? briefFlags(desk, sec, sec.lines.map((_, li) => v[`${i},${li}`] ?? "")) : briefFlags(desk, sec, list);
+              // A draft shows no flag before its check: the flag would point at the slips.
+              const flags = sec.draft && !v[`${i},at`] ? null : sec.lines ? briefFlags(desk, sec, sec.lines.map((_, li) => v[`${i},${li}`] ?? "")) : briefFlags(desk, sec, list);
               const lines = sec.given ? givenLines(sec) : null;
               return (
                 <section key={sec.h} data-guide={editing ? "brief-section" : sec.given && study ? "brief-worked" : undefined} className={`grid gap-1.5 ${editing ? "-mx-3 rounded border border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2.5" : ""}`}>
@@ -1042,6 +1062,7 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
                     ) : (
                       src && <p className="text-[12.5px] text-[#5B6474]">Source: {src.replace(/^source:\s*/i, "")}</p>
                     ))}
+                  {editing && sec.draft && <BriefCheck task={task} b={b} i={i} />}
                 </section>
               );
             })}
@@ -1053,12 +1074,82 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
   );
 }
 
+/**
+ * Under a drafted section (F1.3 steps 2 and 3): Check my answers, then each slip's verdict. As RmfCheck: no count
+ * before the check, and a slip still wrong says where to read, never its value.
+ */
+function BriefCheck({ task, b, i }: { task: Task; b: Brief; i: number }) {
+  const { desk, progress, update } = useDesk();
+  const sec = b.sections[i];
+  const gk = briefKey(task.id, b.code);
+  const v = progress.grids?.[gk] ?? {};
+  const typed = sec.lines ? sec.lines.map((_, li) => v[`${i},${li}`] ?? "") : (v[`${i},0`] ?? "").split("\n").filter((x) => x.trim());
+  const draft = sec.draft?.(desk);
+  const want = sec.want?.(desk);
+  const flags = briefFlags(desk, sec, typed);
+  const [justChecked, setJustChecked] = useState(false);
+  useEffect(() => {
+    if (justChecked) document.querySelector('[data-guide="brief-result"]')?.scrollIntoView({ block: "nearest" });
+  }, [justChecked]);
+  if (!draft || !want || !flags) return null;
+  const wrong = (li: number) => !(typed[li] ?? "").trim() || !!flags[li];
+  const bad = Array.from({ length: Math.max(want.length, typed.length) }, (_, li) => li).filter(wrong);
+  const label = (li: number) => sec.lines?.[li].l ?? `Line ${li + 1}`;
+  const where = sec.src!(desk);
+  const at = v[`${i},at`];
+  if (!at)
+    return (
+      <button
+        type="button"
+        data-guide="brief-check"
+        onClick={() => {
+          update((p) => ({ ...p, grids: { ...p.grids, [gk]: { ...(p.grids?.[gk] ?? {}), [`${i},at`]: new Date().toISOString(), [`${i},miss`]: bad.join(",") } } }));
+          setJustChecked(true);
+        }}
+        className="mt-1 inline-flex h-9 w-fit items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90"
+      >
+        <Icon name="check" size={14} strokeWidth={2.5} /> Check my answers
+      </button>
+    );
+  const slips = draft.why.flatMap((w, li) => (w ? [li] : []));
+  const missed = (v[`${i},miss`] ?? "").split(",").filter(Boolean).map(Number);
+  const found = slips.filter((li) => !missed.includes(li)).length;
+  return (
+    <div data-guide="brief-result" role="status" className="mt-1 grid gap-1 rounded border border-[#DDE1E8] bg-[#F7F8FA] px-3 py-2 text-[13px] leading-snug text-[#111827]">
+      <p className="font-semibold">{found === slips.length ? `You found all ${slips.length} lines that were wrong.` : `You found ${found} of the ${slips.length} lines that were wrong.`}</p>
+      {missed.some((li) => !slips.includes(li)) && <p>A line that was right was changed. It is flagged on the page.</p>}
+      <ul className="grid gap-1">
+        {slips.map((li) => (
+          <li key={li} data-brief-verdict={wrong(li) ? "open" : "right"}>
+            <strong className="font-semibold">{label(li)}:</strong>{" "}
+            {wrong(li) ? `read it again in ${where}.` : <>{missed.includes(li) ? "corrected" : "you found this"}. The draft had “{draft.v[li]}”. {draft.why[li]}</>}
+          </li>
+        ))}
+      </ul>
+      <p className={bad.length ? "text-[#92400E]" : "text-[#14532D]"}>
+        {bad.length ? `${bad.length} still ${bad.length === 1 ? "differs" : "differ"} from ${where}: correct the flagged ${bad.length === 1 ? "line" : "lines"}.` : `All ${want.length} lines now match ${where}; the other ${want.length - slips.length} were right as drafted.`}
+      </p>
+      {!(v[`${i},src`] ?? "").trim() && <p className="text-[#92400E]">The Source line is still empty.</p>}
+    </div>
+  );
+}
+
 /** Beside the brief: which section this step fills, and whether it is complete. */
 export function BriefProgress({ task, s }: { task: Task; s: Step }) {
   const { desk, progress } = useDesk();
   const b = briefOf(task.id, s.n)!;
   const g = briefStatus(progress, task, s.n, desk);
   const sec = b.sections[b.steps[s.n]];
+  // A draft is checked under the section (BriefCheck); no count or verdict here, either would say how many slips are left.
+  if (sec.draft)
+    return (
+      <p className="mt-3 flex items-start gap-2 text-[13.5px] leading-relaxed text-[#111827]">
+        <Icon name="edit" size={15} className="mt-0.5 shrink-0 text-[#4338CA]" />
+        <span>
+          Check section <strong>{sec.h}</strong> on the page against <strong>{sec.src?.(desk)}</strong>: open it from the toolbar at the bottom of the screen. Correct any line that differs, fill the Source line, then click Check my answers under the section.
+        </span>
+      </p>
+    );
   return (
     <div className="mt-3 grid gap-2">
       <p className="flex items-start gap-2 text-[13.5px] leading-relaxed text-[#111827]">
@@ -1629,6 +1720,7 @@ export function ChecklistWork({ task, s, chk }: { task: Task; s: Step; chk: Chec
                           {reg.cols[c].h === code ? "" : `${reg.cols[c].h}: `}<span className="text-[#111827]">{cellValue(reg, progress, task.id, ri, c) || <em>empty</em>}</span>
                         </span>
                       ))}
+                    {chk.aside?.[code] && <span className="block text-[12px] leading-snug text-[#111827]">{chk.aside[code](reg.rows[ri], desk)}</span>}
                   </span>
                   {chk.codes === undefined ? (
                     <button type="button" onClick={() => write(chk.fail)} className="h-7 rounded border border-[#C9CED8] bg-white px-2.5 text-[12px] font-semibold text-[#111827] hover:border-[#B45309] hover:text-[#92400E] focus-ring">
@@ -1693,6 +1785,7 @@ export function ReportWork({ task, s }: { task: Task; s: Step }) {
           <span className="text-[12.5px] text-[#5B6474] tabular-nums">{n} reported</span>
         </div>
       )}
+      {n > 0 && reportDone(desk, progress, task) && <p data-guide="report-done" className="rounded border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 text-[13.5px] text-[#14532D]">Right: every item that shows unmasked data is reported, and nothing of it was copied.</p>}
       {miss && <p className="text-[12.5px] text-[#92400E]">Look again: one of your items has a {reg.cols[reg.report!.col].h} that is not “{reg.report!.clean}”.</p>}
     </div>
   );
@@ -1762,6 +1855,9 @@ export function CompareWork({ task, s }: { task: Task; s: Step }) {
   useDocs(["BKB-ERM-001", addendumOf(desk)]);
   const offices = compareOffices(reg, desk, progress, task.id);
   const set = (city: string, v: string) => update((p) => ({ ...p, grids: { ...p.grids, [gk]: { ...(p.grids?.[gk] ?? {}), [`cmp:${city}`]: v } } }));
+  // Only the row that really differs gets the note: a wrong click writes nothing to undo.
+  const pick = (city: string, r: { ri: number; differs: boolean; note: string }) =>
+    update((p) => ({ ...p, grids: { ...p.grids, [gk]: { ...(p.grids?.[gk] ?? {}), [`cmp:${city}:row`]: String(r.ri), ...(r.differs ? { [`${r.ri},9`]: r.note } : {}) } } }));
   if (!offices) return <div className="mt-3 h-24 animate-pulse rounded bg-[#F3F4F7]" aria-busy="true" />;
   return (
     <div data-guide="compare" className="mt-3 grid gap-2">
@@ -1786,7 +1882,23 @@ export function CompareWork({ task, s }: { task: Task; s: Step }) {
               ))}
             </div>
             {wrong && <p className="mt-1.5 text-[12.5px] leading-snug text-[#92400E]">Look again: Annex A reads “{o.theirs}” for {o.country}.</p>}
-            {o.got === "differs" && o.differs && <p className="mt-1.5 text-[12.5px] text-[#14532D]">Record both values in Frequency / deadline and write “Differs — addendum governs”.</p>}
+            {o.got === "differs" && o.differs && (
+              <div className="mt-2">
+                <p className="text-[12.5px] leading-snug text-[#3F4757]">Which of your {o.city} rows does Annex A differ on? Click it: the register records both values and “Differs — addendum governs” in that row&apos;s Frequency / deadline.</p>
+                <div className="mt-1.5 flex flex-wrap gap-2">
+                  {o.details.map((r) => (
+                    <button key={r.ri} type="button" data-compare-row={r.ri} onClick={() => pick(o.city, r)} aria-pressed={o.row === String(r.ri)} className={`min-h-8 rounded border px-3 py-1 text-left text-[13px] font-semibold focus-ring ${o.row === String(r.ri) ? "border-[#4338CA] bg-[#4338CA] text-white" : "border-[#C9CED8] bg-white text-[#3F4757]"}`}>
+                      {r.ob}
+                    </button>
+                  ))}
+                </div>
+                {!!o.row && (o.details.find((r) => String(r.ri) === o.row)?.differs ? (
+                  <p className="mt-1.5 text-[12.5px] text-[#14532D]">Recorded in that row: {o.details.find((r) => String(r.ri) === o.row)?.note}</p>
+                ) : (
+                  <p className="mt-1.5 text-[12.5px] leading-snug text-[#92400E]">Look again: on that row Annex A gives the same clock as the addendum.</p>
+                ))}
+              </div>
+            )}
             {o.got === "same" && !o.differs && <p className="mt-1.5 text-[12.5px] text-[#14532D]">Recorded: the two sources agree, so there is no difference to note.</p>}
           </section>
         );
@@ -1818,7 +1930,7 @@ function RowCheck({ task, s, chk }: { task: Task; s: Step; chk: RowCheckSpec }) 
     const own = (r: string[], ri: number) => reg.mine(r, desk) && (!reg.only?.[s.n] || reg.only[s.n](r, progress)) && (reg.grow?.adds[s.n] === undefined || addedBy(reg, progress, task.id, ri) === s.n);
     regRows(reg, progress, task.id).forEach((r, ri) => {
       // A value the platform wrote itself (derived) is not the learner's answer, so it is not checked.
-      if (own(r, ri) && derivedAt(reg, progress, task.id, ri, chk.col) === null) picks.push({ label: cellValue(reg, progress, task.id, ri, chk.ask ?? chk.label), pick: cellValue(reg, progress, task.id, ri, chk.col) });
+      if (own(r, ri) && derivedAt(reg, progress, task.id, ri, chk.col) === null) picks.push({ label: cellValue(reg, progress, task.id, ri, chk.ask ?? chk.label), pick: cellValue(reg, progress, task.id, ri, chk.col) + (chk.with === undefined ? "" : ` · ${cellValue(reg, progress, task.id, ri, chk.with)}`) });
     });
     // Looked up by another column (`ask`, T3.1 step 5: the policy of the row's Process): the answers come
     // back in the order sent, each stored under the row's own label.

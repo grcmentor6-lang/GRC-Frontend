@@ -37,9 +37,9 @@ R35's terms are read as the table below defines them. Check the tiers from Criti
 
 | Term in rule R35 | What it means in this policy | Read it on the intake form |
 | :-: | :-: | :-: |
-| Tier 4 data | Data that BKB-STD-001 classifies Tier 4 — Restricted: special-category personal data, PHI, cardholder data, cryptographic keys and credentials, and the other Tier 4 examples of BKB-STD-001 Section 3. | Data the vendor receives |
-| Tier 3 personal or confidential data | Personal data or client information that is not Tier 4. BKB-STD-001 never classifies personal data below Tier 3. Pseudonymised data (a random ID stands in for the person, and the key that links the ID to the person stays with the BKB organisation) is still personal data: Tier 3. | Data the vendor receives; Identifiers sent |
-| Children's data at scale | Data that identifies a child (name, contact details, age, school, image, voice or video, or biometric data) for 10,000 children or more. Data the vendor holds only under pseudonymous IDs that it cannot link to a child counts as Tier 3 personal data, not as children's data at scale. | Data the vendor receives; Identifiers sent |
+| Tier 4 data | Data that BKB-STD-001 classifies Tier 4 — Restricted: special-category personal data, PHI, cardholder data, children's data at scale, cryptographic keys and credentials, and the other Tier 4 examples of BKB-STD-001 Sections 3 and 5. | Data the vendor receives |
+| Tier 3 personal or confidential data | Personal data or client information that is not Tier 4. BKB-STD-001 never classifies personal data below Tier 3. Pseudonymised data (a random ID stands in for the person, and the key that links the ID to the person stays with the BKB organisation) is still personal data. | Data the vendor receives; Identifiers sent |
+| Children's data at scale | Data about children, for 10,000 children or more or as a continuous feed. Pseudonymised data counts: a random ID still stands for one child, whoever holds the key. | Data the vendor receives; Identifiers sent; Volume |
 | At volume | Data about 10,000 people or more, or a continuous feed of their data. | Volume |
 | Customer-facing service | Customers (schools, learners, parents, client organisations) use the service, or see what it produces. | Users |
 | Regulatory-critical service | The organisation needs the service to meet a legal obligation, for example verifiable parental consent or regulatory reporting. | Business criticality |
@@ -93,6 +93,22 @@ Minimum requirements scale with organisation criticality as defined in Organizat
 | 2 | Obtain the return of the Group's data, then certified deletion | Business owner | Deletion certificate — within 30 days of the end date |
 | 3 | Close the supplier in the vendor register | Vendor / Third-Party Risk Analyst | Register entry closed — within 5 working days of the certificate |
 
+6.3 Procedure: Reading a supplier's draft contract
+
+Where a supplier sends its own draft, the Vendor / Third-Party Risk Analyst reads it against the clause checklist before Procurement / Legal negotiate. A clause is Covered if the draft says everything in the table below, Falls short if the draft has the clause but says less, and Missing if the draft has no such clause.
+
+| Clause | The draft must say |
+| :-: | :-: |
+| Security obligations and standards | A named security standard or programme, kept for the whole contract |
+| Confidentiality | Binds both parties, and lasts after the contract ends |
+| Data processing agreement (GDPR Art.28 or equivalent) | A data processing agreement forms part of the contract, and the supplier acts only on instructions |
+| Incident notification within 24 hours | The supplier notifies us within 24 hours of becoming aware |
+| Audit rights | We may audit the supplier, or receive an independent report, at least once a year |
+| Sub-processor approval | A new sub-processor receives our data only after our written approval |
+| Exit and data return | The supplier returns our data, then certifies its deletion, within 30 days of the end date (Section 6.2) |
+| Business continuity commitments | Recovery time and recovery point objectives, and a recovery test at least once a year |
+| Transfer mechanism | The mechanism for each country the data leaves to |
+
 7\. Guidelines
 
 7.1 Guideline: Reading a SOC 2 report
@@ -112,6 +128,8 @@ Each check S1–S9 (Ref-SOC checks) is read as the table below says, on the date
 | S7 | Where the vendor receives personal data (Section 3.1: pseudonymised data included), Confidentiality or Privacy must be among the criteria tested. If neither is, S7 fails. | TSC; Data the vendor receives (Vendors › Vendor Intake) |
 | S8 | A CUEC that needs the Group to set up a control for this service (for example MFA for its administrators, user access reviews, data-retention settings) fails S8, and each gets an internal owner who implements it. A CUEC the report marks Standard, one every customer of a cloud service already runs through its own processes, does not fail S8; it still gets an internal owner. | CUECs |
 | S9 | The service being purchased is the Service line of the vendor's intake form. A system description (Scope) that leaves it out fails. | Scope; Service (Vendors › Vendor Intake) |
+
+A document that arrives after the review is read the same way. It clears a failed check only if it is the document Vendors › Flag Risk names for that check, or a new report by an independent auditor. A vendor's own statement or plan does neither: it cannot change an auditor's opinion (S4) or a report's scope (S9).
 
 8\. Compliance, exceptions and enforcement
 

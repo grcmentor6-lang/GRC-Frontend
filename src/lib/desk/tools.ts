@@ -1,6 +1,7 @@
 import type { Desk, Task } from "./model";
 import { stepKey, type Progress } from "./progress";
 import { stepReads, stepSources } from "./registers";
+import { labOf, labOpen } from "./labs";
 
 /**
  * Which platform tools the mentee may open.
@@ -56,6 +57,8 @@ export const reached = (desk: Desk, p: Progress, here: Here | null | undefined, 
 
 export function toolOpen(desk: Desk, isOpen: (w: number) => boolean, key: string, p?: Progress, here?: Here | null): boolean {
   const sec = key.split("|")[0];
+  const lab = labOf(key);
+  if (lab) return labOpen(lab, p);
   if (UTILITIES.has(sec)) return true;
   if (!isOpen(weekOf(desk, key))) return false;
   if (SHELF.has(sec) || !p || !firstUses(desk).has(key)) return true;

@@ -65,6 +65,8 @@ This policy applies to every BKB organisation. Organisation addenda (BKB-ADD-01 
 | 3 | Update the obligations register and raise actions for affected policies and controls | Compliance Manager | Register update and actions — before the change takes effect |
 | 4 | Report changes with a material impact to the Org CRCO | Compliance Manager | Change report — monthly |
 
+A change found after its 30 days have passed was found late. Its impact is assessed and its actions are due within 30 days of the date it is logged, and the brief records that it was found late.
+
 6.2 Procedure: External audit coordination
 
 | Step | Action | Responsible | Output / SLA |
@@ -103,7 +105,7 @@ Complete: it covers the whole period (D3) and shows the query or filter that pro
 
 Unaltered: an unchanged system export, never annotated, edited or re-typed; notes go in a separate file (D6).
 
-In scope, legible and safe: from the in-scope system, office and entity (D7); every key field legible (D10); no unmasked personal data or secrets (D9).
+In scope, legible and safe: from the in-scope system, office and entity (D7); every key field legible (D10); no unmasked personal data or secrets (D9). A file sent to a PBC request is in scope for that request only if it is the record the request asks for, from the system the request names: a file from elsewhere inside the audit answers some other request, or none, and fails D7.
 
 Every evidence request states these as its acceptance criteria, in the words of rule R17.
 

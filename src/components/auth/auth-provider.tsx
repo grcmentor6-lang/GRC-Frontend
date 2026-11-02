@@ -5,6 +5,7 @@ import { authApi, type User } from "@/lib/auth";
 import { ApiError, setRefreshHandler } from "@/lib/api";
 import { getAccessToken, setAccessToken, userKey } from "@/lib/token";
 import { hydrateQueryCache, invalidateQuery } from "@/lib/use-query";
+import { flushProgress } from "@/lib/desk/progress-sync";
 
 interface AuthContextValue {
   user: User | null;
@@ -139,6 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOut = useCallback(async (to = "/") => {
+    flushProgress(); // while the token is still good
     try {
       await authApi.logout();
     } catch {

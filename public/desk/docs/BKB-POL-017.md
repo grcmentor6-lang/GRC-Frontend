@@ -46,7 +46,7 @@ DPIAs are mandatory for high-risk processing, including children's data and AI (
 
 Data-subject requests are answered within the shortest deadline that applies to the person (procedure Section 6.1): one month under GDPR, 30 days under KVKK, 10 days under PIPA.
 
-Personal data leaves the country of the office that holds it only under the cross-border transfer mechanism that the organisation addendum's Section 2 names for that office: the office the data leaves, not the office that receives it. A transfer is any movement of personal data out of that country, including when people in another country view it or download it remotely.
+Personal data leaves the country of the office that holds it only under the cross-border transfer mechanism that the organisation addendum's Section 2 names for that office: the office the data leaves, not the office that receives it. Where that cell names a chapter of a law rather than a safeguard, the addendum says how the safeguard is found. A transfer is any movement of personal data out of that country, including when people in another country view it or download it remotely.
 
 Children's data is processed only with verifiable parental consent where the law requires it (COPPA 312.5, GDPR Art.8, KVKK).
 
@@ -94,6 +94,8 @@ An organisation that uses the personal data for a purpose of its own becomes a c
 | 2 | Where a DPIA is required, describe the processing, assess necessity and proportionality, and assess the risks to people | Privacy Compliance Analyst with the business owner | DPIA draft — within 15 working days |
 | 3 | Decide the measures that reduce each risk, and the residual risk | DPO and Org CISO | Measures agreed |
 | 4 | Where a high residual risk remains, consult the supervisory authority before the processing starts (GDPR Art.36) | DPO | Prior consultation — before start |
+
+Where the organisation is processor, the DPIA is the controller's to carry out (GDPR Art.35): the organisation still screens the processing, records the result, tells the controller and helps it with the information it needs (GDPR Art.28(3)(f)).
 
 Rule R29's triggers are read as this policy defines them:
 

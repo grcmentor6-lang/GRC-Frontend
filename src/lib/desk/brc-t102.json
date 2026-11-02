@@ -5,12 +5,20 @@
    "INC-2610-3001"
   ],
   [
-   "Discovered (UTC)",
-   "2026-12-08 13:20 UTC"
+   "Link exposed by the software release",
+   "2026-12-07 17:30, Amsterdam time (UTC+1)"
   ],
   [
-   "Offices whose systems are affected",
-   "Amsterdam, Netherlands"
+   "Monitoring alert",
+   "2026-12-08 14:05, Amsterdam time (UTC+1)"
+  ],
+  [
+   "Incident logged in the incident tool",
+   "2026-12-08 14:20, Amsterdam time (UTC+1)"
+  ],
+  [
+   "Platform taken offline",
+   "2026-12-08 14:50, Amsterdam time (UTC+1)"
   ],
   [
    "System affected",
@@ -18,11 +26,11 @@
   ],
   [
    "What happened",
-   "A software release on 7 December left a report-export link of the Learning platform & content reachable without sign-in, and it was used from an unknown address to download student records. The export reads the records decrypted, so encryption at rest did not protect them. The platform was taken offline to stop the downloads."
+   "A software release on 7 December left a report-export link of the Learning platform & content reachable without sign-in, and it was used from an unknown address to download student records. The export reads the records decrypted. The platform was taken offline to stop the downloads."
   ],
   [
-   "Data-subject countries",
-   "India; Turkey; United States"
+   "Records taken, by the school's country",
+   "India 2,050; Turkey 1,720; United States 730"
   ],
   [
    "Data categories",
@@ -47,16 +55,13 @@
  ],
  "facts": [
   [
-   "Discovered (UTC)",
-   "2026-12-08 13:20 UTC"
+   "Discovered (UTC)"
   ],
   [
-   "Offices whose systems are affected",
-   "Amsterdam, Netherlands"
+   "Offices whose systems are affected"
   ],
   [
-   "Data-subject countries",
-   "India; Turkey; United States"
+   "Data-subject countries"
   ]
  ],
  "regimes": [
@@ -89,13 +94,19 @@
    "CERT-In cyber-incident report",
    "Mumbai, India",
    "Cyber / sector law: CERT-In Directions 2022 — 6h incident reporting"
+  ],
+  [
+   "NIS2 (Cyberbeveiligingswet)",
+   "Amsterdam, Netherlands",
+   "Cyber / sector law: Cyberbeveiligingswet (NIS2) — transposition delayed, referred to CJEU 2026; NCSC-NL, RDI"
   ]
  ],
  "early": "Earliest firm deadline",
  "applies": [
   "Applies",
   "Applies if condition met",
-  "Does not apply"
+  "Does not apply",
+  "Monitor"
  ],
  "tell": [
   "Children's data",
@@ -103,6 +114,7 @@
   "Financial data",
   "Credentials",
   "More than 1,000 people",
+  "Exception: unreadable to whoever took it (GDPR Art.34(3)(a))",
   "Tell data subjects (R30)"
  ],
  "phases": [
@@ -208,7 +220,7 @@
   ],
   [
    "Discovered (UTC)",
-   "2026-12-08 13:20 UTC"
+   ""
   ],
   [
    "Data affected",
@@ -220,6 +232,10 @@
   ],
   [
    "Listed with a condition",
+   ""
+  ],
+  [
+   "On watch, no clock yet",
    ""
   ],
   [
@@ -244,8 +260,8 @@
   ]
  ],
  "d4": [
-  "Hold it; legal sign-off is required first",
-  "Post it on social media",
-  "Send it — speed matters"
+  "Hold it until the General Counsel has signed it off",
+  "Send it to the schools today and hold only the notice to families",
+  "Send it today with the DPO's approval; the General Counsel reads it afterwards"
  ]
 }

@@ -4,20 +4,16 @@
  "office": "Amsterdam, Netherlands",
  "weeks": [
   [
-   "Week 1",
-   "Lesson"
+   "Week 1"
   ],
   [
-   "Week 2",
-   "Poster + quiz"
+   "Week 2"
   ],
   [
-   "Week 3",
-   "Phishing simulation"
+   "Week 3"
   ],
   [
-   "Week 4",
-   "Results + refresher"
+   "Week 4"
   ]
  ],
  "activities": [
@@ -46,6 +42,10 @@
    "Service desk / Report"
   ],
   [
+   "How fast do you report?",
+   "Within 1 hour"
+  ],
+  [
    "What else?",
    "Change password"
   ]
@@ -69,9 +69,9 @@
   ]
  ],
  "d2": [
-  "HR only",
+  "HR and Legal",
   "HR, Legal and the works council",
-  "IT"
+  "HR, Legal and IT Security, who run the tool"
  ],
  "sim": [
   [
@@ -387,5 +387,20 @@
    "LI-COMM",
    "—"
   ]
+ ],
+ "draftWeeks": [
+  "Lesson",
+  "Phishing simulation",
+  "Poster + quiz",
+  "Results + refresher"
+ ],
+ "quizNone": "None: another theme's question",
+ "draftComms": [
+  "W4 · Mon 26 Oct",
+  "W11 · Mon 14 Dec",
+  "W9 · Mon 30 Nov",
+  "W8 · Mon 23 Nov",
+  "W11 · Mon 14 Dec",
+  "W11 · Mon 14 Dec"
  ]
 }

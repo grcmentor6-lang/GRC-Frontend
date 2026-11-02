@@ -37,7 +37,7 @@ This policy applies to every BKB organisation. Organisation addenda (BKB-ADD-01 
 
 • Privileged access is held in a privileged-access management (PAM) tool, granted just in time, and recorded where Section 4 requires.
 
-• Access of leavers is removed within 4 hours of termination, and immediately for involuntary leavers.
+• Access of leavers is removed within 4 hours of termination, and within 1 hour for involuntary leavers.
 
 • User and privileged access is reviewed at the frequencies in Section 4; access the review does not confirm is removed.
 
@@ -92,7 +92,7 @@ Minimum requirements scale with organisation criticality as defined in Organizat
 | Step | Action | Responsible | Output / SLA |
 | :-: | :-: | :-: | :-: |
 | 1 | Record the leaver with termination time (UTC) and whether it is voluntary | HR | Leaver record |
-| 2 | Disable every account of the leaver | IAM team | Disable log (≤ 4 h; immediately if involuntary) |
+| 2 | Disable every account of the leaver | IAM team | Disable log (≤ 4 h; ≤ 1 h if involuntary) |
 | 3 | Reconcile HR leavers against active accounts every week | IAM team | Reconciliation report |
 | 4 | Raise an incident for any account used after termination | IAM team | Incident ticket |
 

@@ -12,7 +12,7 @@ import { stepKey, taskStatus, useProgress, type Progress } from "@/lib/desk/prog
 /**
  * My Submissions — everything the mentee has handed in, week by week and task by task: each step's
  * typed work, the option taken, the rows decided, the parts read, and where each task stands. It
- * replaces My Learnings in the menu. Desk progress is per browser for now (lib/desk/progress.ts),
+ * replaces My Learnings in the menu. Desk progress is kept per account (lib/desk/progress.ts),
  * so this page reads the same store the Working Desk writes.
  */
 export default function SubmissionsPage() {

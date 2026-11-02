@@ -261,5 +261,42 @@
    "Business continuity commitments",
    "Critical"
   ]
- ]
+ ],
+ "vendors": [
+  "Lumen Learner Analytics",
+  "Quill Originality Inc.",
+  "MathMind Content Licensing"
+ ],
+ "forms": [
+  [
+   "Second form: Quill Originality Inc.",
+   "Service: plagiarism checking of student essays. Data the vendor receives: student submissions (may contain personal content) and student names. Students: learners on LearnTech's higher-education courses, all aged 18 or over. Volume: ~2 million documents/year, from about 90,000 students. Users: teachers see the similarity reports. Hosting location: United States. Substitutability: Moderate. Business criticality: Assessment feature."
+  ],
+  [
+   "Third form: MathMind Content Licensing",
+   "Service: licensed maths content library. Data the vendor receives: none beyond anonymous usage counts. Volume: n/a. Users: learners read the content in the LearnTech learning platform. Hosting location: United Kingdom. Substitutability: Easy. Business criticality: Content."
+  ]
+ ],
+ "counts": [
+  "2",
+  "7",
+  "13",
+  "17"
+ ],
+ "cycles": [
+  "Every 12 months",
+  "Every 24 months",
+  "At renewal"
+ ],
+ "draft": {
+  "Security obligations and standards": "Clause 7: Lumen maintains an information security programme aligned with ISO/IEC 27001 throughout the term.",
+  "Confidentiality": "Clause 9: Each party keeps the other's confidential information secret during the term and for five years after it ends.",
+  "Data processing agreement (GDPR Art.28 or equivalent)": "Clause 11: Lumen processes personal data only on LearnTech's documented instructions. The data processing addendum in Schedule 2 forms part of this agreement.",
+  "Incident notification within 24 hours": "Clause 12: Lumen notifies LearnTech of a security incident without undue delay, and no later than 72 hours after confirming it.",
+  "Audit rights": "Clause 14: Each year Lumen gives LearnTech its current SOC 2 Type II report on request.",
+  "Sub-processor approval": "Clause 15: Lumen may engage sub-processors. It publishes the current list on its website.",
+  "Exit and data return": "Clause 20: When this agreement ends, Lumen deletes LearnTech's data within 90 days.",
+  "Business continuity commitments": "Nothing in the draft on recovery or continuity."
+ },
+ "transfer": "Clause 21: Lumen hosts the service in the United States."
 }

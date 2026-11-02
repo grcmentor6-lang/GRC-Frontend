@@ -34,11 +34,11 @@
   ],
   [
    "Exceptions",
-   "None noted"
+   "One, in CC7.2: security alerts not reviewed on 9 of 25 days sampled. Management response: fixed on 3 November 2026, with the new review logs attached"
   ],
   [
    "CUECs",
-   "Standard: user entities manage their own user provisioning"
+   "Standard: user entities manage their own user provisioning. Specific to this service: user entities set the retention period for their event data in the analytics console"
   ],
   [
    "Report date",
@@ -85,7 +85,30 @@
   ]
  ],
  "cuecs": [
-  "Standard: user entities manage their own user provisioning"
+  "Standard: user entities manage their own user provisioning",
+  "Specific to this service: user entities set the retention period for their event data in the analytics console"
+ ],
+ "extra": [
+  [
+   "X1",
+   "The hosting provider's own SOC 2 Type II report (unmodified opinion, period ended 30 April 2026), with the provider's bridge letter covering the months to 30 November 2026.",
+   "S5"
+  ],
+  [
+   "X2",
+   "Lumen's Head of Security writes: CC7.2 has worked since 3 November and our own team has retested it, so please treat the opinion as unmodified.",
+   "S4"
+  ],
+  [
+   "X3",
+   "A privacy audit of the learner-analytics SDK by an independent auditor, (fictional) Hale & Brandt LLP, signed 12 September 2026.",
+   "S7"
+  ],
+  [
+   "X4",
+   "Lumen's Head of Product writes: the SDK will be in the scope of next year's report, so please treat it as covered now.",
+   "S9"
+  ]
  ],
  "decision": [
   "Decision",

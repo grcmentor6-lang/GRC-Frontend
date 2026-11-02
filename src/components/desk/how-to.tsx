@@ -216,8 +216,8 @@ export function thenLabel(task: Task, s: Step): string {
   if (t !== null) return `Fill table ${t + 1}, “${RMF.tables[t].title}”`;
   // A register's column: "Fill column E, “Offices (R02)”".
   const reg = regOf(task.id, s.n);
-  // A report on the register's rows (F2.2 step 4): "Report data issue" on each item that needs it.
-  if (reg?.report?.step === s.n) return "Report any item with unmasked data (D9)";
+  // A report on the register's rows (F2.2 step 4). Read before the question is answered, so it says what to read, not what to do.
+  if (reg?.report?.step === s.n) return "Check each item's Content note (D9)";
   if (reg?.then?.[s.n]) return reg.then[s.n];
   const cols = reg?.steps[s.n] ?? [];
   if (cols.length === 1) {
@@ -357,6 +357,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
               )}
             </span>
           </div>
+          {!readOnly && !done && <div className="mt-3"><MessageNotice task={task} n={s.n} /></div>}
           <Submitted task={task} s={s} />
         </>
       ) : (

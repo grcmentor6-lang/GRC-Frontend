@@ -4,7 +4,7 @@ import { DVerb } from "@/components/ui/dverb";
 import { VERB_LIST } from "@/lib/verbs";
 import { MethodMedal } from "@/components/badges/method-medal";
 import { summarise, type MethodBadgeSummary } from "@/components/badges/use-method-badges";
-import { readProgress } from "@/lib/desk/progress";
+import { EMPTY } from "@/lib/desk/progress";
 import type { Cv } from "@/lib/cv";
 
 const STD_TONES: Record<string, { chip: string; dot: string }> = {
@@ -39,7 +39,7 @@ function Head({ icon, children, action }: { icon?: IconName; children: React.Rea
 
 export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own method badges; left out on the public CV. */ methodBadges?: MethodBadgeSummary }) {
   const p = cv.profile;
-  const mb = methodBadges ?? summarise(readProgress(null));
+  const mb = methodBadges ?? summarise(EMPTY);
   const shown = methodBadges ? mb.rows : mb.rows.filter(({ g }) => g.state === "earned" || g.state === "distinction");
   const doneVerbs = new Set(cv.verbs.done);
   const activeVerbs = new Set(cv.verbs.active);

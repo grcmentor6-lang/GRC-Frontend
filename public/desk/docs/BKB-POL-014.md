@@ -96,8 +96,9 @@ Minimum requirements scale with organisation criticality as defined in Organizat
 | 3 | A cyber-incident reporting duty (Section 2's Cyber / sector law column) applies only where that office's own systems are affected. Data subjects living in the country do not engage it. |
 | 4 | A regime whose own words set a condition that the incident facts do not settle (being a registrant, the incident being material, the organisation being in a law's scope) applies if the condition is met. List it with its condition: its clock is not firm. |
 | 5 | A regime of an office that is not engaged does not apply. |
-| 6 | Deadline = discovery time (UTC) + the clock. Hours and days are calendar time, weekends included; business days skip Saturdays and Sundays. Where a cell gives a range, count from its shortest end. Write each deadline as the discovery time is written: date, time, UTC (2026-01-31 09:00 UTC). |
+| 6 | Discovery time = the moment the incident is logged in the incident tool (Section 6.1, step 1), in UTC: an alert not yet logged does not start the clock, and triage and containment do not stop it. Deadline = discovery time (UTC) + the clock. Hours and days are calendar time, weekends included; business days skip Saturdays and Sundays. Where a cell gives a range, count from its shortest end. Write each deadline as the discovery time is written: date, time, UTC (2026-01-31 09:00 UTC). |
 | 7 | The earliest firm deadline governs the plan (Section 3.1). A conditional regime is listed with its deadline and its condition, and is not used for the earliest. |
+| 8 | An EU directive that Section 2 says is not yet transposed into the country's law sets no clock: mark it Monitor, with no deadline, and check its status again before the notices go out (Regulatory Watch › Regulation Tracker). A law in force in phases is not this case: step 2 applies. |
 
 7\. Guidelines
 

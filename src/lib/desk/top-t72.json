@@ -967,7 +967,7 @@
   ],
   [
    "Critical vulnerabilities are fixed within SLA",
-   "LI-KPI from T8.1: class 1–2 findings closed in SLA ÷ all class 1–2 findings",
+   "LI-KPI from T8.1: class 1–2 findings within SLA ÷ all class 1–2 findings",
    "Vulnerability team (RACI A: CISO)",
    "Monthly; management review"
   ],
@@ -1018,7 +1018,7 @@
    "Controls implemented (treatment plan actions)",
    "2027-03-21",
    "2027-04-21",
-   "Control owners"
+   "Cyber Risk Manager"
   ],
   [
    "M4",

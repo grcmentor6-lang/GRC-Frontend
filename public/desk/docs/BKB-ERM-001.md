@@ -625,7 +625,7 @@ Annex A — Statutory notification matrix (51 countries)
 | Nigeria | Nigeria Data Protection Act 2023 + GAID 2025 | 72h to NDPC | Cybercrimes (Amendment) Act 2024 — 72h reporting to ngCERT |
 | Norway | GDPR (via EEA) + Personopplysningsloven | 72h to supervisory authority (GDPR Art.33); without undue delay to data subjects if high risk | Digital Security Act (NIS1-based, in force Oct 2025); NSM |
 | Peru | Law 29733 + new Regulation (DS 016-2024-JUS, in force Mar 2025) | 48h to ANPD after detection | Digital Trust Framework; PECERT |
-| Philippines | Data Privacy Act 2012 | 72h to NPC and data subjects | DICT; Cybercrime Prevention Act 2012 |
+| Philippines | Data Privacy Act 2012 | 48h to NPC; 72h to data subjects | DICT; Cybercrime Prevention Act 2012 |
 | Poland | GDPR + 2018 Act | 72h to supervisory authority (GDPR Art.33); without undue delay to data subjects if high risk | National Cybersecurity System Act (NIS2 amendment); CSIRT GOV/NASK |
 | Portugal | GDPR + Lei 58/2019 | 72h to supervisory authority (GDPR Art.33); without undue delay to data subjects if high risk | NIS2 transposition; CNCS national cyber centre |
 | Qatar | PDPL Law 13/2016 | 72h to NDPO | NCSA; National Information Assurance Standard (NIAS) |

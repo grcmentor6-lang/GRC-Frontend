@@ -631,7 +631,7 @@
   ],
   [
    "A3",
-   "MFA: mFA is Yes (BKB-POL-006 Section 3.1)."
+   "MFA: MFA is Yes (BKB-POL-006 Section 3.1)."
   ],
   [
    "A4",
@@ -676,5 +676,39 @@
    "Effectiveness check",
    "Re-test 3 months later (L18): the next quarter's privileged-access review, with this test script."
   ]
+ ],
+ "extra": [
+  [
+   "PR-049",
+   "Q4",
+   "adm-nowak14",
+   "2026-10-07",
+   "System owner (independent)",
+   "Revoke",
+   "Yes",
+   "On",
+   "2026-10-09"
+  ],
+  [
+   "PR-050",
+   "Q4",
+   "adm-silva15",
+   "2026-10-07",
+   "System owner (independent)",
+   "Revoke",
+   "Yes",
+   "On",
+   ""
+  ]
+ ],
+ "queries": {
+  "PR-022": "The Q2 review is on file: signed by the system owner, dated 2026-04-29.",
+  "PR-050": "The PAM log shows adm-silva15 removed on 2026-10-09, two days after the review. Nobody wrote the date on the review record."
+ },
+ "effects": [
+  "adm-petrov11 was misused while its review was late.",
+  "For longer than the script allows, nobody had confirmed that adm-petrov11 still needed its privileged access.",
+  "adm-petrov11's access should have been removed at the review, and it was kept.",
+  "The privileged-access review cannot be relied on for any quarter of the year."
  ]
 }

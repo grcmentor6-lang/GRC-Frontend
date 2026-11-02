@@ -2,6 +2,7 @@
 
 import { ALL_WEEKS_OPEN } from "@/lib/flags";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Ctx, type DeskCtx, type ViewItem } from "./desk-context";
@@ -13,7 +14,7 @@ import { Viewer } from "./viewer";
 import { ToolModal, ToolWindow } from "./tool-modal";
 import { press } from "./ui";
 import { currentWeek, loadDesk, startOf, weekOpen, type Desk } from "@/lib/desk/model";
-import { decisionChecked, stepKey, taskStatus, useProgress, type Progress } from "@/lib/desk/progress";
+import { decisionChecked, stepKey, taskStatus, useProgress, useSaveState, type Progress } from "@/lib/desk/progress";
 
 /** Midnight of the mentee's start date. They may start any day; until they choose, today. */
 
@@ -27,6 +28,8 @@ export function DeskApp() {
   const { user } = useAuth();
   const [desk, setDesk] = useState<Desk | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Read here, alongside the desk's content, so the wait for saved work is the longer of the two and not the sum.
+  const { status, retry } = useProgress(user?.email ?? "");
 
   useEffect(() => {
     loadDesk().then(setDesk, (e: Error) => setError(e.message));
@@ -41,11 +44,43 @@ export function DeskApp() {
         </div>
       </div>
     );
+  // Never an empty desk over real work: without the saved copy, nothing here can be changed or saved.
+  if (status === "failed")
+    return (
+      <div className="grid h-desk place-items-center bg-[#FAFAF7] px-4 text-center">
+        <div className="grid justify-items-center gap-2">
+          <p className="text-[14px] font-medium text-slate-800">Your saved work did not load.</p>
+          <p className="text-[13px] text-slate-500">It is safe on the server. Check your connection, then try again.</p>
+          <button type="button" onClick={retry} className="mt-1 rounded-md bg-[#111827] px-3 py-1.5 text-[13px] font-medium text-white">
+            Try again
+          </button>
+        </div>
+      </div>
+    );
   if (!desk || !user) return <DeskSkeleton />;
   return (
     <MotionConfig reducedMotion="user">
-      <DeskLoaded key={user.startDate ?? ""} desk={desk} who={user.email} startIso={user.startDate} preview={ALL_WEEKS_OPEN || user.role === "admin"} />
+      {/* The shell shows at once, locked; the desk mounts afresh on the saved work, as its starting task depends on it. */}
+      <DeskLoaded key={`${user.startDate ?? ""}|${status}`} desk={desk} who={user.email} startIso={user.startDate} preview={ALL_WEEKS_OPEN || user.role === "admin"} locked={status === "loading"} />
     </MotionConfig>
+  );
+}
+
+/** Quiet while saves land; a save that cannot leave must not be invisible, now the browser keeps no copy. */
+function SaveNote({ who }: { who: string }) {
+  const state = useSaveState(who);
+  // Above any open window: the work is usually in a modal that covers this header.
+  if (state === "unsaved")
+    return createPortal(
+      <span role="alert" data-save={state} className="pointer-events-none fixed left-1/2 top-2 z-[100] -translate-x-1/2 whitespace-nowrap rounded-md border border-[#DDE1E8] bg-white px-2.5 py-1 text-[12px] font-medium text-[#B42318] shadow-sm">
+        Not saved yet. Retrying, keep this tab open.
+      </span>,
+      document.body,
+    );
+  return (
+    <span role="status" data-save={state} className="text-[11.5px] font-normal text-[#5B6474]">
+      {state === "saved" ? "Saved" : "Saving…"}
+    </span>
   );
 }
 
@@ -72,7 +107,7 @@ function DeskSkeleton() {
   );
 }
 
-function DeskLoaded({ desk, who, startIso, preview }: { desk: Desk; who: string; startIso: string | null; /** Admins see every week open, to test the programme ahead of the calendar. */ preview?: boolean }) {
+function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who: string; startIso: string | null; /** Admins see every week open, to test the programme ahead of the calendar. */ preview?: boolean; /** Saved work has not arrived: the shell shows, and nothing can be touched. */ locked: boolean }) {
   const { progress, update } = useProgress(who);
   const start = useMemo(() => startOf(startIso), [startIso]);
   const now = currentWeek(start);
@@ -162,11 +197,13 @@ function DeskLoaded({ desk, who, startIso, preview }: { desk: Desk; who: string;
 
   return (
     <Ctx.Provider value={ctx}>
-      <div className="flex h-desk flex-col bg-[#F7F8FA] text-[#111827]">
+      <div className="flex h-desk flex-col bg-[#F7F8FA] text-[#111827]" inert={locked} aria-busy={locked}>
         {/* The desk's header band: what this is, then the twelve weeks as cells. */}
         <header className="flex h-[52px] shrink-0 items-stretch border-b border-[#DDE1E8] bg-[#F7F8FA] max-md:h-auto max-md:flex-col">
           <div className="flex shrink-0 flex-col justify-center border-r border-[#DDE1E8] bg-white px-4 max-md:border-b max-md:border-r-0 max-md:py-2 lg:w-[300px]">
-            <p className="text-[14px] font-bold leading-tight text-[#111827]">Working Desk</p>
+            <p className="flex items-baseline justify-between gap-2 text-[14px] font-bold leading-tight text-[#111827]">
+              Working Desk {locked ? <span className="text-[11.5px] font-normal text-[#5B6474]">Opening your work…</span> : <SaveNote who={who} />}
+            </p>
             <p className="truncate text-[12px] text-[#5B6474] tabular-nums">
               GRC 101 · Week {currentWeek(start)} of {desk.weeks.length} · {desk.weeks[currentWeek(start) - 1].ph}
             </p>
@@ -204,7 +241,13 @@ function DeskLoaded({ desk, who, startIso, preview }: { desk: Desk; who: string;
                   exit={{ opacity: 0, transition: { duration: 0.08 } }}
                   transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
                 >
-                  {weekView ? (
+                  {locked ? (
+                    <div className="mx-auto mt-6 grid w-full max-w-[1000px] content-start gap-4 px-6">
+                      {["h-48", "h-10 w-2/3", "h-24", "h-24"].map((h, i) => (
+                        <div key={i} className={`${h} animate-pulse rounded-md bg-slate-200/70`} />
+                      ))}
+                    </div>
+                  ) : weekView ? (
                     <WeekOverview week={weekView} />
                   ) : (
                     <TaskFile task={task} focus={focus} onFocus={setFocus} tab={tab} setTab={setTab} />

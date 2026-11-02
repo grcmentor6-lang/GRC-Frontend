@@ -68,6 +68,8 @@ Cloud providers offering services to customers shall align to ISO/IEC 27017/2701
 | 6 | Tell the business owner the decision and the conditions of use | Security Architect | Decision notice — within 3 working days of the approved design |
 | 7 | Escalate a request that cannot meet this policy to the escalation contact for an exception (Section 8) | Security Architect | Exception request — within 1 working day of the finding |
 
+Records of this procedure: each record is kept by the role responsible for the line that produces it. Where this procedure or another Group policy places a record in a register, the role responsible for that register keeps it instead.
+
 7\. Guidelines
 
 7.1 Guideline: Top cloud misconfigurations to avoid

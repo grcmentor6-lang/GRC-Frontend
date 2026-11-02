@@ -165,6 +165,24 @@ The two BKB-POL-021 values are set by LearnTech, not taken from a criticality ba
 | United States | State breach-notification laws for affected residents; SEC 8-K Item 1.05 within 4 business days if SEC registrant; sector rules (NYDFS 500 for NY financial services). |
 | Children and students | Verifiable parental consent (COPPA), FERPA school-official controls and written agreements; age-appropriate design. |
 
+6.1 Transfers out of the EEA
+
+Section 2's Amsterdam row names the GDPR chapter on transfers. A chapter is not a safeguard: under GDPR Chapter V each transfer out of the EEA rests on a safeguard of its own, and the RoPA and the data-flow map name that safeguard. For a transfer out of the Amsterdam office, ask the questions below in order: the first yes gives the safeguard.
+
+| Order | Ask | If yes, the transfer rests on |
+| :-: | :-: | :-: |
+| 1 | Does a European Commission adequacy decision cover the recipient in the destination country? | Adequacy decision (GDPR Ch.V, Art.45) |
+| 2 | Otherwise: have the exporter and the recipient signed the Commission's standard contractual clauses? | SCCs (GDPR Ch.V, Art.46) |
+| 3 | Otherwise | No transfer until the DPO has approved a safeguard |
+
+| Destination | Adequacy decision | Standard contractual clauses |
+| :-: | :-: | :-: |
+| India | None | Signed: LearnTech's intra-Group data transfer agreement, Amsterdam to Mumbai |
+| Turkey | None | Signed: LearnTech's intra-Group data transfer agreement, Amsterdam to Istanbul |
+| United States | Covers only organisations on the Data Privacy Framework List (Commission Decision (EU) 2023/1795). The proctoring provider is on the List; LearnTech's New York office is not | Signed: LearnTech's intra-Group data transfer agreement, Amsterdam to New York |
+
+Note. This table is kept by the DPO and was last checked in September 2026. Transfers rest on what it shows on the day they start.
+
 7\. Information classification labels
 
 | Group tier | LearnTech Educational Solutions label |

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
-import { progressKey, readProgress, type Progress } from "@/lib/desk/progress";
+import { useProgress, type Progress } from "@/lib/desk/progress";
 import { BADGES, capstoneStanding, standing, type BadgeStanding, type MethodBadge } from "@/lib/desk/badges";
 
 export interface MethodBadgeSummary {
@@ -20,28 +20,9 @@ export function summarise(p: Progress): MethodBadgeSummary {
   return { rows, earned: rows.filter((r) => isEarned(r.g)).length, total: BADGES.length, capstone: capstoneStanding(p) };
 }
 
-const subscribe = (cb: () => void) => {
-  window.addEventListener("storage", cb);
-  return () => window.removeEventListener("storage", cb);
-};
-
-/**
- * The signed-in mentee's method badges, read from their desk progress. The stored string is the
- * snapshot (stable between renders); the server renders it empty, so hydration never disagrees.
- */
+/** The signed-in mentee's method badges, read from the shared copy of their desk progress. */
 export function useMethodBadges(): MethodBadgeSummary {
   const { user } = useAuth();
-  const who = user?.email ?? "";
-  const raw = useSyncExternalStore(
-    subscribe,
-    () => {
-      try {
-        return who ? localStorage.getItem(progressKey(who)) : null;
-      } catch {
-        return null;
-      }
-    },
-    () => null,
-  );
-  return useMemo(() => summarise(raw ? readProgress(who) : readProgress(null)), [raw, who]);
+  const { progress } = useProgress(user?.email ?? "");
+  return useMemo(() => summarise(progress), [progress]);
 }

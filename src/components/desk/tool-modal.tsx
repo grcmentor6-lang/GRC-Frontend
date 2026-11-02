@@ -22,6 +22,8 @@ import { appZoom } from "@/lib/zoom";
 import { useAuth } from "@/components/auth/auth-provider";
 import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
 import { STEP_GUIDES } from "./step-guides";
+import { LabWindow } from "./lab-console";
+import { allCaptures, labOf } from "@/lib/desk/labs";
 
 /**
  * The step being worked, as a centred modal: the tool's screen on the left, the step's work on the
@@ -89,7 +91,7 @@ function DocWindow({ id, index, onClose, beside }: { id: string; index: number; 
       )}
       <div className="px-4 py-3">
         {DOC_TEXT.has(id) ? (
-          <DocCitation id={id} cites={cites} />
+          <DocCitation id={id} cites={cites} spot={task && step ? regOf(task.id, step.n)?.spot?.[step.n] : undefined} />
         ) : (
           <ol className="grid gap-1 text-[13px] text-slate-700">
             {(lib?.[2] ?? []).map(([n, h]) => <li key={n}><span className="inline-block w-12 text-slate-400 tabular-nums">Section {n}</span>{h}</li>)}
@@ -103,6 +105,8 @@ function DocWindow({ id, index, onClose, beside }: { id: string; index: number; 
 type ToolWindowProps = { toolKey: string; index: number; onClose: () => void; beside?: boolean; plain?: boolean };
 /** A window opened from the toolbar: a document from the Policy Library ("doc|BKB-ADD-16"), or a tool's screen. */
 export function ToolWindow(props: ToolWindowProps) {
+  const lab = labOf(props.toolKey);
+  if (lab) return <LabWindow lab={lab} index={props.index} onClose={props.onClose} />;
   if (props.toolKey.startsWith("page|")) return <PageWindow id={props.toolKey.slice(5)} index={props.index} onClose={props.onClose} beside={props.beside} />;
   return props.toolKey.startsWith("doc|") ? <DocWindow id={props.toolKey.slice(4)} index={props.index} onClose={props.onClose} beside={props.beside} /> : <ScreenWindow {...props} />;
 }
@@ -122,7 +126,7 @@ function PageWindow({ id, index, onClose, beside }: { id: string; index: number;
       width={beside ? place.width : 760}
       left={beside ? place.left : undefined}
     >
-      <div className="bg-white">{t ? <TableView t={t} /> : <p className="p-4 text-[13.5px] text-[#5B6474]">This page is not in this release.</p>}</div>
+      <div className="bg-white">{t && (t as { note?: string }).note && <p data-guide="page-note" className="border-b border-[#E9ECF1] px-3.5 py-2 text-[12.5px] leading-relaxed text-[#5B6474]">{(t as { note?: string }).note}</p>}{t ? <TableView t={t} /> : <p className="p-4 text-[13.5px] text-[#5B6474]">This page is not in this release.</p>}</div>
     </FloatWindow>
   );
 }
@@ -234,7 +238,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
   const heading = rmf !== null || handIn ? RMF.file : briefHandIn && task && s ? briefOf(task.id, s.n)!.title : regsIn.length > 1 ? [...new Set(regsIn.map((r) => r.title.split(" · ")[0]))].map((c) => `${c} · ${task!.subs.find((x) => x.code === c)?.name ?? ""}`).join(" and ") : regHandIn && task && s ? regOf(task.id, s.n)!.title : title;
   // The task's own view of this tool, where it has one (F2.1: "Risk Register › Asset Register (CLS-6)",
   // "2 worked + 6"): its stamp describes what the modal shows, the tool's generic one does not.
-  const stamp = task && deliverable && ownView(task, mock?.tool) ? task.panel.stamp : mock?.stamp;
+  const stamp = (task && s && regOf(task.id, s.n)?.stamp) || (task && deliverable && ownView(task, mock?.tool) ? task.panel.stamp : mock?.stamp);
   // A walk-through of the step, where one is written: it runs the first time the mentee opens the
   // step, and again from "Show me how".
   const { user } = useAuth();
@@ -270,7 +274,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
           </span>
           <div className="min-w-0 flex-1 px-4 py-2.5">
             <p className="text-[12px] text-[#5B6474]">
-              {(handIn || regHandIn || briefHandIn) && task ? `File${briefHandIn || regsIn.length > 1 ? "s" : ""} · ${task.id} · 02_Working` : rmf !== null && task ? `File · ${task.id} · 01_Inputs` : `${section?.t ?? sec}${stamp ? ` · ${stamp}` : ""}`}
+              {(handIn || regHandIn || briefHandIn) && task ? `File${briefHandIn || new Set(regsIn.map((r) => r.title.split(" · ")[0])).size > 1 ? "s" : ""} · ${task.id} · 02_Working` : rmf !== null && task ? `File · ${task.id} · 01_Inputs` : `${section?.t ?? sec}${stamp ? ` · ${stamp}` : ""}`}
             </p>
             <h2 className="truncate text-[17px] font-bold text-[#111827]">{heading}</h2>
           </div>
@@ -429,6 +433,8 @@ function Screen({ toolKey }: { toolKey: string }) {
   if (toolKey === "policies|Policy Library") return <PolicyLibrary />;
   if (toolKey === "learn|Reference pages") return <ReferencePages />;
   if (toolKey === "home|My plan") return <Plan />;
+  if (toolKey === "evidence|Capture Screenshot" && mock)
+    return <ToolScreen mock={{ ...mock, pl: { ...(mock.pl as object), h: ["Evidence ref", "View", "Filter", "Rows", "UTC", "SHA-256"], r: allCaptures(progress).map((c) => [c.ref, c.viewTitle, c.filter, String(c.ids.length), c.utc, c.sha]) } }} flush />;
   if (mock?.dyn === "tasks") {
     const week = here ? desk.tasks[here.task].week : 1;
     const ids = desk.order.filter((t) => desk.tasks[t].week === week);

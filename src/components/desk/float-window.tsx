@@ -31,6 +31,7 @@ export function FloatWindow({
   z = 65,
   left,
   fit,
+  tall,
 }: {
   title: string;
   eyebrow?: string;
@@ -46,6 +47,8 @@ export function FloatWindow({
   left?: string;
   /** As tall as its content, up to the usual height, for a short text (a step's help). */
   fit?: boolean;
+  /** Nearly the whole work area, for a console (Tech Lab). */
+  tall?: boolean;
 }) {
   const ref = useRef<HTMLElement>(null);
   // Where the window has been dragged to, in the page's own (zoomed) pixels; null until moved.
@@ -99,7 +102,7 @@ export function FloatWindow({
           left: pos ? pos.x : (left ?? `calc(84px + ${index * 28}px)`),
           width: `min(${width}px, calc(100vw - 24px))`,
         }}
-        className={`pointer-events-auto absolute flex ${fit ? "max-h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[160px]" : "h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[220px]"} min-w-[300px] max-w-[calc(100vw/var(--app-zoom)-24px)] resize flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_-20px_rgba(17,24,39,0.45)] ${pos ? "" : "max-md:!left-3"}`}
+        className={`pointer-events-auto absolute flex ${tall ? "h-[max(320px,calc(100dvh/var(--app-zoom)-152px))]" : fit ? "max-h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[160px]" : "h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[220px]"} min-w-[300px] max-w-[calc(100vw/var(--app-zoom)-24px)] resize flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_-20px_rgba(17,24,39,0.45)] ${pos ? "" : "max-md:!left-3"}`}
       >
         <header onPointerDown={startDrag} className="flex shrink-0 cursor-grab touch-none select-none items-stretch border-b border-[#DDE1E8] active:cursor-grabbing">
           {leading && <span className="grid shrink-0 place-items-center pl-3">{leading}</span>}

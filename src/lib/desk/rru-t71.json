@@ -567,32 +567,16 @@
    "cat": "Cyber — logging gaps",
    "title": "Security logs deleted before an incident is investigated",
    "asset": "SIEM & log analytics platform",
-   "cause": "online log retention cut to 90 days",
-   "event": "deletion of security logs before an incident found late is investigated",
-   "cons": "a reportable breach left uninvestigated",
+   "facts": "Cause: online log retention cut to 90 days. What may happen: deletion of security logs before an incident found late is investigated. Consequence: a reportable breach left uninvestigated.",
    "often": "Incidents found more than 90 days after they started: about once a year at the office (incident register, 2023–2026).",
    "impact": "A reportable breach the office cannot investigate, and a warning from the National Privacy Commission.",
    "controls": "SIEM alerting on live logs (working); monthly log-source coverage review (not working: two reviews missed in 2026)",
-   "L": 4,
-   "I": 3,
-   "Lr": 3,
    "kri": "Incidents investigated with complete logs (target 100 %)",
-   "draft": 2,
-   "bad": "lower log storage costs for Corporate IT & Technology",
-   "owner": "Chief Information Security Officer",
-   "facts": "Cause: online log retention cut to 90 days. What may happen: deletion of security logs before an incident found late is investigated. Consequence: a reportable breach left uninvestigated.",
    "drafts": [
     "Because of deletion of security logs before an incident found late is investigated, online log retention cut to 90 days may occur, leading to a reportable breach left uninvestigated for SIEM & log analytics platform.",
     "Because of online log retention cut to 90 days, deletion of security logs before an incident found late is investigated may occur, leading to a reportable breach left uninvestigated for SIEM & log analytics platform.",
     "Because of online log retention cut to 90 days, deletion of security logs before an incident found late is investigated may occur, leading to lower log storage costs for Corporate IT & Technology."
-   ],
-   "statement": "Because of online log retention cut to 90 days, deletion of security logs before an incident found late is investigated may occur, leading to a reportable breach left uninvestigated for SIEM & log analytics platform.",
-   "Ir": 3,
-   "score": 12,
-   "rscore": 9,
-   "rating": "High",
-   "rrating": "Medium",
-   "working": 1
+   ]
   },
   {
    "ev": "N2",
@@ -601,32 +585,17 @@
    "cat": "Privacy — exposure of customer personal data",
    "title": "Customer personal data exported to spreadsheets",
    "asset": "Customer master data",
-   "cause": "customer data exported to spreadsheets for manual onboarding",
-   "event": "a spreadsheet of customer personal data sent or saved outside the CRM",
-   "cons": "large-scale personal-data harm to customers",
+   "facts": "Cause: customer data exported to spreadsheets for manual onboarding. What may happen: a spreadsheet of customer personal data sent or saved outside the CRM. Consequence: large-scale personal-data harm to customers.",
    "often": "Spreadsheets of customer data found outside the CRM several times a year (DLP alerts, 2026).",
    "impact": "Large-scale personal-data harm: the largest export held 40,000 customer records.",
    "controls": "DLP labels on Tier 3/4 files (not working: the spreadsheets are created unlabelled); security awareness training (not working for this risk: no module covers exports)",
-   "L": 5,
-   "I": 4,
-   "Lr": 5,
    "kri": "Customer-data spreadsheets found outside the CRM per month (target 0)",
-   "draft": 3,
-   "bad": "the onboarding team",
-   "owner": "Head of Customer Operations",
-   "facts": "Cause: customer data exported to spreadsheets for manual onboarding. What may happen: a spreadsheet of customer personal data sent or saved outside the CRM. Consequence: large-scale personal-data harm to customers.",
    "drafts": [
     "Because of customer data exported to spreadsheets for manual onboarding, a spreadsheet of customer personal data sent or saved outside the CRM may occur, leading to large-scale personal-data harm to customers for the onboarding team.",
     "Because of a spreadsheet of customer personal data sent or saved outside the CRM, customer data exported to spreadsheets for manual onboarding may occur, leading to large-scale personal-data harm to customers for Customer master data.",
     "Because of customer data exported to spreadsheets for manual onboarding, a spreadsheet of customer personal data sent or saved outside the CRM may occur, leading to large-scale personal-data harm to customers for Customer master data."
    ],
-   "statement": "Because of customer data exported to spreadsheets for manual onboarding, a spreadsheet of customer personal data sent or saved outside the CRM may occur, leading to large-scale personal-data harm to customers for Customer master data.",
-   "Ir": 4,
-   "score": 20,
-   "rscore": 20,
-   "rating": "Critical",
-   "rrating": "Critical",
-   "working": 0
+   "decoy": "A.5.13 Labelling of information"
   },
   {
    "ev": "N3",
@@ -635,32 +604,16 @@
    "cat": "Third party — supplier end-of-support",
    "title": "Supplier API end-of-support breaking case workflow",
    "asset": "Workflow & case management",
-   "cause": "the supplier's end-of-support for the API version the office uses",
-   "event": "failure of the integration between the supplier's platform and the case workflow",
-   "cons": "customer cases not handled during the outage",
+   "facts": "Cause: the supplier's end-of-support for the API version the office uses. What may happen: failure of the integration between the supplier's platform and the case workflow. Consequence: customer cases not handled during the outage.",
    "often": "A supplier retires an API the office uses about once a year (ITSM records, 2022–2026).",
    "impact": "Outage 24–72h: customer cases not handled while the integration is rebuilt.",
    "controls": "Supplier change notices reviewed monthly (working); fallback to manual case entry (not working: never tested)",
-   "L": 4,
-   "I": 4,
-   "Lr": 3,
    "kri": "Integrations on a supported supplier API version (target 100 %)",
-   "draft": 1,
-   "bad": "customer cases not handled during the outage for the supplier",
-   "owner": "Chief Delivery Officer",
-   "facts": "Cause: the supplier's end-of-support for the API version the office uses. What may happen: failure of the integration between the supplier's platform and the case workflow. Consequence: customer cases not handled during the outage.",
    "drafts": [
     "Because of the supplier's end-of-support for the API version the office uses, failure of the integration between the supplier's platform and the case workflow may occur, leading to customer cases not handled during the outage for Workflow & case management.",
     "Because of failure of the integration between the supplier's platform and the case workflow, the supplier's end-of-support for the API version the office uses may occur, leading to customer cases not handled during the outage for Workflow & case management.",
     "Because of the supplier's end-of-support for the API version the office uses, failure of the integration between the supplier's platform and the case workflow may occur, leading to customer cases not handled during the outage for the supplier."
-   ],
-   "statement": "Because of the supplier's end-of-support for the API version the office uses, failure of the integration between the supplier's platform and the case workflow may occur, leading to customer cases not handled during the outage for Workflow & case management.",
-   "Ir": 4,
-   "score": 16,
-   "rscore": 12,
-   "rating": "High",
-   "rrating": "High",
-   "working": 1
+   ]
   }
  ],
  "changes": [
@@ -675,7 +628,7 @@
    "ev": "C2",
    "row": "R-16-HQ-12",
    "desc": "Treatment plan due date passed with 50 % completion.",
-   "facts": "R-16-HQ-12's treatment action, “Maintain country crisis plan with evacuation and remote-operation options”, was due on 2026-10-31. On that date it was 50 % complete: the crisis plan is drafted, not yet approved or tested. It is not one of the risk's existing controls.",
+   "facts": "R-16-HQ-12's treatment plan date has passed. Its line on Risk Register › Mitigation Tracker gives the action, its due date and how far it got.",
    "evidence": "Mitigation Tracker export, 2026-11-02"
   }
  ],
@@ -683,61 +636,598 @@
   {
    "asset": "SIEM & log analytics platform",
    "risk": "R-16-HQ-26",
-   "type": "Log / SIEM platform",
-   "ref": [
-    "Log / SIEM platform",
-    "Supporting",
-    "Attack not detected",
-    "Mission Critical system not sending logs",
-    "C, I, A — late detection",
-    "A.8.15 Logging"
-   ],
    "line": "Security event aggregation, detection and correlation. Information Security (CISO Office); Hybrid — on-prem Manila + cloud; Mission Critical"
   },
   {
    "asset": "Customer master data",
    "risk": "R-16-HQ-27",
-   "type": "Client / customer file or database",
-   "ref": [
-    "Client / customer file or database",
-    "Information",
-    "External attacker steals records",
-    "Weak or shared account passwords",
-    "C — personal data exposed",
-    "A.8.5 Secure authentication"
-   ],
    "line": "Account, contact and entitlement records. Customer Operations & Support; Cloud (multi-region, IaaS/PaaS); Business Critical"
   },
   {
    "asset": "Workflow & case management",
    "risk": "R-16-HQ-28",
-   "type": "SaaS business application",
-   "ref": [
-    "SaaS business application",
-    "Supporting",
-    "Account takeover",
-    "SSO not enforced; no MFA",
-    "C, I — data read or changed",
-    "A.5.17 Authentication information"
-   ],
    "line": "Operational workflow and case routing. Service Delivery Operations; SaaS (vendor-hosted); Business Critical"
   }
  ],
  "actions": {
   "R-16-HQ-26": [
+   "Modify: restore online retention to 12 months and run the two missed log-source reviews",
    "Retain and monitor: record the decision, review the KRI quarterly and re-rate if it moves",
-   "Buy cyber insurance to cover breaches that cannot be investigated",
-   "Cut online retention to 30 days to save more storage, and monitor"
+   "Share: take cyber insurance for the cost of a breach that cannot be investigated"
   ],
   "R-16-HQ-27": [
+   "Share: take cyber insurance for privacy fines, and keep the spreadsheets until the CRM project lands",
    "Stop spreadsheet exports: onboard customers in the CRM, and label and block exports of customers' personal data with DLP",
-   "Remind the onboarding team by e-mail not to share spreadsheets",
-   "Buy cyber insurance to cover privacy fines"
+   "Train the onboarding team: add a module on handling customer exports, and remind them of the rules by e-mail"
   ],
   "R-16-HQ-28": [
+   "Ask the supplier for paid extended support on the old API version, and review the position when it ends",
    "Manage the supplier's change: migrate the integration to the supported API version before end-of-support, and test the manual fallback",
-   "Ask the supplier to extend support for the old API version indefinitely",
-   "Accept the outage and tell customers when it happens"
+   "Test the manual fallback now, and run cases by hand once the old API version stops"
+  ]
+ },
+ "types": {
+  "Client / customer file or database": [
+   "Information",
+   "External attacker steals records",
+   "Weak or shared account passwords",
+   "C — personal data exposed"
+  ],
+  "Personal-data set (HR, students, patients)": [
+   "Information",
+   "Insider sends the file outside",
+   "No DLP rule; file not labelled",
+   "C — privacy breach"
+  ],
+  "Financial ledger / payment data": [
+   "Information",
+   "Fraudulent change of bank details",
+   "One person can create a vendor and approve payment",
+   "I — wrong payments"
+  ],
+  "Source code repository": [
+   "Information",
+   "Secret committed and used by attacker",
+   "No secret scanning; broad read access",
+   "C, I — credential theft, tampering"
+  ],
+  "Paper records / printouts": [
+   "Information",
+   "Document left on a desk or printer",
+   "No clear-desk practice",
+   "C — disclosure"
+  ],
+  "Laptop / user endpoint": [
+   "Supporting",
+   "Theft or loss",
+   "Disk not encrypted",
+   "C — data on device exposed"
+  ],
+  "SaaS business application": [
+   "Supporting",
+   "Account takeover",
+   "SSO not enforced; no MFA",
+   "C, I — data read or changed"
+  ],
+  "Server / virtual machine": [
+   "Supporting",
+   "Exploit of a known vulnerability",
+   "Critical patch not applied within SLA",
+   "C, I, A — compromise or outage"
+  ],
+  "Backup system / media": [
+   "Supporting",
+   "Ransomware encrypts backups",
+   "No immutable copy; restore never tested",
+   "A — data cannot be recovered"
+  ],
+  "Network / firewall": [
+   "Supporting",
+   "Attacker reaches an admin interface",
+   "Any-any rule; admin port open to the internet",
+   "C, I, A — lateral movement"
+  ],
+  "Cloud storage bucket": [
+   "Supporting",
+   "Public exposure",
+   "Bucket set to public; logging off",
+   "C — bulk disclosure"
+  ],
+  "E-mail service": [
+   "Supporting",
+   "Spoofed mail from your domain",
+   "DMARC at p=none",
+   "I — staff deceived; payment fraud"
+  ],
+  "Identity provider / directory": [
+   "Supporting",
+   "Leaver still signs in",
+   "Account not disabled within 4 hours",
+   "C, I — unauthorised access"
+  ],
+  "Data centre / server room": [
+   "Supporting",
+   "Unauthorised entry",
+   "Contractor badge with no end date",
+   "C, A — tampering, outage"
+  ],
+  "Log / SIEM platform": [
+   "Supporting",
+   "Attack not detected",
+   "Mission Critical system not sending logs",
+   "C, I, A — late detection"
+  ]
+ },
+ "owners": [
+  [
+   "Account management system",
+   "Client Services & Account Management",
+   "Head of Client Services"
+  ],
+  [
+   "Audit evidence repository",
+   "Internal Audit",
+   "Head of Internal Audit"
+  ],
+  [
+   "Audit management platform",
+   "Internal Audit",
+   "Head of Internal Audit"
+  ],
+  [
+   "BI & reporting platform",
+   "Data & Analytics",
+   "Chief Data Officer"
+  ],
+  [
+   "Backup & disaster recovery",
+   "Corporate IT & Technology",
+   "Chief Information Officer"
+  ],
+  [
+   "Banking & payment files",
+   "Finance & Treasury (Group)",
+   "Chief Financial Officer"
+  ],
+  [
+   "Board & executive portal",
+   "Executive Leadership (Office of the CEO)",
+   "Chief Executive Officer"
+  ],
+  [
+   "Brand & digital asset library",
+   "Marketing & Communications (Group)",
+   "Chief Marketing Officer"
+  ],
+  [
+   "Building management & access control",
+   "Facilities & Administration",
+   "Head of Facilities"
+  ],
+  [
+   "CRM platform",
+   "Sales & Business Development",
+   "Chief Revenue Officer"
+  ],
+  [
+   "Capacity & staffing data",
+   "Workforce Management",
+   "Head of Workforce Management"
+  ],
+  [
+   "Client data security controls",
+   "Information Security & Privacy",
+   "Head of Security & Privacy"
+  ],
+  [
+   "Client reporting repository",
+   "Client Services & Account Management",
+   "Head of Client Services"
+  ],
+  [
+   "Client transaction data",
+   "Service Delivery Operations",
+   "Chief Delivery Officer"
+  ],
+  [
+   "Competitive intelligence library",
+   "Corporate Strategy & Development",
+   "Chief Strategy Officer"
+  ],
+  [
+   "Compliance incidents & breach log",
+   "Governance, Risk & Compliance",
+   "Chief Risk & Compliance Officer"
+  ],
+  [
+   "Contract & SLA records",
+   "Client Services & Account Management",
+   "Head of Client Services"
+  ],
+  [
+   "Contract & SLA repository",
+   "Procurement & Vendor Management",
+   "Head of Procurement"
+  ],
+  [
+   "Contract lifecycle management",
+   "Legal & Corporate Affairs",
+   "General Counsel"
+  ],
+  [
+   "Controls & issues register",
+   "Internal Audit",
+   "Head of Internal Audit"
+  ],
+  [
+   "Core network & infrastructure",
+   "Corporate IT & Technology",
+   "Head of Infrastructure"
+  ],
+  [
+   "Corporate entity & governance records",
+   "Legal & Corporate Affairs",
+   "General Counsel"
+  ],
+  [
+   "Corporate strategy & M&A files",
+   "Executive Leadership (Office of the CEO)",
+   "Chief Executive Officer"
+  ],
+  [
+   "Customer communications & CTI",
+   "Customer Operations & Support",
+   "Head of Customer Operations"
+  ],
+  [
+   "Customer master data",
+   "Customer Operations & Support",
+   "Head of Customer Operations"
+  ],
+  [
+   "Customer support / ticketing",
+   "Customer Operations & Support",
+   "Head of Customer Operations"
+  ],
+  [
+   "Data catalog & governance",
+   "Data & Analytics",
+   "Chief Data Officer"
+  ],
+  [
+   "ERP / financial system",
+   "Finance & Treasury (Group)",
+   "Financial Controller"
+  ],
+  [
+   "Employee records archive",
+   "Global Human Resources",
+   "Chief Human Resources Officer"
+  ],
+  [
+   "Endpoint & device fleet",
+   "Corporate IT & Technology",
+   "Chief Information Officer"
+  ],
+  [
+   "Enterprise data warehouse / lake",
+   "Data & Analytics",
+   "Head of Data Engineering"
+  ],
+  [
+   "Enterprise directory & email",
+   "Corporate IT & Technology",
+   "Chief Information Officer"
+  ],
+  [
+   "Executive correspondence archive",
+   "Executive Leadership (Office of the CEO)",
+   "Chief Executive Officer"
+  ],
+  [
+   "Facilities / space management",
+   "Facilities & Administration",
+   "Head of Facilities"
+  ],
+  [
+   "Financial planning & analysis models",
+   "Finance & Treasury (Group)",
+   "Chief Financial Officer"
+  ],
+  [
+   "GRC platform",
+   "Governance, Risk & Compliance",
+   "Chief Risk & Compliance Officer"
+  ],
+  [
+   "HR Information System (HRIS)",
+   "Global Human Resources",
+   "HR Systems Manager"
+  ],
+  [
+   "IP & trademark portfolio",
+   "Legal & Corporate Affairs",
+   "General Counsel"
+  ],
+  [
+   "ITSM / service desk",
+   "Corporate IT & Technology",
+   "IT Service Manager"
+  ],
+  [
+   "Identity & access management (IAM)",
+   "Information Security (CISO Office)",
+   "Chief Information Security Officer"
+  ],
+  [
+   "Investor relations data room",
+   "Executive Leadership (Office of the CEO)",
+   "Chief Executive Officer"
+  ],
+  [
+   "Knowledge base & help centre",
+   "Customer Operations & Support",
+   "Head of Customer Operations"
+  ],
+  [
+   "Learning management system",
+   "Global Human Resources",
+   "Chief Human Resources Officer"
+  ],
+  [
+   "Legacy application estate",
+   "Corporate IT & Technology",
+   "Chief Information Officer"
+  ],
+  [
+   "M&A deal database",
+   "Corporate Strategy & Development",
+   "Chief Strategy Officer"
+  ],
+  [
+   "ML / model environment",
+   "Data & Analytics",
+   "Chief Data Officer"
+  ],
+  [
+   "Marketing automation & CRM",
+   "Marketing & Communications (Group)",
+   "Chief Marketing Officer"
+  ],
+  [
+   "Matter & litigation management",
+   "Legal & Corporate Affairs",
+   "General Counsel"
+  ],
+  [
+   "PKI & secrets / key management",
+   "Information Security (CISO Office)",
+   "Chief Information Security Officer"
+  ],
+  [
+   "Partnership & alliance contracts",
+   "Corporate Strategy & Development",
+   "Chief Strategy Officer"
+  ],
+  [
+   "Payroll system",
+   "Global Human Resources",
+   "Chief Human Resources Officer"
+  ],
+  [
+   "Performance & SLA dashboards",
+   "Quality & Process Excellence",
+   "Head of Quality"
+  ],
+  [
+   "Policy & standards repository",
+   "Governance, Risk & Compliance",
+   "Chief Risk & Compliance Officer"
+  ],
+  [
+   "Privacy & RoPA register",
+   "Information Security & Privacy",
+   "Head of Security & Privacy"
+  ],
+  [
+   "Process documentation (SOPs)",
+   "Transition & Solution Design",
+   "Head of Transition"
+  ],
+  [
+   "Process improvement repository",
+   "Quality & Process Excellence",
+   "Head of Quality"
+  ],
+  [
+   "Procurement / S2P platform",
+   "Procurement & Vendor Management",
+   "Head of Procurement"
+  ],
+  [
+   "Production delivery platform",
+   "Service Delivery Operations",
+   "Chief Delivery Officer"
+  ],
+  [
+   "Quality monitoring system",
+   "Quality & Process Excellence",
+   "Head of Quality"
+  ],
+  [
+   "Quoting & proposal system (CPQ)",
+   "Sales & Business Development",
+   "Chief Revenue Officer"
+  ],
+  [
+   "Recruitment / ATS",
+   "Global Human Resources",
+   "Chief Human Resources Officer"
+  ],
+  [
+   "Regulatory obligations register",
+   "Governance, Risk & Compliance",
+   "Chief Risk & Compliance Officer"
+  ],
+  [
+   "SIEM & log analytics platform",
+   "Information Security (CISO Office)",
+   "Chief Information Security Officer"
+  ],
+  [
+   "Sales analytics & forecasts",
+   "Sales & Business Development",
+   "Chief Revenue Officer"
+  ],
+  [
+   "Sales contracts & order records",
+   "Sales & Business Development",
+   "Chief Revenue Officer"
+  ],
+  [
+   "Security incident & case management",
+   "Information Security (CISO Office)",
+   "Chief Information Security Officer"
+  ],
+  [
+   "Security monitoring (client scope)",
+   "Information Security & Privacy",
+   "Head of Security & Privacy"
+  ],
+  [
+   "Social & PR monitoring",
+   "Marketing & Communications (Group)",
+   "Chief Marketing Officer"
+  ],
+  [
+   "Solution design & SOW library",
+   "Transition & Solution Design",
+   "Head of Transition"
+  ],
+  [
+   "Strategic planning repository",
+   "Corporate Strategy & Development",
+   "Chief Strategy Officer"
+  ],
+  [
+   "Supplier master & risk register",
+   "Procurement & Vendor Management",
+   "Head of Procurement"
+  ],
+  [
+   "Tax records & filings",
+   "Finance & Treasury (Group)",
+   "Chief Financial Officer"
+  ],
+  [
+   "Telephony / contact platform",
+   "Service Delivery Operations",
+   "Chief Delivery Officer"
+  ],
+  [
+   "Time & attendance records",
+   "Workforce Management",
+   "Head of Workforce Management"
+  ],
+  [
+   "Transition project repository",
+   "Transition & Solution Design",
+   "Head of Transition"
+  ],
+  [
+   "Treasury management system",
+   "Finance & Treasury (Group)",
+   "Group Treasurer"
+  ],
+  [
+   "Visitor management records",
+   "Facilities & Administration",
+   "Head of Facilities"
+  ],
+  [
+   "Vulnerability & threat management",
+   "Information Security (CISO Office)",
+   "Chief Information Security Officer"
+  ],
+  [
+   "WFM / scheduling system",
+   "Workforce Management",
+   "Head of Workforce Management"
+  ],
+  [
+   "Website & CMS",
+   "Marketing & Communications (Group)",
+   "Chief Marketing Officer"
+  ],
+  [
+   "Workflow & case management",
+   "Service Delivery Operations",
+   "Chief Delivery Officer"
+  ]
+ ],
+ "tracker": [
+  [
+   "R-16-HQ-02",
+   "Enforce dual approval and out-of-band verification for bank-detail changes",
+   "CFO",
+   "2026-12-20",
+   "60 %",
+   "Open"
+  ],
+  [
+   "R-16-HQ-05",
+   "Tier suppliers by criticality",
+   "Procurement / Vendor Risk Analyst",
+   "2026-12-15",
+   "75 %",
+   "Open"
+  ],
+  [
+   "R-16-HQ-10",
+   "Validate office BCP against local hazard scenario",
+   "Business Continuity & Resilience Analyst",
+   "2027-01-29",
+   "30 %",
+   "Open"
+  ],
+  [
+   "R-16-HQ-12",
+   "Maintain country crisis plan with evacuation and remote-operation options",
+   "Regional Managing Director",
+   "2026-10-31",
+   "50 %",
+   "Open"
+  ],
+  [
+   "R-16-HQ-19",
+   "Validate sector-specific controls against mandatory standards",
+   "Org CISO",
+   "2026-12-04",
+   "80 %",
+   "Open"
+  ],
+  [
+   "R-16-HQ-25",
+   "Onboard remaining Mission/Business Critical log sources",
+   "Incident Response & Crisis Manager",
+   "2027-02-26",
+   "20 %",
+   "Open"
+  ]
+ ],
+ "extra": {
+  "ev": "N4",
+  "id": "R-16-HQ-29",
+  "desc": "The access review of Diligent Entities found a leaver's account, D-0002, used after termination.",
+  "asset": "Corporate entity & governance records",
+  "facts": "Cause: leavers' access to Diligent Entities removed by hand, outside the HR feed. What may happen: use of a leaver's account after termination. Consequence: unauthorised changes to company filings.",
+  "often": "A leaver's account found in use after termination: once in 2–5 years on this system (access reviews, 2022–2026).",
+  "impact": "Minor non-compliance: a filing changed without authority is caught and corrected by Legal.",
+  "controls": "Second-person approval of every filing (working); removal of leavers' access by the Legal administrator (not working: D-0002 was missed); user access review of the system (not working: UAR-EXTRA concluded Not effective)",
+  "drafts": [
+   "Because of use of a leaver's account after termination, leavers' access to Diligent Entities removed by hand, outside the HR feed may occur, leading to unauthorised changes to company filings for Corporate entity & governance records.",
+   "Because of leavers' access to Diligent Entities removed by hand, outside the HR feed, use of a leaver's account after termination may occur, leading to unauthorised changes to company filings for Legal & Corporate Affairs.",
+   "Because of leavers' access to Diligent Entities removed by hand, outside the HR feed, use of a leaver's account after termination may occur, leading to unauthorised changes to company filings for Corporate entity & governance records."
   ]
  }
 }
