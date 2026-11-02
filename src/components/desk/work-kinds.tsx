@@ -1,16 +1,17 @@
 "use client";
 
-import { waitingAt } from "@/lib/desk/inbox";
+import { INJ_AT } from "@/lib/desk/inbox";
+import { LABS } from "@/lib/desk/labs";
 import { Fragment, useEffect, useState, useSyncExternalStore } from "react";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { isDecideCell, isFillCell, type Desk, type Step, type Task } from "@/lib/desk/model";
 import { stepKey, type Progress, type RowsFeedback } from "@/lib/desk/progress";
 import { api } from "@/lib/api";
-import { gridKey, gridStatus } from "@/lib/desk/work";
+import { gridKey, gridStatus, submitWhy } from "@/lib/desk/work";
 import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
 import { useDoc, useDocs } from "./doc-text";
-import { RMF, dmyToIso, fileExts, fileNameOk, isDateRow, isoToDmy, openBefore, receiptHash, rmfAt, rmfExpected, rmfGiven, rmfKey, rmfMiss, same, submitCodes } from "@/lib/desk/forms";
+import { RMF, dmyToIso, fileExts, fileNameOk, isDateRow, isoToDmy, receiptHash, rmfAt, rmfExpected, rmfGiven, rmfKey, rmfMiss, same, submitCodes } from "@/lib/desk/forms";
 
 /*
  * The work a "do" step asks for, in the shape the pack gives it (see workKind in lib/desk/model):
@@ -245,12 +246,10 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
   const codes = submitCodes(task, s);
   const files = codes.filter((c) => fileExts(task, c).length);
   const name = (c: string) => progress.answers[`${key}#${c}`] ?? "";
-  const named = files.every((c) => fileNameOk(desk, task, c, name(c)));
-  const waiting = openBefore(progress, task, s);
-  const msgs = waitingAt(desk, progress, task.id, s.n).length; // a message placed at the hand-in is answered first
-  // A register handed in here (F1.2 FAM-MAP) goes in with no empty cell in the columns it hands in.
-  const gaps = handedIn(task.id, s.n).reduce((n, r) => n + regEmpty(desk, progress, task, s.n, r).length, 0);
   const at = progress.logs?.[key];
+  // A message placed at the hand-in is answered first; a register handed in here (F1.2 FAM-MAP) goes in with no
+  // empty cell in the columns it hands in; each file is named. The line beside Submit names the next of these.
+  const why = submitWhy(desk, progress, task, s);
   const submit = async () => {
     const list = files.map((c) => name(c).trim());
     const hash = await receiptHash(desk, progress, task, list);
@@ -258,6 +257,7 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
   };
   return (
     <div className="mt-3 grid gap-3">
+      {!readOnly && <HandInJobs task={task} s={s} />}
       {files.map((c) => {
         const v = name(c);
         const ok = fileNameOk(desk, task, c, v);
@@ -315,18 +315,53 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
       ) : null}
       {!readOnly && (
         <div className="flex flex-wrap items-center gap-3">
-          <button data-guide="submit" type="button" disabled={!named || waiting.length > 0 || gaps > 0 || msgs > 0} onClick={submit} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]">
+          <button data-guide="submit" type="button" disabled={!!why} onClick={submit} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]">
             {at ? "Submit again" : "Submit"}
           </button>
-          {msgs > 0 ? (
-            <span className="text-[12.5px] text-[#5B6474]">Reply to your message in the Inbox first.</span>
-          ) : waiting.length > 0 ? (
-            <span className="text-[12.5px] text-[#5B6474]">Finish step{waiting.length > 1 ? "s" : ""} {waiting.join(", ")} first.</span>
-          ) : gaps > 0 ? (
-            <span className="text-[12.5px] text-[#5B6474]">Fill the {gaps} empty cell{gaps > 1 ? "s" : ""} first.</span>
-          ) : null}
+          {why && <span data-guide="submit-why" className="text-[12.5px] text-[#5B6474]">{why}</span>}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * A hand-in that is more than naming and submitting (T6.1 step 8: a message, a fourth sheet, a Tech Lab, two files):
+ * its jobs in order, each ticked when done, the next one marked (owner, 2 Nov 2026: "nothing walks the learner through
+ * them in order"). The guide reads `data-job` / `data-state` to pick up at the next job.
+ */
+function HandInJobs({ task, s }: { task: Task; s: Step }) {
+  const { desk, progress } = useDesk();
+  const key = stepKey(task.id, s.n);
+  const inj = task.inj.filter((id) => INJ_AT[id] === s.n);
+  const sheets = handedIn(task.id, s.n).filter((r) => r.steps[s.n]?.length);
+  const lab = LABS.find((l) => l.task === task.id && l.after === stepKey(task.id, s.n - 1));
+  const files = submitCodes(task, s).filter((c) => fileExts(task, c).length).length;
+  const sent = !!progress.logs?.[key];
+  const jobs: { id: string; text: string; done: boolean; skipped?: boolean }[] = [
+    ...(inj.length ? [{ id: "msg", text: `Reply to the ${desk.inj[inj[0]].sender}'s message: Open Inbox, below.`, done: inj.every((id) => !!progress.msgs[id]) }] : []),
+    ...sheets.map((r) => ({ id: "sheet", text: r.job ?? `Fill ${r.code}.`, done: !regEmpty(desk, progress, task, s.n, r).length })),
+    ...(lab ? [{ id: "lab", text: `Tech Lab: ${desk.sections[lab.tool.split("|")[0]]?.t ?? "Systems"} › ${lab.tool.split("|")[1]} on the toolbar (orange dot). Submit does not wait for it, but its findings join your file only if you finish it before you submit.`, done: !!progress.labs?.[lab.id]?.done, skipped: sent && !progress.labs?.[lab.id]?.done }] : []),
+    { id: "files", text: files > 1 ? `Name the ${files} files, then Submit.` : files ? "Name the file, then Submit." : "Submit.", done: sent },
+    { id: "complete", text: "Mark activity complete.", done: !!progress.done[key] },
+  ];
+  if (jobs.length < 3) return null; // naming, Submit and Mark complete alone need no list
+  const now = jobs.find((j) => !j.done && !j.skipped);
+  return (
+    <div data-guide="jobs" className="rounded border border-[#DDE1E8] bg-[#F7F8FA] px-3 py-2.5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">This step, in order</p>
+      <ol className="mt-1.5 grid gap-1.5">
+        {jobs.map((j, i) => (
+          <li key={j.id} data-job={j.id} data-state={j.done ? "done" : j === now ? "now" : j.skipped ? "skipped" : "todo"} className={`grid grid-cols-[18px_1fr] items-baseline gap-x-2 text-[12.5px] leading-snug ${j === now ? "font-semibold text-[#111827]" : j.done ? "text-[#15803D]" : "text-[#5B6474]"}`}>
+            <span className="text-right font-mono text-[11px]">{j.done ? <Icon name="check" size={12} className="inline" /> : i + 1}</span>
+            <span>
+              {j === now && <span className="mr-1 rounded-[3px] bg-[#EEF0FF] px-1 py-px text-[11px] font-semibold text-[#3730A3]">Next</span>}
+              {j.text}
+              {j.skipped && " Not done before Submit."}
+            </span>
+          </li>
+        ))}
+      </ol>
     </div>
   );
 }
@@ -397,7 +432,8 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
   const working = !!s && !readOnly && (open.size > 0 || reporting || !!reg.view?.[s.n]);
   // The hand-in step (F1.2 step 6): the mentee's rows, the columns handed in, every empty cell marked.
   const checking = !!s && !readOnly && reg.handIn?.step === s.n;
-  const empty = checking ? new Set(regEmpty(desk, progress, task, s!.n, reg)) : new Set<string>();
+  // A derived cell still empty is not the learner's to fill: it says what writes it, and is not counted.
+  const empty = checking ? new Set(regEmpty(desk, progress, task, s!.n, reg).filter((c) => { const [ri, ci] = c.split(",").map(Number); return derivedAt(reg, progress, task.id, ri, ci) === null; })) : new Set<string>();
   const [showWorked, setShowWorked] = useState(false);
   const [showEarlier, setShowEarlier] = useState(false);
   const firstOpen = Math.min(...open);
@@ -528,7 +564,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
         <thead className="bg-[#F7F8FA] text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">
           <tr>
             {/* In a finding step column A is the same organisation on every row: named above instead. */}
-            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F7F8FA] shadow-[1px_0_0_#DDE1E8]" : ""} ${open.has(ci) || (study && filledBy.has(ci)) ? "bg-[#EEF0FF] text-[#3730A3]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F7F8FA] shadow-[1px_0_0_#DDE1E8]" : ""}`}>{c.h}</th>)}
+            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F7F8FA] shadow-[1px_0_0_#DDE1E8]" : ""} ${open.has(ci) || (study && filledBy.has(ci)) ? "bg-[#EEF0FF] text-[#3730A3]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F7F8FA] shadow-[1px_0_0_#DDE1E8]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""}`}>{c.h}</th>)}
             {(adding || trimming) && <th className={th}><span className="sr-only">Remove</span></th>}
           </tr>
         </thead>
@@ -653,7 +689,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                     const rule = reg.cells?.[ci];
                     const off = !!rule && !!v.trim() && rule.fix(v, liveRow(reg, progress, task.id, ri), desk, ri, by) === null;
                     return (
-                      <td key={ci} className={`${td} p-0`}>
+                      <td key={ci} className={`${td} p-0 ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] bg-white shadow-[-1px_0_0_#DDE1E8]" : ""}`}>
                         {opts && opts.some((o) => o.length > 40) ? (
                           // A select cannot wrap: where the options are sentences (T7.2's "so what" lines) the chosen one would be
                           // cut at the cell's edge. The cell shows it wrapped in full; the select, invisible, lies over it and takes
@@ -682,6 +718,14 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                       </td>
                     );
                   }
+                  // A line the platform writes, not written yet: what writes it (T6.1 UAR-MEMO's second system), never an empty to fill.
+                  const waits = mine && !v.trim() && derivedAt(reg, progress, task.id, ri, ci) !== null ? reg.derived?.[ci]?.waits?.((x) => cellValue(reg, progress, task.id, ri, x)) : undefined;
+                  if (waits)
+                    return (
+                      <td key={ci} data-waits className={`${td} px-3 py-2 text-[12.5px] italic text-[#5B6474]`}>
+                        {waits}
+                      </td>
+                    );
                   return (
                     <td key={ci} className={`${td} px-3 py-2 ${(working || checking) && ci === stick ? "sticky left-0 z-[1] bg-white shadow-[1px_0_0_#DDE1E8] max-[600px]:max-w-[132px] max-[600px]:text-[12px]" : ""} ${mine && v.length <= 24 && !c.wrap ? "whitespace-nowrap" : ""} ${empty.has(cell) ? "bg-[#FEF3C7] shadow-[inset_0_0_0_2px_#F59E0B]" : ""} ${c.auto ? "sticky left-0 z-[1] whitespace-nowrap bg-white font-mono text-[12px] font-semibold text-[#111827] shadow-[1px_0_0_#DDE1E8]" : ci === 1 && mine ? "font-medium text-[#111827]" : mine ? "text-[#3F4757]" : ""}`}>
                       {c.list && v ? listed(v) : v || (mine ? <span className="text-[#C9CED8]">—</span> : "")}

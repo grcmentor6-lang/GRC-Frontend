@@ -7,7 +7,7 @@ import { useDesk } from "./desk-context";
 import { DecisionSummary, LI_TAG, PartHead, Work, thenLabel, thenOf } from "./how-to";
 import { BriefProgress, BriefWork, CopyWork, GridProgress, GridWork, LogWork, RegisterProgress, RegisterWork, LadderWork, RmfFile, RmfProgress, RuleHelper, StudyWork, SubmitWork, TreeWork, ChecklistWork, ReportWork, SplitWork, CompareWork, ConsistencyWork } from "./work-kinds";
 import { DECIDE_FROM, LADDER, STUDY, briefOf, deliverableFor, handedIn, regOf, stepSources } from "@/lib/desk/registers";
-import { gridKey, stepAnswered } from "@/lib/desk/work";
+import { gridKey, lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { Inbox, MessageNotice } from "./chat";
 import { ToolScreen } from "./viewer";
 import { FloatWindow } from "./float-window";
@@ -247,6 +247,27 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
   const [guideAt, setGuideAt] = useState(-1);
   const startGuide = () => setGuideAt(0);
   useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && present, startGuide, 700);
+  // A guide card that sent the learner to another window (the Inbox, a Tech Lab) ends the walk there; when that
+  // window closes, the walk starts again and its cards for jobs already done pass by (T6.1 step 8).
+  const [away, setAway] = useState<{ until: string | (() => boolean) } | null>(null);
+  useEffect(() => {
+    if (!away) return;
+    const { until } = away;
+    let opened = false;
+    const id = window.setInterval(() => {
+      if (typeof until === "function") {
+        if (until()) {
+          setAway(null);
+          setGuideAt(0);
+        }
+      } else if (document.querySelector(until)) opened = true;
+      else if (opened) {
+        setAway(null);
+        setGuideAt(0);
+      }
+    }, 400);
+    return () => window.clearInterval(id);
+  }, [away]);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-start justify-center p-3 pb-[88px] sm:p-6 sm:pb-[92px]" role="dialog" aria-modal="true" aria-label={heading}>
@@ -340,7 +361,8 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
                   </div>
                 )}
                 {regHandIn && regsIn.length > 1 ? (
-                  regsIn.map((r) => (
+                  // The sheet this step fills (T6.1's Sheet 4) first: the work, then the files it is handed in with.
+                  [...regsIn].sort((a, b) => +!!b.steps[s!.n]?.length - +!!a.steps[s!.n]?.length).map((r) => (
                     <div key={r.code} className="shrink-0">
                       <RegisterWork task={task} s={s} of={r} readOnly={!!progress.submitted[task.id]} />
                     </div>
@@ -375,6 +397,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
                 setGuideAt(-1);
                 markTourSeen(`grc101.guide.${guideKey}`, user?.email);
               }}
+              onAway={(until) => setAway({ until })}
             />
           )}
         </div>
@@ -652,7 +675,12 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
       {!sealed && !done && <MessageNotice task={task} n={s.n} />}
       <footer className="flex shrink-0 items-stretch bg-[#F7F8FA]">
         <span className="flex flex-1 items-center px-4 py-3 text-[12px] text-[#5B6474]">
-          {done ? (
+          {/* A locked button says why, naming the next thing to do (owner, 2 Nov 2026). */}
+          {!done && !sealed && lockedWhy(desk, progress, task, s, start) ? (
+            <span data-guide="complete-why" className="inline-flex items-start gap-1.5 text-[12.5px] font-medium text-[#78350F]">
+              <Icon name="info" size={14} className="mt-px shrink-0" /> {lockedWhy(desk, progress, task, s, start)}
+            </span>
+          ) : done ? (
             <span className="inline-flex items-center gap-1.5 font-semibold text-[#15803D]">
               <Icon name="checkCircle" size={15} /> Complete
             </span>

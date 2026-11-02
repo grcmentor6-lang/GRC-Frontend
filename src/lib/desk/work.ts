@@ -1,6 +1,6 @@
 import { isFillCell, rmfTable, workKind, type Desk, type Step, type Task } from "./model";
-import { ATTEST, RMF, attestDone, rmfAt, rmfExpected, rmfFilled, rmfGiven, rmfKey } from "./forms";
-import { LADDER, STUDY, briefOf, briefStatus, compareDone, liveRow, regOf, regRows, regStatus, reportDone } from "./registers";
+import { ATTEST, RMF, attestDone, fileExts, fileNameOk, openBefore, rmfAt, rmfExpected, rmfFilled, rmfGiven, rmfKey, submitCodes } from "./forms";
+import { LADDER, STUDY, briefOf, briefStatus, compareDone, derivedAt, handedIn, liveRow, regEmpty, regOf, regRows, regStatus, reportDone } from "./registers";
 import { stepKey, type Progress } from "./progress";
 import { waitingAt } from "./inbox";
 
@@ -77,6 +77,51 @@ export function stepAnswered(desk: Desk, p: Progress, task: Task, s: Step, start
     default:
       return true;
   }
+}
+
+/** The cells still to fill in each register a step hands in, the learner's only (a derived cell fills itself). */
+export function handInGaps(desk: Desk, p: Progress, task: Task, n: number): { code: string; n: number }[] {
+  return handedIn(task.id, n)
+    .map((reg) => ({ code: reg.code, n: regEmpty(desk, p, task, n, reg).filter((c) => { const [ri, ci] = c.split(",").map(Number); return derivedAt(reg, p, task.id, ri, ci) === null; }).length }))
+    .filter((g) => g.n > 0);
+}
+
+/** Why Submit is not open yet, naming the next thing to do; null once it is. */
+export function submitWhy(desk: Desk, p: Progress, task: Task, s: Step): string | null {
+  if (waitingAt(desk, p, task.id, s.n).length) return "Reply to your message in the Inbox first.";
+  const before = openBefore(p, task, s);
+  if (before.length) return `Finish step${before.length > 1 ? "s" : ""} ${before.join(", ")} first.`;
+  const gaps = handInGaps(desk, p, task, s.n);
+  if (gaps.length) return `Fill ${gaps.map((g) => `the ${g.n} empty cell${g.n > 1 ? "s" : ""} in ${g.code}`).join(" and ")} first.`;
+  if (handedIn(task.id, s.n).some((reg) => regEmpty(desk, p, task, s.n, reg).length)) return "Wait for the lines the platform writes from your answers.";
+  const files = submitCodes(task, s).filter((c) => fileExts(task, c).length);
+  if (files.some((c) => !fileNameOk(desk, task, c, p.answers[`${stepKey(task.id, s.n)}#${c}`] ?? ""))) return `Name ${files.length > 1 ? `the ${files.length} files` : "the file"} first.`;
+  return null;
+}
+
+/**
+ * Why "Mark activity complete" is not open yet, naming the next thing to do (owner, 2 Nov 2026: a disabled button
+ * always says why). Null once the step's work is in.
+ */
+export function lockedWhy(desk: Desk, p: Progress, task: Task, s: Step, start?: Date): string | null {
+  if (stepAnswered(desk, p, task, s, start)) return null;
+  const key = stepKey(task.id, s.n);
+  if (waitingAt(desk, p, task.id, s.n).length) return "Reply to your message in the Inbox first.";
+  if (s.kind === "pick" && !(p.acks?.[key] ?? []).includes("checked")) return "Pick an option and click Check my answer first.";
+  const reg = regOf(task.id, s.n);
+  if (reg?.checkRows?.[s.n] && !p.rowChecks?.[`${task.id}-${s.n}`]) return "Fill every row, then click Check my answers.";
+  const files = submitCodes(task, s).filter((c) => fileExts(task, c).length).length;
+  const submit = workKind(s, desk) === "submit" && !p.logs?.[key] ? (submitWhy(desk, p, task, s) ?? `Submit ${files > 1 ? `the ${files} files` : files ? "the file" : "your work"} first.`) : null;
+  if (reg?.steps[s.n]) {
+    const g = regStatus(desk, p, task, s.n);
+    const left = g.cells - g.filled;
+    if (!g.ok) return left > 0 ? `Fill or correct the ${left} cell${left > 1 ? "s" : ""} left in ${reg.code} first.` : `Fill ${reg.code} first.`;
+    return submit ?? "Finish the step's work above first.";
+  }
+  if (submit) return submit;
+  if (STUDY[task.id]?.[s.n]) return "Find each item above first.";
+  if (LADDER[task.id]?.[s.n]) return "Walk the rule above to its first yes first.";
+  return "Finish the step's work above first.";
 }
 
 /** A step's submission as one readable line, for the step row and My Submissions. */

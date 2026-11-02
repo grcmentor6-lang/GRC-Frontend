@@ -244,10 +244,14 @@ def main(src: str) -> None:
     rework_t72(w)
     rework_t81(w)
     rework_t82(w)
+    techlab_t82(w)
     rework_t91(w)
     rework_t92(w)
+    techlab_t92(w)
     rework_t101(w)
+    techlab_t101(w)
     rework_t102(w)
+    techlab_t102(w)
     rework_t111(w)
     rework_t112(w)
     rework_t121(w)
@@ -4425,13 +4429,23 @@ def techlab(w: dict) -> None:
     six rows pointed at simulator files the platform does not have, as raw <a> tags, and only one of them has a
     related task of the same organisation that it can feed. LABS_BUILT is one row per lab; its data is
     public/desk/labs/<id>.json, its key backend/_seed/grc101_lab_keys.json, its line src/lib/desk/labs.ts. Corrections item T-LAB."""
-    LABS_BUILT = [("AppAdmin (business SaaS)", "Admin and SSO review", "GlobalConnect", "Mitratech TeamConnect", "6", "T6.1 (Week 6)")]
+    LABS_BUILT = [
+        ("AppAdmin (business SaaS)", "Admin and SSO review", "GlobalConnect", "Mitratech TeamConnect", "6", "T6.1 (Week 6)"),
+        ("NetShield", "Remote-admin exposure", "LearnTech", "Fortinet FortiGate", "8", "T8.2 (Week 8)"),
+        ("LedgerSim", "Segregation of duties in finance", "LearnTech", "Workday Adaptive Planning", "9", "T9.2 (Week 9)"),
+        ("DataSentry", "Label coverage", "LearnTech", "Microsoft Purview Information Protection + DSPM", "10", "T10.1 (Week 10)"),
+        ("LogLens", "Log-source coverage", "LearnTech", "MISP + OpenCTI + sector ISAC feeds", "10", "T10.2 (Week 10)"),
+    ]
+    assert "systems|LedgerSim" in w["tp"], "pack screen moved"
+    assert "systems|LogLens" in w["tp"], "pack screen moved"
+    assert "systems|NetShield" in w["tp"], "pack screen moved"
+    assert "systems|DataSentry" in w["tp"], "pack screen moved"
     assert "systems|AppAdmin (business SaaS)" in w["tp"], "pack screen moved"
     w["sections"]["systems"]["tools"] = [{"n": s, "d": f"{title} · {prod}", "k": f"W{wk}"} for s, title, _, prod, wk, _ in LABS_BUILT]
-    w["tp"]["systems|*"]["stamp"] = f"{len(LABS_BUILT)} lab task"
+    w["tp"]["systems|*"]["stamp"] = f"{len(LABS_BUILT)} lab tasks"
     w["tp"]["systems|*"]["pl"].update(h=["Lab task", "Organisation", "Real product (text only)", "Simulator", "Week"], r=[[title, org, prod, s, wk] for s, title, org, prod, wk, _ in LABS_BUILT])
     cc = w["tp"]["testing|Configuration Check"]
-    cc["stamp"] = f"{len(LABS_BUILT)} lab"
+    cc["stamp"] = f"{len(LABS_BUILT)} labs"
     cc["pl"]["r"] = [[title, s, wk, rel] for s, title, _, _, wk, rel in LABS_BUILT]
     cap = w["tp"]["evidence|Capture Screenshot"]
     assert cap["pl"]["r"][0][1] == "Certification campaigns", cap  # the pack's sample rows of another simulator: the screen now lists the mentee's own
@@ -4452,6 +4466,103 @@ def techlab(w: dict) -> None:
     new_h = "Systems › AppAdmin opens at this step: the Compliance Manager's check of the TeamConnect tenant. Its findings join UAR-MEMO as the Tenant check row, so do it before you submit. Press Submit: the platform seals the file"
     note = next(r for r in w["notes"]["T6.1"] if r[0] == 8)
     for holder, field in ((t["steps"][7], "help"), (note, 2)):
+        assert old_h in holder[field], holder[field]
+        holder[field] = holder[field].replace(old_h, new_h)
+
+
+def techlab_t82(w: dict) -> None:
+    """T8.2 step 7 reads the second lab, as T6.1 step 8 reads the first. Runs after rework_t82(), which writes this step's text."""
+    old_h = "Press Submit: the platform seals the file"
+    t = w["tasks"]["T8.2"]
+    old_p, new_p = "Raise Finding; Policies", "Raise Finding; Systems › NetShield; Evidence › Capture Screenshot; Policies"
+    assert old_p in t["card"]["Where to add"] and old_p in t["meta"]["tool"]
+    t["card"]["Where to add"] = t["card"]["Where to add"].replace(old_p, new_p)
+    t["meta"]["tool"] = t["meta"]["tool"].replace(old_p, new_p)
+    for row in w["cards"]["T8.2"]:
+        if row[0] == "Where to add":
+            row[1] = row[1].replace(old_p, new_p)
+    for d in w["deliverables"]:
+        if d[0] == "T8.2":
+            d[5] = d[5].replace(old_p, new_p)
+    assert t["steps"][6]["refs"]["docs"] == []
+    t["steps"][6]["refs"]["docs"] = [["BKB-ADD-36", ["8"]]]  # the lab's last question reads Section 8.1, so the library shows the jump
+    new_h = "Systems › NetShield opens at this step: the Information Security Auditor's check of the Amsterdam firewall. Its findings join CT-MEMO as the Network path check row, so do it before you submit. Press Submit: the platform seals the file"
+    note = next(r for r in w["notes"]["T8.2"] if r[0] == 7)
+    for holder, field in ((t["steps"][6], "help"), (note, 2)):
+        assert old_h in holder[field], holder[field]
+        holder[field] = holder[field].replace(old_h, new_h)
+
+
+def techlab_t101(w: dict) -> None:
+    """T10.1 step 6 reads the third lab, the mentee's own DataSentry draw (TL-36-SOC-08-DLP02-C, Label coverage), moved from
+    F2.1 to T10.1: the discovery scan is read against the RoPA entry and data-flow map. Runs after rework_t101()."""
+    old_h = "Press Submit: the platform seals the file"
+    t = w["tasks"]["T10.1"]
+    old_p, new_p = "Risk Register › Asset Register; Policies", "Risk Register › Asset Register; Systems › DataSentry; Evidence › Capture Screenshot; Policies"
+    assert old_p in t["card"]["Where to add"] and old_p in t["meta"]["tool"]
+    t["card"]["Where to add"] = t["card"]["Where to add"].replace(old_p, new_p)
+    t["meta"]["tool"] = t["meta"]["tool"].replace(old_p, new_p)
+    for row in w["cards"]["T10.1"]:
+        if row[0] == "Where to add":
+            row[1] = row[1].replace(old_p, new_p)
+    for d in w["deliverables"]:
+        if d[0] == "T10.1":
+            d[5] = d[5].replace(old_p, new_p)
+    new_h = "Systems › DataSentry opens at this step: the Privacy Compliance Analyst's check of the data catalogue's discovery scan against your map. Its findings join ROPA as the Discovery scan check row, so do it before you submit. Press Submit: the platform seals the file"
+    note = next(r for r in w["notes"]["T10.1"] if r[0] == 6)
+    for holder, field in ((t["steps"][5], "help"), (note, 2)):
+        assert old_h in holder[field], holder[field]
+        holder[field] = holder[field].replace(old_h, new_h)
+
+
+def techlab_t92(w: dict) -> None:
+    """T9.2 step 5 reads the fifth lab, the mentee's own LedgerSim draw (TL-36-BUS-03-FIN01-C, Segregation of duties in
+    finance), moved from T6.1 to T9.2: the finance system that enforces a supplier decision. Runs after rework_t92().
+    Corrections item 110."""
+    old_h = "Press Submit: the platform seals the file"
+    t = w["tasks"]["T9.2"]
+    old_p, new_p = "Flag Risk; Policies", "Flag Risk; Systems › LedgerSim; Evidence › Capture Screenshot; Policies"
+    assert old_p in t["card"]["Where to add"] and old_p in t["meta"]["tool"]
+    t["card"]["Where to add"] = t["card"]["Where to add"].replace(old_p, new_p)
+    t["meta"]["tool"] = t["meta"]["tool"].replace(old_p, new_p)
+    n = 0
+    for row in w["cards"]["T9.2"]:
+        if row[0] == "Where to add":
+            row[1], n = row[1].replace(old_p, new_p), n + 1
+    assert n == 1
+    for d in w["deliverables"]:
+        if d[0] == "T9.2":
+            d[5] = d[5].replace(old_p, new_p)
+    s = t["steps"][4]
+    assert s["n"] == 5
+    new_h = "Systems › LedgerSim opens at this step: the Compliance Manager's check of LearnTech's finance system, where a supplier decision is enforced. Its findings join SOC-DEC as the Vendor set-up check row, so do it before you submit. Press Submit: the platform seals the file"
+    note = next(r for r in w["notes"]["T9.2"] if r[0] == 5)
+    for holder, field in ((s, "help"), (note, 2)):
+        assert old_h in holder[field], holder[field]
+        holder[field] = holder[field].replace(old_h, new_h)
+
+
+def techlab_t102(w: dict) -> None:
+    """T10.2 step 7 reads the fourth lab, the mentee's own LogLens draw (TL-36-SOC-14-SIEM01-O, Log-source coverage), moved from
+    T8.2 to T10.2: the logs behind INC-2610-3001's notification plan. Runs after rework_t102(). Corrections item 109."""
+    old_h = "Press Submit: the platform seals the file"
+    t = w["tasks"]["T10.2"]
+    old_p, new_p = "Regulation Tracker; Policies", "Regulation Tracker; Systems › LogLens; Evidence › Capture Screenshot; Policies"
+    assert old_p in t["card"]["Where to add"] and old_p in t["meta"]["tool"]
+    t["card"]["Where to add"] = t["card"]["Where to add"].replace(old_p, new_p)
+    t["meta"]["tool"] = t["meta"]["tool"].replace(old_p, new_p)
+    for row in w["cards"]["T10.2"]:
+        if row[0] == "Where to add":
+            row[1] = row[1].replace(old_p, new_p)
+    for d in w["deliverables"]:
+        if d[0] == "T10.2":
+            d[5] = d[5].replace(old_p, new_p)
+    s = t["steps"][6]
+    assert s["n"] == 7 and s["refs"]["docs"] == [], s["refs"]
+    s["refs"]["docs"] = [["BKB-ADD-36", ["5", "8"]]]  # the lab's last question reads Sections 5 and 8.1, so the library shows the jump
+    new_h = "Systems › LogLens opens at this step: the DPO's check of the logs behind your plan, in LearnTech's security monitoring. Its findings join BRC-PLAN as the Log evidence check row, so do it before you submit. Press Submit: the platform seals the file"
+    note = next(r for r in w["notes"]["T10.2"] if r[0] == 7)
+    for holder, field in ((s, "help"), (note, 2)):
         assert old_h in holder[field], holder[field]
         holder[field] = holder[field].replace(old_h, new_h)
 

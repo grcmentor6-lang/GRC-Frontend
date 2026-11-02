@@ -16,7 +16,7 @@ import { STEP_GUIDES } from "./step-guides";
 import { DECISION_CONTEXT } from "@/lib/desk/decision-context";
 import { FloatWindow } from "./float-window";
 import { UndertakingCard } from "./undertaking";
-import { stepAnswered, submissionText } from "@/lib/desk/work";
+import { lockedWhy, stepAnswered, submissionText } from "@/lib/desk/work";
 import { MessageNotice } from "./chat";
 
 const REF_ICON: Record<string, IconName> = { rule: "shield", page: "table", tpl: "file", ds: "grid", doc: "book", clause: "pin" };
@@ -414,6 +414,9 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
               ) : done ? (
                 <span className="inline-flex items-center gap-1.5 px-1 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
               ) : (
+                <>
+                {/* A locked button says why, naming the next thing to do (owner, 2 Nov 2026). */}
+                {!readOnly && lockedWhy(desk, progress, task, s, start) && <span data-guide="complete-why" className="text-[12.5px] text-[#78350F]">{lockedWhy(desk, progress, task, s, start)}</span>}
                 <button
                   type="button"
                   data-guide="step-complete"
@@ -423,6 +426,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
                 >
                   Mark activity complete
                 </button>
+                </>
               )}
             </span>
           </div>

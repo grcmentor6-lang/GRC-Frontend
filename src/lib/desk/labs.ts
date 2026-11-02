@@ -17,7 +17,13 @@ export interface LabRef {
   after: string;
 }
 
-export const LABS: LabRef[] = [{ id: "TL-16-BUS-25-BIZ01-C", tool: "systems|AppAdmin (business SaaS)", task: "T6.1", after: "T6.1-7" }];
+export const LABS: LabRef[] = [
+  { id: "TL-16-BUS-25-BIZ01-C", tool: "systems|AppAdmin (business SaaS)", task: "T6.1", after: "T6.1-7" },
+  { id: "TL-36-INF-07-NET02-C", tool: "systems|NetShield", task: "T8.2", after: "T8.2-6" },
+  { id: "TL-36-SOC-08-DLP02-C", tool: "systems|DataSentry", task: "T10.1", after: "T10.1-5" },
+  { id: "TL-36-SOC-14-SIEM01-O", tool: "systems|LogLens", task: "T10.2", after: "T10.2-6" },
+  { id: "TL-36-BUS-03-FIN01-C", tool: "systems|LedgerSim", task: "T9.2", after: "T9.2-4" },
+];
 
 export const labOf = (toolKey: string) => LABS.find((l) => l.tool === toolKey);
 export const labOpen = (l: LabRef, p?: Progress) => !p || !!p.done[l.after] || !!p.submitted[l.task];
@@ -46,6 +52,8 @@ export interface Lab {
   tenant: string;
   asOf: string;
   related: string;
+  /** Where the findings land in the related task's hand-in. */
+  feed: string;
   context: string;
   atWork: string;
   owner: [string, string];
@@ -65,6 +73,8 @@ export interface LabCapture {
   ids: string[];
   utc: string;
   sha: string;
+  /** UTC time the learner deleted it: a stub that only holds its number. */
+  deleted?: string;
 }
 export interface LabRow {
   pick: string;
@@ -81,7 +91,20 @@ export interface LabState {
   done?: string;
 }
 
-export const allCaptures = (p: Progress): LabCapture[] => p.labCaptures ?? [];
+// A deleted capture stays in the list as a stub (`deleted` set, its rows and hash dropped), so its E-number is never
+// given again: numbering counts the whole list. Everything a learner sees reads this, which leaves the stubs out.
+export const allCaptures = (p: Progress): LabCapture[] => (p.labCaptures ?? []).filter((c) => !c.deleted);
+
+/** Why a capture may not be deleted, or null: one behind a right answer is the evidence for a finding the memo
+ *  records, and evidence behind a recorded finding is never removed (Decisions Made, Tech Lab). */
+export function keptFor(s: LabState, ref: string, parts: LabPart[]): string | null {
+  const i = parts.findIndex((x) => s.parts[x.id]?.ref === ref && s.parts[x.id]?.correct === true);
+  return i < 0 ? null : `Kept: the evidence for your right answer to question ${i + 1}${s.done ? " and the findings" : ""}.`;
+}
+
+/** The list with one capture deleted: a stub keeps its number, nothing of what it held. */
+export const deleteCapture = (all: LabCapture[], ref: string, utc: string): LabCapture[] =>
+  all.map((c) => (c.ref === ref ? { ref: c.ref, lab: c.lab, view: "", viewTitle: "", filter: "", ids: [], utc: c.utc, sha: "", deleted: utc } : c));
 
 /** Findings with their evidence refs and times written in: "{admins}" → "E1 (2026-11-02 10:14 UTC)". */
 export function labFindings(p: Progress, id: string): string[] {

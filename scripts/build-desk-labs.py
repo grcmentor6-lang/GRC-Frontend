@@ -99,6 +99,7 @@ public = {
     "tenant": "globalconnect.example / TeamConnect",
     "asOf": AS_OF,
     "related": "T6.1",
+    "feed": "UAR-MEMO, row Tenant check",
     "context": "At GlobalConnect, matter and litigation management runs on Mitratech TeamConnect, named here only for context. AppAdmin is a brand-neutral simulator that shows the same governance information. All tenant data is synthetic.",
     "atWork": "At work, a junior analyst opens an application's admin console when an access review needs confirming: the extract shows who had access on one day, the console shows who holds it now and how they sign in.",
     "owner": ["Compliance Manager", "Your UAR tested the extract of 2026-08-28. Before the memo goes, check the tenant itself: is TeamConnect's administrator set approved, and does everyone sign in through SSO? Capture what you find, so I can rely on it without opening the console."],

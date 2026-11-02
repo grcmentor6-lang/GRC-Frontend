@@ -34,6 +34,13 @@ export type TourStep = {
   /** Where the do-it cursor taps, when that is not the middle of the lit area: a lit block that
    *  explains a field, whose middle would land the cursor on the explanation instead of the field. */
   pointAt?: () => HTMLElement | null;
+  /** Its part is done already (a job of the step the learner has finished): passed over at once. */
+  skip?: () => boolean;
+  /** The learner leaves the tour here to work, and the parent's `onAway` starts it again when they are back: a
+   *  selector for a "do it" step that opens another window (the Inbox, a Tech Lab), the tour ending once it opens and
+   *  resuming when it closes; or a test for a step whose Next hands over the screen (a sheet to fill), resuming once
+   *  it holds. */
+  away?: string | (() => boolean);
 };
 
 /** Hidden-state offset for the card's directional entrance (settles toward the target). */
@@ -66,7 +73,7 @@ const swallow = (e: React.MouseEvent) => e.stopPropagation();
 /** driver.js-style placement: prefer the side with room (bottom→top→right→left); for oversized
  *  targets, float the card clear of the target (no arrow), and with no target at all, dead-centre.
  *  Returns the arrow's cross-axis offset. */
-function place(r: Box | null, th: number, zoom: number, avoid: Box | null = null): Pos {
+function place(r: Box | null, th: number, zoom: number, avoid: Box | null = null, focus: Box | null = null): Pos {
   // `r` and `th` are already in the page's own (zoomed) pixels; the viewport is not, so divide.
   const vw = window.innerWidth / zoom;
   const vh = window.innerHeight / zoom;
@@ -80,7 +87,10 @@ function place(r: Box | null, th: number, zoom: number, avoid: Box | null = null
   // must never land on it: its Next button would be under the window.
   const hits = (top: number, left: number) =>
     !!avoid && left < avoid.left + avoid.width && left + TIP_W > avoid.left && top < avoid.top + avoid.height && top + th > avoid.top;
-  const floatTop = r.top + r.height / 2 > vh / 2 ? MARGIN : vh - th - 24;
+  // The half away from what the step points at, where it points at a part of a tall target (T6.1 step 8: the first
+  // account's Type at the top of Sheet 4, read with its facts under it on a phone).
+  const mid = focus ? focus.top + focus.height / 2 : r.top + r.height / 2;
+  const floatTop = mid > vh / 2 ? MARGIN : vh - th - 24;
   // Floating beside the raised window when the middle would land on it: the wider free side.
   const floatLeft = !hits(floatTop, cx) || !avoid ? cx
     : avoid.left >= vw - (avoid.left + avoid.width) ? clamp(avoid.left - TIP_W - GAP, MARGIN, vw - TIP_W - MARGIN) : clamp(avoid.left + avoid.width + GAP, MARGIN, vw - TIP_W - MARGIN);
@@ -91,10 +101,12 @@ function place(r: Box | null, th: number, zoom: number, avoid: Box | null = null
   // A tall target (a whole file) has no room above or below, but often has beside it: the card
   // goes there, level with the target's middle, before it would float over the target itself.
   if (r.height > vh * 0.7) {
-    const beside = space.right >= TIP_W + GAP + MARGIN ? "right" : space.left >= TIP_W + GAP + MARGIN ? "left" : null;
-    if (!beside) return float;
     const top = clamp(r.top + r.height / 2 - th / 2, MARGIN, vh - th - MARGIN);
-    const left = beside === "right" ? r.left + r.width + GAP : r.left - GAP - TIP_W;
+    const leftOf = (b: "right" | "left") => (b === "right" ? r.left + r.width + GAP : r.left - GAP - TIP_W);
+    // Not beside it where the raised window is (T6.1 step 8: the test plan open at the right edge covered Next).
+    const beside = (["right", "left"] as const).find((b) => space[b] >= TIP_W + GAP + MARGIN && !hits(top, leftOf(b))) ?? null;
+    if (!beside) return float;
+    const left = leftOf(beside);
     return { side: beside, top, left, arrow: clamp(r.top + r.height / 2 - top, 18, th - 18) };
   }
   const fits: Record<Exclude<Side, "float">, boolean> = {
@@ -322,11 +334,13 @@ export const markTourSeen = (base: string, who: string | null | undefined) => {
  *  between targets — it repositions instantly and stays glued through scroll/resize/layout shifts.
  *  The only motion is the native smooth-scroll to reach an off-screen target and a clean cross-fade
  *  of the card. Respects prefers-reduced-motion. */
-export function GuidedTour({ steps, step, onStep, onClose }: {
+export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
   steps: TourStep[];
   step: number;
   onStep: (i: number) => void;
   onClose: () => void;
+  /** A step with `away` was done: the window it opened, to resume the tour when that window closes. */
+  onAway?: (away: string | (() => boolean)) => void;
 }) {
   const [box, setBox] = useState<Box>(OFFSCREEN);
   const [pos, setPos] = useState<Pos | null>(null);
@@ -341,8 +355,8 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
 
   // Through a ref: a parent that passes fresh arrows on every render (the desk modal re-renders on
   // each keystroke) must not restart the step, which re-hid and re-showed the card per letter.
-  const cb = useRef({ onStep, onClose });
-  useLayoutEffect(() => { cb.current = { onStep, onClose }; });
+  const cb = useRef({ onStep, onClose, onAway });
+  useLayoutEffect(() => { cb.current = { onStep, onClose, onAway }; });
   // A nextWhen step: whether Next is unlocked yet, polled while the step runs.
   const [ready, setReady] = useState(false);
 
@@ -372,7 +386,9 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
     const tr = raw;
     const clearOf = !!(ar && tr) && (ar.right <= tr.left || ar.left >= tr.left + tr.width || ar.bottom <= tr.top || ar.top >= tr.top + tr.height);
     const avoid = ar && clearOf ? { top: ar.top / z, left: ar.left / z, width: ar.width / z, height: ar.height / z } : null;
-    const p = place(r, tipRef.current?.offsetHeight ?? 170, z, avoid);
+    const fr = s.pointAt?.()?.getBoundingClientRect();
+    const focus = fr ? { top: fr.top / z, left: fr.left / z, width: fr.width / z, height: fr.height / z } : null;
+    const p = place(r, tipRef.current?.offsetHeight ?? 170, z, avoid, focus);
     if (!last.pos || last.pos.side !== p.side || last.pos.top !== p.top || last.pos.left !== p.left || last.pos.arrow !== p.arrow) {
       last.pos = p;
       setPos(p);
@@ -386,6 +402,10 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
     const s = stepRef.current!;
     setShown(false);
     lastRef.current = { box: null, pos: null };
+    if (s.skip?.()) {
+      const id = setTimeout(() => (step + 1 < steps.length ? cb.current.onStep(step + 1) : cb.current.onClose()));
+      return () => clearTimeout(id);
+    }
     s.onEnter?.();
 
     // Scroll is locked for every step of the tour. The mentee is reading a card about one specific
@@ -489,10 +509,14 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
     if (!active) return;
     const wait = steps[step]?.waitFor;
     if (!wait) return;
+    const away = steps[step]?.away;
     const id = window.setInterval(() => {
       if (!wait()) return;
       clearInterval(id);
-      if (step + 1 < steps.length) cb.current.onStep(step + 1);
+      if (typeof away === "string") {
+        cb.current.onClose();
+        cb.current.onAway?.(away);
+      } else if (step + 1 < steps.length) cb.current.onStep(step + 1);
       else cb.current.onClose();
     }, 150);
     return () => clearInterval(id);
@@ -698,12 +722,12 @@ export function GuidedTour({ steps, step, onStep, onClose }: {
             {/* A "do it" step whose target never appeared (the work is already done, or this state has no
                 such control) still gets Next, so the guide can always be finished. */}
             {(!current.waitFor || box === OFFSCREEN) && <button
-              onClick={() => (isLast ? onClose() : onStep(step + 1))}
+              onClick={() => (typeof current.away === "function" ? (onClose(), onAway?.(current.away)) : isLast ? onClose() : onStep(step + 1))}
               disabled={!!current.nextWhen && !ready && box !== OFFSCREEN}
               title={current.nextWhen && !ready ? current.doIt : undefined}
               className="focus-ring disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:active:scale-100 h-8 px-3.5 rounded-lg bg-[#4338CA] hover:bg-[#3730A3] active:scale-[0.97] text-white text-[12.5px] font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-[background-color,transform] duration-150"
             >
-              {isLast ? "Got it" : "Next"} <Icon name={isLast ? "check" : "arrowRight"} size={13} strokeWidth={isLast ? 3 : 2} />
+              {isLast || typeof current.away === "function" ? "Got it" : "Next"} <Icon name={isLast || typeof current.away === "function" ? "check" : "arrowRight"} size={13} strokeWidth={isLast ? 3 : 2} />
             </button>}
           </div>
         </div>

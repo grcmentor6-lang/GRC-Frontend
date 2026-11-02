@@ -383,6 +383,16 @@ const CARD_WINDOW = PAGE_WINDOW("Ref-Certification card");
 const START_WINDOW = 'section[role="dialog"][aria-label^="Access Reviews › Start Review"]';
 const UARPLAN_WINDOW = PAGE_WINDOW("Ref-UAR test plan");
 const UCODES_WINDOW = PAGE_WINDOW("Ref-UAR codes");
+/** T6.1 step 8: Sheet 4, a Type cell of it, the Compliance Manager's message, the Tech Lab, and the panel's jobs. */
+const SHEET4 = '[data-reg="UAR-EXTRA"]';
+const x4 = (row: number) => $(`${SHEET4} [aria-label="Type, or R19 on the last line, row ${row}"]`);
+const J3_MSG = '[id="msg-T6.1-J3"]';
+const LAB61_WINDOW = 'section[role="dialog"][aria-label^="AppAdmin"]';
+const jobState = (id: string) => $(`[data-guide="jobs"] [data-job="${id}"]`)?.dataset.state;
+const jobDone = (id: string) => jobState(id) === "done";
+const jobNow = (id: string) => jobState(id) === "now";
+/** Sheet 4 done: its reference pages are put away, so they cover neither the panel's jobs nor the file names. */
+const closeRefPages = () => document.querySelectorAll<HTMLElement>('section[role="dialog"][aria-label^="Ref-UAR"] button[aria-label^="Close"]').forEach((b) => b.click());
 /** T6.1 step 3: the account's Result and Attributes failed cells, as recorded. */
 const uarResult = (id: string) => {
   const td = evqWalk(id)?.closest("td");
@@ -4013,33 +4023,86 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     finish("This button unlocks once your answers are checked and the message has its reply. UAR-MEMO's conclusion is then written from them."),
   ],
 
+  // Four jobs in order (owner, 2 Nov 2026: the step "gets stuck"; nothing led to the lab). Each card belongs to one job
+  // of the panel's list and passes by once that job is done, so the walk picks up where the learner is. The Inbox and the
+  // Tech Lab open windows of their own: the walk ends as one opens and starts again when it closes; Sheet 4 is filled
+  // with the walk out of the way, and it starts again once the sheet is complete.
   "T6.1-8": [
     {
-      title: "The files you hand in",
+      title: "Four jobs, in order",
       icon: "file",
-      body: "At work, UAR-TEST is the workpaper an auditor re-reads; its exceptions become actions in T12.1, and the same test is the final exam's practical station. UAR-MEMO states the conclusion. This step checks both, names them and submits them.",
-      getEl: () => $('[data-guide="register"]'),
-    },
-    {
-      title: "No empty cells",
-      icon: "check",
-      body: "Any empty cell is marked amber, and the line above each sheet counts them.",
-      getEl: () => $('[data-guide="empty-check"]'),
+      body: "At work, the hand-in is where a test's workpapers are finished and sealed: UAR-TEST is what an auditor re-reads, UAR-MEMO states the conclusion. This step has four jobs, listed here in order: the Compliance Manager's message, Sheet 4, the Tech Lab, then naming and submitting both files. The one marked Next is yours now.",
+      getEl: () => $('[data-guide="jobs"]'),
+      skip: () => jobDone("sheet"),
     },
     {
       title: "A message has arrived",
       icon: "inbox",
-      body: "The Compliance Manager has a second system for you. Open the message from the Inbox on the toolbar and confirm it.",
-      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+      body: "The Compliance Manager has a second system for you. Click Open Inbox, read the message and confirm it, then click Back to step. This guide carries on from the next job.",
+      // The notice in this window's panel (the step list behind it has its own).
+      getEl: () => $('[data-desk-modal] [data-guide="message-notice"]'),
+      pointAt: () => $('[data-desk-modal] [data-guide="message-open"]'),
+      waitFor: () => !!$(J3_MSG),
+      away: J3_MSG,
+      doIt: "Click Open Inbox",
+      skip: () => !jobNow("msg"),
     },
     {
       title: "Sheet 4: the second system",
-      icon: "edit",
-      body: "UAR-EXTRA is below the memo. For each account walk A1 to A6 and choose its type, or None; its last line is R19 for this system alone. Ref-UAR test plan and Ref-UAR codes are in Learn › Reference pages, R19 on Control Testing › Record Result. A wrong value is flagged at once, with where to read it.",
-      getEl: () => $('[data-reg="UAR-EXTRA"]'),
-      onEnter: () => $('[data-reg="UAR-EXTRA"]')?.scrollIntoView({ block: "center" }),
+      icon: "table",
+      body: "Sheet 4 is first in this window: the ten accounts of Diligent Entities, from the same review. Each row holds what Sheet 2 held for an account. Type, at the right edge, is yours: you test them as you tested Sheets 2 and 3.",
+      getEl: () => $(`${SHEET4} > p`),
+      onEnter: () => $(SHEET4)?.scrollIntoView({ block: "start" }),
+      skip: () => jobDone("sheet"),
     },
-    ...nameAndSubmit("xlsx", "1 to 7").map((c) => (c.title === "Name the file" ? { ...c, title: "Name the files", body: "Type the four parts listed under each box, in order, joined by underscores: UAR-TEST ends .xlsx (a workbook), UAR-MEMO .docx (a memo)." } : c)),
+    ...openPage(8, "Ref-UAR test plan").map((c) => ({ ...c, ...(c.title === "Open Ref-UAR test plan" ? { body: "The page that holds A1 to A6. Drag its window aside if it covers the sheet." } : {}), skip: () => jobDone("sheet") })),
+    {
+      title: "The test plan",
+      icon: "table",
+      body: "A1 to A6, as in steps 3 and 4: each row says when the attribute passes and which cell it reads. Ref-UAR codes, further down the Reference pages list, names the types.",
+      getEl: () => $(UARPLAN_WINDOW),
+      skip: () => jobDone("sheet"),
+    },
+    {
+      title: "The first account yourself",
+      icon: "edit",
+      body: "D-0001 first. Walk its row through A1 to A6 of the test plan. An account that fails none is None; one that fails takes the type Ref-UAR codes gives (Reference pages, the same list). Choose it in Type. Next unlocks once it is right.",
+      // The account's row; on a phone its facts are lines under it, so the sheet (the card floats clear of the row).
+      getEl: () => (innerWidth > 600 ? $(`${SHEET4} tr[data-row="0"]`) : $(SHEET4)),
+      // On a phone the page's window covers the sheet: it was read on the card before, and Learn reopens it.
+      onEnter: () => { if (innerWidth <= 600) closeRefPages(); $(SHEET4)?.scrollIntoView({ block: "start" }); },
+      pointAt: () => x4(1),
+      alsoShow: () => (innerWidth > 700 ? $(UARPLAN_WINDOW) : null),
+      nextWhen: () => !!(x4(1) as HTMLSelectElement | null)?.value && x4(1)?.getAttribute("aria-invalid") !== "true",
+      doIt: "Choose D-0001's type",
+      skip: () => jobDone("sheet"),
+    },
+    {
+      title: "The other nine, then R19",
+      icon: "edit",
+      body: "Do the same for the other nine. A wrong type is flagged at once, with where to read it. The last line concludes Diligent Entities by rule R19 (Control Testing › Record Result), on these ten accounts alone. Click Got it and fill the sheet: this guide comes back once every row is right.",
+      getEl: () => $(SHEET4),
+      away: () => jobDone("sheet"),
+      skip: () => jobDone("sheet"),
+    },
+    {
+      title: "Next: the Tech Lab",
+      icon: "grid",
+      body: "At work, an access review is confirmed in the application's own admin console: who holds admin now, and who signs in around SSO. The Compliance Manager has asked for it on TeamConnect. Submit does not wait for it, but its findings join UAR-MEMO's Tenant check row only if you finish it before you submit.",
+      getEl: () => $('[data-guide="jobs"] [data-job="lab"]'),
+      // Straight there, not a smooth scroll: back from a long sheet on a phone it is far down, and a long smooth scroll
+      // outlasts the card's tracking (the card was left off screen).
+      onEnter: () => { closeRefPages(); $('[data-guide="jobs"] [data-job="lab"]')?.scrollIntoView({ block: "center" }); },
+      skip: () => !jobNow("lab"),
+    },
+    ...openScreen("systems", "Systems", "AppAdmin", "The lab is tagged Step 8. It opens in its own window, with its own guide. When you have marked it complete, close it: this guide carries on with the files.", LAB61_WINDOW).map((c, i) => ({ ...c, skip: () => !jobNow("lab"), ...(i === 1 ? { away: LAB61_WINDOW } : {}) })),
+    ...nameAndSubmit("xlsx", "1 to 7").map((c) =>
+      c.title === "Name the file"
+        ? { ...c, title: "Name the files", body: "Type the four parts listed under each box, in order, joined by underscores: UAR-TEST ends .xlsx (a workbook), UAR-MEMO .docx (a memo).", nextWhen: () => [...document.querySelectorAll<HTMLInputElement>('[data-guide="file-name-input"]')].every((el) => !!el.value.trim() && el.getAttribute("aria-invalid") !== "true"), doIt: "Type both file names", onEnter: () => { closeRefPages(); $('[data-guide="file-name"]')?.scrollIntoView({ block: "center" }); }, skip: () => !jobNow("files") }
+        : c.title === "Submit it"
+          ? { ...c, body: "Submit hands both files in. The receipt shows a hash (a fingerprint of the files) and a UTC time. If Submit is grey, the line beside it says what is left.", nextWhen: () => !!$('[data-guide="receipt"]'), doIt: "Click Submit", skip: () => !jobNow("files") }
+          : c,
+    ),
   ],
   // T6.2 (desk-step-builder, 29 Oct 2026): LVR-REC's two sheets and LVR-KPI, worked in Access Reviews › Terminated User
   // Check, whose screen shows T6.2 its own disable logs. Step 5 asks its question in the row (guide "5q", BKB-POL-006
@@ -5963,7 +6026,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "The files you hand in",
       icon: "file",
-      body: "At work, vendors often send more once they hear a decision, and the file has to show what each item did. SOC-EXTRA holds what Lumen sent. You say what each item does, then hand in SOC-REV, the review worksheet, and SOC-DEC, which goes to the approver: its conditions and CUEC owners become actions in T12.1.",
+      body: "At work, vendors often send more once they hear a decision, and the file has to show what each item did. SOC-EXTRA holds what Lumen sent. You say what each item does, then hand in SOC-REV, the review worksheet, and SOC-DEC, which goes to the approver: its conditions and CUEC owners become actions in T12.1. Systems › LedgerSim also opens here: the Compliance Manager's check of the finance system where a supplier decision is enforced. Submit does not wait for it, but its findings join SOC-DEC's Vendor set-up check row only if you finish it before you submit.",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
     ...openScreen("vendors", "Vendors", "Flag Risk", "The document each failed check needs.", FLAG_WINDOW),
@@ -6309,7 +6372,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "The files you hand in",
       icon: "file",
-      body: "At work, the assessment and the plan go to the DPO together, with the breach-register entry. BRC-ASSESS is the notification assessment: the facts, each regime with its deadline, and the data-subject test. BRC-PLAN is the notification plan and breach-register entry, written by the platform from your steps 2 to 6. T11.1 and T12.1 build on the plan. This step checks them, names the two files and submits them.",
+      body: "At work, the assessment and the plan go to the DPO together, with the breach-register entry. BRC-ASSESS is the notification assessment: the facts, each regime with its deadline, and the data-subject test. BRC-PLAN is the notification plan and breach-register entry, written by the platform from your steps 2 to 6. T11.1 and T12.1 build on the plan. This step checks them, names the two files and submits them. Systems › LogLens also opens here: the DPO's check of the logs behind the plan. Submit does not wait for it, but its findings join BRC-PLAN's Log evidence check row only if you finish it before you submit.",
       getEl: () => $('[data-guide="register"]'),
     },
     {

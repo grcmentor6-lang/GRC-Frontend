@@ -7,7 +7,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { GuidedTour, markTourSeen, useTourOnce, type TourStep } from "@/components/app/guided-tour";
 import { useDesk } from "./desk-context";
 import { FloatWindow } from "./float-window";
-import { allCaptures, labFindings, partRows, type Lab, type LabCapture, type LabPart, type LabRef, type LabRow, type LabState } from "@/lib/desk/labs";
+import { allCaptures, deleteCapture, keptFor, labFindings, partRows, type Lab, type LabCapture, type LabPart, type LabRef, type LabRow, type LabState } from "@/lib/desk/labs";
 
 const BLANK = "(blank)";
 const NONE: LabState = { parts: {} };
@@ -36,6 +36,7 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [q, setQ] = useState("");
   const [guideAt, setGuideAt] = useState(-1);
+  const [confirming, setConfirming] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/desk/labs/${ref.id}.json`, { cache: "no-cache" })
@@ -93,7 +94,7 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
       { title: "The console's screens", body: "These tabs are the application's own screens. The question on the right says which one to read.", getEl: () => $('[data-lab="tabs"]') },
       { title: "Try a filter", body: `Practice first: set ${g.col} to ${g.value}. The table keeps only the rows that match.`, getEl: () => $(`[data-lab-filter="${g.col}"]`), nextWhen: () => live.current.filters[g.col] === g.value, doIt: `Set ${g.col} to ${g.value}` },
       { title: "Capture evidence", body: "Press Capture evidence. It records this screen, the filters and exactly the rows left in the table, with the UTC time.", getEl: () => $('[data-lab="capture"]'), onEnter: () => { startCount.current = live.current.count; }, waitFor: () => live.current.count > startCount.current, doIt: "Press Capture evidence" },
-      { title: "Your evidence ref", body: "This is the reference a colleague can rely on: E-number, screen, filter, rows, UTC time and a SHA-256. This one was practice, so it answers no question. Evidence › Capture Screenshot keeps every capture.", getEl: () => $('[data-lab="trail"]') },
+      { title: "Your evidence ref", body: "This is the reference a colleague can rely on: E-number, screen, filter, rows, UTC time and a SHA-256. This one was practice, so it answers no question: you may delete it, as any capture no right answer rests on. Evidence › Capture Screenshot lists the captures you keep.", getEl: () => $('[data-lab="trail"]') },
       { title: "Now the questions", body: "Each question asks for a capture holding exactly the right rows. Clear filters, find them, capture, then choose the capture here. Replay any time with ▶ Show me how.", getEl: () => $('[data-lab="guide"]') },
     ];
   }, [lab]);
@@ -126,10 +127,10 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
             )}
             {!current && (
               <section data-lab="findings" className="grid gap-2 rounded border border-[#BBF7D0] bg-white p-3 text-[13px]">
-                <p className="font-semibold text-[#111827]">Findings for the memo</p>
+                <p className="font-semibold text-[#111827]">Findings for {lab.feed.split(",")[0]}</p>
                 <ul className="grid list-disc gap-1.5 pl-4 leading-relaxed text-[#3F4757]">{findings.map((f) => <li key={f}>{f}</li>)}</ul>
                 {state.done ? (
-                  <p className="text-[12.5px] text-[#15803D]">Complete. These lines are in UAR-MEMO, row Tenant check.</p>
+                  <p className="text-[12.5px] text-[#15803D]">Complete. These lines are in {lab.feed}. Close this console to go back to your step and hand the files in.</p>
                 ) : (
                   <button type="button" onClick={() => setState((s) => ({ ...s, done: new Date().toISOString() }))} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110">Mark complete</button>
                 )}
@@ -139,16 +140,32 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
               <p className="text-[12px] font-semibold text-[#3F4757]">Your captures</p>
               {mine.length === 0 ? <p className="mt-1 text-[12.5px] text-[#5B6474]">None yet. Capture evidence records what the table shows.</p> : (
                 <ul className="mt-1 grid gap-1.5">
-                  {mine.map((c) => (
-                    <li key={c.ref} data-capture={c.ref} className="text-[12px] leading-snug text-[#3F4757]">
-                      <span className="font-mono font-semibold text-[#111827]">{c.ref}</span> · {c.viewTitle} · {c.filter} · {c.ids.length} {c.ids.length === 1 ? "row" : "rows"}
-                      <span className="block font-mono text-[11px] text-[#5B6474]">{c.utc}{c.sha ? ` · SHA-256 ${c.sha}` : ""}</span>
-                    </li>
-                  ))}
+                  {mine.map((c) => {
+                    // A capture no right answer rests on may be deleted, after a confirm; one that does says why it stays.
+                    const kept = keptFor(state, c.ref, lab.parts);
+                    return (
+                      <li key={c.ref} data-capture={c.ref} className="text-[12px] leading-snug text-[#3F4757]">
+                        <span className="font-mono font-semibold text-[#111827]">{c.ref}</span> · {c.viewTitle} · {c.filter} · {c.ids.length} {c.ids.length === 1 ? "row" : "rows"}
+                        <span className="block font-mono text-[11px] text-[#5B6474]">{c.utc}{c.sha ? ` · SHA-256 ${c.sha}` : ""}</span>
+                        {kept ? (
+                          <span data-lab="kept" className="block text-[11.5px] text-[#5B6474]">{kept}</span>
+                        ) : confirming === c.ref ? (
+                          <span className="mt-1 flex flex-wrap items-center gap-2">
+                            <span className="text-[12px] text-[#78350F]">Delete {c.ref}? Its number is not used again.</span>
+                            <button type="button" data-lab="delete-yes" onClick={() => { update((p) => ({ ...p, labCaptures: deleteCapture(p.labCaptures ?? [], c.ref, utcNow()) })); setConfirming(null); }} className="h-7 rounded bg-[#B91C1C] px-2.5 text-[12px] font-semibold text-white hover:brightness-110">Delete</button>
+                            <button type="button" onClick={() => setConfirming(null)} className="h-7 rounded border border-[#C9CED8] bg-white px-2.5 text-[12px] font-semibold text-[#3F4757]">Keep</button>
+                          </span>
+                        ) : (
+                          <button type="button" data-lab="delete" aria-label={`Delete ${c.ref}`} onClick={() => setConfirming(c.ref)} className="mt-1 inline-flex h-7 items-center gap-1 rounded border border-[#C9CED8] bg-white px-2 text-[12px] font-semibold text-[#3F4757] hover:border-[#B91C1C] hover:text-[#B91C1C]">
+                            <Icon name="x" size={12} /> Delete
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>
-            <p className="text-[12px] leading-relaxed text-[#5B6474]">{lab.context}</p>
           </aside>
 
           <div className="order-2 flex min-h-0 min-w-0 flex-1 flex-col bg-white min-[900px]:order-1">
@@ -229,6 +246,7 @@ function Brief({ lab, onGuide }: { lab: Lab; onGuide: () => void }) {
         <dl className="mt-1 grid gap-1.5 text-[12.5px]">
           {lab.rules.map(([k, v]) => <div key={k}><dt className="font-semibold text-[#3F4757]">{k}</dt><dd>{v}</dd></div>)}
         </dl>
+        <p className="mt-1.5 text-[12px] text-[#5B6474]">{lab.context}</p>
       </details>
     </section>
   );
