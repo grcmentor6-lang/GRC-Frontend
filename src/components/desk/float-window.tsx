@@ -4,6 +4,7 @@ import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNod
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { Icon } from "@/components/ui/icon";
+import { PreparedFor } from "./prepared-for";
 
 /**
  * A floating, non-modal window: dragged by its title bar, resized from its bottom-right corner,
@@ -124,6 +125,7 @@ export function FloatWindow({
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+        <PreparedFor />
       </motion.section>
     </div>,
     document.body,

@@ -37,8 +37,18 @@ export function LeadImplementerPath({ who, onProgress }: { who: string; /** Shar
   useEffect(() => {
     Promise.all([loadDesk(), loadLi()]).then(([d, m]) => (setDesk(d), setLi(m)), () => setFailed(true));
   }, []);
+  // Until the server copy of the desk is read, progress is the empty record: marking every skill
+  // "not done" from it would misreport a mentee who has real work.
+  const { status, retry } = useProgress(who);
+  if (status === "failed")
+    return (
+      <p className="border border-[#DDE1E8] bg-white px-4 py-3 text-[13.5px] text-[#5B6474]">
+        Your desk progress could not be loaded.{" "}
+        <button type="button" onClick={() => retry()} className="font-semibold text-[#4338CA] hover:underline focus-ring">Try again</button>
+      </p>
+    );
   if (failed) return <p className="border border-[#DDE1E8] bg-white px-4 py-3 text-[13.5px] text-[#5B6474]">The Lead Implementer path could not be loaded. Refresh to try again.</p>;
-  if (!desk || !li) return <div className="h-64 animate-pulse rounded-md bg-slate-100" aria-busy="true" />;
+  if (!desk || !li || status !== "ready") return <div className="h-64 animate-pulse rounded-md bg-slate-100" aria-busy="true" />;
   return <Path desk={desk} li={li} who={who} onProgress={onProgress} />;
 }
 
@@ -422,7 +432,9 @@ export function LeadImplementerPanel({ itemRef, who }: { itemRef: string; who: s
   useEffect(() => {
     Promise.all([loadDesk(), loadLi()]).then(([d, m]) => (setDesk(d), setLi(m)), () => {});
   }, []);
-  if (!desk || !li) return null;
+  // Hidden until the real progress is read (or if it fails): an empty record would mark everything not done.
+  const { status } = useProgress(who);
+  if (!desk || !li || status !== "ready") return null;
   return <Panel desk={desk} li={li} who={who} itemRef={itemRef} />;
 }
 

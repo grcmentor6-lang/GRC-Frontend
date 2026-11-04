@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { appZoom } from "@/lib/zoom";
@@ -142,6 +142,11 @@ function place(r: Box | null, th: number, zoom: number, avoid: Box | null = null
  */
 function visibleRect(el: HTMLElement | null): { top: number; left: number; width: number; height: number } | null {
   if (!el) return null;
+  return shownPart(el) ?? el.getBoundingClientRect(); // wholly out of view: keep the real box so it is scrolled to
+}
+
+/** `visibleRect`'s cut, or null when none of the element shows (clipped away by its pane, or off screen). */
+function shownPart(el: HTMLElement): { top: number; left: number; width: number; height: number } | null {
   const r = el.getBoundingClientRect();
   let top = r.top, left = r.left, right = r.right, bottom = r.bottom;
   for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
@@ -154,7 +159,7 @@ function visibleRect(el: HTMLElement | null): { top: number; left: number; width
   }
   top = Math.max(top, 0); left = Math.max(left, 0);
   bottom = Math.min(bottom, window.innerHeight); right = Math.min(right, window.innerWidth);
-  if (bottom <= top || right <= left) return r; // wholly out of view: keep the real box so it is scrolled to
+  if (bottom <= top || right <= left) return null;
   return { top, left, width: right - left, height: bottom - top };
 }
 
@@ -242,11 +247,15 @@ function tapAt(s: TourStep, box: Box): { left: number; top: number } {
 
 /** Raise an element's top-level layer (its child of <body>, e.g. a portalled window) over the tour's
  *  overlay, and hand back the undo. Only portalled layers: raising the app root would lift it all. */
-function raiseOver(el: HTMLElement | null | undefined, z = "71"): () => void {
-  let n = el;
+function topLayer(el: Element | null | undefined): HTMLElement | null {
+  let n = el as HTMLElement | null | undefined;
   while (n?.parentElement && n.parentElement !== document.body) n = n.parentElement;
-  if (!n || n.parentElement !== document.body || getComputedStyle(n).position !== "fixed") return () => {};
-  const layer = n;
+  return n && n.parentElement === document.body ? n : null;
+}
+
+function raiseOver(el: HTMLElement | null | undefined, z = "71"): () => void {
+  const layer = topLayer(el);
+  if (!layer || getComputedStyle(layer).position !== "fixed") return () => {};
   const prev = layer.style.zIndex;
   layer.style.zIndex = z;
   return () => { layer.style.zIndex = prev; };
@@ -259,7 +268,9 @@ function sinkCovering(el: HTMLElement | null): () => void {
   const r = el.getBoundingClientRect();
   // The topmost thing there that is not the tour's own dim and click-blockers.
   const hit = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((n) => !n.closest("[data-guide-tour]"));
-  if (!hit || el.contains(hit)) return () => {};
+  // Never the target's own window: mid-scroll the centre lands on a neighbouring row of the same list, and
+  // sinking that layer sent the window under the step's modal (T4.1 step 1, BKB-POL-006 in the Policy Library).
+  if (!hit || el.contains(hit) || topLayer(hit) === topLayer(el)) return () => {};
   return raiseOver(hit as HTMLElement, "1");
 }
 
@@ -279,6 +290,16 @@ export const requestTour = (base: string) => {
   }
 };
 
+/** Whether `useTourOnce` would run this walkthrough on this mount: queued, or not yet seen by this mentee here. */
+export function tourDue(base: string, who: string | null | undefined): boolean {
+  if (!who) return false;
+  try {
+    return !!sessionStorage.getItem(`${base}.pending`) || !localStorage.getItem(`${base}:${who}`);
+  } catch {
+    return false; // storage unavailable — leave the Guide button as the way in
+  }
+}
+
 /**
  * Auto-run a walkthrough: whenever one has been queued by `requestTour`, and otherwise the first
  * time a given mentee reaches this surface on this device.
@@ -296,14 +317,7 @@ export function useTourOnce(base: string, who: string | null | undefined, ready:
   const fired = useRef(false);
 
   useEffect(() => {
-    if (fired.current || !ready || !who) return;
-    let queued = false;
-    try {
-      queued = !!sessionStorage.getItem(`${base}.pending`);
-      if (!queued && localStorage.getItem(`${base}:${who}`)) return;
-    } catch {
-      return; // storage unavailable — leave the Guide button as the way in
-    }
+    if (fired.current || !ready || !tourDue(base, who)) return;
     fired.current = true; // once per mount, whatever else changes
     setTimeout(() => {
       try {
@@ -326,6 +340,26 @@ export const markTourSeen = (base: string, who: string | null | undefined) => {
   }
 };
 
+/**
+ * One walkthrough on screen at a time. Tours that want to run queue in the order they asked; only the first
+ * is drawn, and the others wait (their step held, nothing measured, frozen or lifted) until it closes or
+ * unmounts. Two cards over one page — a step's row guide and the same guide restarted by a window it opened
+ * (F1.2 step 5, 3 Nov 2026) — each with its own dim and hole, swallowed each other's clicks.
+ */
+let tourQueue: symbol[] = [];
+const tourSubs = new Set<() => void>();
+const subscribeTours = (f: () => void) => { tourSubs.add(f); return () => { tourSubs.delete(f); }; };
+function useTourTurn(wants: boolean): boolean {
+  const [id] = useState(() => Symbol("tour"));
+  useEffect(() => {
+    if (!wants) return;
+    tourQueue = [...tourQueue, id];
+    tourSubs.forEach((f) => f());
+    return () => { tourQueue = tourQueue.filter((x) => x !== id); tourSubs.forEach((f) => f()); };
+  }, [wants, id]);
+  return useSyncExternalStore(subscribeTours, () => tourQueue[0] === id, () => false);
+}
+
 /** A spotlight coach-mark tour: dims the page, cuts a hole around the current target, and shows a
  *  smartly-placed "Step X of N" tooltip with an arrow + Back / Next / Skip. Purely presentational —
  *  the parent owns `step` (‑1 = closed) and persistence.
@@ -334,11 +368,13 @@ export const markTourSeen = (base: string, who: string | null | undefined) => {
  *  between targets — it repositions instantly and stays glued through scroll/resize/layout shifts.
  *  The only motion is the native smooth-scroll to reach an off-screen target and a clean cross-fade
  *  of the card. Respects prefers-reduced-motion. */
-export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
+export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
   steps: TourStep[];
   step: number;
   onStep: (i: number) => void;
   onClose: () => void;
+  /** A walkthrough that runs once and has no button to replay it: no Skip, no close, Esc ignored. */
+  required?: boolean;
   /** A step with `away` was done: the window it opened, to resume the tour when that window closes. */
   onAway?: (away: string | (() => boolean)) => void;
 }) {
@@ -360,8 +396,14 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
   // A nextWhen step: whether Next is unlocked yet, polled while the step runs.
   const [ready, setReady] = useState(false);
 
-  const active = step >= 0 && step < steps.length;
-  stepRef.current = active ? steps[step] : null;
+  // Wanting to run is not running: another tour on screen goes first (useTourTurn).
+  const wants = step >= 0 && step < steps.length;
+  const active = useTourTurn(wants) && wants;
+  // Before every other effect below, which all read it (declared first, so it runs first).
+  useLayoutEffect(() => { stepRef.current = active ? steps[step] : null; });
+  // The way the learner is moving: a card passed over (`skip`) on the way back passes over backwards, or Back
+  // onto it would bounce straight forward again.
+  const prevStep = useRef(-1);
 
   // Measure and commit only on actual movement. The tracking loop runs at frame rate, so setting
   // state unconditionally would re-render (and repaint the full-screen dim) 60×/second for nothing.
@@ -400,10 +442,12 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
   useLayoutEffect(() => {
     if (!active) return;
     const s = stepRef.current!;
-    setShown(false);
     lastRef.current = { box: null, pos: null };
+    const backwards = step < prevStep.current;
+    prevStep.current = step;
     if (s.skip?.()) {
-      const id = setTimeout(() => (step + 1 < steps.length ? cb.current.onStep(step + 1) : cb.current.onClose()));
+      const to = backwards && step > 0 ? step - 1 : step + 1;
+      const id = setTimeout(() => (to < steps.length ? cb.current.onStep(to) : cb.current.onClose()));
       return () => clearTimeout(id);
     }
     s.onEnter?.();
@@ -438,7 +482,10 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
     // the My Tasks window): either way it is scrolled to, so the step points at all of it.
     const hidden = (n: HTMLElement) => {
       const b = n.getBoundingClientRect();
-      return !inView(b) || (visibleRect(n)?.height ?? b.height) < b.height - 2;
+      // A row wholly below its pane's edge (BKB-ERM-001 under the fold of the Policy Library, T7.1 step 8) is
+      // in the viewport by its box, but none of it shows: the hole lit whatever sat there instead.
+      const part = shownPart(n);
+      return !inView(b) || !part || part.height < b.height - 2;
     };
     const scrollTo = (n: HTMLElement) => {
       const b = n.getBoundingClientRect();
@@ -497,11 +544,24 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
       }, 120);
     }
 
+    // Scrolled to and still not all on screen (a decision's feedback on a phone: the why of each option runs on below
+    // the fold, under the desk's header and toolbar): frozen, its last option could not be read until the guide moved
+    // on. Its scroller is let go; scrolling it keeps the lit thing in view, and the hole follows.
+    // Again whenever it grows (the feedback appearing under a question answered on its own card).
+    let settled = false;
+    const fit = () => {
+      const n = s.getEl();
+      const part = n && shownPart(n);
+      if (settled && n && (!part || part.height < n.getBoundingClientRect().height - 2)) { thaw(); thaw = () => {}; }
+    };
+    const fitId = setTimeout(() => { settled = true; fit(); }, 750);
+
     // A target that grows (a flag appearing under a field) keeps its hole and card in step.
-    const ro = new ResizeObserver(() => reposition());
+    const ro = new ResizeObserver(() => { reposition(); fit(); });
     if (el) ro.observe(el);
 
-    return () => { ro.disconnect(); thaw(); drop(); lower(); cancelAnimationFrame(sinkId); clearTimeout(resinkId); unsink(); cancelAnimationFrame(raf); clearInterval(poll); clearTimeout(showId); };
+    // Hidden as the step ends (the previous step's cleanup hides the card before the next one is placed).
+    return () => { setShown(false); ro.disconnect(); thaw(); drop(); lower(); cancelAnimationFrame(sinkId); clearTimeout(resinkId); clearTimeout(fitId); unsink(); cancelAnimationFrame(raf); clearInterval(poll); clearTimeout(showId); };
   }, [step, active, reposition, steps.length]);
 
   // A "do it" step: watch for the action and move on when it has happened.
@@ -552,10 +612,13 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
 
   // Reset when the tour closes so the next open appears cleanly (no stale hole).
   useEffect(() => {
-    if (active) return;
-    setShown(false);
-    setBox(OFFSCREEN);
-    lastRef.current = { box: null, pos: null };
+    if (!active) return;
+    return () => {
+      setShown(false);
+      setBox(OFFSCREEN);
+      lastRef.current = { box: null, pos: null };
+      prevStep.current = -1;
+    };
   }, [active]);
 
   // Stay glued through manual scroll / resize, coalesced to one measurement per frame — scroll
@@ -580,7 +643,7 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
   useEffect(() => {
     if (!active) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { cb.current.onClose(); return; }
+      if (e.key === "Escape") { if (!required) cb.current.onClose(); return; }
       // Arrows only navigate the tour when the mentee isn't typing. The spotlight is now a hole
       // they can work through, so a cursor key inside a field it is pointing at means "move the
       // caret" — jumping to the next step there would throw away what they were mid-way through
@@ -589,15 +652,18 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
       const s = steps[step];
       if (e.key === "ArrowRight" && !s?.waitFor && (!s?.nextWhen || s.nextWhen())) cb.current.onStep(Math.min(steps.length - 1, step + 1));
-      else if (e.key === "ArrowLeft") cb.current.onStep(Math.max(0, step - 1));
+      else if (e.key === "ArrowLeft" && steps.slice(0, step).some((x) => !x.skip?.())) cb.current.onStep(step - 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [active, step, steps]);
+  }, [active, step, steps, required]);
 
   if (!active || typeof document === "undefined") return null;
   const current = steps[step];
   const isLast = step === steps.length - 1;
+  // Back only where there is a card to go back to: every earlier card passing over (a question answered, so the
+  // cards that lead to it are done) leaves Back nowhere to land.
+  const canBack = steps.slice(0, step).some((x) => !x.skip?.());
   const side: Side = pos?.side ?? "float";
   const floating = side === "float";
 
@@ -677,7 +743,9 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
           opacity: shown ? 1 : 0,
           transform: shown ? "translate(0) scale(1)" : `${ENTER_OFFSET[side]} scale(0.98)`,
         }}
-        className="absolute pointer-events-auto rounded-xl bg-white ring-1 ring-slate-200 shadow-[0_18px_40px_-12px_rgba(15,23,42,0.45)] p-4 transition-[opacity,transform] duration-200 ease-out"
+        // Fades in only: hidden at once between cards, or the next card's text showed in the old card's fading box (a
+        // card passed over flashed up for a frame).
+        className={`absolute pointer-events-auto rounded-xl bg-white ring-1 ring-slate-200 shadow-[0_18px_40px_-12px_rgba(15,23,42,0.45)] p-4 ${shown ? "transition-[opacity,transform] duration-200 ease-out" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={`Guide: ${current.title}`}
@@ -693,9 +761,9 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
             <h3 className="text-[15px] font-semibold tracking-tight text-slate-900 leading-snug" style={{ textWrap: "balance" }}>{current.title}</h3>
             <p className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-[#4338CA] mt-0.5 tabular-nums">Step {step + 1} of {steps.length}</p>
           </div>
-          <button onClick={onClose} aria-label="Skip guide" className="focus-ring shrink-0 -mr-1 -mt-1 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
+          {!required && <button onClick={onClose} aria-label="Skip guide" className="focus-ring shrink-0 -mr-1 -mt-1 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
             <Icon name="x" size={14} />
-          </button>
+          </button>}
         </div>
 
         <p className="text-[13.5px] text-slate-700 leading-relaxed mt-3" style={{ textWrap: "pretty" }}>{current.body}</p>
@@ -710,11 +778,11 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway }: {
             ))}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            {step > 0 ? (
+            {canBack ? (
               <button onClick={() => onStep(step - 1)} className="focus-ring h-8 px-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-[12.5px] font-medium inline-flex items-center gap-1 cursor-pointer transition-colors">
                 <Icon name="arrowLeft" size={13} /> Back
               </button>
-            ) : (
+            ) : required ? null : (
               <button onClick={onClose} className="focus-ring h-8 px-2.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-[12.5px] font-medium cursor-pointer transition-colors">
                 Skip
               </button>

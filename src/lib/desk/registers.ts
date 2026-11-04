@@ -2,6 +2,7 @@ import type { Desk, Task } from "./model";
 import { bullets, docLines, docNow, docTable } from "./docs";
 import type { Progress } from "./progress";
 import { labFeed } from "./labs";
+import { localizable, toLearner } from "./names";
 import UAR from "./uar-t61.json";
 import LVR from "./lvr-t62.json";
 import RRU from "./rru-t71.json";
@@ -56,6 +57,8 @@ export interface Register {
   }[];
   /** A register worked at its hand-in step (an extra sheet a message brings): its line in that step's list of jobs. */
   job?: string;
+  /** Shown above the other sheets of its hand-in (T6.1's Sheet 4); otherwise sheets keep their order, Sheet 2 below. */
+  first?: boolean;
   /** Given rows; empty for a register the mentee builds row by row (see `grow`). */
   rows: string[][];
   /**
@@ -320,7 +323,7 @@ function sopLimit(r: string[]): { best: string; why: string } {
   const pol = limitOf(at.line[3]);
   const add = add36().find((x) => x[2].endsWith(`: ${outOf(at.line![3])}`))?.[3];
   return add
-    ? { best: add, why: `Section 6.1 step ${at.n} gives “${pol}”; BKB-ADD-36 Section 5 gives “${add}”. An addendum may only tighten a Group value (BKB-POL-000 Section 5), so LearnTech's applies.` }
+    ? { best: add, why: `Section 6.1 step ${at.n} gives “${pol}”; BKB-ADD-36 Section 5 gives “${add}”. An addendum may only tighten a Group value (BKB-POL-000 Section 5), so ${toLearner("LearnTech")}'s applies.` }
     : { best: pol, why: `Section 6.1 step ${at.n} gives “${pol}”, and BKB-ADD-36 Section 5 sets no value of its own for it.` };
 }
 function sopRole(r: string[]): { best: string; why: string } {
@@ -1015,7 +1018,7 @@ function brcPlan(field: string, p: Progress): string {
     case "Regimes that apply, with deadlines (UTC)":
       return dl(BRC.early) ? regs("Applies").map((r) => `${r[0]}: ${dl(r[0])}`).join("; ") : "";
     case "Listed with a condition":
-      return dl(BRC.early) ? regs(BRC_COND).map((r) => `${r[0]}: ${dl(r[0])}, only if its condition is met`).join("; ") || "None" : "";
+      return dl(BRC.early) ? regs(BRC_COND).map((r) => `${r[0]}: no date, its clock starts when its condition is met`).join("; ") || "None" : "";
     case "Earliest firm deadline (BKB-POL-014 Section 3.1)":
       return dl(BRC.early);
     case "Tell data subjects (R30)":
@@ -1368,7 +1371,7 @@ export const REGISTERS: Record<string, Register> = {
       ["A-02", "Regional performance dashboard", "Regional P&L, KPIs and management reporting.", "No", "Business Critical", "Q1 No → Q2 harm? Yes → Q3 personal data or restricted by law/contract? Yes → Tier 3", "Tier 3 — Confidential", "", ""],
       ["A-03", "Regional contracts repository", "Local contracts and legal documents. Disclosure would breach client contracts.", "No", "Standard / Operational", "", "", "", ""],
       ["A-04", "Sales contracts & order records", "Signed orders and commercial terms. Disclosure would mean the loss of major clients.", "No", "Business Critical", "", "", "", ""],
-      ["A-05", "Learning management system", "Training records and L&D content. Disclosure would stay internal only.", "No", "Standard / Operational", "", "", "", ""],
+      ["A-05", "Learning management system", "Staff training records (each employee's courses, completion dates and assessment scores) and L&D content. Disclosure would stay internal only.", "Yes", "Standard / Operational", "", "", "", ""],
       ["A-06", "Local regulatory compliance records", "Regional regulator filings and attestations. Disclosure would bring regulator fines.", "No", "Business Critical", "", "", "", ""],
       ["A-07", "Draft product brochure (not yet approved)", "Draft product brochure (not yet approved). Disclosure would stay internal only.", "See description", "Standard / Operational", "", "", "", ""],
       ["A-08", "Unlabelled internal wiki page on meeting-room booking", "Unlabelled internal wiki page on meeting-room booking. Disclosure would stay internal only.", "See description", "Standard / Operational", "", "", "", ""],
@@ -1563,7 +1566,7 @@ export const REGISTERS: Record<string, Register> = {
               : "Choose the row's office first: one row for each office."
             : by === 3
               ? `Copy one line of ${addendum(d)} Section 2.1, or one requirement of Section 6, word for word.`
-              : "Copy one Key Requirement of GlobalConnect Customer Solutions, word for word.",
+              : toLearner("Copy one Key Requirement of GlobalConnect Customer Solutions, word for word."),
       },
       2: {
         fix: (v, r, d, _ri, by) => {
@@ -1627,7 +1630,7 @@ export const REGISTERS: Record<string, Register> = {
         const [a, b] = [obl.lines21(d)?.length, obl.rows6(d)?.length];
         return `${addendum(d)} Section 2.1 lists ${a ?? "its"} lead-regulator requirements and Section 6 has ${b ?? "its"} overlays. Add one row for each${a && b ? `: ${a + b} rows` : ""}. Article/clause is in Section 2.2. Type: law for an act of parliament, reg for a regulator's own requirement, standard for an industry standard; Learn › Framework Quick Reference says which a named standard or law is.`;
       },
-      4: (d) => `Add 3 rows, one for each of the first three Key Requirements of GlobalConnect Customer Solutions. Article/clause is in ${addendum(d)} Section 2.2.`,
+      4: (d) => toLearner(`Add 3 rows, one for each of the first three Key Requirements of GlobalConnect Customer Solutions. Article/clause is in ${addendum(d)} Section 2.2.`),
       5: (d) => `Frequency / deadline, Process and Evidence of compliance are in ${addendum(d)} Section 2.2, one row per obligation. The policy that implements each row is in the BKB-POL-000 Section 3 index: Check my answers then shows each row's answer.`,
       6: () =>
         "Steps 1 to 4 give 17 rows; the register holds 15. Keep the 3 contract rows, which KR2 needs, and remove the two rows that bind neither of your two offices.",
@@ -1997,7 +2000,7 @@ export const REGISTERS: Record<string, Register> = {
     ],
     rows: [
       ["Q1", "Access to source code must be restricted.", "ISO/IEC 27001 A.8.4"],
-      ["Q2", "Password complexity, rotation and storage rules must be defined for systems that cannot use MFA/SSO.", "ISO/IEC 27001 A.5.17"],
+      ["Q2", "Password length, storage and change rules (change on suspected compromise, not on a schedule) must be defined for systems that cannot use MFA/SSO.", "ISO/IEC 27001 A.5.17"],
       ["Q3", "Third-party access should be time-bound.", "ISO/IEC 27001 A.5.18"],
       ["Q4", "Access must be granted on least privilege and approved by the asset owner.", "ISO/IEC 27001 A.5.15 / SOC 2 CC6.3"],
       ["Q5", "AI agents must have dedicated identities with scoped permissions.", "BKB-POL-022"],
@@ -2149,7 +2152,7 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 6, cols: [1, 2, 3, 4, 5], ident: [0] },
     note: {
       1: () => "Rule R14 fixes the six steps every SOP has, in this order. BKB-POL-021 Section 6.1 is the procedure this SOP carries out: for each step, choose the Section 6.1 action that does what the step's name says. Section 6.1 has seven lines and the SOP six steps, so one line has no step of its own.",
-      2: () => "Each SOP step takes the time limit of its Section 6.1 line (in Output / SLA, after the dash). BKB-ADD-36 Section 5 sets LearnTech's own value for two Section 6.1 outputs: where it sets one, it is the one that applies (decision T4.2-D1).",
+      2: () => toLearner("Each SOP step takes the time limit of its Section 6.1 line (in Output / SLA, after the dash). BKB-ADD-36 Section 5 sets LearnTech's own value for two Section 6.1 outputs: where it sets one, it is the one that applies (decision T4.2-D1)."),
       3: () => "The Responsible role is the one BKB-POL-021 Section 6.1 names for the line each step carries out. Each step shows the action you chose in step 1.",
       5: () => "A step's output is the record it leaves: the first part of its Section 6.1 line's Output / SLA, before the dash. The exception step also names the escalation contact, as BKB-POL-021 Section 8 writes it.",
     },
@@ -2633,6 +2636,7 @@ export const REGISTERS: Record<string, Register> = {
     mine: () => true,
     steps: { 8: [12] },
     job: "Sheet 4, UAR-EXTRA, first in the window: choose each account's type (or None), then R19 on its last line.",
+    first: true,
     ident: [0],
     cells: {
       12: {
@@ -3127,8 +3131,8 @@ export const REGISTERS: Record<string, Register> = {
     then: { 7: "Check the scale names in LI-RAM" },
     note: {
       7: () => "LI-RAM is the method card another assessor follows to reach comparable results. A colleague filled these two rows from memory. Read each against BKB-ERM-001 (Policies › Policy Library), from score 1 up to score 5, and correct any name that differs. Keep the names separated by ;.",
-      8: () => "A colleague filled these two rows from memory. In BKB-ERM-001 (Policies › Policy Library), Section 4 gives the appetite of each criticality band; GlobalConnect is a LOW-criticality organisation. Section 7 gives the due days of each residual rating. Correct any value that differs.",
-      9: () => "A colleague filled these four rows and nobody has checked them. Read each against the Charter's delegation table, Section 6.1 (Policies › Policy Library), in the column for GlobalConnect's criticality band, and choose the authority it names where the row differs.",
+      8: () => toLearner("A colleague filled these two rows from memory. In BKB-ERM-001 (Policies › Policy Library), Section 4 gives the appetite of each criticality band; GlobalConnect is a LOW-criticality organisation. Section 7 gives the due days of each residual rating. Correct any value that differs."),
+      9: () => toLearner("A colleague filled these four rows and nobody has checked them. Read each against the Charter's delegation table, Section 6.1 (Policies › Policy Library), in the column for GlobalConnect's criticality band, and choose the authority it names where the row differs."),
       10: () => "Ref-Clause map (Learn › Reference pages), row 8.2: the documented information clause 8.2 requires, and the deliverables that evidence it.",
     },
     reads: { 10: ["learn|Reference pages"] },
@@ -3378,7 +3382,7 @@ export const REGISTERS: Record<string, Register> = {
     derived: { 1: { from: [], value: (v, p) => (v(0) === CT_SAMP[2] ? (p.rowChecks?.["T8.2-2"] ? `${CT.sample.join(" and ")}: systematic, every 2nd quarter from quarter ${CT.sample[0].slice(1)} (seed ${CT.seed}, mod 4 = ${CT.seed % 4}). Their ${CT_SAMPLE.length} records are all tested, in Sheet 2.` : "") : null) } },
     ident: [0],
     checkRows: { 2: { label: 0, col: 1 } },
-    note: { 2: (d) => `Rule R15 (Learn › Rule tables): ${(d.rules.R15?.[1] ?? "").split(". ")[0]}. Control Testing › Restore Test Review shows which of the card's three controls is assigned to you, and what it holds; its frequency for LearnTech is in BKB-ADD-36 Section 5 (Policies › Policy Library). Ref-Sampling is in Learn › Reference pages.` },
+    note: { 2: (d) => toLearner(`Rule R15 (Learn › Rule tables): ${(d.rules.R15?.[1] ?? "").split(". ")[0]}. Control Testing › Restore Test Review shows which of the card's three controls is assigned to you, and what it holds; its frequency for LearnTech is in BKB-ADD-36 Section 5 (Policies › Policy Library). Ref-Sampling is in Learn › Reference pages.`) },
     reads: { 2: ["testing|Restore Test Review", "learn|Reference pages"], 7: ["systems|NetShield", "evidence|Capture Screenshot"] },
     handIn: { step: 7, cols: [1], ident: [0] },
   },
@@ -3411,7 +3415,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 4: [1, 2, 3, 4, 6] },
     checkRows: { 4: { label: 0, col: 5 } },
-    note: { 4: () => `Rule R26 is in Learn › Rule tables: read its ratings in order and take the first that fits. The records are of the privileged accounts of LearnTech's Amsterdam office; BKB-ADD-36 Section 8 (Policies › Policy Library) gives each office's Mission Critical assets. The last column is what the IAM team answered when you queried each deviation.` },
+    note: { 4: () => toLearner(`Rule R26 is in Learn › Rule tables: read its ratings in order and take the first that fits. The records are of the privileged accounts of LearnTech's Amsterdam office; BKB-ADD-36 Section 8 (Policies › Policy Library) gives each office's Mission Critical assets. The last column is what the IAM team answered when you queried each deviation.`) },
     reads: { 4: ["learn|Rule tables"] },
     handIn: { step: 7, cols: [5], ident: [0] },
   },
@@ -3613,7 +3617,7 @@ export const REGISTERS: Record<string, Register> = {
     code: "VEN-Q LI-CLD",
     title: "VEN-Q · Cloud and supply-chain section (LI-CLD) · Service model and split (L19)",
     on: [6, 8],
-    cols: [{ h: "Item", wrap: true, w: 240 }, { h: "Your answer", wrap: true, w: 170, opts: (_d, r) => (r[0] === VEN.cloud[0][0] ? ["IaaS", "PaaS", "SaaS"] : ["Lumen (provider)", "LearnTech (customer)"]) }],
+    cols: [{ h: "Item", wrap: true, w: 240 }, { h: "Your answer", wrap: true, w: 170, opts: (_d, r) => (r[0] === VEN.cloud[0][0] ? ["IaaS", "PaaS", "SaaS"] : ["Lumen (provider)", toLearner("LearnTech (customer)")]) }],
     rows: VEN.cloud.map(([x]) => [x, ""]),
     mine: () => true,
     steps: { 6: [1] },
@@ -3694,7 +3698,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 3: [1] },
     ident: [0],
     checkRows: { 3: { label: 0, col: 1 } },
-    note: { 3: () => "Each row is a CUEC from the CUECs line of Lumen's report: a control Lumen expects LearnTech to run. Vendors › Flag Risk names the internal owner of each kind of CUEC." },
+    note: { 3: () => toLearner("Each row is a CUEC from the CUECs line of Lumen's report: a control Lumen expects LearnTech to run. Vendors › Flag Risk names the internal owner of each kind of CUEC.") },
     reads: { 3: ["vendors|Flag Risk", "learn|Reference pages"] },
     handIn: { step: 5, cols: [1], ident: [0] },
   },
@@ -3811,7 +3815,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0, 1],
     checkRows: { 3: { label: 0, col: 2, with: 3 }, 4: { label: 0, col: 4 } },
     note: {
-      3: () => "T-ROPA's four shapes: Collect, personal data comes into LearnTech from outside (a client or a person); System, it is kept or used in a LearnTech system; Transfer, it leaves the country of the office that holds it (BKB-POL-017 Section 3.1 says what counts); Delete, it is erased. Choose each flow's system from Risk Register › Asset Register, which lists LearnTech's Amsterdam and Mumbai assets: the asset whose description fits what happens in the flow.",
+      3: () => toLearner("T-ROPA's four shapes: Collect, personal data comes into LearnTech from outside (a client or a person); System, it is kept or used in a LearnTech system; Transfer, it leaves the country of the office that holds it (BKB-POL-017 Section 3.1 says what counts); Delete, it is erased. Choose each flow's system from Risk Register › Asset Register, which lists LearnTech's Amsterdam and Mumbai assets: the asset whose description fits what happens in the flow."),
       4: (_d, p) => `BKB-POL-017 Section 3.1: start from the Cross-border transfer cell of BKB-ADD-36 Section 2, in the row of the office the data leaves. A chapter of a law is not a safeguard: where the cell names one, Section 6.1 of the addendum says how the safeguard is found. The rows are the flows step 3 found to be transfers${dfmShape(p, "F1") ? "" : " (once step 3 is checked)"}. Both are in Policies › Policy Library.`,
     },
     reads: { 3: ["risk|Asset Register"] },
@@ -3860,10 +3864,11 @@ export const REGISTERS: Record<string, Register> = {
     mine: () => true,
     steps: { 3: [3], 4: [4] },
     // Step 3 decides the regimes; step 4 dates the ones step 3 found to apply, and the earliest firm deadline.
-    only: { 3: (r) => r[0] !== BRC.early, 4: (r, p) => r[0] === BRC.early || ["Applies", BRC_COND].includes(brcBest(p, 3, r[0])) },
+    // A conditional regime's clock runs from its condition (SEC: the materiality decision), not discovery: no date to work out.
+    only: { 3: (r) => r[0] !== BRC.early, 4: (r, p) => r[0] === BRC.early || brcBest(p, 3, r[0]) === "Applies" },
     derived: {
       3: { from: [], value: (v) => (v(0) === BRC.early ? "—" : null) },
-      4: { from: [], value: (v, p) => (brcBest(p, 3, v(0)) === BRC_NOT ? "None: does not apply" : brcBest(p, 3, v(0)) === BRC_MON ? "None: no clock yet" : null) },
+      4: { from: [], value: (v, p) => (brcBest(p, 3, v(0)) === BRC_NOT ? "None: does not apply" : brcBest(p, 3, v(0)) === BRC_MON ? "None: no clock yet" : brcBest(p, 3, v(0)) === BRC_COND ? "No date: starts when its condition is met" : null) },
     },
     cells: { 4: { fix: (v) => utcTime(v), hint: () => "Write a deadline as the discovery time is written: date, time, UTC (2026-01-31 09:00 UTC)." } },
     ident: [0, 1, 2],
@@ -3873,7 +3878,7 @@ export const REGISTERS: Record<string, Register> = {
       3: (_d, p) => `Each row is a regime of BKB-ADD-36 Section 2: the office whose row it is in, and the column and words of its cell. BKB-POL-014 Section 6.3 (Policies › Policy Library) says which offices the incident engages and which of their regimes apply. Regulatory Watch › Regulation Tracker gives each law's status. From your step 2: offices whose systems are affected: ${p.grids?.["T10.2|BRC-ASSESS Facts"]?.["1,1"] ?? ""}. Data-subject countries: ${p.grids?.["T10.2|BRC-ASSESS Facts"]?.["2,1"] ?? ""}.`,
       4: (_d, p) => {
         const cond = (BRC.regimes as string[][]).filter((r) => brcBest(p, 3, r[0]) === BRC_COND).map((r) => r[0]);
-        return `Discovered: ${brcDisc(p)}. Each deadline is the discovery time plus the clock in the row's Section 2 words; BKB-POL-014 Section 6.3, step 6 (Policies › Policy Library) says how to count. The rows are the regimes step 3 found to apply${cond.length ? `; ${cond.join(", ")} applies only if its condition is met, so its clock is not firm` : " (once step 3 is checked)"}. The last row is the earliest firm deadline.`;
+        return `Discovered: ${brcDisc(p)}. Each deadline is the discovery time plus the clock in the row's Section 2 words; BKB-POL-014 Section 6.3, step 6 (Policies › Policy Library) says how to count. The rows are the regimes step 3 found to apply${cond.length ? `; ${cond.join(", ")} is listed with its condition and no date: its clock starts when the condition is met (Section 6.3, step 4)` : " (once step 3 is checked)"}. The last row is the earliest firm deadline.`;
       },
     },
     handIn: { step: 7, cols: [3, 4], ident: [0] },
@@ -4089,7 +4094,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 1: [2] },
     ident: [0, 1],
     checkRows: { 1: { label: 0, col: 2 } },
-    note: { 1: () => "The Regulation Tracker's rows for LearnTech's four offices. Compare each office's authority with the Authority column of its row in BKB-ADD-36 Section 2 (Policies › Policy Library)." },
+    note: { 1: () => toLearner("The Regulation Tracker's rows for LearnTech's four offices. Compare each office's authority with the Authority column of its row in BKB-ADD-36 Section 2 (Policies › Policy Library).") },
     readHow: { 1: "Find each office's row and read its Authority column." },
   },
   "T11.2 FEED": {
@@ -4270,7 +4275,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 12: [3] },
     ident: [0, 1, 2],
     checkRows: { 12: { label: 0, col: 3 } },
-    note: { 12: () => "The five LearnTech systems that carry the new duties, and why. Rule L22: find each in TSA-36 Technology_Stack (Learn › Reference pages) by its Cap ID and read its Domain; BKB-TECH-000 Section 3 (Policies › Policy Library) gives the layer of each Domain." },
+    note: { 12: () => toLearner("The five LearnTech systems that carry the new duties, and why. Rule L22: find each in TSA-36 Technology_Stack (Learn › Reference pages) by its Cap ID and read its Domain; BKB-TECH-000 Section 3 (Policies › Policy Library) gives the layer of each Domain.") },
     readHow: { 12: "BKB-TECH-000 Section 3: the layer of each Technology_Stack Domain, in its last column." },
     handIn: { step: 14, cols: [3], ident: [0] },
   },
@@ -5051,7 +5056,8 @@ export function splitRow(cells: Record<string, string>, ri: number, col: number,
 }
 /** A compare step's offices (T3.1 step 7): each office of the rows copied from Section 2, with its clock there and
  *  the matrix's for its country, and what the mentee recorded. Null until both documents are loaded. */
-const DIFFERS = "Differs — addendum governs";
+/** Two Group sources disagree on a clock: both are recorded, and the shorter one is worked to until the owners resolve it. */
+const DIFFERS = "Differs: work to the shorter until the owners resolve it";
 export function compareOffices(reg: Register, desk: Desk, p: Progress, taskId: string) {
   const rows = regRows(reg, p, taskId).map((_, ri) => ri).filter((ri) => [1, 2].includes(addedBy(reg, p, taskId, ri)));
   const offices = [...new Set(rows.map((ri) => cellValue(reg, p, taskId, ri, 5)).filter(Boolean))];
@@ -5852,7 +5858,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
  */
 export type Ladder = { rule: string; col: number; row: (r: string[]) => boolean };
 export const LADDER: Record<string, Record<number, Ladder>> = {
-  "F1.2": { 2: { rule: "R01", col: 3, row: (r) => r[0] === "LearnTech Educational Solutions" && r[1] === "ISO/IEC 27001:2022" } },
+  "F1.2": { 2: { rule: "R01", col: 3, row: (r) => r[0] === toLearner("LearnTech Educational Solutions") && r[1] === "ISO/IEC 27001:2022" } },
 };
 /** "1) Made by a parliament or a regulator? → Law / regulation. … 5) Otherwise → Voluntary framework." */
 export function ladderSteps(ruleText: string): { q: string; then: string }[] {
@@ -5886,3 +5892,6 @@ export function reportDone(desk: Desk, p: Progress, task: Task): boolean {
 /** A question answered in its row, with no register of its own to carry `reads`. */
 const ROW_READS: Record<string, string[]> = { "T8.1-10": ["learn|Reference pages"], "T11.1-4": ["awareness|Phishing Campaign Planner"], "T12.1-8": ["learn|Rule tables"], "T12.1-11": ["learn|Rule tables"], "T12.2-2": ["learn|Rule tables"], "T12.2-9": ["learn|Framework Quick Reference"], "T12.2-11": ["learn|Rule tables", "learn|Framework Quick Reference"] };
 export const stepReads = (taskId: string, n: number): string[] => regOf(taskId, n)?.reads?.[n] ?? briefOf(taskId, n)?.reads?.[n] ?? ROW_READS[`${taskId}-${n}`] ?? [];
+
+// The learner's organisation names and mentee ID (lib/desk/names.ts): the content above, rewritten in place.
+localizable(REGISTERS, BRIEFS, STUDY, LADDER, DECIDE_FROM, ROW_READS, AUDITEE, CT_SAMP, UAR, LVR, RRU, TOP, VUL, CT, VEN, SOC, ROPA, BRC, AWRD, REGD, ACTD, AUDD);

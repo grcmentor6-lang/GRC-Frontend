@@ -10,9 +10,10 @@ import { WelcomeTour, startWelcomeTour } from "./welcome-tour";
 import { UpNext } from "./up-next";
 import { FeedbackWidget } from "./feedback-widget";
 import { OrgInfoButton } from "@/components/desk/org-drawer";
+import { useDeskIdentity } from "@/lib/desk/identity";
 import { DropdownPanel } from "@/components/ui/motion";
-import { learningsApi } from "@/lib/learnings";
-import { useCachedQuery } from "@/lib/use-query";
+import { useDeskRecord, recordCounts } from "@/lib/desk-record";
+import { certificateApi } from "@/lib/certificate";
 
 function DashSidebar({
   collapsed,
@@ -30,6 +31,15 @@ function DashSidebar({
   // Labels/badge/brand are hidden only on desktop when collapsed; the mobile drawer is always
   // full-width, so on small screens `collapsed` must not hide them.
   const hideWhenCollapsed = collapsed ? "md:hidden" : "";
+  // The certificate link is greyed out until the certificate is issued; it still opens, to show what is left.
+  const [certIssued, setCertIssued] = useState(true);
+  useEffect(() => {
+    let live = true;
+    certificateApi.mine().then((c) => live && setCertIssued(c.status !== "preview")).catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
 
   return (
     <aside
@@ -70,20 +80,21 @@ function DashSidebar({
       <nav data-tour="nav" className="flex-1 min-h-0 p-3 flex flex-col gap-0.5">
         {DASH_NAV.map((item) => {
           const active = isActive(item.href);
+          const dim = item.id === "certificate" && !certIssued && !active;
           return (
             <Link
               key={item.id}
               href={item.href}
               onClick={closeMobile}
               data-tour={`nav-${item.id}`}
-              title={item.soon ? `${item.label} — coming soon` : item.label}
+              title={item.soon ? `${item.label} — coming soon` : dim ? `${item.label} — not issued yet` : item.label}
               // The rail is far taller than 11 links on a big screen, so the last one is pushed to
               // the floor — the column is then anchored at both ends and the slack reads as a gap
               // between groups instead of a blank band under the buttons.
               className={`focus-ring group w-full flex-1 min-h-0 max-h-10 px-3 rounded-lg flex items-center gap-3 transition-all no-underline ${
                 item.id === DASH_NAV[DASH_NAV.length - 1].id ? "mt-auto" : ""
               } ${
-                active ? "bg-indigo-50/80 text-indigo-700" : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
+                active ? "bg-indigo-50/80 text-indigo-700" : dim ? "text-slate-300 hover:bg-slate-50 hover:text-slate-400" : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
               }`}
             >
               <Icon name={item.icon} size={17} strokeWidth={active ? 2 : 1.6} className="shrink-0" />
@@ -266,16 +277,13 @@ function Gauge({ pct, size, stroke, children }: { pct: number; size: number; str
 /**
  * How far through the programme they are — one control, not two.
  *
- * Activities done and certificate progress are the same journey, so they share one capsule: the
- * gauge carries the certificate percentage (the thing the work is for, issued at 100%), the text
- * under it the activity count that percentage is made of. Click it for the milestone track and
- * what is left to go. Below `lg`, only the gauge.
- *
- * Derived from the engagement tree, not a second endpoint: `learnings:grc101` is already fetched
- * by the Dashboard and the desk, and `useCachedQuery` dedupes the key across the whole app.
+ * The share of Working Desk steps this account has completed, from its desk_progress — the same
+ * counts as the Dashboard, My Submissions and Reports (lib/desk-record). Not labelled as certificate
+ * progress: what the certificate requires of the desk is not decided here. Click it for the
+ * milestone track and what is left to go. Below `lg`, only the gauge.
  */
 function ProgramProgress() {
-  const { data } = useCachedQuery("learnings:grc101", () => learningsApi.get("grc101"));
+  const { desk, progress, state } = useDeskRecord();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -293,13 +301,12 @@ function ProgramProgress() {
     };
   }, [open]);
 
-  const tasks = (data?.orgs ?? []).flatMap((o) => o.projects.flatMap((p) => p.tasks));
-  if (tasks.length === 0) return null;
-
-  const acts = tasks.reduce((n, t) => n + t.total, 0);
-  const done = tasks.reduce((n, t) => n + t.done, 0);
+  if (!desk || state !== "ready") return null;
+  const c = recordCounts(desk, progress);
+  const acts = c.steps;
+  const done = c.stepsDone;
   const pct = acts ? Math.round((done / acts) * 100) : 0;
-  // The next quarter mark still ahead, and how many activities reach it.
+  // The next quarter mark still ahead, and how many steps reach it.
   const next = [25, 50, 75, 100].find((q) => q > pct);
 
   return (
@@ -308,7 +315,7 @@ function ProgramProgress() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Certificate ${pct}% complete, ${done} of ${acts} activities done. Show progress details`}
+        aria-label={`GRC 101 ${pct}% done, ${done} of ${acts} steps done. Show progress details`}
         className={`flex h-11 items-center gap-2.5 rounded-full border px-1 transition-[background,border-color,box-shadow] lg:pl-1 lg:pr-3 ${
           open
             ? "border-[#d2ccff] bg-white shadow-[0_4px_14px_-8px_rgba(91,79,233,.35)]"
@@ -320,10 +327,10 @@ function ProgramProgress() {
         </Gauge>
         <span className="hidden flex-col gap-1 whitespace-nowrap text-left lg:flex">
           <span className="text-[12.5px] leading-none text-[#4b4c63]">
-            <b className="mr-0.5 text-[15px] font-semibold tracking-[-0.01em] text-[#191a2c]">{pct}%</b> to certificate
+            <b className="mr-0.5 text-[15px] font-semibold tracking-[-0.01em] text-[#191a2c]">{pct}%</b> of GRC 101
           </span>
           <span className="text-[11.5px] leading-none text-[#8a8ba3]">
-            <b className="font-semibold tabular-nums text-[#4b4c63]">{done}</b> of {acts} activities
+            <b className="font-semibold tabular-nums text-[#4b4c63]">{done}</b> of {acts} steps done
           </span>
         </span>
         <Icon name="chevronDown" size={14} className={`hidden text-[#8a8ba3] transition-transform duration-200 lg:block ${open ? "rotate-180" : ""}`} />
@@ -337,8 +344,8 @@ function ProgramProgress() {
             </span>
           </Gauge>
           <span>
-            <b className="block text-[15px] font-semibold text-[#191a2c]">Certificate progress</b>
-            <small className="mt-0.5 block text-[12.5px] text-[#8a8ba3]">Issued automatically at 100%</small>
+            <b className="block text-[15px] font-semibold text-[#191a2c]">GRC 101 progress</b>
+            <small className="mt-0.5 block text-[12.5px] text-[#8a8ba3]">Steps completed on the Working Desk</small>
           </span>
         </div>
 
@@ -373,7 +380,7 @@ function ProgramProgress() {
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <div className="rounded-xl bg-[#f3f3f9] px-3 py-2.5">
-            <small className="block text-[11.5px] text-[#8a8ba3]">Activities done</small>
+            <small className="block text-[11.5px] text-[#8a8ba3]">Steps done</small>
             <b className="my-[3px] block text-[20px] font-semibold tracking-[-0.02em] tabular-nums text-[#191a2c]">{done}</b>
             <span className="whitespace-nowrap text-[11.5px] text-[#8a8ba3]">of {acts}</span>
           </div>
@@ -381,7 +388,7 @@ function ProgramProgress() {
             <small className="block text-[11.5px] text-[#8a8ba3]">Left to go</small>
             <b className="my-[3px] block text-[20px] font-semibold tracking-[-0.02em] tabular-nums text-[#191a2c]">{acts - done}</b>
             <span className="whitespace-nowrap text-[11.5px] text-[#8a8ba3]">
-              {next ? `${next}% at ${Math.ceil((acts * next) / 100)}` : "Certificate ready"}
+              {next ? `${next}% at ${Math.ceil((acts * next) / 100)}` : "All steps done"}
             </span>
           </div>
         </div>
@@ -441,9 +448,13 @@ function DashTopBar({ openMobile }: { openMobile: () => void }) {
 
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  useDeskIdentity(); // the learner's names on every desk surface below (lib/desk/names.ts), set before any of it loads
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  // The mobile drawer is open on the page it was opened on: navigating closes it, with no effect to run.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const mobileOpen = openOn === pathname;
+  const setMobileOpen = (open: boolean) => setOpenOn(open ? pathname : null);
 
   // The desk is a focus surface and wants the width: entering it folds the main menu to its icon
   // rail every time, and leaving it puts the menu back as it was. Opening the menu while on the desk
@@ -462,11 +473,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onDesk]);
 
-  // Close the mobile drawer on navigation and on Escape.
-  useEffect(() => setMobileOpen(false), [pathname]);
+  // Close the mobile drawer on Escape.
   useEffect(() => {
     if (!mobileOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenOn(null);
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [mobileOpen]);

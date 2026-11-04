@@ -7,6 +7,7 @@ import { TableView, Label, press } from "./ui";
 import type { ToolMock } from "@/lib/desk/model";
 import { DOC_TEXT } from "@/lib/desk/docs";
 import { DocCitation } from "./doc-text";
+import { PreparedFor } from "./prepared-for";
 
 /** "<b>Frame:</b> Please send…" → bold label + text, without dangerouslySetInnerHTML. */
 function Rich({ s }: { s: string }) {
@@ -209,6 +210,7 @@ function Sheet({ item, onClose }: { item: ViewItem; onClose: () => void }) {
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{body}</div>
+        <PreparedFor className="pl-6" />
       </aside>
     </div>
   );

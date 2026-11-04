@@ -25,6 +25,10 @@
    "Learning platform & content (Amsterdam)"
   ],
   [
+   "LearnTech's role",
+   "Controller: LearnTech runs the platform and decides what the student records are used for; schools enrol their students on it"
+  ],
+  [
    "What happened",
    "A software release on 7 December left a report-export link of the Learning platform & content reachable without sign-in, and it was used from an unknown address to download student records. The export reads the records decrypted. The platform was taken offline to stop the downloads."
   ],
@@ -88,7 +92,7 @@
   [
    "DPDP — detailed report to the Board",
    "Mumbai, India",
-   "Breach notification: Notify Board and affected principals without delay; detailed report within 72h"
+   "Breach notification: from ~May 2027 (DPDP Rules 2025, Rule 7), notify Board and affected principals without delay; detailed report within 72h. Not yet in force"
   ],
   [
    "CERT-In cyber-incident report",

@@ -343,7 +343,7 @@ function HandInJobs({ task, s }: { task: Task; s: Step }) {
     ...sheets.map((r) => ({ id: "sheet", text: r.job ?? `Fill ${r.code}.`, done: !regEmpty(desk, progress, task, s.n, r).length })),
     ...(lab ? [{ id: "lab", text: `Tech Lab: ${desk.sections[lab.tool.split("|")[0]]?.t ?? "Systems"} › ${lab.tool.split("|")[1]} on the toolbar (orange dot). Submit does not wait for it, but its findings join your file only if you finish it before you submit.`, done: !!progress.labs?.[lab.id]?.done, skipped: sent && !progress.labs?.[lab.id]?.done }] : []),
     { id: "files", text: files > 1 ? `Name the ${files} files, then Submit.` : files ? "Name the file, then Submit." : "Submit.", done: sent },
-    { id: "complete", text: "Mark activity complete.", done: !!progress.done[key] },
+    { id: "complete", text: "Mark step complete.", done: !!progress.done[key] },
   ];
   if (jobs.length < 3) return null; // naming, Submit and Mark complete alone need no list
   const now = jobs.find((j) => !j.done && !j.skipped);
@@ -1928,7 +1928,7 @@ export function CompareWork({ task, s }: { task: Task; s: Step }) {
             {wrong && <p className="mt-1.5 text-[12.5px] leading-snug text-[#92400E]">Look again: Annex A reads “{o.theirs}” for {o.country}.</p>}
             {o.got === "differs" && o.differs && (
               <div className="mt-2">
-                <p className="text-[12.5px] leading-snug text-[#3F4757]">Which of your {o.city} rows does Annex A differ on? Click it: the register records both values and “Differs — addendum governs” in that row&apos;s Frequency / deadline.</p>
+                <p className="text-[12.5px] leading-snug text-[#3F4757]">Which of your {o.city} rows does Annex A differ on? Click it: the register records both values in that row&apos;s Frequency / deadline, and that you work to the shorter one until the owners resolve it.</p>
                 <div className="mt-1.5 flex flex-wrap gap-2">
                   {o.details.map((r) => (
                     <button key={r.ri} type="button" data-compare-row={r.ri} onClick={() => pick(o.city, r)} aria-pressed={o.row === String(r.ri)} className={`min-h-8 rounded border px-3 py-1 text-left text-[13px] font-semibold focus-ring ${o.row === String(r.ri) ? "border-[#4338CA] bg-[#4338CA] text-white" : "border-[#C9CED8] bg-white text-[#3F4757]"}`}>

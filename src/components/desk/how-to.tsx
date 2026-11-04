@@ -18,6 +18,8 @@ import { FloatWindow } from "./float-window";
 import { UndertakingCard } from "./undertaking";
 import { lockedWhy, stepAnswered, submissionText } from "@/lib/desk/work";
 import { MessageNotice } from "./chat";
+import { useDeskIdentity } from "@/lib/desk/identity";
+import { canonAt, optionOrder, relabel, reorderStep, shown } from "@/lib/desk/option-order";
 
 const REF_ICON: Record<string, IconName> = { rule: "shield", page: "table", tpl: "file", ds: "grid", doc: "book", clause: "pin" };
 
@@ -58,7 +60,7 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
       <div className="flex flex-wrap items-baseline gap-x-2.5 border-b border-[#DDE1E8] px-4 py-2.5">
         <h2 className="text-[14px] font-bold text-[#111827]">Step by step</h2>
         <span className="text-[13px] text-[#5B6474] tabular-nums">
-          {task.steps.length} activities · {task.ndec} decisions · {doneCount}/{task.steps.length} complete
+          {task.steps.length} steps · {task.ndec} decisions · {doneCount}/{task.steps.length} complete
         </span>
       </div>
       <div
@@ -140,7 +142,7 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                     <span>{s.tool}</span>
                   </span>
                 </span>
-                <span className={`${cell} hidden items-center px-3 text-[13px] text-[#3F4757] @[760px]:flex`}>{decision ? <TypeChip each={s.kind === "each"} /> : "Activity"}</span>
+                <span className={`${cell} hidden items-center px-3 text-[13px] text-[#3F4757] @[760px]:flex`}>{decision ? <TypeChip each={s.kind === "each"} /> : "Step"}</span>
                 <span className={`${cell} hidden min-w-0 items-center gap-2 px-3 @[760px]:flex`} title={kr ? `${splitKr(kr.kr).tag}: ${splitKr(kr.kr).text}` : undefined}>
                   {kr ? (
                     <>
@@ -424,7 +426,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
                   onClick={markDone}
                   className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
                 >
-                  Mark activity complete
+                  Mark step complete
                 </button>
                 </>
               )}
@@ -453,16 +455,19 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
  */
 export function DecisionSummary({ task, s }: { task: Task; s: Step }) {
   const { progress } = useDesk();
+  const { menteeId } = useDeskIdentity();
   const pick = progress.picks[stepKey(task.id, s.n)];
   const fb = s.did ? progress.decisions?.[s.did] : undefined;
   if (typeof pick !== "string" || !s.opt) return null;
+  // Stored canonical; shown in the learner's letters (option-order.ts).
+  const order = optionOrder(menteeId, s.did ?? stepKey(task.id, s.n), s.opt.length);
   return (
     <p data-guide="decision-summary" className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded border border-[#DDE1E8] bg-[#F7F8FA] px-3 py-2 text-[13.5px] text-[#111827]">
       <span className="text-[12px] text-[#5B6474]">Your answer</span>
-      <span><span className="mr-1 font-semibold text-slate-500">{pick}</span>{s.opt[pick.charCodeAt(0) - 65]}</span>
+      <span><span className="mr-1 font-semibold text-slate-500">{shown(order, pick)}</span>{s.opt[pick.charCodeAt(0) - 65]}</span>
       {fb?.best && (
         <span className={`rounded-[3px] px-1.5 py-0.5 text-[11.5px] font-semibold ${fb.correct ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#FEF3C7] text-[#92400E]"}`}>
-          {fb.correct ? "Best" : `Best was ${fb.best}`}
+          {fb.correct ? "Best" : `Best was ${shown(order, fb.best)}`}
         </span>
       )}
     </p>
@@ -475,6 +480,7 @@ export function DecisionSummary({ task, s }: { task: Task; s: Step }) {
  */
 function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: QuestionKey; setQ: (q: QuestionKey) => void; onClose: () => void }) {
   const { desk, view } = useDesk();
+  const { menteeId } = useDeskIdentity();
   useEffect(() => {
     if (!q) return;
     const onKey = (e: KeyboardEvent) => {
@@ -488,6 +494,8 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
     return () => document.removeEventListener("keydown", onKey);
   }, [q, setQ, onClose]);
   const note = desk.notes[task.id]?.find(([n]) => n === s.n)?.[2] ?? s.help;
+  // A pick step's text lists its options inline: in the learner's order (option-order.ts).
+  const w = s.kind === "pick" && s.opt ? reorderStep(s.w, s.opt, optionOrder(menteeId, s.did ?? stepKey(task.id, s.n), s.opt.length)) : s.w;
   const refs = stepRefs(s);
 
   const refName = (kind: string, id: string): string => {
@@ -512,7 +520,7 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
     // The open row already shows the instruction; Do adds only the owner's note, in simpler words.
     do: (
       <figure className="grid gap-2">
-        <blockquote className="border-l-2 border-[#C7CBF5] pl-3 text-[14px] leading-relaxed text-[#111827]">{note || s.w}</blockquote>
+        <blockquote className="border-l-2 border-[#C7CBF5] pl-3 text-[14px] leading-relaxed text-[#111827]">{note || w}</blockquote>
         {note && (
           <figcaption className="flex items-center gap-2 text-[12px] text-[#5B6474]">
             <span className="grid h-5 w-5 place-items-center rounded-full bg-[#EEF0FF] text-[9.5px] font-semibold text-[#3730A3]">{initials}</span>
@@ -547,7 +555,7 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
   return (
     <FloatWindow
       title={`Help with step ${s.n}`}
-      eyebrow={`${task.id} · ${s.kind === "do" ? "Activity" : "Decision"}`}
+      eyebrow={`${task.id} · ${s.kind === "do" ? "Step" : "Decision"}`}
       leading={<span className="grid h-7 w-7 place-items-center rounded-full bg-[#4338CA] text-white"><Icon name="help" size={15} /></span>}
       onClose={onClose}
       width={460}
@@ -652,7 +660,7 @@ function Attestation({ task, a, readOnly }: { task: Task; a: Attest; readOnly: b
 /** What the mentee handed in for a step done in a tool, in one line under its bar. */
 function Submitted({ task, s }: { task: Task; s: Step }) {
   const { desk, progress } = useDesk();
-  const text = submissionText(desk, progress, task, s);
+  const text = submissionText(desk, progress, task, s, useDeskIdentity().menteeId);
   if (!text) return null;
   return (
     <p className="mt-2 flex items-start gap-2 text-[13px] text-[#3F4757]">
@@ -731,6 +739,9 @@ function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: 
   // One radio group per copy: the same decision is drawn in the step row and in the step's window,
   // and radios sharing a name are one group to the browser, so ticking one copy unticked the other.
   const group = `${key}-${useId()}`;
+  // Each learner sees the options in their own order (option-order.ts). The pick stored and sent, `best` and
+  // `fb.options` stay canonical; only the position drawn and the letter shown are the learner's.
+  const order = optionOrder(useDeskIdentity().menteeId, did ?? key, s.opt!.length);
 
   // Fetched once the pick is checked, from whichever surface checked it; kept with the progress.
   useEffect(() => {
@@ -755,11 +766,12 @@ function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: 
       {fb && (
         <p data-guide="decision-result" className={`flex items-center gap-2 rounded px-3 py-2 text-[13.5px] font-semibold ${fb.correct === false ? "bg-[#FFFBEB] text-[#78350F]" : "bg-[#F0FDF4] text-[#14532D]"}`}>
           <Icon name={fb.correct === false ? "info" : "checkCircle"} size={16} className="shrink-0" />
-          {fb.correct === true ? "You chose the best option." : fb.correct === false ? `Not the best option. The best is ${best}.` : "Your choice is recorded. The reviewer checks it against your material."}
+          {fb.correct === true ? "You chose the best option." : fb.correct === false ? `Not the best option. The best is ${shown(order, best ?? "")}.` : "Your choice is recorded. The reviewer checks it against your material."}
         </p>
       )}
-      {s.opt!.map((o, i) => {
-        const letter = String.fromCharCode(65 + i);
+      {order.map((i, d) => {
+        const o = s.opt![i];
+        const letter = canonAt(order, d);
         const on = pick === letter;
         const isBest = !!fb && best === letter;
         const why = fb?.options?.[i];
@@ -771,7 +783,7 @@ function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: 
             <span className="flex items-start gap-3">
               <input type="radio" name={group} checked={on} onChange={() => update((p) => ({ ...p, picks: { ...p.picks, [key]: letter } }))} className="mt-0.5 accent-indigo-600" />
               <span className="min-w-0 flex-1">
-                <span className="mr-1.5 font-semibold text-slate-500">{letter}</span>{o}
+                <span className="mr-1.5 font-semibold text-slate-500">{String.fromCharCode(65 + d)}</span>{o}
                 {fb && (isBest || on) && (
                   <span className={`ml-2 inline-block whitespace-nowrap rounded-[3px] px-1.5 py-0.5 align-[1px] text-[11.5px] font-semibold ${isBest ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#FEF3C7] text-[#92400E]"}`}>
                     {isBest && on ? "Your choice · best" : isBest ? "Best" : "Your choice"}
@@ -781,14 +793,14 @@ function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: 
             </span>
             {why && (
               <span className="ml-7 grid gap-x-6 gap-y-0.5 text-[13px] leading-snug text-[#3F4757] md:grid-cols-2">
-                <span><strong className="font-semibold text-[#111827]">Why: </strong>{why.reason}</span>
-                <span><strong className="font-semibold text-[#111827]">If you do this: </strong>{why.consequence}</span>
+                <span><strong className="font-semibold text-[#111827]">Why: </strong>{relabel(why.reason, order)}</span>
+                <span><strong className="font-semibold text-[#111827]">If you do this: </strong>{relabel(why.consequence, order)}</span>
               </span>
             )}
           </label>
         );
       })}
-      {fb?.why && <p className="text-[12.5px] leading-snug text-[#5B6474]"><strong className="font-semibold text-[#3F4757]">The rule: </strong>{fb.why}</p>}
+      {fb?.why && <p className="text-[12.5px] leading-snug text-[#5B6474]"><strong className="font-semibold text-[#3F4757]">The rule: </strong>{relabel(fb.why, order)}</p>}
       {!checked && (
         <div className="flex flex-wrap items-center gap-3">
           <button
@@ -827,7 +839,7 @@ export function KrProgress({ task, kr }: { task: Task; kr: string }) {
         <div className="h-1.5 flex-1 rounded-full bg-slate-200">
           <div className="h-full rounded-full bg-emerald-500 transition-[width] duration-300 ease-out" style={{ width: `${acts.length ? (n / acts.length) * 100 : 0}%` }} />
         </div>
-        <span className="text-[12px] text-slate-500 tabular-nums">{n} / {acts.length} activities</span>
+        <span className="text-[12px] text-slate-500 tabular-nums">{n} / {acts.length} steps</span>
       </div>
     </div>
   );

@@ -6,6 +6,11 @@ import { MethodMedal } from "@/components/badges/method-medal";
 import { summarise, type MethodBadgeSummary } from "@/components/badges/use-method-badges";
 import { EMPTY } from "@/lib/desk/progress";
 import type { Cv } from "@/lib/cv";
+import { MachineNote, MachineTag } from "@/components/app/machine-note";
+
+// ponytail: backend/app/services/cv.py's stand-in when the best review has no feedback; drop this
+// guard once the backend stops sending it.
+const ENDORSEMENT_FILLER = "Strong, standard-aligned work — ready for real GRC fieldwork.";
 
 const STD_TONES: Record<string, { chip: string; dot: string }> = {
   indigo: { chip: "bg-indigo-50 text-indigo-700 ring-indigo-100", dot: "bg-indigo-500" },
@@ -39,6 +44,11 @@ function Head({ icon, children, action }: { icon?: IconName; children: React.Rea
 
 export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own method badges; left out on the public CV. */ methodBadges?: MethodBadgeSummary }) {
   const p = cv.profile;
+  const isPublic = !methodBadges;
+  // Nothing done yet: the header metrics would all read 0, which looks like a failed record rather than a new one.
+  const noWork = cv.metrics.every((m) => Number(m.value) === 0);
+  // ponytail: the public CV has no badge data (the desk progress is the owner's, client-side), so the
+  // section is hidden there rather than claiming none earned. Needs the badges on the CV response.
   const mb = methodBadges ?? summarise(EMPTY);
   const shown = methodBadges ? mb.rows : mb.rows.filter(({ g }) => g.state === "earned" || g.state === "distinction");
   const doneVerbs = new Set(cv.verbs.done);
@@ -56,20 +66,30 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
               <h2 className="text-[27px] md:text-[30px] font-semibold tracking-[-0.025em] leading-none">{p.name}</h2>
-              {p.openToWork && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 h-[22px] rounded-full bg-emerald-400/20 ring-1 ring-emerald-300/40 text-[10.5px] font-medium tracking-tight text-emerald-50">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300" /> Open to opportunities
-                </span>
-              )}
+              {/* "Open to opportunities" is not shown: the backend sends true for everyone and the
+                  learner has no setting for it, so it would be a claim they never made. */}
             </div>
             <div className="flex items-center gap-4 mt-3 text-[12px] text-indigo-100/90 flex-wrap">
-              <span className="inline-flex items-center gap-1.5"><Icon name="user" size={13} /> {p.location}</span>
-              <span className="inline-flex items-center gap-1.5"><Icon name="mail" size={13} /> {p.email}</span>
-              <span className="inline-flex items-center gap-1.5"><Icon name="shield" size={13} /> Mentor-verified</span>
+              {p.location && p.location !== "—" && <span className="inline-flex items-center gap-1.5"><Icon name="user" size={13} /> {p.location}</span>}
+              {/* The email stays off the public page: anyone holding the link could harvest it. */}
+              {!isPublic && p.email && <span className="inline-flex items-center gap-1.5"><Icon name="mail" size={13} /> {p.email}</span>}
+              {p.linkedin && (
+                <a href={p.linkedin.startsWith("http") ? p.linkedin : `https://${p.linkedin}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-indigo-50 hover:underline">
+                  <Icon name="linkedin" size={13} /> LinkedIn
+                </a>
+              )}
+              <span className="inline-flex items-center gap-1.5"><Icon name="shield" size={13} /> GRC 101 learner · simulated engagements</span>
             </div>
           </div>
         </div>
-        <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-7">
+        {noWork ? (
+          <p className="relative mt-7 rounded-xl bg-white/10 ring-1 ring-white/15 px-4 py-3 text-[12.5px] text-indigo-50">
+            {isPublic
+              ? "Just getting started: no work on the record yet."
+              : "Your record starts with your first step on the Working Desk. Tasks submitted, steps done and engagements fill in here as you work."}
+          </p>
+        ) : (
+        <div className={`relative grid grid-cols-2 gap-2.5 mt-7 ${cv.metrics.length > 3 ? "lg:grid-cols-4" : "sm:grid-cols-3"}`}>
           {cv.metrics.map((m) => (
             <div key={m.label} className="rounded-xl bg-white/10 ring-1 ring-white/15 backdrop-blur-sm px-3.5 py-3">
               <div className="flex items-baseline gap-1">
@@ -80,6 +100,7 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
             </div>
           ))}
         </div>
+        )}
       </div>
 
       <div className="px-8 md:px-10 py-8 space-y-8">
@@ -91,7 +112,8 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
         <div className="h-px bg-slate-100" />
 
         {/* Method badges (pack v1.9.0). On the mentee's own CV every badge shows with where it stands;
-            the public CV shows only what has been earned. */}
+            the public CV leaves the section out until the CV response carries the badges. */}
+        {!isPublic && (<>
         <section>
           <Head icon="trophy" action={<span className="text-[11px] text-slate-400 font-medium">{mb.earned} of {mb.total} earned</span>}>Method badges</Head>
           {shown.length === 0 ? (
@@ -113,14 +135,20 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
           )}
         </section>
         <div className="h-px bg-slate-100" />
+        </>)}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-9 gap-y-8">
           <div className="lg:col-span-7 space-y-8">
             {/* experience */}
             <section>
-              <Head icon="checkSquare" action={<span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium"><Icon name="shield" size={12} /> Mentor-graded</span>}>Verified experience</Head>
+              <Head icon="checkSquare" action={<span className="text-[11px] text-slate-400 font-medium">Tasks submitted on the Working Desk</span>}>Fieldwork</Head>
+              <p className="-mt-1 mb-3 text-[11.5px] text-slate-500 leading-relaxed" style={{ textWrap: "pretty" }}>
+                Simulated enterprise engagements on grcmentor. The organisations are fictional; the work is the candidate&apos;s own.
+              </p>
               {cv.experience.length === 0 ? (
-                <p className="text-[12.5px] text-slate-400 tracking-tight">Complete and pass your first mentor-graded activity to populate verified experience.</p>
+                <p className="text-[12.5px] text-slate-500 tracking-tight">
+                  {isPublic ? "No tasks submitted yet." : "No tasks submitted yet. Each task you submit appears here with what you handed in, under the organisation it was for."}
+                </p>
               ) : (
                 <div className="space-y-5">
                   {cv.experience.map((exp, ei) => (
@@ -148,17 +176,20 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <DVerb verbId={it.verb} />
                                     <span className="font-mono text-[10px] text-slate-400">{it.step}</span>
-                                    <span className="inline-flex items-center gap-1 px-1.5 h-[18px] rounded-md bg-amber-50 ring-1 ring-amber-100">
-                                      <Icon name="star" size={9} className="text-amber-500" />
-                                      <span className="text-[10px] font-semibold text-amber-700 tabular-nums">{it.score.toFixed(1)}</span>
-                                    </span>
+                                    {it.score != null && (
+                                      <span className="inline-flex items-center gap-1 px-1.5 h-[18px] rounded-md bg-amber-50 ring-1 ring-amber-100">
+                                        <Icon name="star" size={9} className="text-amber-500" />
+                                        <span className="text-[10px] font-semibold text-amber-700 tabular-nums">{it.score.toFixed(1)}</span>
+                                      </span>
+                                    )}
                                     <span className="text-[10.5px] text-slate-400 ml-auto">{relTime(it.when)}</span>
                                   </div>
                                   <p className="text-[12.5px] text-slate-700 tracking-tight mt-1">{it.text}</p>
+                                  {/* Model output: tagged, never quoted and signed like a person's words. */}
                                   {it.note && (
-                                    <div className="mt-1.5 flex items-start gap-1.5 text-[11.5px] text-slate-500 italic tracking-tight">
-                                      <Icon name="chat" size={12} className="text-violet-400 mt-0.5 shrink-0" />
-                                      <span style={{ textWrap: "pretty" }}>&ldquo;{it.note}&rdquo; — {it.by}</span>
+                                    <div className="mt-1.5 text-[11.5px] text-slate-500 tracking-tight">
+                                      <MachineTag label="Grader feedback · generated" className="mb-0.5" />
+                                      <span style={{ textWrap: "pretty" }}>{it.note}</span>
                                     </div>
                                   )}
                                 </div>
@@ -178,7 +209,7 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
               <>
                 <div className="h-px bg-slate-100" />
                 <section>
-                  <Head icon="chart" action={<span className="text-[11px] text-slate-400">mentor-rated / 5</span>}>Skill assessment</Head>
+                  <Head icon="chart" action={<span className="text-[11px] text-slate-400">AI-rated / 5</span>}>Skill assessment</Head>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                     {cv.skills.map((r) => (
                       <div key={r.id}>
@@ -254,7 +285,9 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
               </section>
             )}
 
-            {/* method verbs */}
+            {/* method verbs — the Working Desk records none, so a desk-only record leaves this out
+                rather than printing 22 grey chips. */}
+            {doneVerbs.size + activeVerbs.size > 0 && (
             <section>
               <Head icon="bolt" action={<span className="text-[11px] text-slate-400 font-medium">{cv.verbs.done.length}/22</span>}>Method competencies</Head>
               <div className="flex flex-wrap gap-1.5">
@@ -266,23 +299,21 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
                 })}
               </div>
             </section>
+            )}
 
             {/* endorsement */}
-            {cv.endorsement && (
+            {/* The backend's "endorsement" is the AI grader's feedback on the best-scored step. It is
+                shown as machine output (no avatar, no signature), and its invented stand-in quote,
+                used when the feedback is blank, is dropped. */}
+            {cv.endorsement && cv.endorsement.quote !== ENDORSEMENT_FILLER && (
               <>
                 <div className="h-px bg-slate-100" />
                 <section>
-                  <Head icon="chat">Mentor endorsement</Head>
-                  <div className="rounded-xl bg-violet-50/40 ring-1 ring-violet-100 p-4">
-                    <p className="text-[13px] text-slate-700 italic leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>&ldquo;{cv.endorsement.quote}&rdquo;</p>
-                    <div className="flex items-center gap-2.5 mt-3 pt-3 border-t border-violet-100/70">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white text-[12px] font-semibold shrink-0">{cv.endorsement.initials}</div>
-                      <div className="min-w-0">
-                        <div className="text-[12.5px] font-semibold tracking-tight text-slate-900">{cv.endorsement.name}</div>
-                        <div className="text-[11px] text-slate-500 tracking-tight truncate">{cv.endorsement.role}</div>
-                      </div>
-                    </div>
-                  </div>
+                  <Head icon="chat">Grader feedback</Head>
+                  <MachineNote label="Generated · AI grader · not a mentor endorsement">
+                    <p className="text-[13px] text-slate-700 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>{cv.endorsement.quote}</p>
+                    <div className="mt-2 text-[11px] text-slate-500 tracking-tight">On the best-scored step · {cv.endorsement.role}</div>
+                  </MachineNote>
                 </section>
               </>
             )}
@@ -290,14 +321,14 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
             {/* program */}
             {cv.program && (
               <>
-                <div className="h-px bg-slate-100" />
+                {cv.standards.length > 0 && <div className="h-px bg-slate-100" />}
                 <section>
                   <Head icon="book">Program</Head>
                   <div className="flex items-start gap-3">
                     <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-600 text-white text-[12px] font-mono font-semibold shrink-0">G</span>
                     <div className="min-w-0">
                       <div className="text-[13px] font-semibold tracking-tight text-slate-900">{cv.program.title}</div>
-                      <div className="text-[11.5px] text-slate-500 tracking-tight">{cv.program.code} · {cv.program.provider} · {cv.program.cohort}</div>
+                      <div className="text-[11.5px] text-slate-500 tracking-tight">{[cv.program.code, cv.program.provider, cv.program.cohort].filter(Boolean).join(" · ")}</div>
                       <div className="inline-flex items-center gap-1.5 mt-1.5 text-[11px] text-indigo-600 font-medium"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> {cv.program.status}</div>
                     </div>
                   </div>
@@ -310,7 +341,7 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
 
       {/* provenance footer */}
       <div className="px-8 md:px-10 py-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-400"><Icon name="refresh" size={12} /> Auto-compiled from verified grcmentor work · {cv.publicUrl}</div>
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-400"><Icon name="refresh" size={12} /> Auto-compiled from work done on grcmentor (simulated engagements) · {cv.publicUrl}</div>
         <div className="flex items-baseline gap-0">
           <span className="text-[12px] font-semibold tracking-[-0.02em] text-slate-700">grc</span>
           <span className="text-[12px] font-semibold tracking-[-0.02em] text-indigo-600">mentor</span>

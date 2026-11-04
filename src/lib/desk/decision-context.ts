@@ -1,3 +1,4 @@
+import { localizable } from "./names";
 /**
  * The situation a decision step's question sits in: two or three sentences before the options, so a
  * learner has something to reason with. The pack's questions are one line ("Where does it apply?").
@@ -121,3 +122,6 @@ export const DECISION_CONTEXT: Record<string, string> = {
   "T12.2-D6":
     "Not NC-1, which you have answered: suppose GlobalConnect challenges a finding with its evidence row, and at the closing meeting the auditor keeps the finding in the report as written. The Compliance Manager still holds that the evidence answers it, and asks what GlobalConnect does next.",
 };
+
+// In the learner's organisation names (lib/desk/names.ts).
+localizable(DECISION_CONTEXT);

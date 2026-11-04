@@ -3,6 +3,7 @@
  * as text: public/desk/docs/<ID>.md, taken verbatim from the v1.8.8 pack's .docx files. Only the
  * documents steps cite are here; anything else shows its headings from `desk.library`.
  */
+import { onIdentityChange, toLearner } from "./names";
 
 export interface DocSection {
   num: string; // "7", "2.1"
@@ -15,6 +16,7 @@ export const DOC_TEXT = new Set(["SRC-EC-MINORS-2025", "SRC-EU-2022-2065", "BKB-
 
 const cache = new Map<string, Promise<DocSection[]>>();
 const ready = new Map<string, DocSection[]>();
+onIdentityChange(() => (cache.clear(), ready.clear()));
 
 /** A document already loaded, for checks that compare a copy with its source (null until then). */
 export const docNow = (id: string): DocSection[] | null => ready.get(id) ?? null;
@@ -23,7 +25,8 @@ export function loadDoc(id: string): Promise<DocSection[]> {
   if (!DOC_TEXT.has(id)) return Promise.resolve([]);
   let p = cache.get(id);
   if (!p) {
-    p = fetch(`/desk/docs/${id}.md`, { cache: "no-cache" }).then((r) => (r.ok ? r.text() : "")).then(parseDoc).then((d) => (ready.set(id, d), d));
+    // In the learner's names (lib/desk/names.ts); rebuilt below if the identity changes.
+    p = fetch(`/desk/docs/${id}.md`, { cache: "no-cache" }).then((r) => (r.ok ? r.text() : "")).then((t) => parseDoc(toLearner(t))).then((d) => (ready.set(id, d), d));
     cache.set(id, p);
   }
   return p;

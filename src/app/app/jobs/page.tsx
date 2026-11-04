@@ -1,51 +1,28 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Card } from "@/components/ui/primitives";
 import { SkeletonCardGrid } from "@/components/ui/skeleton";
-import { DVerb } from "@/components/ui/dverb";
-import { useCachedQuery } from "@/lib/use-query";
 import { userKey } from "@/lib/token";
-import { learningsApi } from "@/lib/learnings";
-import {
-  deriveJobs,
-  matchMeta,
-  JOB_SOURCES,
-  type DerivedJob,
-  type JobSource,
-  type RespState,
-} from "@/lib/jobs";
+import { useAuth } from "@/components/auth/auth-provider";
+import { useProgress } from "@/lib/desk/progress";
+import { loadDesk, type Desk } from "@/lib/desk/model";
+import { recordCounts } from "@/lib/desk-record";
+import { deriveJobs, matchMeta, type DerivedJob, type RespState } from "@/lib/jobs";
 
-const SRC_META: Record<JobSource, { icon: IconName; cls: string }> = {
-  LinkedIn: { icon: "linkedin", cls: "bg-indigo-50 text-indigo-700 ring-indigo-100" },
-  "We Work Remotely": { icon: "briefcase", cls: "bg-amber-50 text-amber-800 ring-amber-100" },
-  "Remote.co": { icon: "link", cls: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
-  Indeed: { icon: "search", cls: "bg-violet-50 text-violet-700 ring-violet-100" },
-};
-const AVA: Record<string, string> = {
-  indigo: "from-indigo-400 to-violet-500",
-  violet: "from-violet-400 to-indigo-500",
-  emerald: "from-emerald-400 to-teal-500",
-  amber: "from-amber-400 to-orange-500",
-  rose: "from-rose-400 to-pink-500",
-};
 const RESP: Record<RespState, { icon: IconName; cls: string; sw: number; tag: string; tagcls: string }> = {
-  matched: { icon: "check", cls: "bg-emerald-50 text-emerald-600 ring-emerald-100", sw: 3, tag: "Matched", tagcls: "text-emerald-600" },
-  partial: { icon: "play", cls: "bg-indigo-50 text-indigo-600 ring-indigo-100", sw: 1.8, tag: "Developing", tagcls: "text-indigo-600" },
-  gap: { icon: "plus", cls: "bg-slate-50 text-slate-300 ring-slate-200", sw: 2, tag: "Growth area", tagcls: "text-slate-500" },
-};
-const STD_STATE: Record<RespState, string> = {
-  matched: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-  partial: "bg-indigo-50 text-indigo-700 ring-indigo-100",
-  gap: "bg-slate-50 text-slate-500 ring-slate-200",
+  matched: { icon: "check", cls: "bg-emerald-50 text-emerald-600 ring-emerald-100", sw: 3, tag: "Submitted", tagcls: "text-emerald-600" },
+  partial: { icon: "play", cls: "bg-indigo-50 text-indigo-600 ring-indigo-100", sw: 1.8, tag: "In progress", tagcls: "text-indigo-600" },
+  gap: { icon: "plus", cls: "bg-slate-50 text-slate-300 ring-slate-200", sw: 2, tag: "Not started", tagcls: "text-slate-500" },
 };
 
-// ---- saved jobs (local, per-browser; backend persistence is a later phase) ----
+// ---- saved roles (local, per-browser; backend persistence is a later phase) ----
 // Modelled as an external store so SSR + hydration stay consistent and we never
 // setState synchronously inside an effect.
 // Scoped per account: without the suffix the next person signing in on this browser inherits
-// the previous one's saved jobs.
+// the previous one's saved roles.
 const savedKey = () => `grcmentor:saved-jobs:${userKey()}`;
 const EMPTY_SAVED: ReadonlySet<string> = new Set();
 const savedListeners = new Set<() => void>();
@@ -134,26 +111,21 @@ function MatchRing({ pct, size = 58 }: { pct: number; size?: number }) {
 }
 
 // ---- summary KPIs ----
-function JobsSummary({ jobs }: { jobs: DerivedJob[] }) {
-  const strong = jobs.filter((j) => j.match >= 80).length;
-  const avg = jobs.length ? Math.round(jobs.reduce((n, j) => n + j.match, 0) / jobs.length) : 0;
-  const sources = new Set(jobs.map((j) => j.source)).size;
-  const items: { icon: IconName; tone: string; value: number | string; label: string }[] = [
-    { icon: "briefcase", tone: "indigo", value: jobs.length, label: "Matched roles" },
-    { icon: "star", tone: "emerald", value: strong, label: "Strong matches" },
-    { icon: "target", tone: "violet", value: avg + "%", label: "Avg match" },
-    { icon: "grid", tone: "amber", value: sources, label: "Platforms" },
+function JobsSummary({ jobs, submitted, totalTasks }: { jobs: DerivedJob[]; submitted: number; totalTasks: number }) {
+  const items: { icon: IconName; tone: string; value: string; label: string }[] = [
+    { icon: "checkSquare", tone: "indigo", value: `${submitted} / ${totalTasks}`, label: "Desk tasks submitted" },
+    { icon: "briefcase", tone: "emerald", value: `${jobs.filter((j) => j.match > 0).length} / ${jobs.length}`, label: "Roles your work backs" },
+    { icon: "star", tone: "amber", value: String(jobs.filter((j) => j.match >= 80).length), label: "Strong matches (80+)" },
   ];
   const tones: Record<string, string> = {
     indigo: "bg-indigo-50 text-indigo-600 ring-indigo-100",
     emerald: "bg-emerald-50 text-emerald-600 ring-emerald-100",
-    violet: "bg-violet-50 text-violet-600 ring-violet-100",
     amber: "bg-amber-50 text-amber-700 ring-amber-100",
   };
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       {items.map((s) => (
-        <Card key={s.label} className="flex items-center gap-3 transition-all duration-300 hover:-translate-y-0.5 hover:ring-indigo-200/70">
+        <Card key={s.label} className="flex items-center gap-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ring-1 ${tones[s.tone]}`}>
             <Icon name={s.icon} size={17} />
           </div>
@@ -167,43 +139,35 @@ function JobsSummary({ jobs }: { jobs: DerivedJob[] }) {
   );
 }
 
-function SourceChip({ source }: { source: JobSource }) {
-  const m = SRC_META[source];
-  return (
-    <span className={`inline-flex items-center gap-1 h-[20px] px-1.5 rounded-md text-[10.5px] font-medium tracking-tight ring-1 ${m.cls}`}>
-      <Icon name={m.icon} size={11} /> {source}
-    </span>
-  );
-}
+const search = (site: "linkedin" | "indeed", title: string) =>
+  site === "linkedin"
+    ? `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(title)}`
+    : `https://www.indeed.com/jobs?q=${encodeURIComponent(title)}`;
 
-// ---- job card ----
-function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean; onToggleSave: () => void }) {
+// ---- role card ----
+function JobCard({ job, desk, saved, onToggleSave }: { job: DerivedJob; desk: Desk; saved: boolean; onToggleSave: () => void }) {
   const [open, setOpen] = useState(false);
   const m = matchMeta(job.match);
-  const matchedCount = job.derivedResponsibilities.filter((r) => r.state !== "gap").length;
+  const backed = job.derivedResponsibilities.filter((r) => r.state === "matched").length;
   return (
-    <Card pad={false} className="transition-all duration-300 hover:-translate-y-0.5 hover:ring-indigo-200/70">
+    <Card pad={false}>
       <div className="p-4">
         <div className="flex items-start gap-4">
-          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${AVA[job.tone]} flex items-center justify-center text-white text-[15px] font-semibold shrink-0`}>
-            {job.initials}
+          <div className="w-12 h-12 rounded-xl bg-slate-100 ring-1 ring-slate-200 flex items-center justify-center text-slate-500 shrink-0">
+            <Icon name="briefcase" size={20} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-[15.5px] font-semibold tracking-tight text-slate-900">{job.title}</h3>
-              <SourceChip source={job.source} />
+            <h3 className="text-[15.5px] font-semibold tracking-tight text-slate-900">{job.title}</h3>
+            <div className="text-[12.5px] text-slate-600 tracking-tight mt-0.5">
+              {job.jobFunction} · {job.level}
             </div>
-            <div className="text-[12.5px] text-slate-600 tracking-tight mt-0.5">{job.company}</div>
-            <div className="flex items-center gap-2 mt-1.5 text-[11.5px] text-slate-500 tracking-tight flex-wrap">
-              <span className="inline-flex items-center gap-1">
-                <Icon name="user" size={11} /> {job.location}
-              </span>
-              <span className="text-slate-300">·</span>
-              <span>{job.type}</span>
-              <span className="text-slate-300">·</span>
-              <span>{job.level}</span>
-              <span className="text-slate-300">·</span>
-              <span className="font-medium text-slate-600">{job.salary}</span>
+            <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+              <span className="text-[11px] text-slate-400 tracking-tight">Posts often ask for</span>
+              {job.standards.map((s) => (
+                <span key={s} className="inline-flex items-center h-6 px-2 rounded-md text-[11px] font-medium tracking-tight ring-1 bg-slate-50 text-slate-600 ring-slate-200">
+                  {s}
+                </span>
+              ))}
             </div>
           </div>
           <div className="flex flex-col items-center shrink-0">
@@ -212,37 +176,27 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
           </div>
         </div>
 
-        {/* function match + standards */}
-        <div className="mt-4 flex items-center gap-2.5 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 text-[11.5px] text-slate-600 tracking-tight bg-slate-50 ring-1 ring-slate-200 rounded-lg px-2.5 h-7">
-            <Icon name="layers" size={12} className="text-slate-400" />
-            <span className="font-medium text-slate-700">{job.jobFunction}</span>
-            <Icon name="arrowRight" size={11} className="text-slate-300" />
-            <span className="font-mono text-[10.5px] text-indigo-600">{job.project.code}</span>
-          </span>
-          {job.derivedStandards.map((s) => (
-            <span
-              key={s.label}
-              className={`inline-flex items-center gap-1 h-7 px-2 rounded-lg text-[11px] font-medium tracking-tight ring-1 ${STD_STATE[s.state]}`}
-            >
-              {s.state === "matched" && <Icon name="check" size={10} strokeWidth={3} />}
-              {s.label}
-            </span>
-          ))}
-        </div>
-
         {/* actions */}
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-4 flex items-center gap-2 flex-wrap">
           <a
-            href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(job.title)}`}
+            href={search("linkedin", job.title)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-indigo-600 text-white text-[12.5px] font-semibold tracking-tight no-underline hover:bg-indigo-700 transition-colors shadow-[0_4px_14px_-4px_rgba(79,70,229,0.6)]"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-indigo-600 text-white text-[12.5px] font-semibold tracking-tight no-underline hover:bg-indigo-700 transition-colors"
           >
-            Apply <Icon name="arrowUpRight" size={13} />
+            Find openings on LinkedIn <Icon name="arrowUpRight" size={13} />
+          </a>
+          <a
+            href={search("indeed", job.title)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white ring-1 ring-slate-200 text-slate-600 text-[12.5px] font-medium tracking-tight no-underline hover:bg-slate-50 transition-colors"
+          >
+            Indeed <Icon name="arrowUpRight" size={13} />
           </a>
           <button
             onClick={onToggleSave}
+            title="Saved on this browser only"
             className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-lg ring-1 text-[12.5px] font-medium tracking-tight transition-colors ${saved ? "bg-amber-50 ring-amber-200 text-amber-700" : "bg-white ring-slate-200 text-slate-600 hover:bg-slate-50"}`}
           >
             <Icon name="star" size={13} fill={saved ? "currentColor" : "none"} /> {saved ? "Saved" : "Save"}
@@ -251,7 +205,7 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
             onClick={() => setOpen((o) => !o)}
             className="ml-auto inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-[12.5px] font-medium tracking-tight text-slate-500 hover:text-indigo-600 transition-colors"
           >
-            {open ? "Hide match" : "Why you match"}
+            {open ? "Hide match" : "Why this match"}
             <Icon name="chevronDown" size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
           </button>
         </div>
@@ -260,25 +214,11 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
       {open && (
         <div className="px-5 pb-5 -mt-1">
           <div className="rounded-xl bg-slate-50/60 ring-1 ring-slate-200 p-4">
-            <div className="flex items-center gap-2.5 pb-3 mb-3 border-b border-slate-200">
-              <span className="w-8 h-8 rounded-lg bg-white ring-1 ring-slate-200 flex items-center justify-center text-indigo-600 shrink-0">
-                <Icon name="layers" size={15} />
-              </span>
-              <div className="min-w-0">
-                <div className="text-[12.5px] tracking-tight text-slate-700">
-                  <span className="font-semibold text-slate-900">{job.jobFunction}</span> maps to your method work
-                </div>
-                <div className="text-[11.5px] text-slate-500 tracking-tight">
-                  <span className="font-mono text-[10.5px] text-indigo-600">{job.project.code}</span> · {job.project.title}
-                </div>
-              </div>
-            </div>
-            <div className="text-[10px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-2.5">
-              Responsibilities matched to your work
-            </div>
+            <div className="text-[10px] font-semibold tracking-[0.12em] uppercase text-slate-500 mb-2.5">Typical duties, and the desk task that practises each</div>
             <div className="space-y-2.5">
               {job.derivedResponsibilities.map((r, i) => {
                 const rs = RESP[r.state];
+                const t = desk.tasks[r.task];
                 return (
                   <div key={i} className="flex items-start gap-2.5">
                     <span className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center ring-1 shrink-0 ${rs.cls}`}>
@@ -286,10 +226,10 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="text-[12.5px] text-slate-700 tracking-tight">{r.duty}</div>
-                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                        {r.verb && <DVerb verbId={r.verb} />}
-                        <span className="font-mono text-[10px] text-slate-500">{r.task}</span>
-                        <span className={`text-[10.5px] font-medium ${rs.tagcls}`}>· {rs.tag}</span>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap text-[11px]">
+                        <Link href={`/app/desk#${r.task}`} className="font-mono text-[10.5px] text-indigo-600 hover:underline">{r.task}</Link>
+                        {t && <span className="text-slate-500 truncate">{t.title}</span>}
+                        <span className={`font-medium ${rs.tagcls}`}>· {rs.tag}</span>
                       </div>
                     </div>
                   </div>
@@ -298,7 +238,7 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
             </div>
             <div className="mt-3 pt-3 border-t border-slate-200 flex items-center gap-2 text-[11.5px] text-slate-500">
               <Icon name="info" size={13} className="text-slate-400" />
-              {matchedCount} of {job.derivedResponsibilities.length} responsibilities backed by work you&apos;ve executed.
+              {backed} of {job.derivedResponsibilities.length} duties backed by a task you have submitted.
             </div>
           </div>
         </div>
@@ -308,31 +248,30 @@ function JobCard({ job, saved, onToggleSave }: { job: DerivedJob; saved: boolean
 }
 
 export default function JobsPage() {
-  const { data: learnings, loading } = useCachedQuery("learnings:grc101", () => learningsApi.get("grc101"));
+  const { user } = useAuth();
+  const { progress, status } = useProgress(user?.email ?? "");
+  const [desk, setDesk] = useState<Desk | null>(null);
+  useEffect(() => {
+    loadDesk().then(setDesk, () => {});
+  }, []);
   const { saved, toggle } = useSavedJobs();
 
   const [q, setQ] = useState("");
-  const [source, setSource] = useState<(typeof JOB_SOURCES)[number]>("All sources");
-  const [sort, setSort] = useState<"match" | "recent" | "saved">("match");
+  const [sort, setSort] = useState<"match" | "saved">("match");
 
-  const allJobs = useMemo(() => deriveJobs(learnings ?? null), [learnings]);
+  const allJobs = useMemo(() => deriveJobs(progress), [progress]);
+  const c = desk ? recordCounts(desk, progress) : null;
+  const totalTasks = c?.tasks ?? 0;
+  const submitted = c?.tasksSubmitted ?? 0;
 
   const jobs = useMemo(() => {
-    let list = allJobs.filter((j) => {
-      const srcOk = source === "All sources" || j.source === source;
-      const s = q.toLowerCase();
-      const qOk =
-        !q ||
-        [j.title, j.company, j.jobFunction, j.location, ...j.responsibilities.map((r) => r.duty)]
-          .join(" ")
-          .toLowerCase()
-          .includes(s);
-      return srcOk && qOk;
-    });
-    if (sort === "match") list = [...list].sort((a, b) => b.match - a.match);
-    else if (sort === "saved") list = [...list].filter((j) => saved.has(j.id)).sort((a, b) => b.match - a.match);
-    return list;
-  }, [allJobs, q, source, sort, saved]);
+    const s = q.toLowerCase();
+    let list = allJobs.filter(
+      (j) => !q || [j.title, j.jobFunction, ...j.responsibilities.map((r) => r.duty)].join(" ").toLowerCase().includes(s),
+    );
+    if (sort === "saved") list = list.filter((j) => saved.has(j.id));
+    return [...list].sort((a, b) => b.match - a.match);
+  }, [allJobs, q, sort, saved]);
 
   return (
     <div className="page-shell space-y-4">
@@ -343,17 +282,32 @@ export default function JobsPage() {
         <div>
           <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-slate-900">Matching jobs</h1>
           <p className="text-[13px] text-slate-500 tracking-tight mt-0.5 max-w-2xl" style={{ textWrap: "pretty" }}>
-            Roles from LinkedIn and remote-work platforms, matched to the projects, tasks and activities you&apos;ve executed in
-            GRC 101. Matches rise as you complete more tasks.
+            Common entry-level GRC roles, with the duties their job posts usually list, matched to the Working Desk tasks you have submitted.
+            These are role profiles, not vacancies: use the links on each to search live openings.
           </p>
         </div>
       </div>
 
-      {loading && !learnings ? (
-        <SkeletonCardGrid cards={6} />
+      {status !== "ready" || !desk ? (
+        status === "failed" ? (
+          <Card className="text-center py-12 text-[13px] text-slate-500">Couldn&apos;t load your desk work. Please try again.</Card>
+        ) : (
+          <SkeletonCardGrid cards={6} />
+        )
       ) : (
         <>
-          <JobsSummary jobs={allJobs} />
+          <JobsSummary jobs={allJobs} submitted={submitted} totalTasks={totalTasks} />
+
+          {submitted === 0 && (
+            <p className="flex items-start gap-2 rounded-xl bg-indigo-50/50 ring-1 ring-indigo-100 px-4 py-3 text-[12.5px] text-slate-600">
+              <Icon name="info" size={15} className="mt-0.5 shrink-0 text-indigo-500" />
+              <span>
+                Nothing submitted yet, so every match starts at 0. Open <strong className="text-slate-800">Why this match</strong> on a role to see which desk
+                tasks back its duties; each one you submit moves the match.{" "}
+                <Link href="/app/desk" className="font-medium text-indigo-600 hover:underline">Open the Working Desk</Link>
+              </span>
+            </p>
+          )}
 
           {/* filter / sort bar */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -362,7 +316,7 @@ export default function JobsPage() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search titles, companies, duties…"
+                placeholder="Search roles and duties…"
                 className="flex-1 bg-transparent outline-none text-[12.5px] text-slate-700 placeholder:text-slate-400"
               />
               {q && (
@@ -370,20 +324,6 @@ export default function JobsPage() {
                   <Icon name="x" size={14} />
                 </button>
               )}
-            </div>
-            <div className="relative">
-              <select
-                value={source}
-                onChange={(e) => setSource(e.target.value as (typeof JOB_SOURCES)[number])}
-                className="appearance-none h-9 pl-3 pr-8 rounded-lg bg-white ring-1 ring-slate-200 text-[12.5px] text-slate-700 outline-none cursor-pointer"
-              >
-                {JOB_SOURCES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              <Icon name="chevronDown" size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
             <div className="flex items-center gap-1 p-1 rounded-lg bg-slate-100/80 ring-1 ring-slate-200">
               {(
@@ -411,20 +351,18 @@ export default function JobsPage() {
                 <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 ring-1 ring-slate-200 flex items-center justify-center text-slate-400 mb-3">
                   <Icon name={sort === "saved" ? "star" : "search"} size={20} />
                 </div>
-                <div className="text-[13px] font-medium text-slate-700">
-                  {sort === "saved" ? "No saved roles yet" : "No matching roles"}
-                </div>
+                <div className="text-[13px] font-medium text-slate-700">{sort === "saved" ? "No saved roles yet" : "No matching roles"}</div>
                 <div className="text-[12px] text-slate-500 mt-0.5">
-                  {sort === "saved" ? "Star a role to keep it here." : "Try a different search or source."}
+                  {sort === "saved" ? "Star a role to keep it here. Saved roles stay on this browser only." : "Try a different search."}
                 </div>
               </Card>
             ) : (
-              jobs.map((j) => <JobCard key={j.id} job={j} saved={saved.has(j.id)} onToggleSave={() => toggle(j.id)} />)
+              jobs.map((j) => <JobCard key={j.id} job={j} desk={desk} saved={saved.has(j.id)} onToggleSave={() => toggle(j.id)} />)
             )}
           </div>
 
           <div className="text-center text-[11px] text-slate-500 pt-2 pb-4">
-            grcmentor · matches refresh as you complete more tasks · {allJobs.length} roles tracked
+            grcmentor · {allJobs.length} role profiles · matches move as you submit desk tasks · saved roles are kept on this browser only
           </div>
         </>
       )}

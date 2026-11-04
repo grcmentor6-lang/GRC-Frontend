@@ -256,7 +256,17 @@ def main(src: str) -> None:
     rework_t112(w)
     rework_t121(w)
     rework_t122(w)
+    # The pack's `anchor` line pairs a control with unrelated work ("A.5.7 Threat intelligence — verify backups"). Nothing
+    # reads it, and anything that did would make false claims (professional review, 3 Nov 2026): not shipped.
+    for t in w["tasks"].values():
+        t.pop("anchor", None)
     blob = json.dumps(w, ensure_ascii=False, separators=(",", ":"))
+    # T4.1 Q2 asked for password "rotation": current NIST guidance (SP 800-63B) says change on suspected compromise, not
+    # on a schedule (professional review, 3 Nov 2026). Every copy (panel, POL-GAP, Gap Finder, Review & Redline); the
+    # answer is unchanged, the policy still sets no password rules. registers.ts carries the same sentence.
+    old_q2 = "Password complexity, rotation and storage rules must be defined for systems that cannot use MFA/SSO."
+    assert blob.count(old_q2) >= 3, "T4.1: Q2's statement moved"
+    blob = blob.replace(old_q2, "Password length, storage and change rules (change on suspected compromise, not on a schedule) must be defined for systems that cannot use MFA/SSO.")
     assert "§" not in blob, "a section sign is left in the sample"
     assert '"best"' not in blob, "answer key leaked into the sample"
     # The keys' reasons are answers too: none may reach the browser (D5's "why" once did, unseen).
@@ -3718,12 +3728,19 @@ def rework_t31(w: dict) -> None:
               notice="That new client's security schedule has come through. Its two requirements are in Organization_Profiles as OBL-EXTRA, Section 3. The first held two duties, so with rule R10 that makes three rows, and they are on a second sheet of your OBL-REG, outside the 15-row extract. Each still needs its frequency, its evidence and its policy before you hand the file in.",
               steps=["Read the three rows in Organization_Profiles Section 3 (Policies › Policy Library).", "On OBL-REG's second sheet, fill each row's Evidence of compliance, Frequency / deadline and Linked BKB policy. Its owner role follows from the policy."])
 
+    # D4's option A: two Group sources disagree on a breach clock. A practitioner records both and works to the shorter
+    # until the owners resolve it; "the addendum governs" kept the looser 72 hours (professional review, 3 Nov 2026).
+    old_a, new_a = 'Both values and "Differs — addendum governs"', 'Both values, "Differs", and work to the shorter clock'
+    assert steps[6]["opt"][0] == old_a and steps[6]["w"].count(old_a) == 1, steps[6]["opt"]
+    steps[6]["opt"][0] = new_a
+    steps[6]["w"] = steps[6]["w"].replace(old_a, new_a)
+
     blob = json.dumps([t, w["notes"]["T3.1"], w["cards"]["T3.1"], j2, j3], ensure_ascii=False)
-    for bad in ("Programme office", "inject T3.1-J1", "not only laws", "instead of hiding it", "01_Inputs lists"):
+    for bad in ("Programme office", "inject T3.1-J1", "not only laws", "instead of hiding it", "01_Inputs lists", "addendum governs"):
         assert bad not in blob, f"T3.1 still says {bad!r}"
     # Nothing read before D2 and D4 may name their answers.
     seen = json.dumps([t["card"], t["krs"], w["cards"]["T3.1"], steps[3]["w"], steps[3]["help"], steps[6]["w"], steps[6]["help"]], ensure_ascii=False)
-    assert not re.search(r"contract rows|contract obligations|Differs — addendum governs|differences noted", seen.replace('Both values and \\"Differs — addendum governs\\"', "")), "T3.1: a decision is answered before it is asked"
+    assert not re.search(r"contract rows|contract obligations|work to the shorter|differences noted", seen.replace('Both values, \\"Differs\\", and work to the shorter clock', "")), "T3.1: a decision is answered before it is asked"
 
 
 def rework_t32(w: dict) -> None:
@@ -5188,6 +5205,19 @@ def rework_t92(w: dict) -> None:
     soc = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "soc-t92.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
 
+    # R28: a qualified opinion is not an automatic reject. A practitioner reads what the qualification covers: a control we
+    # rely on (CC6/CC7, as S6 names them) with no fix the auditor has tested rejects; anything else is escalated as a
+    # condition (professional review, 3 Nov 2026). Lumen's is CC7.2 with only management's own fix, so it still rejects.
+    old_r = "Reject if S4 (qualified opinion) or S9 (service not in scope)."
+    new_r = ("Reject if S9 (service not in scope), or if S4 (qualified opinion) covers a relevant control (CC6 or CC7) and no remediation has "
+             "been tested by the auditor. A qualified opinion outside CC6 and CC7 needs a condition: escalate it to the CISO.")
+    assert old_r in w["rules"]["R28"][1], w["rules"]["R28"]
+    w["rules"]["R28"][1] = w["rules"]["R28"][1].replace(old_r, new_r)
+    for table in (w["tp"]["learn|Rule tables"]["pl"]["r"], w["pages"]["Ref-Rules"]["r"]):
+        row = next(r for r in table if r[0] == "R28")
+        assert old_r in row[2], row
+        row[2] = row[2].replace(old_r, new_r)
+
     def helped(n: int, new: str) -> None:
         steps[n - 1]["help"] = notes[n][2] = new
 
@@ -5414,7 +5444,7 @@ def rework_t102(w: dict) -> None:
             ["NIS2 (Cyberbeveiligingswet)", "Not yet in force", "Amsterdam, Netherlands"],
             ["US state breach laws", "In force", "New York, United States"],
             ["SEC 8-K Item 1.05", "In force: registrants", "New York, United States"],
-            ["DPDP Act 2023", "In force in phases", "Mumbai, India"],
+            ["DPDP Act 2023", "In force in phases: breach duty from ~May 2027", "Mumbai, India"],
             ["CERT-In Directions", "In force", "Mumbai, India"],
         ], "note": "Status as last checked by the Group GRC Office. Which regimes apply to an incident is decided with BKB-POL-014 Section 6.3; legal interpretations go to the DPO."}}
 

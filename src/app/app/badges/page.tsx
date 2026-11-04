@@ -8,13 +8,13 @@ import { ExtendAccessCard } from "@/components/app/extend-access-card";
 import { MethodMedal } from "@/components/badges/method-medal";
 import { loadDesk, type Desk } from "@/lib/desk/model";
 import { useProgress, type Progress } from "@/lib/desk/progress";
+import { useTaskScores } from "@/lib/desk-record";
 import { BADGES, CAPSTONE, DIST_AVG, DIST_MIN, NO_BADGE, PASS, capstoneStanding, criteriaText, standing, type BadgeStanding, type BadgeState, type MethodBadge } from "@/lib/desk/badges";
 
 /**
  * Badges — the GRC 101 method badges (pack v1.9.0): one per family of GRC work methods the mentee
- * practises on graded deliverables, plus the capstone. Read from the Working Desk's progress;
- * earning needs released task scores, which the desk does not have yet, so a badge whose tasks are
- * submitted shows "awaiting scores" rather than claiming to be earned.
+ * practises on graded deliverables, plus the capstone. Read from the Working Desk's progress and the
+ * task scores the server releases at submission (GET /me/record: each pick re-checked against its key).
  */
 export default function BadgesPage() {
   const { user } = useAuth();
@@ -37,38 +37,57 @@ function Pill({ s }: { s: BadgeState }) {
   return <span className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-[3px] border px-1.5 py-0.5 text-[11.5px] font-semibold ${STATE[s].cls}`}>{STATE[s].l}</span>;
 }
 
-/** A task on a badge: green once submitted, opening the task on the Working Desk. */
-function TaskChip({ id, desk, p, muted }: { id: string; desk: Desk; p: Progress; muted?: boolean }) {
+/** A task on a badge: green once submitted, with its released score, opening the task on the Working Desk. */
+function TaskChip({ id, desk, p, muted, score }: { id: string; desk: Desk; p: Progress; muted?: boolean; score?: number }) {
   const done = !!p.submitted[id];
   return (
     <Link
       href={`/app/desk#${id}`}
-      title={`${id} ${desk.tasks[id]?.title ?? ""}${done ? " · submitted" : ""}`}
+      title={`${id} ${desk.tasks[id]?.title ?? ""}${done ? ` · submitted${score !== undefined ? ` · score ${score}` : ""}` : ""}`}
       className={`inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-0.5 font-mono text-[11.5px] font-semibold no-underline focus-ring ${
         done ? "border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]" : muted ? "border-[#E9ECF1] bg-white text-[#8A91A3] hover:border-[#C9CED8]" : "border-[#DDE1E8] bg-white text-[#111827] hover:border-[#C9CED8]"
       }`}
     >
       {done && <Icon name="check" size={11} strokeWidth={3} />}
       {id}
+      {done && score !== undefined && <span className="font-normal tabular-nums">· {score}</span>}
     </Link>
   );
 }
 
-/** "2 of 3 tasks submitted · awaiting scores" — what stands between the mentee and the badge. */
+/** "2 of 3 tasks submitted" — what stands between the mentee and the badge. */
 function where(g: BadgeStanding) {
   if (g.state === "earned" || g.state === "distinction") return `Average ${Math.round(g.average ?? 0)}`;
-  if (g.submitted === g.total) return `All ${g.total} submitted · awaiting released scores`;
+  if (g.submitted === g.total && g.scored < g.total) return `All ${g.total} submitted · a task has no released score`;
+  if (g.submitted === g.total) return `All ${g.total} submitted · a task scored below ${PASS}`;
   return `${g.submitted} of ${g.total} task${g.total === 1 ? "" : "s"} submitted`;
 }
 
 function Badges({ desk, who }: { desk: Desk; who: string }) {
-  const { progress: p } = useProgress(who);
-  const rows = BADGES.map((b) => ({ b, g: standing(b, p) }));
-  const cap = capstoneStanding(p);
+  const { progress: p, status, retry } = useProgress(who);
+  const scores = useTaskScores();
+  // Until the server copy is read, `p` is the empty record: showing it would tell a mentee with
+  // real work that they have not started.
+  if (status === "failed")
+    return (
+      <div className="page-shell">
+        <p className="rounded-md border border-[#DDE1E8] bg-white px-4 py-3 text-[13.5px] text-[#5B6474]">
+          Your badges could not be loaded.{" "}
+          <button type="button" onClick={() => retry()} className="font-semibold text-[#4338CA] hover:underline focus-ring">Try again</button>
+        </p>
+      </div>
+    );
+  if (status !== "ready" || !scores) return <div className="page-shell"><div className="h-64 animate-pulse rounded-md bg-slate-100" aria-busy="true" /></div>;
+  return <BadgesBody desk={desk} p={p} scores={scores} />;
+}
+
+function BadgesBody({ desk, p, scores }: { desk: Desk; p: Progress; scores: Record<string, number> }) {
+  const rows = BADGES.map((b) => ({ b, g: standing(b, p, scores) }));
+  const cap = capstoneStanding(p, scores);
   const earned = rows.filter((r) => r.g.state === "earned" || r.g.state === "distinction").length;
   const dist = rows.filter((r) => r.g.state === "distinction").length;
-  const tasks = BADGES.flatMap((b) => b.earn);
-  const submitted = tasks.filter((t) => p.submitted[t]).length;
+  // Same count and wording as /app/submissions: every desk task, done = submitted.
+  const submitted = desk.order.filter((t) => p.submitted[t]).length;
 
   return (
     <div className="page-shell space-y-4">
@@ -76,8 +95,8 @@ function Badges({ desk, who }: { desk: Desk; who: string }) {
         <div>
           <h1 className="text-[22px] font-bold tracking-[-0.01em] text-[#111827]">Badges</h1>
           <p className="max-w-3xl text-[13.5px] text-[#5B6474]">
-            One badge for each family of GRC work methods you practise on graded deliverables, and a capstone for holding all of them. Issued by the Group GRC Office
-            with your submissions attached as evidence.
+            One badge for each family of GRC work methods you practise on graded deliverables, and a capstone for holding all of them. A badge is worked out from
+            the tasks you submit on the Working Desk and their released scores; nothing here is awarded by hand.
           </p>
         </div>
         <Link href="/app/desk" className="inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white no-underline hover:brightness-90 focus-ring">
@@ -89,7 +108,7 @@ function Badges({ desk, who }: { desk: Desk; who: string }) {
         {[
           ["Method badges earned", `${earned} / ${BADGES.length}`],
           ["With distinction", String(dist)],
-          ["Badge tasks submitted", `${submitted} / ${tasks.length}`],
+          ["Tasks submitted", `${submitted} / ${desk.order.length}`],
           ["Method Portfolio", cap.state === "earned" ? "Earned" : `${earned} / ${BADGES.length}`],
         ].map(([k, v], i) => (
           <div key={k} className={`border-[#DDE1E8] px-4 py-3 ${i % 2 === 0 ? "border-r" : "lg:border-r"} ${i < 2 ? "max-lg:border-b" : ""} last:border-r-0`}>
@@ -103,8 +122,9 @@ function Badges({ desk, who }: { desk: Desk; who: string }) {
         <Icon name="info" size={15} className="mt-0.5 shrink-0 text-[#4338CA]" />
         <span>
           <strong className="text-[#111827]">How a badge is earned:</strong> every task that earns it is submitted and its released score is at least {PASS}.{" "}
-          <strong className="text-[#111827]">With distinction:</strong> the average is at least {DIST_AVG} and no task is below {DIST_MIN}. Scores are released after the
-          review of each task; until then a badge whose tasks you have submitted shows as awaiting scores.
+          <strong className="text-[#111827]">With distinction:</strong> the average is at least {DIST_AVG} and no task is below {DIST_MIN}.{" "}
+          <strong className="text-[#111827]">A task&rsquo;s score</strong> is released when you submit it: the share of its decisions, Inbox replies and checked rows
+          that match the answer key, out of 100.
         </span>
       </p>
 
@@ -133,7 +153,7 @@ function Badges({ desk, who }: { desk: Desk; who: string }) {
 
       <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,460px),1fr))]">
         {rows.map(({ b, g }) => (
-          <BadgeCard key={b.code} b={b} g={g} desk={desk} p={p} />
+          <BadgeCard key={b.code} b={b} g={g} desk={desk} p={p} scores={scores} />
         ))}
       </div>
 
@@ -158,7 +178,7 @@ function Badges({ desk, who }: { desk: Desk; who: string }) {
   );
 }
 
-function BadgeCard({ b, g, desk, p }: { b: MethodBadge; g: BadgeStanding; desk: Desk; p: Progress }) {
+function BadgeCard({ b, g, desk, p, scores }: { b: MethodBadge; g: BadgeStanding; desk: Desk; p: Progress; scores: Record<string, number> }) {
   return (
     <article id={b.code} className="flex scroll-mt-4 gap-4 rounded-md border border-[#DDE1E8] bg-white p-4">
       <div className="shrink-0">
@@ -177,7 +197,7 @@ function BadgeCard({ b, g, desk, p }: { b: MethodBadge; g: BadgeStanding; desk: 
         <div className="grid gap-1.5 text-[12px]">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="w-[108px] shrink-0 font-semibold text-[#3F4757]">Earned by</span>
-            {b.earn.map((t) => <TaskChip key={t} id={t} desk={desk} p={p} />)}
+            {b.earn.map((t) => <TaskChip key={t} id={t} desk={desk} p={p} score={scores[t]} />)}
           </div>
           {b.support.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">

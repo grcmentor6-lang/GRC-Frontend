@@ -82,9 +82,9 @@ export interface BadgeStanding {
 }
 
 /**
- * Where a badge stands. Earning needs released task scores; the desk does not score tasks yet, so
- * `scores` is empty and a badge can at most be "in progress" — its tasks submitted, awaiting scores.
- * ponytail: pass the released scores once grading returns them (taskId → 0–100); nothing else changes.
+ * Where a badge stands, from the released task scores (taskId → 0–100, GET /me/record: released at
+ * submission, each pick re-checked against its key on the server). Without scores a badge is at most
+ * "in progress".
  */
 export function standing(b: MethodBadge, p: Progress, scores: Record<string, number> = {}): BadgeStanding {
   const total = b.earn.length;

@@ -25,7 +25,7 @@ function ShareMenu({ cv }: { cv: Cv }) {
   };
   const emailEmployer = () => {
     const subject = encodeURIComponent(`${cv.profile.name} — GRC CV`);
-    const body = encodeURIComponent(`${cv.profile.name} — verified GRC fieldwork on grcmentor.\n\nView the live CV: ${publicUrl}`);
+    const body = encodeURIComponent(`${cv.profile.name} — GRC fieldwork (simulated engagements) on grcmentor.\n\nView the live CV: ${publicUrl}`);
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
     setOpen(false);
   };
@@ -108,7 +108,7 @@ export default function CvPage() {
       ) : cv ? (
         <>
           <CvSheet cv={cv} methodBadges={methodBadges} />
-          <div className="text-center text-[11px] text-slate-400 pt-4 pb-2 cv-noprint">Updates automatically as you complete mentor-graded activities.</div>
+          <div className="text-center text-[11px] text-slate-400 pt-4 pb-2 cv-noprint">Updates automatically from your Working Desk. The public link leaves out your email.</div>
         </>
       ) : (
         <div className="text-center text-[13px] text-slate-400 py-24">Couldn&apos;t load your CV. Please try again.</div>

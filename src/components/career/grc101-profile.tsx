@@ -29,9 +29,13 @@ const STATE: Record<State, { l: string; icon: IconName; cls: string }> = {
   developing: { l: "Developing", icon: "play", cls: "bg-indigo-50 text-indigo-600 ring-indigo-100" },
   upcoming: { l: "Upcoming", icon: "minus", cls: "bg-slate-50 text-slate-300 ring-slate-200" },
 };
-/** Where a set of desk work stands: acquired when all of it is done, developing once any has begun. */
+/** A task counts once submitted (the definition every record page shares); a Lead Implementer extension,
+ *  which has no submit, once all its steps are done. */
+const counted = (desk: Desk, p: Progress, id: string) => (id.startsWith("LI-") ? itemDone(desk, p, id) : !!p.submitted[id]);
+
+/** Where a set of desk work stands: acquired when all of it is submitted, developing once any step is done. */
 function stateOf(desk: Desk, p: Progress, ids: string[]): { s: State; done: number; total: number } {
-  const done = ids.filter((id) => itemDone(desk, p, id)).length;
+  const done = ids.filter((id) => counted(desk, p, id)).length;
   const begun = ids.some((id) => itemProgress(desk, p, id).done > 0);
   return { s: ids.length && done === ids.length ? "acquired" : begun ? "developing" : "upcoming", done, total: ids.length };
 }
@@ -53,7 +57,7 @@ function Chips({ ids, desk, p }: { ids: string[]; desk: Desk; p: Progress }) {
     <span className="mt-1 flex flex-wrap gap-1">
       {ids.map((id) => {
         const href = itemHref(desk, id);
-        const done = itemDone(desk, p, id);
+        const done = counted(desk, p, id);
         const cls = `rounded-[3px] border px-1.5 py-px font-mono text-[10.5px] font-semibold no-underline ${done ? "border-emerald-200 bg-emerald-50 text-emerald-700" : id.startsWith("LI-") ? "border-indigo-100 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-600"}`;
         return href ? <Link key={id} href={href} className={`${cls} hover:border-slate-300 focus-ring`}>{id}</Link> : <span key={id} className={cls}>{id}</span>;
       })}
@@ -92,7 +96,7 @@ function Profile({ desk, who, onProgress }: { desk: Desk; who: string; onProgres
       <div className="space-y-5 xl:col-span-2">
         <Card>
           <Head icon="bolt" action={<span className="text-[11px] font-medium text-slate-400">{acquired} of {domains.length} acquired</span>}>Skills acquired</Head>
-          <p className="-mt-1.5 mb-3 text-[12px] text-slate-500">The GRC 101 competency domains. A domain is acquired when every task that practises it is done.</p>
+          <p className="-mt-1.5 mb-3 text-[12px] text-slate-500">The GRC 101 competency domains. A domain is acquired when every task that practises it is submitted.</p>
           <div className="divide-y divide-slate-100">
             {domains.map((d) => {
               const g = stateOf(desk, p, d.ids);
@@ -109,7 +113,7 @@ function Profile({ desk, who, onProgress }: { desk: Desk; who: string; onProgres
                   </div>
                   <span className="shrink-0 text-right text-[11px] font-semibold text-slate-500">
                     {x.l}
-                    <span className="block font-mono font-normal tabular-nums text-slate-400">{g.done}/{g.total} tasks</span>
+                    <span className="block font-mono font-normal tabular-nums text-slate-400">{g.done}/{g.total} submitted</span>
                   </span>
                 </div>
               );

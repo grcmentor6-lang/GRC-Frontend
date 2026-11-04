@@ -32,89 +32,76 @@ function steps(showNav: () => void, goto: (href: string) => void): TourStep[] {
   return [
     {
       title: "Welcome — here's how this works",
-      body: "You're joining a simulated company as its GRC practitioner. Two minutes now and you'll know where everything lives. Use Next, or Skip if you'd rather explore.",
+      body: "You're joining a simulated Group GRC Office for 12 weeks, working two organisations. Two minutes now and you'll know where everything lives. Use Next, or Skip if you'd rather explore.",
       icon: "sparkle",
       getEl: () => null, // no target — the card floats, page dimmed
     },
     {
       title: "Your dashboard",
-      body: "Start every session here. It's the first item in the nav, and it's where your progress, your scores and your next move all live.",
+      body: "Start every session here. It shows your next step on the Working Desk and how far through the desk you are.",
       icon: "home",
       ...nav("nav-dashboard"),
     },
     {
-      title: "Your next move, always on top",
-      body: "This banner points at the exact task and step to continue, with your enrolment status and certificate progress beside it. Continue jumps straight into the Working Desk.",
+      title: "Your next step, always on top",
+      body: "This banner names the exact task and step to do next and opens the desk on it. On your first day it sends you to pick your start date: every due date counts from that day.",
       icon: "play",
       ...dash("dash-hero"),
     },
     {
       title: "Your numbers at a glance",
-      body: "Activities completed, your average mentor score, and anything due soon — a quick read on where you stand this track.",
+      body: "Steps done, decisions made, and your next task due date, all counted from the work saved to your account.",
       icon: "checkSquare",
       optional: true, // a locked track shows a preview instead
       ...dash("dash-stats"),
     },
     {
       title: "Your organisations",
-      body: "Each card is a simulated enterprise engagement. Open one and you land in the Working Desk, on that organisation's context page.",
+      body: "The two organisations you work for. Click one for its full profile: offices, standards and what binds it.",
       icon: "briefcase",
       optional: true,
       ...dash("dash-orgs"),
     },
     {
-      title: "Standards you're covering",
-      body: "The GRC frameworks behind your tasks. Use the tabs to move across every framework in the track — each opens its own panel showing the tasks and activities it drives.",
-      icon: "shield",
-      optional: true,
-      ...dash("dash-standards"),
-    },
-    {
-      title: "Track your growth",
-      body: "Your skill rubric radar and progress bars fill in as the mentor grades your work. Come back here to watch badges and scores climb.",
+      title: "Track your progress",
+      body: "Method badges, tasks submitted and steps done fill in as you work on the desk.",
       icon: "star",
       optional: true,
       ...dash("dash-grid"),
     },
     {
       title: "The Working Desk — where you actually work",
-      body: "Your engagement nests: organisation → project → task → activity. Read the brief → read the reference documents → fill in the workspace → submit → act on the feedback. Every activity runs that same loop, and the desk has its own walkthrough when you get there.",
+      body: "Twelve weeks, a few tasks each, every task a list of steps. Each step names the screen to open from the toolbar at the bottom; an orange dot marks where to go. The desk has its own walkthrough, and \"Show me how\" replays a step's guide.",
       icon: "desk",
       ...nav("nav-desk"),
     },
     {
       title: "Read the documents. That's the job.",
-      body: "Each task hands you real source material — intake notes, a classification scheme, a standard extract. The facts you need are only in there. Answers written from general knowledge instead of the documents are the single most common reason work comes back.",
+      body: "Policies, registers and the organisation's own records hold the facts each step needs. Decisions are checked the moment you answer and tell you why each option is right or wrong.",
       icon: "book",
       ...nav("nav-desk"),
     },
     {
-      title: "Your engagements and deliverables",
-      body: "My Learnings is the full tree — every organisation you've worked, its projects, tasks and the artefacts you produced. Earlier work is reference material for later tasks, so it stays available.",
-      icon: "layers",
-      ...nav("nav-learnings"),
+      title: "Everything you submitted",
+      body: "My Submissions lists every task and step you have completed on the desk, week by week.",
+      icon: "inbox",
+      ...nav("nav-submissions"),
     },
     {
-      title: "Everything below compiles itself",
-      body: "Badges, your certificate, your CV, career tools, reports and matched jobs are all generated from graded work. You never write them by hand — finish tasks and they fill in.",
+      title: "What your work turns into",
+      body: "Badges, your certificate, CV, career tools, reports and matched jobs are built from your desk work. You never write them by hand.",
       icon: "trophy",
       ...nav("nav"),
     },
     {
-      title: "How your work is graded",
-      body: "Mechanical checks first — mandatory fields, owners named as roles not departments, arithmetic that re-computes. Pass those and an AI mentor scores the substance on five rubric dimensions, with Socratic feedback. Write decision + the rule you applied + who owns what happens next, and you'll score well.",
-      icon: "bullseye",
-      ...nav("nav-reports"),
-    },
-    {
       title: "What's due, and your account",
-      body: "The clock shows what's on you right now — overdue stages, revisions still outstanding, and anything due in the next week. Profile, password and billing sit under your avatar — along with a link back to this guide.",
+      body: "The bell shows desk tasks due in the next week and anything overdue. Profile and password sit under your avatar, with a link back to this guide.",
       icon: "clock",
       getEl: tag("bell"),
     },
     {
       title: "The full written guide lives here",
-      body: "Worth ten minutes before you start: it walks your actual first task end to end, and shows weak vs strong answers side by side so you know what good looks like. Come back to it whenever something's unclear.",
+      body: "Worth ten minutes before you start: how the desk works, how your work is checked, and what to do on your first day.",
       icon: "help",
       ...nav("nav-guide"),
     },
@@ -133,7 +120,7 @@ export function WelcomeTour({ openNav }: { openNav: () => void }) {
     if (window.matchMedia("(max-width: 767px)").matches) openNav();
   }, [openNav]);
 
-  // replace, not push: a fourteen-step guide shouldn't bury the mentee's real history.
+  // replace, not push: a twelve-step guide shouldn't bury the mentee's real history.
   const goto = useCallback((href: string) => {
     if (window.location.pathname !== href) router.replace(href);
   }, [router]);

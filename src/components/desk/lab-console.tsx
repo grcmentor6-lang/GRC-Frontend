@@ -8,6 +8,7 @@ import { GuidedTour, markTourSeen, useTourOnce, type TourStep } from "@/componen
 import { useDesk } from "./desk-context";
 import { FloatWindow } from "./float-window";
 import { allCaptures, deleteCapture, keptFor, labFindings, partRows, type Lab, type LabCapture, type LabPart, type LabRef, type LabRow, type LabState } from "@/lib/desk/labs";
+import { deepMap, toLearner } from "@/lib/desk/names";
 
 const BLANK = "(blank)";
 const NONE: LabState = { parts: {} };
@@ -41,7 +42,8 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
   useEffect(() => {
     fetch(`/desk/labs/${ref.id}.json`, { cache: "no-cache" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((l: Lab) => {
+      .then((raw: Lab) => {
+        const l = deepMap(raw, toLearner); // in the learner's names (lib/desk/names.ts)
         setLab(l);
         setViewKey(l.views[0].key);
       })

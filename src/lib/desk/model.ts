@@ -5,6 +5,7 @@
  * scripts/build-desk-sample.py. Phase 1 swaps the fetch for the backend's /me/desk, which runs the
  * engine per mentee and keeps answer keys server-side. Nothing else here changes.
  */
+import { CANONICAL, deepMap, deskIdentityNow, swapper, type DeskIdentity } from "./names";
 
 export type Table = { h: string[]; r: string[][] };
 export type StepKind = "do" | "pick" | "each";
@@ -42,7 +43,6 @@ export interface Task {
   rev: string;
   subs: { code: string; name: string; fmt: string }[];
   refs: string[];
-  anchor: string;
   card: Record<string, string | string[]>;
   meta: { stage: string; thread: string; domains: string[]; builds: string[]; feeds: string[]; sec: string; tool: string; template: string; record: string };
   panel: { tool: string; stamp: string; kind: string; pl: Partial<Table> };
@@ -117,6 +117,8 @@ export interface Desk {
 }
 
 let cached: Promise<Desk> | null = null;
+// The desk in the learner's names (lib/desk/names.ts), copied once per identity; the canonical one is the file itself.
+let shown: { who: DeskIdentity; desk: Promise<Desk> } | null = null;
 export function loadDesk(): Promise<Desk> {
   // "no-cache": revalidate with the server on every load, so a rebuilt sample.json reaches testers at
   // once instead of an old copy the browser kept (the file is not fingerprinted). Still a 304 when unchanged.
@@ -124,7 +126,10 @@ export function loadDesk(): Promise<Desk> {
     if (!r.ok) throw new Error(`Desk content failed to load (${r.status})`);
     return r.json();
   });
-  return cached;
+  const who = deskIdentityNow();
+  if (who === CANONICAL) return cached;
+  if (shown?.who !== who) shown = { who, desk: cached.then((d) => deepMap(d, swapper(CANONICAL, who))) };
+  return shown.desk;
 }
 
 /** The eight questions, in the order the mentee meets them: what, how, why, then the rest.

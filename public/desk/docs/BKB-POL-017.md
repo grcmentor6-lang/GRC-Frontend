@@ -46,7 +46,7 @@ DPIAs are mandatory for high-risk processing, including children's data and AI (
 
 Data-subject requests are answered within the shortest deadline that applies to the person (procedure Section 6.1): one month under GDPR, 30 days under KVKK, 10 days under PIPA.
 
-Personal data leaves the country of the office that holds it only under the cross-border transfer mechanism that the organisation addendum's Section 2 names for that office: the office the data leaves, not the office that receives it. Where that cell names a chapter of a law rather than a safeguard, the addendum says how the safeguard is found. A transfer is any movement of personal data out of that country, including when people in another country view it or download it remotely.
+Personal data leaves the country of the office that holds it only under the cross-border transfer mechanism that the organisation addendum's Section 2 names for that office: the office the data leaves, not the office that receives it. Where that cell names a chapter of a law rather than a safeguard, the addendum says how the safeguard is found. A transfer is any movement of personal data out of that country to another company, including when that company's people in another country view it or download it remotely. Each Group office abroad is its own Group company, so it is a recipient; an employee of the same company travelling or working abroad is not.
 
 Children's data is processed only with verifiable parental consent where the law requires it (COPPA 312.5, GDPR Art.8, KVKK).
 

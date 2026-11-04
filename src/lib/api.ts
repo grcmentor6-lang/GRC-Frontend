@@ -9,6 +9,9 @@
  */
 import { camelToSnake, snakeToCamel } from "./case";
 import { getAccessToken } from "./token";
+import { deepMap, toCanon, toLearner } from "./desk/names";
+
+const DESK_CHECKS = /^\/me\/desk\/(decision|rows|message|lab)(\?|$)/;
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
@@ -130,6 +133,10 @@ async function request<T>(
   body?: unknown,
   opts: RequestOptions = {},
 ): Promise<T> {
+  // The learner's desk shows their own organisation names and mentee ID; the server's keys use the canonical ones
+  // (lib/desk/names.ts). Only the checking endpoints carry names: picks out in canonical, feedback back in theirs.
+  const named = DESK_CHECKS.test(path);
+  if (named) body = deepMap(body, toCanon);
   let res = await rawRequest(method, path, body, opts);
 
   // FastAPI's HTTPBearer returns 403 when the header is missing and 401 when a token is
@@ -147,7 +154,7 @@ async function request<T>(
     throw new ApiError(res.status, extractErrorMessage(parsed, res), parsed);
   }
 
-  return parsed as T;
+  return (named ? deepMap(parsed, toLearner) : parsed) as T;
 }
 
 export const api = {

@@ -1,5 +1,6 @@
 import type { TourStep } from "@/components/app/guided-tour";
 import { docTable } from "@/lib/desk/docs";
+import { localizable, toLearner } from "@/lib/desk/names";
 
 /**
  * Walk-throughs for steps, shown in the step's modal the first time it opens (and again from
@@ -89,6 +90,8 @@ const openFromHome = (screen: string, window: string, tagged: string): TourStep[
     body: "Platform screens open from the toolbar at the bottom of the page.",
     getEl: () => $('[data-guide-section="home"]'),
     waitFor: () => !!$('[data-guide-menu="home"]'),
+    // The step opens its menu by itself (toolbar.tsx): already open, the click is done.
+    skip: () => !!$('[data-guide-menu="home"]'),
     doIt: "Click Home",
   },
   {
@@ -144,6 +147,7 @@ const openAddendum = (n: number): TourStep[] => [
     body: "Policies carries the dot: BKB-ADD-16 is in its Policy Library.",
     getEl: () => $('[data-guide-section="policies"]'),
     waitFor: () => !!$('[data-guide-menu="policies"]'),
+    skip: () => !!$('[data-guide-menu="policies"]'),
     doIt: "Click Policies",
   },
   {
@@ -210,7 +214,7 @@ const stdSec = (sec: string) => ({
 /** A field of CLS-RES table 2 by its label ("Tier 3"). */
 const clsField = (label: string) => $(`[data-guide="brief-section"] input[aria-label="${label}"]`);
 /** The label chosen for a sample item of CLS-RES table 1. */
-const labelCell = (row: number) => famCell("GlobalConnect label", row) as HTMLSelectElement | null;
+const labelCell = (row: number) => famCell(toLearner("GlobalConnect label"), row) as HTMLSelectElement | null;
 /** The R05 check of a CLS-RES row (A-03 is row 3). */
 const r05 = (row: number) => famCell("Personal data or credentials? (R05)", row) as HTMLSelectElement | null;
 
@@ -223,6 +227,7 @@ const openDefectCodes = (n: number): TourStep[] => [
     body: "Evidence carries the dot: Defect Codes is in its menu, tagged with this step.",
     getEl: () => $('[data-guide-section="evidence"]'),
     waitFor: () => !!$('[data-guide-menu="evidence"]'),
+    skip: () => !!$('[data-guide-menu="evidence"]'),
     doIt: "Click Evidence",
   },
   {
@@ -255,6 +260,7 @@ const openLearn = (screen: string, what: string, win: string): TourStep[] => [
     body: `Learn carries the dot: ${screen} is in its menu, tagged with this step.`,
     getEl: () => $('[data-guide-section="learn"]'),
     waitFor: () => !!$('[data-guide-menu="learn"]'),
+    skip: () => !!$('[data-guide-menu="learn"]'),
     doIt: "Click Learn",
   },
   {
@@ -307,6 +313,7 @@ const openScreen = (sec: string, label: string, screen: string, what: string, wi
     body: `${label} carries the dot: ${screen} is in its menu, tagged with this step.`,
     getEl: () => $(`[data-guide-section="${sec}"]`),
     waitFor: () => !!$(`[data-guide-menu="${sec}"]`),
+    skip: () => !!$(`[data-guide-menu="${sec}"]`),
     doIt: `Click ${label}`,
   },
   {
@@ -739,6 +746,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "An orange dot in the toolbar marks a place this step uses. Learn has one: it holds the Framework Quick Reference, which says what kind of instrument each standard is.",
       getEl: () => $('[data-guide-section="learn"]'),
       waitFor: () => !!$('[data-guide-menu="learn"]'),
+      skip: () => !!$('[data-guide-menu="learn"]'),
       doIt: "Click Learn",
     },
     {
@@ -802,6 +810,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "Policies carries the dot: BKB-ADD-16 is in its Policy Library.",
       getEl: () => $('[data-guide-section="policies"]'),
       waitFor: () => !!$('[data-guide-menu="policies"]'),
+      skip: () => !!$('[data-guide-menu="policies"]'),
       doIt: "Click Policies",
     },
     {
@@ -6288,7 +6297,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Each deadline",
       icon: "table",
-      body: "At work, each regime's clock is turned into a date and a time in UTC, so that offices in four time zones work to the same moment, and the plan works to the earliest firm one. The rows are the regimes step 3 found to apply.",
+      body: "At work, each regime's clock is turned into a date and a time in UTC, so that offices in four time zones work to the same moment, and the plan works to the earliest firm one. The rows are the regimes step 3 found to apply; one that applies only if a condition is met has no date yet, because its clock starts when the condition is met.",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
     ...openLib(4, "BKB-POL-014", "The incident policy", POL014_WINDOW),
@@ -7657,3 +7666,28 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     ...nameAndSubmit("docx", "9 to 11"),
   ],
 };
+
+/**
+ * Every decision guide, once: its question can be answered at any card that lights it (the first card lights the
+ * whole question, and the hole stays live), or before the guide runs at all (Show me how on an answered step).
+ * - Each card from the second up to and including "Pick and check" leads to the answer (open the source, read it, pick): once the
+ *   answer is checked they pass by, rather than send the learner to read for a choice that is locked.
+ * - "Finish here" passes by once the step is complete (its button is gone; the card pointed at nothing).
+ * Checked is the question's lock (its fieldset disabled), not its feedback, which arrives a moment later.
+ */
+const PICK_DOIT = "Pick an option and click Check my answer";
+for (const [k, cards] of Object.entries(STEP_GUIDES)) {
+  const at = cards.findIndex((c) => c.doIt === PICK_DOIT);
+  if (at < 0) continue;
+  const n = k.match(/-(\d+)q?$/)![1];
+  const checked = () => !!($(`#act-${n} fieldset[data-guide="decision"]`) as HTMLFieldSetElement | null)?.disabled;
+  STEP_GUIDES[k] = cards.map((c, i) => {
+    if (i === at) return { ...c, skip: checked };
+    if (i > 0 && i < at) return { ...c, skip: () => checked() || !!c.skip?.() };
+    if (i > at && c.title === "Finish here") return { ...c, skip: () => !$(`#act-${n} [data-guide="step-complete"]`) };
+    return c;
+  });
+}
+
+// In the learner's organisation names (lib/desk/names.ts).
+localizable(STEP_GUIDES);

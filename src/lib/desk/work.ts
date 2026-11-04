@@ -1,8 +1,9 @@
 import { isFillCell, rmfTable, workKind, type Desk, type Step, type Task } from "./model";
 import { ATTEST, RMF, attestDone, fileExts, fileNameOk, openBefore, rmfAt, rmfExpected, rmfFilled, rmfGiven, rmfKey, submitCodes } from "./forms";
-import { LADDER, STUDY, briefOf, briefStatus, compareDone, derivedAt, handedIn, liveRow, regEmpty, regOf, regRows, regStatus, reportDone } from "./registers";
+import { LADDER, STUDY, briefOf, briefStatus, compareDone, derivedAt, handedIn, liveRow, regEmpty, regKey, regOf, regRows, regStatus, reportDone } from "./registers";
 import { stepKey, type Progress } from "./progress";
 import { waitingAt } from "./inbox";
+import { CANONICAL_ID, optionOrder, shown } from "./option-order";
 
 /** Where a task's register lives in progress: one per task and tool, shared by the task's steps. */
 export const gridKey = (taskId: string, toolKey: string) => `${taskId}|${toolKey}`;
@@ -124,11 +125,13 @@ export function lockedWhy(desk: Desk, p: Progress, task: Task, s: Step, start?: 
   return "Finish the step's work above first.";
 }
 
-/** A step's submission as one readable line, for the step row and My Submissions. */
-export function submissionText(desk: Desk, p: Progress, task: Task, s: Step): string {
+/** A step's submission as one readable line, for the step row and My Submissions. A pick is stored canonical and
+ *  shown in the learner's letter (option-order.ts), so pass their mentee ID. */
+export function submissionText(desk: Desk, p: Progress, task: Task, s: Step, menteeId = CANONICAL_ID): string {
   const key = stepKey(task.id, s.n);
   const pick = p.picks[key];
-  const head = typeof pick === "string" && s.opt ? `${pick}. ${s.opt[pick.charCodeAt(0) - 65] ?? ""}` : "";
+  const letter = (c: string) => shown(optionOrder(menteeId, s.did ?? key, s.opt!.length), c);
+  const head = typeof pick === "string" && s.opt ? `${letter(pick)}. ${s.opt[pick.charCodeAt(0) - 65] ?? ""}` : "";
   return [head, workText(desk, p, task, s)].filter(Boolean).join(" · ");
 }
 
@@ -137,6 +140,11 @@ function workText(desk: Desk, p: Progress, task: Task, s: Step): string {
   const pick = p.picks[key];
   const reg = regOf(task.id, s.n);
   if (reg?.steps[s.n]) {
+    // regStatus counts the cells the register gives too (it gates Mark complete on them), so an untouched
+    // step read "4 of 7 cells filled" (T11.2 step 9). Say nothing until the learner has typed one of its cells.
+    const own = reg.steps[s.n];
+    const typed = Object.entries(p.grids?.[regKey(task.id, reg.code)] ?? {}).some(([k, v]) => (own.length ? own.includes(Number(k.split(",")[1])) : /^\d+,\d+$/.test(k)) && !!String(v).trim());
+    if (!typed) return "";
     const g = regStatus(desk, p, task, s.n);
     const cols = reg.steps[s.n].map((ci) => reg.cols[ci].h.split(" ")[0]).join(", ");
     return g.filled ? `${reg.code} column${reg.steps[s.n].length > 1 ? "s" : ""} ${cols}: ${g.filled} of ${g.cells} cells filled` : "";

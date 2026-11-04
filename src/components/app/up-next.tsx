@@ -3,15 +3,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
-import { useCachedQuery } from "@/lib/use-query";
 import { userKey } from "@/lib/token";
-import { calendarApi } from "@/lib/calendar";
-import { deskApi } from "@/lib/desk";
-import { buildUpNext } from "@/lib/up-next";
 import { SOFT_TONES } from "@/lib/tones";
 import { DropdownPanel } from "@/components/ui/motion";
+import { useAuth } from "@/components/auth/auth-provider";
+import { useDeskRecord } from "@/lib/desk-record";
+import { ALL_WEEKS_OPEN } from "@/lib/flags";
+import { planOf, dueText } from "@/lib/desk-plan";
+import { fmtDay } from "@/lib/desk/model";
 
-const PROGRAM = "grc101";
+/** Only look this far ahead; beyond it is the Calendar page's job. */
+const HORIZON_DAYS = 7;
+interface Item { id: string; icon: string; tone: "rose" | "amber" | "indigo"; title: string; detail: string; when: string; href: string; blocking: boolean }
 // Scoped per account — an unscoped key lets one learner's dismissals silence the next learner's
 // bell on the same browser, including a blocking mentor note.
 const seenKey = () => `grcmentor:upnext-seen:${userKey()}`;
@@ -32,12 +35,12 @@ export function UpNext() {
   const [seen, setSeen] = useState<Set<string>>(readSeen);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Same cache key as the Calendar page — this costs no extra request.
-  const { data: cal } = useCachedQuery(`calendar:${PROGRAM}`, () => calendarApi.get(PROGRAM));
-  // Mentor decisions are news, not dated commitments, so they ride their own small endpoint
-  // rather than the calendar feed — putting them there would clutter the Calendar page with
-  // things the learner does not owe anybody.
-  const { data: feedback } = useCachedQuery("mentor-feedback", () => deskApi.mentorFeedback());
+  // The desk's own hand-in dates for this account (lib/desk-plan), the same as the Calendar page.
+  // ponytail: the old /me/calendar deadlines and /me/mentor-feedback gate decisions belong to the
+  // retired activity table and linked to desk routes that no longer exist; add desk review news here
+  // when the desk has a reviewer.
+  const { user } = useAuth();
+  const { desk, progress, start } = useDeskRecord();
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -47,7 +50,22 @@ export function UpNext() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  const items = useMemo(() => buildUpNext(cal ?? [], feedback ?? []), [cal, feedback]);
+  const items: Item[] = useMemo(() => {
+    if (!desk || !user?.startDate) return [];
+    return planOf(desk, progress, start, ALL_WEEKS_OPEN || user.role === "admin")
+      .filter((t) => (t.state === "overdue" || t.state === "today" || t.state === "upcoming") && t.left <= HORIZON_DAYS)
+      .map((t) => ({
+        id: `due-${t.id}-${t.state}`,
+        icon: t.state === "overdue" ? "alertTriangle" : "clock",
+        tone: t.state === "overdue" ? "rose" : t.state === "today" ? "amber" : "indigo",
+        // The title is the task; the right-hand line already says "Overdue by 2 days" / "Due tomorrow".
+        title: `${t.id} · ${t.title}`,
+        detail: `Due ${fmtDay(t.due)} · ${t.stepsDone} of ${t.steps} steps done`,
+        when: dueText(t),
+        href: `/app/desk#${t.id}`,
+        blocking: t.state !== "upcoming",
+      }));
+  }, [desk, progress, start, user]);
   const blocking = items.reduce((n, x) => n + (x.blocking && !seen.has(x.id) ? 1 : 0), 0);
   const late = items.some((x) => x.tone === "rose" && !seen.has(x.id));
 
@@ -96,7 +114,7 @@ export function UpNext() {
             </div>
             <div className="text-[12.5px] font-medium text-slate-600">Nothing due</div>
             <div className="text-[11.5px] text-slate-400 mt-0.5 max-w-[220px]">
-              Deadlines, outstanding revisions, mentor feedback and booked sessions show up here.
+              {user?.startDate ? "Desk tasks due in the next 7 days, and any overdue, show up here." : "Pick your start date on the Working Desk; your due dates show up here."}
             </div>
           </div>
         ) : (
@@ -112,7 +130,7 @@ export function UpNext() {
                   <Icon name={n.icon as IconName} size={14} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[12.5px] font-medium text-slate-800 tracking-tight leading-snug">{n.title}</div>
+                  <div className="text-[12.5px] font-medium text-slate-800 tracking-tight leading-snug line-clamp-2">{n.title}</div>
                   <div className="text-[11.5px] text-slate-500 tracking-tight truncate">{n.detail}</div>
                 </div>
                 <span className={`text-[10.5px] shrink-0 mt-0.5 whitespace-nowrap ${n.tone === "rose" ? "text-rose-500 font-medium" : "text-slate-400"}`}>

@@ -3,6 +3,7 @@
  * Backend is snake_case; lib/api.ts converts at the boundary.
  */
 import { api } from "./api";
+import type { DeskIdentity } from "@/lib/desk/identity";
 
 export interface TokenResponse {
   accessToken: string;
@@ -39,6 +40,8 @@ export interface User {
    *  FREE_ACCESS_LIMIT, and never withdrawn once given. */
   freeAccess: boolean;
   createdAt: string;
+  /** Their mentee ID and organisation names on the shared desk. Absent on an older backend. */
+  deskIdentity?: DeskIdentity;
 }
 
 export interface LinkedInShareRequest {

@@ -18,10 +18,16 @@ export interface Certificate {
   recipientInitials: string;
   tasksDone: number;
   tasksTotal: number;
-  verbsPracticed: number;
-  verbsTotal: number;
-  avgScore: number;
+  /** Null: the Working Desk has no method verbs. */
+  verbsPracticed: number | null;
+  verbsTotal: number | null;
+  /** Null: no task scores are released yet. */
+  avgScore: number | null;
   completionPct: number;
+  /** Every desk task submitted. Issuing may still be off, so this is not "issued". */
+  certificateEligible: boolean;
+  /** The credential's figures, the same list the public verify page shows. */
+  stats: CertVerifyStat[];
   completedTaskCodes: string[];
   /** Judgment calls defended, and the competences they showed. Snapshotted at issue. */
   judgment?: { calls: number; average: number; competences: string[] } | null;

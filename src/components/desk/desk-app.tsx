@@ -5,14 +5,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useDeskIdentity } from "@/lib/desk/identity";
 import { Ctx, type DeskCtx, type ViewItem } from "./desk-context";
 import { TaskFile, type Tab } from "./task-file";
 import { Ring, WeekPanel, WeekRail, WeekTimeline } from "./week-panel";
 import { WeekOverview } from "./week-overview";
 import { Toolbar } from "./toolbar";
 import { Viewer } from "./viewer";
+import { DeskIntro, INTRO_KEY } from "./desk-intro";
+import { tourDue } from "@/components/app/guided-tour";
 import { ToolModal, ToolWindow } from "./tool-modal";
 import { press } from "./ui";
+import { thenOf } from "./how-to";
+import { ATTEST } from "@/lib/desk/forms";
 import { currentWeek, loadDesk, startOf, weekOpen, type Desk } from "@/lib/desk/model";
 import { decisionChecked, stepKey, taskStatus, useProgress, useSaveState, type Progress } from "@/lib/desk/progress";
 
@@ -31,9 +36,11 @@ export function DeskApp() {
   // Read here, alongside the desk's content, so the wait for saved work is the longer of the two and not the sum.
   const { status, retry } = useProgress(user?.email ?? "");
 
+  // In the learner's names: reloaded if their identity arrives after the copy of /me the tab painted from.
+  const who = useDeskIdentity();
   useEffect(() => {
     loadDesk().then(setDesk, (e: Error) => setError(e.message));
-  }, []);
+  }, [who]);
 
   if (error)
     return (
@@ -129,6 +136,8 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   // The week panel folds to a rail. It opens every time you arrive on the desk, and folds itself
   // when you pick a task from it, so the work gets the room.
   const [panelOpen, setPanel] = useState(true);
+  // The first-visit guide is due or on screen: no menu opens by itself under it (Toolbar).
+  const [intro, setIntro] = useState(() => tourDue(INTRO_KEY, who));
 
   const openTask = useCallback((id: string, step?: number, t: Tab = "how") => {
     setTaskId(id);
@@ -171,8 +180,10 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
     const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
     const t = here ? desk.tasks[here.task] : undefined;
     // A decision is answered in its row first (Check my answer); until then its tool opens only to read.
+    // A question with no part 2 (F1.2 step 5) is answered and completed in its row: its tool is only read, never
+    // the step's modal, which would run the row's guide a second time over the first.
     const working = !!step && !!t && step.key === key && isOpen(t.week) && !progress.submitted[t.id] && (mode === "work" || !progress.done[stepKey(t.id, step.n)])
-      && (step.kind !== "pick" || decisionChecked(progress, t.id, step.n));
+      && (step.kind !== "pick" || (decisionChecked(progress, t.id, step.n) && (!!thenOf(step) || !!ATTEST[t.id]?.[step.n])));
     // The step's own tool, already open as the modal (READ-ME-FIRST over My Organisation, say):
     // asking for it again from the toolbar opens its screen beside the work instead.
     if (working && toolKey !== key) return setToolKey(key);
@@ -255,11 +266,12 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
                 </motion.div>
               </AnimatePresence>
             </main>
-            <Toolbar />
+            <Toolbar modal={toolKey} hold={locked || intro} />
           </div>
         </div>
 
       </div>
+      <DeskIntro who={who} ready={!locked} onDone={() => setIntro(false)} />
       <Viewer item={viewing} onClose={() => setViewing(null)} />
       <ToolModal
         toolKey={toolKey}

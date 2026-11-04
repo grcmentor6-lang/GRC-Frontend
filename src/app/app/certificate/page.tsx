@@ -4,12 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Loader } from "@/components/ui/loader";
 import { CertificateSheet, type CertStat } from "@/components/cert/certificate-sheet";
-import { useMethodBadges } from "@/components/badges/use-method-badges";
 import { certificateApi, CERT_LOCKED, type Certificate } from "@/lib/certificate";
 import { ExtendAccessCard } from "@/components/app/extend-access-card";
-
-const AI_MENTOR = { name: "grcmentor AI Mentor", title: "Automated Assessment · ISO 27001 aligned" };
-const ISSUER = { name: "grcmentor", title: "Issuing Authority" };
 
 function ShareMenu({ cert }: { cert: Certificate }) {
   const [open, setOpen] = useState(false);
@@ -124,28 +120,21 @@ export default function CertificatePage() {
     return () => { cancelled = true; };
   }, []);
 
-  // The GRC 101 method badges (pack v1.9.0), from the Working Desk.
-  const methodBadges = useMethodBadges();
-
-  const stats: CertStat[] = cert
-    ? [
-        { value: `${cert.tasksDone}`, label: `of ${cert.tasksTotal} tasks` },
-        { value: `${methodBadges.earned}/${methodBadges.total}`, label: "Method badges" },
-        { value: `${cert.verbsPracticed}/${cert.verbsTotal}`, label: "Method verbs" },
-        { value: `${cert.avgScore} / 5`, label: "Mentor score" },
-        // The stat that separates this credential from a completion certificate. Only printed
-        // once there is something to print — an early cohort with none reads better at four.
-        ...(cert.judgment?.calls
-          ? [{ value: `${cert.judgment.calls}`, label: "Judgment calls" }]
-          : []),
-      ]
-    : [];
+  // The sheet prints exactly the figures the public verify page prints: one list, from the backend.
+  const stats: CertStat[] = cert?.stats ?? [];
 
   const certVerifyLabel = cert?.verifyUrl?.replace(/^https?:\/\//, "") ?? "";
   const locked = CERT_LOCKED.find((l) => l.id === tab);
   const isLocked = !!locked;
-  const recipient = cert?.recipient ?? "—";
-  const statusNote = isLocked ? locked!.statusNote : cert?.statusNote ?? "";
+  // Every task submitted issues the certificate, unless the record has steps not marked done (the server says which).
+  const waiting = cert?.status === "preview" && cert.tasksTotal > 0 && cert.tasksDone === cert.tasksTotal;
+  const statusNote = isLocked
+    ? locked!.statusNote
+    : waiting
+      ? "Not issued · some steps are not marked done"
+      : cert?.status === "preview"
+        ? `Not issued · ${cert.completionPct}% of tasks submitted`
+        : cert?.statusNote ?? "";
   const chipTone = isLocked
     ? "bg-slate-100 ring-slate-200 text-slate-500"
     : cert?.status === "issued"
@@ -186,21 +175,24 @@ export default function CertificatePage() {
       {loading ? (
         <Loader label="Loading certificate…" />
       ) : isLocked ? (
-        <CertStage dep={tab}>
-          <CertificateSheet
-            preview
-            stats={[{ value: "—", label: "Locked" }]}
-            cert={{ eyebrow: locked!.eyebrow, programTitle: locked!.programTitle, blurb: locked!.blurb, recipient, standards: locked!.standards, credentialId: null, verifyUrl: null, issueDate: null, mentor: AI_MENTOR, issuer: ISSUER }}
-          />
-        </CertStage>
+        // No content exists for this programme yet, so no sheet with the mentee's name on it either.
+        <section className="rounded-md border border-[#DDE1E8] bg-white px-6 py-10 text-center">
+          <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-[#F3F4F7] text-[#8A91A3]"><Icon name="lock" size={18} /></span>
+          <h2 className="mt-3 text-[16px] font-bold text-[#111827]">{locked!.programTitle}</h2>
+          <p className="mx-auto mt-2 max-w-md text-[13.5px] text-[#3F4757]">
+            This programme has not opened yet, so there is no certificate to work towards. It {locked!.statusNote.replace(/^Locked · /, "")}.
+          </p>
+        </section>
       ) : cert ? (
         <>
           <CertStage dep={`${tab}-${cert.status}`}>
             <CertificateSheet preview={cert.status === "preview"} stats={stats} cert={cert} />
           </CertStage>
           <div className="text-center text-[11px] text-slate-400 pt-5 pb-2 cert-noprint">
-            {cert.status === "preview" ? (
-              <>Issues automatically at 100% completion · {cert.completionPct}% complete</>
+            {waiting ? (
+              <>Every task is submitted, but some steps are not marked done. Mark them complete on the Working Desk and the certificate is issued.</>
+            ) : cert.status === "preview" ? (
+              <>Not issued · {cert.tasksDone} of {cert.tasksTotal} tasks submitted ({cert.completionPct}%). It is issued when every task is submitted.</>
             ) : cert.expired ? (
               <>This credential lapsed on {cert.expiryDate}. It stays verifiable at {certVerifyLabel} as a record of completed work.</>
             ) : (

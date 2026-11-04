@@ -5,7 +5,8 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { stepReads, stepSources } from "@/lib/desk/registers";
 import { useUnread } from "./chat";
-import { UTILITIES, sectionOpen, toolOpen, unlockHint } from "@/lib/desk/tools";
+import { UTILITIES, sectionOpen, stepMenu, toolOpen, unlockHint } from "@/lib/desk/tools";
+import { stepKey } from "@/lib/desk/progress";
 
 const SEC_ICON: Record<string, IconName> = {
   home: "home", evidence: "paperclip", frameworks: "layers", access: "users", risk: "alertTriangle", vendors: "handshake",
@@ -23,7 +24,7 @@ const MENU_W = 400;
  * open for reading after (lib/desk/tools.ts). The section the step in hand is done in carries an
  * amber dot, and its tool is the amber row of the menu.
  */
-export function Toolbar() {
+export function Toolbar({ modal, hold }: { /** The step's tool open as the modal. */ modal: string | null; /** Another walk-through is on screen (the desk's first-visit guide). */ hold: boolean }) {
   const { desk, isOpen, here, openTool, progress } = useDesk();
   const unread = useUnread();
   const unreadHere = useUnread(here?.task ?? "-");
@@ -81,14 +82,26 @@ export function Toolbar() {
   const sec = pop ? desk.sections[pop] : undefined;
   const open = (key: string) => toolOpen(desk, isOpen, key, progress, here);
 
-  const toggle = (k: string, el: HTMLButtonElement) => {
-    if (pop === k) return setPop(null);
+  const show = (k: string, el: HTMLElement) => {
     // The menu sits over its own cell, kept inside the dock's width.
     const nav = dock.current;
     const x = el.offsetLeft - (nav?.scrollLeft ?? 0);
     setLeft(Math.max(0, Math.min(x, (nav?.clientWidth ?? MENU_W) - MENU_W)));
     setPop(k);
   };
+  const toggle = (k: string, el: HTMLButtonElement) => (pop === k ? setPop(null) : show(k, el));
+
+  // The step's tool opening as the modal opens the menu its learner goes to first (owner, 3 Nov), and so does
+  // the next step taken in the same modal; opening a task or a step row opens none. Only the menu: the tool
+  // in it stays their click. Not for a finished step, a submitted task or a closed week, and not on a phone,
+  // where the menu would cover half the screen and the step under it.
+  const t = here ? desk.tasks[here.task] : undefined;
+  const menu = t && step && !hold && isOpen(t.week) && !progress.submitted[t.id] && !progress.done[stepKey(t.id, step.n)] ? stepMenu(t, step.n) : null;
+  const auto = menu && desk.sections[menu] && sectionOpen(desk, isOpen, menu, progress, here) ? menu : null;
+  useEffect(() => {
+    const el = modal && auto && dock.current?.querySelector<HTMLElement>(`[data-guide-section="${auto}"]`);
+    if (el && matchMedia("(min-width: 640px)").matches) show(auto, el);
+  }, [here?.task, here?.n, modal, auto]);
 
   const cell = (k: string, l: string, icon: IconName, unlocked: boolean, opts: { badge?: number; end?: boolean } = {}) => {
     const on = pop === k;

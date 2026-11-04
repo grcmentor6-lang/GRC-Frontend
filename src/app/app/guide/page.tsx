@@ -3,33 +3,45 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
-import { VERB_LIST, GATE_VERBS } from "@/lib/verbs";
-import { VERB_TONES } from "@/lib/tones";
 import { startWelcomeTour } from "@/components/app/welcome-tour";
 import { AccessChip } from "@/components/app/access-chip";
-import { Gloss } from "@/components/app/glossary";
-
-/** The five rubric dimensions, derived from the verb metadata so the guide can't drift from it. */
-const RUBRIC = [...new Set(VERB_LIST.flatMap((v) => v.layer2))].filter((d) => d !== "All five rubric dimensions");
+import { DASH_NAV } from "@/components/app/nav";
 
 type Section = { id: string; title: string; icon: IconName };
 
 const SECTIONS: Section[] = [
   { id: "what", title: "What grcmentor is", icon: "sparkle" },
   { id: "shape", title: "How the programme is shaped", icon: "layers" },
-  { id: "org", title: "The organisation you work for", icon: "briefcase" },
+  { id: "org", title: "The organisations you work for", icon: "briefcase" },
   { id: "task", title: "Anatomy of a task", icon: "clipboard" },
   { id: "desk", title: "Doing the work: the Working Desk", icon: "desk" },
-  { id: "example", title: "A worked example", icon: "play" },
-  { id: "method", title: "Vocabulary", icon: "grid" },
-  { id: "grading", title: "How you are graded", icon: "bullseye" },
-  { id: "answers", title: "What a good answer looks like", icon: "edit" },
+  { id: "lab", title: "Tech Lab", icon: "bolt" },
+  { id: "saving", title: "Your work is saved to your account", icon: "checkCircle" },
+  { id: "example", title: "Your first task, step by step", icon: "play" },
+  { id: "checking", title: "How your work is checked", icon: "bullseye" },
   { id: "outputs", title: "What your work turns into", icon: "trophy" },
   { id: "access", title: "How long you have access", icon: "calendar" },
   { id: "around", title: "Finding your way around", icon: "home" },
   { id: "first", title: "Your first session", icon: "rocket" },
-  { id: "tips", title: "Getting a good grade", icon: "lightbulb" },
+  { id: "tips", title: "Doing it well", icon: "lightbulb" },
 ];
+
+/** What each menu item is for. Keyed by nav id, so an item added to the menu without a line here is skipped, not invented. */
+const MENU_HELP: Record<string, string> = {
+  dashboard: "Your next desk step, your due dates and how far through the desk you are.",
+  desk: "Where you do the work. You will spend most of your time here.",
+  calendar: "The due date of every desk task, counted from your start date, with what is overdue.",
+  submissions: "Every task and step you have completed on the desk, week by week.",
+  library: "Every clause and control of the standards the programme uses, in plain terms, as graphics you can save and share.",
+  badges: "The method badges your desk tasks earn.",
+  certificate: "Your GRC 101 certificate and its verification link.",
+  cv: "A CV compiled from your work.",
+  career: "Career paths and what to work on next.",
+  certification: "Professional certifications and how your work maps to them.",
+  reports: "Your record as a report you can read or download.",
+  jobs: "Job openings matched to your work.",
+  guide: "This page. Come back whenever something is unclear.",
+};
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
@@ -93,6 +105,20 @@ function Bullets({ items }: { items: (string | React.ReactNode)[] }) {
   );
 }
 
+function Cards({ items }: { items: { t: string; d: string; icon?: IconName }[] }) {
+  return (
+    <div className="grid sm:grid-cols-2 gap-3">
+      {items.map((c) => (
+        <div key={c.t} className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
+          {c.icon && <Icon name={c.icon} size={17} className="text-indigo-500 mb-2.5" />}
+          <h4 className="text-[13px] font-semibold tracking-tight text-slate-900">{c.t}</h4>
+          <p className="text-[12px] text-slate-600 leading-relaxed tracking-tight mt-1" style={{ textWrap: "pretty" }}>{c.d}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function GuidePage() {
   const [active, setActive] = useState(SECTIONS[0].id);
 
@@ -114,19 +140,18 @@ export default function GuidePage() {
 
   return (
     <div className="page-shell">
-      {/* Hero */}
       <div className="rounded-2xl bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white px-6 py-7 md:px-8 md:py-8 shadow-[0_20px_50px_-25px_rgba(99,102,241,0.8)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">User guide</p>
         <h1 className="text-[26px] md:text-[30px] font-semibold tracking-[-0.02em] mt-1.5">How grcmentor works</h1>
         <p className="text-[13.5px] text-white/85 leading-relaxed tracking-tight mt-2 max-w-[62ch]" style={{ textWrap: "pretty" }}>
-          You are about to work as a GRC practitioner inside simulated companies — real standards, real
-          deliverables, real deadlines, graded by an AI mentor. Read this once, end to end. It covers who you
-          work for, what you will produce, how it is marked, and what you walk away with.
+          For twelve weeks you work in a simulated Group GRC Office, for two organisations, on real
+          standards and real deliverables. Read this once, end to end: who you work for, how the Working
+          Desk works, how your work is checked, and what to do on day one.
         </p>
         <div className="flex flex-wrap items-center gap-2 mt-5">
           <button
             onClick={startWelcomeTour}
-            className="guide-blink focus-ring cursor-pointer inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-white text-indigo-700 text-[13px] font-semibold tracking-tight hover:bg-white/90 transition-colors"
+            className="focus-ring cursor-pointer inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-white text-indigo-700 text-[13px] font-semibold tracking-tight hover:bg-white/90 transition-colors"
           >
             <Icon name="play" size={14} /> Take the 2-minute tour
           </button>
@@ -140,7 +165,6 @@ export default function GuidePage() {
       </div>
 
       <div className="flex gap-8 mt-7">
-        {/* Contents rail */}
         <nav aria-label="Guide contents" className="hidden lg:block w-[220px] shrink-0">
           <div className="sticky top-6">
             <p className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-400 px-2.5 mb-2">On this page</p>
@@ -162,17 +186,12 @@ export default function GuidePage() {
         </nav>
 
         <div className="flex-1 min-w-0 space-y-10">
-          <Sec
-            id="what"
-            title="What grcmentor is"
-            icon="sparkle"
-            lead="Not a course you watch. A job you do. Every screen in this app exists to move one engagement forward and turn the evidence of that work into something an employer will recognise."
-          >
+          <Sec id="what" title="What grcmentor is" icon="sparkle" lead="Not a course you watch. A job you do. You join a Group GRC Office as a mentee, take tasks from named owners, and hand in the files a GRC team really produces.">
             <div className="grid sm:grid-cols-3 gap-3">
               {[
-                { icon: "briefcase" as IconName, t: "You are hired", d: "Assigned to a simulated company as its GRC practitioner, with a real org profile: industry, regulators, assets, standards in scope." },
-                { icon: "clipboard" as IconName, t: "You do the work", d: "Structured engagements broken into projects, tasks and activities — registers, policies, assessments, briefings, sign-offs." },
-                { icon: "trophy" as IconName, t: "You get credit", d: "Graded submissions compile automatically into a CV, badges, a verifiable certificate and matched jobs." },
+                { icon: "briefcase" as IconName, t: "You join a team", d: "Two simulated organisations, each with offices, regulators, policies, registers and people, and the standards that bind them." },
+                { icon: "clipboard" as IconName, t: "You do the work", d: "Each week brings tasks: fill a register, map a framework, test a control, review access, write a procedure, decide what to do." },
+                { icon: "trophy" as IconName, t: "It builds your record", d: "What you complete on the desk feeds My Submissions, your badges, your certificate and your CV." },
               ].map((c) => (
                 <div key={c.t} className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
                   <Icon name={c.icon} size={17} className="text-indigo-500" />
@@ -181,27 +200,15 @@ export default function GuidePage() {
                 </div>
               ))}
             </div>
-            <div className="mt-3">
-              <Note>
-                Your mentor is an AI. It reviews and grades every submission, asks Socratic follow-ups and
-                decides whether the work passes. There is no human queue to wait on — feedback arrives when you submit.
-              </Note>
-            </div>
           </Sec>
 
-          <Sec
-            id="shape"
-            title="How the programme is shaped"
-            icon="layers"
-            lead="Five levels, nesting inwards. Learn these names — the whole app is organised by them."
-          >
+          <Sec id="shape" title="How the programme is shaped" icon="layers" lead="GRC 101 is twelve weeks. Learn these four names: the desk and every page around it use them.">
             <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               {[
-                { k: "Track", d: "GRC 101 → 301 → 501, taken in order. 101 is foundations; each track unlocks when the one before it is complete." },
-                { k: "Organisation", d: "The simulated company you are assigned to inside a track. You work its real context, not generic examples." },
-                { k: "Project", d: "A named engagement for that organisation — e.g. standing up an ISMS, or running a risk assessment cycle." },
-                { k: "Task", d: "A deliverable-sized chunk of the project, mapped to a standard. This is the unit that gets graded as a whole." },
-                { k: "Activity", d: "A single action inside the task, driven by one of the 22 method verbs. This is what you actually fill in and submit." },
+                { k: "Week", d: "Weeks 1 and 2 are Foundation (your rules, your organisation, classification and evidence). Weeks 3 to 12 are Practice, one GRC area each: obligations, policies, audit evidence, access reviews, risk, control testing, vendors, privacy, awareness, follow-up." },
+                { k: "Task", d: "Two or three per week, coded by week: F1.1, F1.2, F1.3 in week 1, T3.1 and T3.2 in week 3. Each has an owner, an objective, key results, a due date and the files you hand in." },
+                { k: "Step", d: "A task is a list of steps, done in order. Each step says what to do, which screen to do it in, and when it is done." },
+                { k: "Submit", d: "When every step of a task is complete, Submit task seals it with the time. A sealed task cannot be changed." },
               ].map((r, i, arr) => (
                 <div key={r.k} className="flex gap-3" style={{ paddingLeft: i * 14 }}>
                   <div className="shrink-0 flex flex-col items-center">
@@ -216,435 +223,135 @@ export default function GuidePage() {
               ))}
             </div>
             <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-3">
-              Progress is sequential and gated: an activity opens when the one before it is complete, and a
-              task opens when the previous task closes. You cannot skip ahead — the point is that the later
-              work depends on artefacts you produced earlier, exactly like a real engagement.
+              You choose your start date the first time you open the desk. Every task&apos;s due date counts from
+              it: week 1&apos;s tasks fall due in the first seven days, week 2&apos;s in the next seven, and so on. The
+              desk, the Calendar and the bell all show the same dates.
             </p>
           </Sec>
 
-          <Sec
-            id="org"
-            title="The organisation you work for"
-            icon="briefcase"
-            lead="Every task is answered in the context of one specific company. Generic answers score badly; answers that use this company's facts score well. Open the Organisation Context panel on the desk before you write anything."
-          >
-            <div className="grid sm:grid-cols-2 gap-3">
-              {[
-                { t: "Profile & footprint", d: "Sub-industry, head office city and country, regional offices — this drives which laws and regulators apply." },
-                { t: "Regulator & rationale", d: "The primary regulator and why it applies. Cite it when a task asks about legal or regulatory drivers." },
-                { t: "Services & processes", d: "What the company sells and its customer-facing processes — your scope statements should name these." },
-                { t: "Interested parties", d: "Internal and external parties plus their key requirements. Use these as your named stakeholders and owners." },
-                { t: "Information assets", d: "On-premises and cloud assets, and the client data handled. Your registers and classifications are built from these." },
-                { t: "Standards in scope", d: "Mandatory and optional standards plus regulatory requirements — what your work is assessed against." },
-              ].map((c) => (
-                <div key={c.t} className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
-                  <h4 className="text-[13px] font-semibold tracking-tight text-slate-900">{c.t}</h4>
-                  <p className="text-[12px] text-slate-600 leading-relaxed tracking-tight mt-1" style={{ textWrap: "pretty" }}>{c.d}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3">
-              <Note>
-                The single biggest score difference between mentees: naming this organisation&apos;s actual
-                systems, roles, regulators and processes instead of writing &ldquo;the company&rdquo; and
-                &ldquo;relevant stakeholders&rdquo;. Specificity is a graded rubric dimension.
-              </Note>
+          <Sec id="org" title="The organisations you work for" icon="briefcase" lead="Every task is answered for one specific organisation, sometimes both. Answers come from that organisation's facts, not from general knowledge.">
+            <Cards
+              items={[
+                { t: "Where to read about them", d: "The organisation buttons in the header, the cards on your Dashboard, and Home › My Organisation on the desk." },
+                { t: "What you will find", d: "Offices and where they are, what the organisation sells, its departments and systems, its regulators, and which standards are mandatory or optional for it." },
+                { t: "Policies and records", d: "Policies › Policy Library holds the organisation's policies and standards; registers, evidence and risk screens hold its records. Steps tell you which ones to read." },
+                { t: "People", d: "Every task has a named owner and supporters. Messages from them arrive in the Inbox at the step they belong to." },
+              ]}
+            />
+          </Sec>
+
+          <Sec id="task" title="Anatomy of a task" icon="clipboard" lead="Open a task on the desk and it reads top to bottom: why it matters, what done looks like, the steps, and submitting.">
+            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
+              <Step n={1} title="Objective and key results">
+                <p>What the task is for, and the key results that say when it is done well (KR1, KR2 …). Each key result names the steps that deliver it.</p>
+              </Step>
+              <Step n={2} title="The steps">
+                <p>Steps open one after another. A step tells you what to do, where (the screen to open from the toolbar) and when it is done. The kinds you will meet:</p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li><span className="font-medium text-slate-700">Work in a file or screen</span>: copy values from a screen, fill a register&apos;s cells, write a short entry, name a file.</li>
+                  <li><span className="font-medium text-slate-700">A decision</span>: a situation with options. Pick one and press Check my answer; the pick locks and you see the best option, why, and what happens with each.</li>
+                  <li><span className="font-medium text-slate-700">A decision per row</span>: the same, for every row of a table, checked with Check my answers.</li>
+                  <li><span className="font-medium text-slate-700">Reading</span>: read the screen and confirm each part you read.</li>
+                </ul>
+                <p>When a step is done, press Mark step complete and the next step opens.</p>
+              </Step>
+              <Step n={3} title="Submit the task">
+                <p>The task&apos;s footer lists the files you hand in and counts the steps left. Once none are left, Submit task seals the task with the date and time.</p>
+              </Step>
             </div>
           </Sec>
 
-          <Sec
-            id="task"
-            title="Anatomy of a task"
-            icon="clipboard"
-            lead="Every task runs the same shape: a readiness gate to open it, the activities in the middle, and a research submission to close it."
-          >
+          <Sec id="desk" title="Doing the work: the Working Desk" icon="desk" lead="One screen holds the whole engagement: the weeks, the task in hand, and the organisation's systems.">
             <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
-              <Step n={1} title={`Readiness gate (${GATE_VERBS.rua.label})`}>
-                <p>{GATE_VERBS.rua.when}</p>
-                <p>
-                  You work through the controls in scope, inspect every template you are about to fill in,
-                  explain each step&apos;s concepts in your own words, and pass a short verification session.
-                  Only then do the task&apos;s activities unlock. It feels like a hurdle — it is the thing that
-                  stops you filling in a register you do not understand.
-                </p>
+              <Step n={1} title="The week panel">
+                <p>On the left: the twelve weeks, each task with its steps done and its due date (&ldquo;Due in 3 days&rdquo;, &ldquo;Overdue by 1 day&rdquo;, &ldquo;Submitted&rdquo;). Arriving on the desk opens this week&apos;s overview.</p>
               </Step>
-              <Step n={2} title="The activities">
-                <p>
-                  The body of the task: typically five to twelve activities, each driven by one method verb and
-                  each producing a piece of the deliverable. Complete them in order; each is graded on submit.
-                </p>
+              <Step n={2} title="The toolbar">
+                <p>Along the bottom: the organisation&apos;s systems, grouped as Home, Frameworks, Risk, Policies, Reg Watch, Learn, Evidence, and later Access, Testing, Vendors and Awareness, plus your Inbox. A section opens as you reach the tasks that use it.</p>
+                <p>An <span className="font-medium text-slate-700">orange dot</span> marks where your current step needs you: the screen it is done in, and the screens it reads from. Inside a section, the screen for your step is tagged with the step number.</p>
               </Step>
-              <Step n={3} title={`Research submission (${GATE_VERBS.research.label})`}>
-                <p>{GATE_VERBS.research.when}</p>
-                <p>
-                  You evidence the research behind the deliverable: work the required methods, cite a real
-                  source and name the organisation for each, then sign the declaration. This closes the task
-                  and unlocks the next one.
-                </p>
+              <Step n={3} title="Work and reading side by side">
+                <p>Your step&apos;s own screen opens as the working window. Anything else you open, such as a policy or a register to read, opens as a window beside it that you can move and resize.</p>
               </Step>
-              <div className="flex gap-4">
-                <div className="shrink-0 w-7 grid place-items-center">
-                  <span className="grid place-items-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200/70">
-                    <Icon name="check" size={14} strokeWidth={3} />
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-[13.5px] font-semibold tracking-tight text-slate-900">Task complete</h4>
-                  <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-1">
-                    The deliverable lands in My Learnings, the standard&apos;s coverage ticks up, and any badge
-                    or CV entry it earns appears automatically.
-                  </p>
-                </div>
-              </div>
+              <Step n={4} title="Help on every step">
+                <p>Each step has a short walk-through that runs the first time you open it; Show me how runs it again. Help with this step gives the plain-English note and the references the step relies on. Learn holds the rule tables, reference pages and a glossary.</p>
+              </Step>
+              <Step n={5} title="The Inbox">
+                <p>Messages from the people in the task arrive at the step they belong to. When one is waiting for the task in hand, the Inbox carries the orange dot. Some ask you to choose a reply.</p>
+              </Step>
             </div>
           </Sec>
 
-          <Sec
-            id="desk"
-            title="Doing the work: the Working Desk"
-            icon="desk"
-            lead="The Working Desk is where you execute. Everything you need for the current activity is on that one screen — you should not need to hunt."
-          >
-            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
-              <Step n={1} title="Pick up where you left off">
-                <p>
-                  The dashboard&apos;s Continue card and the desk&apos;s step rail both point at your next open
-                  activity. The rail on the left shows the whole task: done, current, and locked steps.
-                </p>
-              </Step>
-              <Step n={2} title="Read the brief and the organisation context">
-                <p>
-                  Each activity states its objective, the standard and controls it maps to, and what a
-                  complete answer must contain. Read the deliverable contract before you start typing — it is
-                  literally the checklist you will be graded against.
-                </p>
-              </Step>
-              <Step n={3} title="Open the reference material">
-                <p>
-                  Templates, prior artefacts, standard extracts and stakeholder documents are attached to the
-                  activity and open in their own windows, so you can keep a template beside your answer. Work
-                  produced in earlier activities is available here too — later tasks build on it.
-                </p>
-              </Step>
-              <Step n={4} title="Look up any term you don't know">
-                <p>
-                  Technical terms carry a <span className="underline decoration-dotted decoration-slate-400 underline-offset-[3px]">dotted underline</span> wherever
-                  they appear — the brief, the organisation context, the reference material, the acceptance
-                  criteria. Click one and its definition opens beside the word; click away, or press Esc, to
-                  dismiss it. Nothing is hidden behind a hover, so it works on a touchscreen too.
-                </p>
-                <p>
-                  Every term is explained where you meet it, so you never have to break off and look
-                  one up. Try it now:{" "}
-                  <Gloss>the asset owner signs the asset register, and a DPIA covers personal data.</Gloss>
-                </p>
-              </Step>
-              <Step n={5} title="Fill in the workspace">
-                <p>
-                  Every verb has its own purpose-built workspace: a register grid for Record, a mapping matrix
-                  for Map, a request form for Request, a scoring rubric for Score, and so on. Tabs across the
-                  top break longer activities into parts — complete them all before submitting.
-                </p>
-                <p>
-                  Interaction activities (request, interview, conduct, present, sign-off, schedule) are
-                  structured forms addressed to a named stakeholder role. There is no chat to negotiate with;
-                  what is graded is the quality of what you wrote.
-                </p>
-              </Step>
-              <Step n={6} title="Submit and read the feedback">
-                <p>
-                  Submitting runs the grading immediately. If a deterministic check fails you get told exactly
-                  which one, you fix it, and you resubmit. If it passes, the rubric feedback tells you where
-                  the answer was thin.
-                </p>
-              </Step>
-              <div className="flex gap-4">
-                <div className="shrink-0 w-7 grid place-items-center">
-                  <span className="grid place-items-center w-7 h-7 rounded-full bg-violet-50 text-violet-600 ring-1 ring-violet-200/70">
-                    <Icon name="bot" size={14} />
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-[13.5px] font-semibold tracking-tight text-slate-900">The AI mentor grades on submit</h4>
-                  <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-1">
-                    There is no chat to negotiate with — you submit, it grades, and its written feedback is
-                    where the guidance lives. Read it in full and act on it before you resubmit.
-                  </p>
-                </div>
-              </div>
-            </div>
+          <Sec id="lab" title="Tech Lab" icon="bolt" lead="From week 6, five steps open a Tech Lab: a practice console of a simulated system, where you query the system yourself and record what you find.">
+            <Cards
+              items={[
+                { t: "AppAdmin", d: "Admin and SSO review of a legal-matters system. Week 6, task T6.1." },
+                { t: "NetShield", d: "Remote-admin exposure on a firewall. Week 8, task T8.2." },
+                { t: "LedgerSim", d: "Vendor set-up and payments in finance. Week 9, task T9.2." },
+                { t: "DataSentry", d: "Label and data-map coverage. Week 10, task T10.1." },
+                { t: "LogLens", d: "Log-source coverage before a breach plan. Week 10, task T10.2." },
+              ]}
+            />
             <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-3">
-              Tip: collapse the main menu with the button at the top-left when you are on the desk. The
-              workspace column wants the width.
+              Each lab has parts to work through, findings to record and evidence captures (E1, E2 …) you can
+              see under Evidence. Finish a lab before you submit its task and its findings go into that
+              task&apos;s file. A lab does not stop you submitting.
             </p>
           </Sec>
 
-          <Sec
-            id="example"
-            title="A worked example"
-            icon="play"
-            lead="Abstract descriptions only get you so far. Here is your actual first task, start to finish, so you know exactly what the work feels like before you open it."
-          >
-            <div className="rounded-xl bg-slate-900 text-white p-5">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center justify-center px-2 h-7 rounded-md bg-white/10 ring-1 ring-white/20 text-[12px] font-mono font-semibold">AA-001</span>
-                <h4 className="text-[15px] font-semibold tracking-tight">Information Asset Inventory &amp; Classification</h4>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {["CloudTech", "ISO/IEC 27001:2022", "Controls A.5.9 & A.5.12", "Badge: Process Mapping Specialist"].map((c) => (
-                  <span key={c} className="inline-flex items-center px-2.5 h-7 rounded-lg bg-white/10 ring-1 ring-white/15 text-[11.5px] font-medium tracking-tight text-white/85">{c}</span>
-                ))}
-              </div>
-              <p className="text-[12.5px] text-white/75 leading-relaxed tracking-tight mt-3" style={{ textWrap: "pretty" }}>
-                <span className="font-semibold text-white">The deliverable:</span> a signed-off Information Asset
-                Register for CloudTech&apos;s Customer Platform team — every asset listed with its classification,
-                storage location, named owner and any remediation gaps. Later tasks read from this register, so
-                errors here follow you.
-              </p>
-            </div>
+          <Sec id="saving" title="Your work is saved to your account" icon="checkCircle" lead="Everything you do on the desk is saved to your account on our server as you work, not in your browser.">
+            <Bullets
+              items={[
+                <>The desk header says <span className="font-medium text-slate-700">Saving…</span> while a change goes up and <span className="font-medium text-slate-700">Saved</span> once it has landed.</>,
+                <>Sign in on any computer and your work is there. Clearing your browser does not lose it.</>,
+                <>If the connection drops, a red note says <span className="font-medium text-slate-700">Not saved yet. Retrying, keep this tab open.</span> Leave the tab open until it clears; closing the tab asks first.</>,
+                <>If your saved work cannot be loaded, the desk says so and offers Try again. It never opens an empty desk over your work.</>,
+              ]}
+            />
+          </Sec>
 
-            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5 mt-3">
-              <Step n={1} title="Clear the readiness gate">
-                <p>
-                  Before a single field opens you work through the controls in scope (A.5.9 asset inventory,
-                  A.5.12 classification), inspect the register template you are about to fill in, and explain
-                  in your own words what an &ldquo;information asset&rdquo; actually is. Then a short
-                  verification session checks you meant it. Only now do the activities unlock.
-                </p>
+          <Sec id="example" title="Your first task, step by step" icon="play" lead="Week 1 opens with F1.1, “Your first day in the Group GRC Office”. Here is what it asks, so you know what the work feels like before you start.">
+            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
+              <Step n={1} title="Fill table 1 of READ-ME-FIRST">
+                <p>Open READ-ME-FIRST and copy six values from Home › My Organisation and your task list: each organisation&apos;s name and home office, the owner of task F1.2, and your start date. A value that does not match the screen is flagged under its row.</p>
               </Step>
-              <Step n={2} title="Read the source material — properly">
-                <p>
-                  The task hands you the Customer Platform team&apos;s raw intake notes and CloudTech&apos;s
-                  classification scheme. The notes are deliberately messy, exactly like real intake: eight
-                  assets described in passing, one with no owner at all, one nobody can account for.
-                </p>
-                <p>
-                  <span className="font-medium text-slate-700">This is where the task is won or lost.</span> The
-                  facts you need are only in these documents — you cannot produce a correct register from
-                  general knowledge, and the mentor can tell when you tried.
-                </p>
+              <Step n={2} title="Two decisions about conduct">
+                <p>A colleague asks for your login; you do not understand a rule. Pick what you would do and press Check my answer. The feedback tells you the best option and why for every option.</p>
               </Step>
-              <Step n={3} title="Gather the information (Request, then Conduct)">
-                <p>
-                  First you write to IT/Operations asking for their initial asset list — a named role in the
-                  To-field, at least three specific items requested, a subject line under 80 characters. Then you
-                  run structured interviews with the process owners and record what they tell you.
-                </p>
-                <p>
-                  These are forms, not chats. What gets graded is whether you asked the right things of the
-                  right role, and whether your notes are specific enough to build a register from.
-                </p>
+              <Step n={3} title="The data rules and your undertaking">
+                <p>Tick and save the four data and AI rules, then open and sign the undertaking with your full name, your mentee ID and a signature. Nothing touches data until you have signed.</p>
               </Step>
-              <Step n={4} title="Record each asset (Record)">
-                <p>
-                  A register grid opens. One row per asset: name, the data it holds, where it is stored, and an
-                  owner. The owner must be a <span className="font-medium text-slate-700">role</span> — &ldquo;Platform
-                  Engineering Lead&rdquo;, not &ldquo;Engineering&rdquo; and not a person&apos;s name. That is a
-                  Layer 1 check; it fails the submission outright rather than quietly costing you marks.
-                </p>
+              <Step n={4} title="Your folders and your week-1 dates">
+                <p>After one more decision about a dataset, fill table 2 with your four folder paths, then table 3 with the due dates of F1.2, F1.3 and the week-1 knowledge check, picked from Home › My plan.</p>
               </Step>
-              <Step n={5} title="Classify, then cross-check (Apply, then Cross-reference)">
-                <p>
-                  Public, Internal or Confidential — decided by CloudTech&apos;s published rules, not your
-                  instinct. Anything holding customer or staff personal data is at minimum Confidential, as is
-                  anything holding credentials or proprietary source code. Every row needs a one-line rationale
-                  naming the rule you applied.
-                </p>
-                <p>
-                  Then you cross-reference the register against the network diagrams. Two sources, one truth —
-                  you are looking for what the interviews missed and what the diagrams reveal.
-                </p>
+              <Step n={5} title="Name the file and hand it in">
+                <p>Type the file name from its four parts, then Submit. You get a receipt with the time; the task is sealed and F1.2 is next.</p>
               </Step>
-              <Step n={6} title="Flag the gaps (Identify)">
-                <p>
-                  Now the judgement. The marketing email list has no owner. The stray database backup on an
-                  engineer&apos;s laptop — nobody knows who made it or what is in it. Both are remediation gaps,
-                  and each flag needs a proposed action and a named accountable role. Catching these is the
-                  actual skill the task is testing.
-                </p>
-              </Step>
-              <Step n={7} title="Review, then present for sign-off (Review, then Present)">
-                <p>
-                  You submit the near-final register with a cover note for a quality check, address the feedback,
-                  and then present it to the department head: the deck, at least three anticipated questions
-                  answered, and the sign-off decision recorded with its date.
-                </p>
-              </Step>
-              <Step n={8} title="Evidence your research and close the task">
-                <p>
-                  The research submission gate: work the required methods, cite real sources, name the
-                  organisation, sign the declaration. The register lands in My Learnings, A.5.9 and A.5.12 tick
-                  up on your standards coverage, and the Process Mapping Specialist badge unlocks.
-                </p>
-              </Step>
-              <div className="flex gap-4">
-                <div className="shrink-0 w-7 grid place-items-center">
-                  <span className="grid place-items-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200/70">
-                    <Icon name="check" size={14} strokeWidth={3} />
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-[13.5px] font-semibold tracking-tight text-slate-900">Ten activities, a couple of sittings</h4>
-                  <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-1">
-                    Most of it reading and deciding, not typing. Gather → record → classify → verify → flag →
-                    review → sign off is the shape of nearly every task in every track. Once you have worked one,
-                    you know how to work all of them.
-                  </p>
-                </div>
-              </div>
             </div>
           </Sec>
 
-          <Sec
-            id="method"
-            title="Vocabulary"
-            icon="grid"
-            lead="Every activity in every track is one of these 22 actions. They are the vocabulary of the profession — by the end you will have practised all of them, and your CV shows which."
-          >
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
-              {VERB_LIST.map((v) => {
-                const tone = VERB_TONES[v.color] ?? VERB_TONES.indigo;
-                return (
-                  <div key={v.id} className="rounded-xl bg-white ring-1 ring-slate-200 p-3.5">
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center justify-center w-6 h-6 rounded-lg ring-1 text-[10px] font-semibold ${tone.bg} ${tone.text} ${tone.ring}`}>
-                        {v.code}
-                      </span>
-                      <span className="text-[13px] font-semibold tracking-tight text-slate-900">{v.label}</span>
-                      <span className="ml-auto text-[11px] tabular-nums text-slate-300">{v.num}</span>
-                    </div>
-                    <p className="text-[12px] text-slate-600 leading-relaxed tracking-tight mt-1.5" style={{ textWrap: "pretty" }}>{v.when}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </Sec>
-
-          <Sec
-            id="grading"
-            title="How you are graded"
-            icon="bullseye"
-            lead="Two layers, in order. Layer 1 is pass/fail and mechanical. Layer 2 is judgement, and it is where your score comes from."
-          >
-            <div className="grid md:grid-cols-2 gap-3">
-              <div className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
-                <div className="flex items-center gap-2">
-                  <span className="grid place-items-center w-7 h-7 rounded-lg bg-slate-100 text-slate-600"><Icon name="checkSquare" size={15} /></span>
-                  <h4 className="text-[13.5px] font-semibold tracking-tight text-slate-900">Layer 1 — deterministic checks</h4>
-                </div>
-                <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-2">
-                  Automatic, objective and unarguable: mandatory fields populated, schema conformance, owners
-                  named as roles rather than departments, arithmetic that re-computes, citations present.
-                  Failing one blocks the submission and tells you exactly what to fix. These are free marks —
-                  never lose them.
-                </p>
-                <p className="text-[12px] text-slate-500 leading-relaxed tracking-tight mt-2">
-                  Each verb card in the workspace lists its own Layer 1 checks. Read them before you submit.
-                </p>
-              </div>
-              <div className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
-                <div className="flex items-center gap-2">
-                  <span className="grid place-items-center w-7 h-7 rounded-lg bg-violet-50 text-violet-600"><Icon name="sliders" size={15} /></span>
-                  <h4 className="text-[13.5px] font-semibold tracking-tight text-slate-900">Layer 2 — rubric scoring</h4>
-                </div>
-                <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-2">
-                  Your AI mentor reads the substance of the answer and scores it against the dimensions the
-                  verb calls for, with written justification for each:
-                </p>
-                <div className="flex flex-wrap gap-1.5 mt-2.5">
-                  {RUBRIC.map((d) => (
-                    <span key={d} className="inline-flex items-center px-2.5 h-7 rounded-lg bg-violet-50 text-violet-700 ring-1 ring-violet-200/70 text-[11.5px] font-medium tracking-tight">
-                      {d}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+          <Sec id="checking" title="How your work is checked" icon="bullseye" lead="Most checking happens as you work, so you find out while you can still put it right.">
+            <Bullets
+              items={[
+                <><span className="font-medium text-slate-700">Values you copy</span> are compared with the screen they come from, and a mismatch is flagged under its row.</>,
+                <><span className="font-medium text-slate-700">Decisions</span> are checked the moment you press Check my answer. The pick then locks: read the feedback, it is the lesson.</>,
+                <><span className="font-medium text-slate-700">Tables of decisions</span> are checked row by row with Check my answers, each row showing the right answer and the rule behind it.</>,
+                <><span className="font-medium text-slate-700">Mark step complete</span> stays grey until a step&apos;s work is there, and says what is left.</>,
+                <><span className="font-medium text-slate-700">Submitting</span> seals the task with the date and time. Scores for whole tasks are not shown in the app yet.</>,
+              ]}
+            />
             <div className="mt-3">
-              <Bullets
-                items={[
-                  "Feedback is Socratic — expect questions that push you to justify a decision rather than a corrected answer handed to you.",
-                  "Resubmission is allowed and expected. Review activities cap revisions at three, so address the feedback properly the first time.",
-                  "Your rolling rubric averages appear on the dashboard and in Reports, so you can see which dimension is dragging you down.",
-                ]}
-              />
+              <Note>Some options in a decision are reasonable and still not the best. Read why each option is right or wrong, not only whether you picked the best one.</Note>
             </div>
           </Sec>
 
-          <Sec
-            id="answers"
-            title="What a good answer looks like"
-            icon="edit"
-            lead="The same asset, entered two ways. Both are legible English; only one passes. Read these three pairs and you will understand the grading better than any description of it."
-          >
-            <div className="space-y-3">
-              {[
-                {
-                  q: "Owner of the customer accounts database",
-                  bad: "Engineering team",
-                  good: "Platform Engineering Lead",
-                  why: "A department cannot be held accountable and cannot sign anything. Layer 1 rejects departmental owners outright — this is a hard fail, not a deduction.",
-                },
-                {
-                  q: "Classification of the support ticket system",
-                  bad: "Confidential — it's sensitive.",
-                  good: "Confidential — customers attach documents containing personal data, and rule 1 of CloudTech's scheme puts any asset holding customer personal data at minimum Confidential.",
-                  why: "Same verdict, but the second one shows the rule was applied rather than guessed. Reasoning Quality and Standards Alignment are both graded here; \"it's sensitive\" earns neither.",
-                },
-                {
-                  q: "The unaccounted-for database backup on an engineer's laptop",
-                  bad: "Unknown — needs investigation.",
-                  good: "Flagged as a remediation gap: unmanaged .sql dump on an unencrypted endpoint, contents and provenance unknown. Proposed action — Platform Engineering Lead to identify contents within 5 working days, then either bring it under the register with a classification or securely destroy it.",
-                  why: "Noticing the problem is half a mark. Naming what is wrong, who owns fixing it and what \"fixed\" means is the whole one — and it is exactly what the Identify verb's Layer 1 checks demand.",
-                },
-              ].map((r) => (
-                <div key={r.q} className="rounded-xl bg-white ring-1 ring-slate-200 overflow-hidden">
-                  <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-slate-500">{r.q}</p>
-                  </div>
-                  <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-                    <div className="p-4">
-                      <div className="flex items-center gap-1.5 text-rose-600">
-                        <Icon name="xCircle" size={14} />
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.09em]">Weak</span>
-                      </div>
-                      <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-1.5" style={{ textWrap: "pretty" }}>{r.bad}</p>
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-center gap-1.5 text-emerald-600">
-                        <Icon name="checkCircle" size={14} />
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.09em]">Strong</span>
-                      </div>
-                      <p className="text-[12.5px] text-slate-700 leading-relaxed tracking-tight mt-1.5" style={{ textWrap: "pretty" }}>{r.good}</p>
-                    </div>
-                  </div>
-                  <div className="px-4 py-3 bg-indigo-50/50 border-t border-indigo-100/70 flex gap-2.5">
-                    <Icon name="lightbulb" size={14} className="shrink-0 mt-px text-indigo-500" />
-                    <p className="text-[12px] text-slate-600 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>{r.why}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3">
-              <Note>
-                The pattern across all three: <span className="font-semibold">decision + the rule you applied + who owns what happens next</span>.
-                Almost every rubric point in this platform comes from writing those three things instead of just the first.
-              </Note>
-            </div>
-          </Sec>
-
-          <Sec
-            id="outputs"
-            title="What your work turns into"
-            icon="trophy"
-            lead="Nothing you submit is thrown away. Completed, graded work compiles itself into the artefacts you will actually show an employer — you never write any of this by hand."
-          >
+          <Sec id="outputs" title="What your work turns into" icon="trophy" lead="You never write these by hand. They are built from what you complete on the desk.">
             <div className="grid sm:grid-cols-2 gap-3">
               {[
-                { icon: "inbox" as IconName, t: "My Submissions", d: "Everything you have handed in on the Working Desk, step by step, with each task's status.", href: "/app/submissions" },
-                { icon: "star" as IconName, t: "Badges", d: "Earned for milestones — verbs practised, standards covered, tasks and tracks completed.", href: "/app/badges" },
-                { icon: "ribbon" as IconName, t: "Certificate", d: "Issued on track completion and independently verifiable by a third party from its code.", href: "/app/certificate" },
-                { icon: "file" as IconName, t: "My CV", d: "Auto-compiled from graded work: engagements, deliverables, standards and the verbs you have practised.", href: "/app/cv" },
+                { icon: "inbox" as IconName, t: "My Submissions", d: "Every task and step you have completed on the desk, week by week.", href: "/app/submissions" },
+                { icon: "star" as IconName, t: "Badges", d: "Method badges earned by completing the desk tasks behind each one.", href: "/app/badges" },
+                { icon: "ribbon" as IconName, t: "Certificate", d: "Your GRC 101 certificate, verifiable by anyone from its link.", href: "/app/certificate" },
+                { icon: "file" as IconName, t: "My CV", d: "A CV compiled from the work you have done.", href: "/app/cv" },
               ].map((c) => (
                 <Link key={c.t} href={c.href} className="group rounded-xl bg-white ring-1 ring-slate-200 p-4 no-underline hover:ring-indigo-300 hover:shadow-[0_10px_30px_-18px_rgba(15,23,42,0.4)] transition-all">
                   <div className="flex items-center gap-2">
@@ -658,117 +365,71 @@ export default function GuidePage() {
             </div>
           </Sec>
 
-          <Sec
-            id="access"
-            title="How long you have access"
-            icon="calendar"
-            lead="The programme is 16 weeks of work, but your access stays open for 24 weeks from the start date you pick — an 8-week cushion for leave, revisions, and life. It's self-paced within that window."
-          >
+          <Sec id="access" title="How long you have access" icon="calendar" lead="The programme is 12 weeks of work. Your access stays open for 24 weeks from the start date you pick, so there is room for catching up.">
             <div className="mb-3"><AccessChip variant="light" /></div>
             <Bullets
               items={[
-                <><strong>24 weeks from day one.</strong> Your access runs until the date shown above (and on your dashboard and Billing page). Only <em>submitting new work</em> is time-boxed.</>,
-                <><strong>Your finished work never expires.</strong> Your certificate, CV, badges and completed deliverables stay viewable and shareable for life — even after the work window closes.</>,
-                <><strong>Need more time? Share your progress.</strong> Post a badge or certificate on LinkedIn, then paste the link on the <Link href="/app/badges" className="text-indigo-600 no-underline hover:underline">Badges</Link> or <Link href="/app/certificate" className="text-indigo-600 no-underline hover:underline">Certificate</Link> page to add <strong>4 weeks</strong>. One-time.</>,
+                <><strong>24 weeks from your start date.</strong> Your access runs until the date shown above, which also appears on your Dashboard.</>,
+                <><strong>Your finished work stays yours.</strong> Your certificate, CV and badges stay viewable and shareable after the window closes.</>,
+                <><strong>Need more time? Share your progress.</strong> Post a badge or certificate on LinkedIn, then paste the link on the <Link href="/app/badges" className="text-indigo-600 no-underline hover:underline">Badges</Link> or <Link href="/app/certificate" className="text-indigo-600 no-underline hover:underline">Certificate</Link> page to add <strong>4 weeks</strong>. One time only.</>,
               ]}
             />
-            <Note>
-              If your window closes before you finish, you can still open and read everything — you just can&apos;t submit until you extend it by sharing on LinkedIn.
-            </Note>
           </Sec>
 
           <Sec id="around" title="Finding your way around" icon="home" lead="What each item in the left-hand menu is for.">
             <div className="rounded-xl bg-white ring-1 ring-slate-200 divide-y divide-slate-100">
-              {[
-                { icon: "home" as IconName, t: "Dashboard", d: "Your progress at a glance and the Continue card that jumps straight to your next activity." },
-                { icon: "desk" as IconName, t: "Working Desk", d: "Where you execute activities. You will spend most of your time here." },
-                { icon: "calendar" as IconName, t: "Calendar", d: "Scheduled stakeholder sessions and task deadlines from your engagements." },
-                { icon: "inbox" as IconName, t: "My Submissions", d: "Every step you have handed in, task by task, and where each task stands." },
-                { icon: "shield" as IconName, t: "Standards", d: "The same work viewed by standard instead of by project — useful for seeing your coverage of a framework." },
-                { icon: "settings" as IconName, t: "Account Settings", d: "In the avatar menu, top-right — profile, password and billing." },
-                { icon: "help" as IconName, t: "User Guide", d: "This page. It stays in the menu — come back whenever something is unclear." },
-              ].map((r) => (
-                <div key={r.t} className="flex items-start gap-3 px-4 py-3">
-                  <Icon name={r.icon} size={16} className="shrink-0 mt-0.5 text-slate-400" />
+              {DASH_NAV.filter((n) => MENU_HELP[n.id]).map((n) => (
+                <div key={n.id} className="flex items-start gap-3 px-4 py-3">
+                  <Icon name={n.icon} size={16} className="shrink-0 mt-0.5 text-slate-400" />
                   <div className="min-w-0">
-                    <div className="text-[13px] font-semibold tracking-tight text-slate-900">{r.t}</div>
-                    <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-0.5">{r.d}</p>
+                    <div className="text-[13px] font-semibold tracking-tight text-slate-900">{n.label}</div>
+                    <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-0.5">{MENU_HELP[n.id]}</p>
                   </div>
                 </div>
               ))}
-            </div>
-            <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-3">
-              Individual task and activity screens have their own short walkthrough — look for the guide
-              button in the header when you land on one for the first time.
-            </p>
-          </Sec>
-
-          <Sec
-            id="first"
-            title="Your first session"
-            icon="rocket"
-            lead="Do these five things, in this order, and you will have your first graded deliverable behind you."
-          >
-            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
-              <Step n={1} title="Open the Working Desk and read the task brief">
-                <p>
-                  Do not start filling anything in. Read the objective, the deliverable description and the
-                  controls it maps to. Ten minutes here saves an hour of rework.
-                </p>
-              </Step>
-              <Step n={2} title="Open the Organisation Context panel">
-                <p>
-                  Learn who CloudTech is — industry, regulator, what they sell, what data they hold. Every answer
-                  you write should be recognisably about this company and no other.
-                </p>
-              </Step>
-              <Step n={3} title="Read every reference document before you type">
-                <p>
-                  The intake notes and the classification scheme contain the facts and the rules. They are not
-                  optional background; the task is not answerable without them.
-                </p>
-              </Step>
-              <Step n={4} title="Work one activity, checklist visible">
-                <p>
-                  The acceptance criteria tick off live as you type. Aim for all green before you submit — a
-                  submission with red checks is a submission you already know will come back.
-                </p>
-              </Step>
-              <Step n={5} title="Submit, read the feedback properly, resubmit">
-                <p>
-                  Feedback arrives immediately. Expect questions rather than corrections — that is the point.
-                  Answer what was actually asked; resubmitting the same reasoning in new words is the most
-                  common way people burn their three revisions.
-                </p>
-              </Step>
-              <div className="flex gap-4">
-                <div className="shrink-0 w-7 grid place-items-center">
-                  <span className="grid place-items-center w-7 h-7 rounded-full bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200/70">
-                    <Icon name="clock" size={14} />
-                  </span>
-                </div>
+              <div className="flex items-start gap-3 px-4 py-3">
+                <Icon name="settings" size={16} className="shrink-0 mt-0.5 text-slate-400" />
                 <div className="min-w-0">
-                  <h4 className="text-[13.5px] font-semibold tracking-tight text-slate-900">Work in task-sized sittings</h4>
-                  <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-1">
-                    Tasks are designed to be finished in one or two sessions. Drafts save as you go, but
-                    stopping halfway through a register means re-reading the source material to pick it back up.
-                  </p>
+                  <div className="text-[13px] font-semibold tracking-tight text-slate-900">Account Settings</div>
+                  <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-0.5">In the avatar menu, top right: your profile and password.</p>
                 </div>
               </div>
             </div>
+            <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-3">
+              The bell in the header lists desk tasks due in the next seven days and any that are overdue. Found
+              a problem? The button at the bottom right sends us a note, the page and a screenshot.
+            </p>
           </Sec>
 
-          <Sec id="tips" title="Getting a good grade" icon="lightbulb" lead="The habits that separate a pass from a distinction. None of them take longer — they just take intent.">
+          <Sec id="first" title="Your first session" icon="rocket" lead="Do these in order and you will have your first task submitted.">
+            <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
+              <Step n={1} title="Open the Working Desk and pick your start date">
+                <p>The first time you open the desk it asks when your twelve weeks begin. Week 1 opens that day and every due date counts from it, so pick the day you will actually start.</p>
+              </Step>
+              <Step n={2} title="Let the desk walk you through">
+                <p>The desk&apos;s own walk-through runs once. Then read week 1&apos;s overview: what the week is for and what you hand in.</p>
+              </Step>
+              <Step n={3} title="Read your organisation">
+                <p>Open Home › My Organisation and read both organisations before you type anything. Step 1 of F1.1 copies from it.</p>
+              </Step>
+              <Step n={4} title="Work F1.1 step by step">
+                <p>Follow the orange dot. Read each decision&apos;s feedback in full. Mark each step complete as you finish it.</p>
+              </Step>
+              <Step n={5} title="Submit, then check your Dashboard">
+                <p>Submit task seals F1.1. Your Dashboard then points at F1.2, and the Calendar shows what is due next.</p>
+              </Step>
+            </div>
+          </Sec>
+
+          <Sec id="tips" title="Doing it well" icon="lightbulb" lead="The habits that separate careful work from guesswork.">
             <Bullets
               items={[
-                "Name names. A real system, a real role, this organisation's real regulator. \"Relevant stakeholders\" scores nothing; \"the Head of IT Operations\" scores.",
-                "Assign owners as roles, never departments. \"IT\" is not accountable; \"IT Service Manager\" is.",
-                "Justify every judgement. Any rating, ranking, classification or score needs a one-line rationale — several Layer 1 checks fail without one.",
-                "Cite the standard, clause or control you are relying on. Standards Alignment is graded on every technical verb.",
-                "Reuse your own earlier artefacts. Later tasks expect consistency with the register you built three activities ago — contradicting yourself is caught.",
-                "Do the readiness gate properly. Rushing it is why people then produce a register they cannot defend.",
-                "Write for the audience the verb names. A Brief for a non-technical board is not the same document as an Assess for an auditor.",
-                "Read the Layer 1 checklist before submitting. It is published up front — failing it is an unforced error.",
+                "Read the screen the step names before you type. The facts are there, and copied values are checked against it.",
+                "Use this organisation's names: its offices, systems, roles and regulators. \"Relevant stakeholders\" says nothing; \"the Compliance Manager\" does.",
+                "Before a decision, find the policy or rule it rests on. The feedback will cite it.",
+                "Watch your due dates on the week panel or the Calendar. Overdue tasks show in red.",
+                "Work a task in one or two sittings. Your work is saved, but a register half done means re-reading its sources.",
+                "Stuck? Use Show me how, then Help with this step. Still stuck? Report it with the button at the bottom right, naming the step (for example F1.1-4).",
               ]}
             />
           </Sec>
@@ -777,7 +438,7 @@ export default function GuidePage() {
             <div className="min-w-0 flex-1">
               <h3 className="text-[15px] font-semibold tracking-tight text-slate-900">That is everything you need to start</h3>
               <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-1" style={{ textWrap: "pretty" }}>
-                Your first organisation is waiting. Open the Working Desk and clear the readiness gate on task one.
+                Open the Working Desk, pick your start date, and begin F1.1.
               </p>
             </div>
             <Link

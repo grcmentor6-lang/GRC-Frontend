@@ -52,7 +52,7 @@ function CareerHero({ program, progress }: { program: CareerProgram; progress: n
           <p className="text-[13.5px] text-indigo-50/90 mt-2 tracking-tight leading-relaxed max-w-xl" style={{ textWrap: "pretty" }}>{program.tagline}</p>
           <div className="mt-4 max-w-sm">
             <div className="flex items-center justify-between text-[11px] text-indigo-100 mb-1.5">
-              <span>{active ? "Module progress" : "Not started"}</span>
+              <span>{active ? "Steps done" : "Not started"}</span>
               <span className="font-medium tabular-nums">{progress}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-white/20 overflow-hidden">

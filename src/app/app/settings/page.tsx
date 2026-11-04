@@ -73,7 +73,6 @@ function ProfilePanel() {
     linkedin: user?.linkedin ?? "",
     university: user?.university ?? "",
     qualification: user?.qualification ?? "",
-    bio: user?.bio ?? "",
   });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -141,7 +140,6 @@ function ProfilePanel() {
           <Field label="City"><TextInput icon="mapPin" value={form.city ?? ""} onChange={set("city")} /></Field>
           <Field label="University"><UniversitySelect value={form.university ?? ""} onChange={set("university")} /></Field>
           <Field label="Qualification"><TextInput value={form.qualification ?? ""} onChange={set("qualification")} /></Field>
-          <Field label="Short introduction" className="sm:col-span-2"><TextInput value={form.bio ?? ""} onChange={set("bio")} /></Field>
         </div>
       </SettingsCard>
     </form>

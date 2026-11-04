@@ -78,17 +78,18 @@ export function CertificateSheet({
   stats: CertStat[];
   preview?: boolean;
 }) {
-  const credentialId = cert.credentialId ?? "— pending completion —";
-  const verifyLabel = cert.verifyUrl?.replace(/^https?:\/\//, "") ?? "issued at 100% completion";
+  const credentialId = cert.credentialId ?? "— none: not issued —";
+  const verifyLabel = cert.verifyUrl?.replace(/^https?:\/\//, "") ?? "nothing to verify yet";
   return (
-    <div id="cert-sheet" className="relative" style={{ width: 1000, background: "#FCFBF6", fontFamily: "var(--font-plex-sans), sans-serif" }}>
+    // Not issued: the sheet is greyed out, so a progress record never passes for the credential in colour.
+    <div id="cert-sheet" className="relative" style={{ width: 1000, background: "#FCFBF6", fontFamily: "var(--font-plex-sans), sans-serif", ...(preview ? { filter: "grayscale(1)", opacity: 0.6 } : {}) }}>
       <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(1200px 500px at 50% -10%, rgba(79,70,229,0.05), transparent 60%), radial-gradient(800px 500px at 50% 120%, rgba(201,154,63,0.06), transparent 60%)" }} />
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center select-none" style={{ opacity: 0.035 }}>
         <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 460, color: "#312e81", lineHeight: 1 }}>G</span>
       </div>
       {(preview || cert.expired) && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center select-none" style={{ transform: "rotate(-24deg)" }}>
-          <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 150, letterSpacing: "0.1em", color: preview ? "rgba(49,46,129,0.06)" : "rgba(190,18,60,0.08)" }}>{preview ? "PREVIEW" : "EXPIRED"}</span>
+          <span style={{ fontFamily: SERIF, fontWeight: 700, fontSize: preview ? 110 : 150, letterSpacing: "0.1em", color: preview ? "rgba(49,46,129,0.13)" : "rgba(190,18,60,0.08)" }}>{preview ? "NOT ISSUED" : "EXPIRED"}</span>
         </div>
       )}
 
@@ -110,12 +111,17 @@ export function CertificateSheet({
           <span style={{ height: 1, width: 56, background: "linear-gradient(90deg,#C99A3F,transparent)" }} />
         </div>
 
-        <div style={{ fontSize: 12.5, letterSpacing: "0.06em", color: "#6b6680" }}>This is to certify that</div>
+        <div style={{ fontSize: 12.5, letterSpacing: "0.06em", color: "#6b6680" }}>{preview ? "Progress record, not a certificate, for" : "This is to certify that"}</div>
         <div style={{ fontFamily: SERIF, fontWeight: 600, fontSize: 58, lineHeight: 1.1, color: "#312e81", margin: "6px 0 4px" }}>{cert.recipient}</div>
         <div style={{ width: 280, height: 1, background: "linear-gradient(90deg,transparent,#C99A3F,transparent)", marginBottom: 16 }} />
 
+        {/* A preview certifies nothing: it says what is in progress, not what was done. */}
         <p style={{ maxWidth: 640, fontSize: 14, lineHeight: 1.7, color: "#3a3647" }}>
-          has successfully completed the <span style={{ fontWeight: 600, color: "#1e1b3a" }}>{cert.programTitle}</span>, {cert.blurb}
+          {preview ? (
+            <>is working towards the <span style={{ fontWeight: 600, color: "#1e1b3a" }}>{cert.programTitle}</span>. Not issued: the figures below are progress so far, not an award.</>
+          ) : (
+            <>has successfully completed the <span style={{ fontWeight: 600, color: "#1e1b3a" }}>{cert.programTitle}</span>, {cert.blurb}</>
+          )}
         </p>
 
         {/* The sheet is a fixed-width document, so a fifth stat tightens the gutter rather than
@@ -150,7 +156,7 @@ export function CertificateSheet({
           </div>
 
           <div className="flex flex-col items-center" style={{ marginBottom: 2 }}>
-            <Seal />
+            {preview ? <div style={{ width: 118, height: 118, borderRadius: "50%", border: "1.5px dashed rgba(49,46,129,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, letterSpacing: "0.14em", color: "#6b6680", fontWeight: 600 }}>NOT ISSUED</div> : <Seal />}
             <div className="flex items-center gap-2.5" style={{ marginTop: 16 }}>
               <VerifyQR url={cert.verifyUrl} size={54} />
               <div className="text-left">
@@ -170,7 +176,7 @@ export function CertificateSheet({
         </div>
 
         <div style={{ fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase", color: cert.expired ? "#be123c" : "#9a7320", marginTop: 22 }}>
-          {cert.issueDate ? `Issued ${cert.issueDate}` : "Issued on completion"}
+          {cert.issueDate ? `Issued ${cert.issueDate}` : "Not issued"}
           {cert.expiryDate ? ` · ${cert.expired ? "Expired" : "Valid until"} ${cert.expiryDate}` : ""}
         </div>
       </div>

@@ -6,8 +6,7 @@ import { notFound, useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { Plaque } from "@/components/app/plaque";
 import { ItemPoster, LibraryProvenance, TaskContext } from "@/components/app/library";
-import { LIBRARY_BY_ID, entriesOf, findEntry, itemHref, nameOf, summaryOf, tasksCovering } from "@/lib/library";
-import { TASK_META } from "@/lib/taskmeta";
+import { LIBRARY_BY_ID, entriesOf, findEntry, itemHref, nameOf, summaryOf } from "@/lib/library";
 import { useAuth } from "@/components/auth/auth-provider";
 import { LeadImplementerPanel } from "@/components/career/li-path";
 
@@ -28,7 +27,6 @@ export default function LibraryItemPage({ params, searchParams }: {
   const at = all.findIndex((e) => e.item.ref === item.ref);
   const prev = all[at - 1]?.item;
   const next = all[at + 1]?.item;
-  const tasks = tasksCovering(item.ref);
 
   return (
     <div className="page-shell space-y-4">
@@ -79,27 +77,9 @@ export default function LibraryItemPage({ params, searchParams }: {
 
           {standard.id === "iso27001" && user && <LeadImplementerPanel itemRef={item.ref} who={user.email} />}
 
-          <div>
-            <span className="block font-mono text-[9.5px] uppercase tracking-[0.08em] text-slate-400 mb-2">Where GRC 101 uses it</span>
-            {tasks.length ? (
-              <ul className="list-none p-0 m-0 space-y-1">
-                {tasks.map((code) => (
-                  <li key={code}>
-                    <Link
-                      href={`/app/desk/task/${code}`}
-                      className={`focus-ring flex items-baseline gap-3 rounded-lg px-2.5 py-1.5 hover:bg-slate-50 ${code === task ? "bg-sky-50/60" : ""}`}
-                    >
-                      <span className="font-mono text-[11px] text-slate-500 w-[64px] shrink-0">{code}</span>
-                      <span className="text-[12.5px] text-slate-700 tracking-tight">{TASK_META[code]?.name ?? code}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[12.5px] text-slate-500 tracking-tight">No GRC 101 task is graded against this one.</p>
-            )}
-          </div>
-
+          {/* ponytail: "Where GRC 101 uses it" listed the retired 35-task catalogue (AA-001 …) and linked to
+              /app/desk/task/…, which no longer exists. Bring it back once the desk's 25 tasks carry a
+              reviewed control mapping (their `anchor` lines do not describe the task's work). */}
           <div className="flex items-center justify-between gap-3 pt-1">
             {prev ? (
               <Link href={itemHref(standard, prev, task)} className="focus-ring inline-flex items-center gap-1.5 text-[12px] text-slate-500 hover:text-slate-800">

@@ -6,19 +6,23 @@ import { Icon } from "@/components/ui/icon";
 import { Loader } from "@/components/ui/loader";
 import { VerifyQR } from "@/components/cert/certificate-sheet";
 import { certificateApi, type CertVerify } from "@/lib/certificate";
+import { ApiError } from "@/lib/api";
 
 export default function VerifyPage({ params }: { params: Promise<{ credentialId: string }> }) {
   const { credentialId } = use(params);
   const [data, setData] = useState<CertVerify | null>(null);
-  const [state, setState] = useState<"loading" | "found" | "invalid">("loading");
+  const [state, setState] = useState<"loading" | "found" | "invalid" | "unavailable">("loading");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     certificateApi.verify(credentialId)
       .then((d) => { if (!cancelled) { setData(d); setState("found"); } })
-      .catch(() => { if (!cancelled) setState("invalid"); });
+      // Only a 404 means "no such credential". A timeout or a 5xx (the free-tier backend cold-
+      // starting) must not tell an employer that a real credential is fake.
+      .catch((e) => { if (!cancelled) setState(e instanceof ApiError && e.status === 404 ? "invalid" : "unavailable"); });
     return () => { cancelled = true; };
-  }, [credentialId]);
+  }, [credentialId, attempt]);
 
   return (
     <div className="min-h-screen bg-[#FAFAF7] flex flex-col">
@@ -36,6 +40,16 @@ export default function VerifyPage({ params }: { params: Promise<{ credentialId:
             <div className="text-[16px] font-semibold text-slate-900">Credential not found</div>
             <p className="text-[13px] text-slate-500 mt-1.5">No issued credential matches <span className="font-mono text-slate-700">{credentialId}</span>.</p>
             <Link href="/" className="inline-block mt-4 text-[13px] font-medium text-indigo-600 hover:underline">Go to grcmentor →</Link>
+          </div>
+        )}
+
+        {state === "unavailable" && (
+          <div className="rounded-2xl bg-white ring-1 ring-slate-200/70 p-8 text-center shadow-sm">
+            <div className="text-[16px] font-semibold text-slate-900">Verification is temporarily unavailable</div>
+            <p className="text-[13px] text-slate-500 mt-1.5">
+              We could not reach the credential register just now. This says nothing about whether <span className="font-mono text-slate-700">{credentialId}</span> is valid.
+            </p>
+            <button onClick={() => { setState("loading"); setAttempt((n) => n + 1); }} className="mt-4 text-[13px] font-medium text-indigo-600 hover:underline">Try again</button>
           </div>
         )}
 
@@ -63,7 +77,7 @@ export default function VerifyPage({ params }: { params: Promise<{ credentialId:
               <div className="text-[24px] font-semibold tracking-[-0.02em] text-slate-900 mt-1">{data.recipient}</div>
               <div className="text-[13.5px] text-slate-600 tracking-tight mt-2">{data.programTitle}</div>
 
-              <div className="grid grid-cols-3 gap-3 mt-6">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-3 mt-6">
                 {data.stats.map((s) => (
                   <div key={s.label} className="rounded-xl bg-slate-50/70 ring-1 ring-slate-200/60 px-3 py-2.5 text-center">
                     <div className="text-[17px] font-semibold tracking-[-0.02em] text-indigo-600 tabular-nums">{s.value}</div>

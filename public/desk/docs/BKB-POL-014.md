@@ -92,13 +92,14 @@ Minimum requirements scale with organisation criticality as defined in Organizat
 | Step | Action |
 | :-: | :-: |
 | 1 | List the engaged offices: the office whose systems are affected, and, for each country where affected data subjects live, the organisation's office in that country. A country with no office of its own is read with the office of its region (the addendum's Section 1). |
-| 2 | Read each engaged office's row of the addendum's Section 2. A breach-notification regime in that row applies. |
+| 2 | Read each engaged office's row of the addendum's Section 2. A breach-notification regime in that row applies, unless step 2a or step 8 says otherwise. |
+| 2a | A breach-notification law covers only the personal information it defines. US state breach laws cover a person's name together with a Social Security number, a driver's licence or ID number, a financial account or card number with its access code, or sign-in credentials (many states add medical and health-insurance data). Where the data categories taken are none of these, the state laws do not apply, even though residents are affected. |
 | 3 | A cyber-incident reporting duty (Section 2's Cyber / sector law column) applies only where that office's own systems are affected. Data subjects living in the country do not engage it. |
-| 4 | A regime whose own words set a condition that the incident facts do not settle (being a registrant, the incident being material, the organisation being in a law's scope) applies if the condition is met. List it with its condition: its clock is not firm. |
+| 4 | A regime whose own words set a condition that the incident facts do not settle (being a registrant, the incident being material, the organisation being in a law's scope) applies if the condition is met. List it with its condition and no date: its clock runs from the moment the condition is met, not from discovery (SEC 8-K Item 1.05: four business days from the decision that the incident is material). |
 | 5 | A regime of an office that is not engaged does not apply. |
 | 6 | Discovery time = the moment the incident is logged in the incident tool (Section 6.1, step 1), in UTC: an alert not yet logged does not start the clock, and triage and containment do not stop it. Deadline = discovery time (UTC) + the clock. Hours and days are calendar time, weekends included; business days skip Saturdays and Sundays. Where a cell gives a range, count from its shortest end. Write each deadline as the discovery time is written: date, time, UTC (2026-01-31 09:00 UTC). |
-| 7 | The earliest firm deadline governs the plan (Section 3.1). A conditional regime is listed with its deadline and its condition, and is not used for the earliest. |
-| 8 | An EU directive that Section 2 says is not yet transposed into the country's law sets no clock: mark it Monitor, with no deadline, and check its status again before the notices go out (Regulatory Watch › Regulation Tracker). A law in force in phases is not this case: step 2 applies. |
+| 7 | The earliest firm deadline governs the plan (Section 3.1). Where two regimes set different clocks for the same notice, work to the shorter one and record both. A conditional regime is listed with its condition, and is not used for the earliest. |
+| 8 | A regime whose breach duty is not yet in force sets no clock: mark it Monitor, with no deadline, and check its status again before the notices go out (Regulatory Watch › Regulation Tracker). Two cases: an EU directive that Section 2 says is not yet transposed into the country's law, and a law in force in phases whose breach-notification duty Section 2 dates to a later phase. |
 
 7\. Guidelines
 

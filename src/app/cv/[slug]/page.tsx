@@ -27,7 +27,7 @@ export default function PublicCvPage({ params }: { params: Promise<{ slug: strin
             <span className="text-[15px] font-semibold tracking-[-0.02em] text-slate-700">grc</span>
             <span className="text-[15px] font-semibold tracking-[-0.02em] text-indigo-600">mentor</span>
           </Link>
-          <span className="text-[11px] text-slate-400 tracking-tight">Verified GRC fieldwork</span>
+          <span className="text-[11px] text-slate-400 tracking-tight">GRC fieldwork · simulated engagements</span>
         </div>
 
         {state === "loading" && <Loader />}
@@ -42,7 +42,7 @@ export default function PublicCvPage({ params }: { params: Promise<{ slug: strin
           <>
             <CvSheet cv={cv} />
             <div className="text-center text-[11px] text-slate-400 pt-5 pb-2">
-              Auto-compiled from verified mentor-graded work on{" "}
+              Auto-compiled from the work this learner submitted on the Working Desk at{" "}
               <Link href="/" className="text-indigo-600 hover:underline">grcmentor</Link>.
             </div>
           </>

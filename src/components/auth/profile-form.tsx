@@ -36,7 +36,6 @@ export function ProfileForm({
     university: user?.university ?? "",
     qualification: user?.qualification ?? "",
     linkedin: user?.linkedin ?? "",
-    bio: user?.bio ?? "",
   });
   const setP =
     (k: keyof typeof profile) =>
@@ -107,7 +106,6 @@ export function ProfileForm({
         </Field>
         <Field label="Qualification" className="col-span-2"><TextInput required value={profile.qualification} onChange={setP("qualification")} placeholder="e.g. BSc Computer Science" /></Field>
         <Field label="LinkedIn" className="col-span-2"><TextInput icon="linkedin" value={profile.linkedin} onChange={setP("linkedin")} placeholder="https://linkedin.com/in/…" /></Field>
-        <Field label="Short introduction" className="col-span-2"><TextInput required value={profile.bio} onChange={setP("bio")} placeholder="A sentence about you" /></Field>
         {footer && <div className="col-span-2">{footer}</div>}
         <div className="col-span-2">
           <PrimaryBtn type="submit" disabled={busy || disabled} className="w-full">

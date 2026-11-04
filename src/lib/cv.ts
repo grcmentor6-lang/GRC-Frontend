@@ -8,9 +8,11 @@ export interface CvProfile {
   initials: string;
   name: string;
   location: string;
-  email: string;
+  /** Null on the public CV: a shared link never carries the learner's address. */
+  email: string | null;
   linkedin?: string | null;
-  openToWork: boolean;
+  /** Not sent: nobody has been asked, so it is not claimed for them. */
+  openToWork?: boolean;
   summary: string;
 }
 
@@ -19,7 +21,8 @@ export interface CvMetric { value: string; sub: string; label: string }
 export interface CvExperienceItem {
   verb: string;
   step: string;
-  score: number;
+  /** Null: the desk does not score a hand-in yet. */
+  score: number | null;
   when: string;
   text: string;
   note: string;

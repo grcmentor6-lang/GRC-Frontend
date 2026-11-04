@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
-import { TASK_META } from "@/lib/taskmeta";
-import { learningsApi } from "@/lib/learnings";
+import { loadDesk } from "@/lib/desk/model";
 import { nameOf, summaryOf, type LibGroup, type LibItem, type LibStandard } from "@/lib/library";
 
 /*
@@ -153,14 +152,15 @@ export function OverviewPoster({ standard, part, slug }: { standard: LibStandard
   const headH = (t: Tile) => 34 + (t.eyebrow ? 36 : 0) + t.title.length * titleLh + (t.caption ? 44 : 0) + 16;
   const listH = (t: Tile) => (t.list.length ? 24 + t.list.reduce((n, l) => n + l.length * 28 + 8, 0) + (t.more ? 28 : 0) : 0);
 
+  // Each row starts where the one above ended: a plain loop, so nothing is reassigned inside a callback.
+  const rows: { row: Tile[]; y: number; hh: number; start: number }[] = [];
   let y = 290;
-  const rows = Array.from({ length: Math.ceil(tiles.length / cols) }, (_, r) => {
-    const row = tiles.slice(r * cols, (r + 1) * cols);
+  for (let start = 0; start < tiles.length; start += cols) {
+    const row = tiles.slice(start, start + cols);
     const hh = Math.max(...row.map(headH));
-    const out = { row, y, hh, start: r * cols };
+    rows.push({ row, y, hh, start });
     y += hh + Math.max(...row.map(listH)) + GAP;
-    return out;
-  });
+  }
   const H = y + 130;
   const total = groups.reduce((n, g) => n + g.items.length, 0);
   const sub = single
@@ -303,26 +303,28 @@ export function LibraryProvenance({ standard }: { standard?: LibStandard }) {
 
 /** "You came here from a task" — the organisation whose work this reading is for, and the way back. */
 export function TaskContext({ task }: { task: string }) {
-  const meta = TASK_META[task];
-  const [org, setOrg] = useState<string>();
+  // The Working Desk's own task (T3.2 …), read from its catalogue; an id it does not hold shows no banner.
+  const [t, setT] = useState<{ title: string; org: string } | null>(null);
   useEffect(() => {
     let off = false;
-    learningsApi
-      .get("grc101")
-      .then((l) => !off && setOrg(l.orgs.find((o) => o.projects.some((p) => p.tasks.some((t) => t.code === task)))?.name))
+    loadDesk()
+      .then((d) => {
+        const x = d.tasks[task];
+        if (!off && x) setT({ title: x.title, org: x.orglbl });
+      })
       .catch(() => {});
     return () => { off = true; };
   }, [task]);
-  if (!meta) return null;
+  if (!t) return null;
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-l-2 border-sky-700 bg-sky-50/60 px-3.5 py-2.5">
       <div className="min-w-0 flex-1">
         <span className="block font-mono text-[10px] uppercase tracking-[0.08em] text-sky-700">
-          Reading for {task}{org ? ` · ${org}` : ""}
+          Reading for {task}{t.org ? ` · ${t.org}` : ""}
         </span>
-        <span className="block text-[13px] text-slate-800 tracking-tight">{meta.name}</span>
+        <span className="block text-[13px] text-slate-800 tracking-tight">{t.title}</span>
       </div>
-      <Link href={`/app/desk/task/${task}`} className="focus-ring inline-flex items-center gap-1.5 text-[12px] font-medium text-sky-700 hover:text-sky-900">
+      <Link href={`/app/desk#${task}`} className="focus-ring inline-flex items-center gap-1.5 text-[12px] font-medium text-sky-700 hover:text-sky-900">
         Back to the task <Icon name="arrowRight" size={13} />
       </Link>
     </div>

@@ -243,7 +243,7 @@ function KrChecklist({ task, focus, onFocus, onClose }: { task: Task; focus: num
                       key={a}
                       type="button"
                       onClick={() => onFocus(a)}
-                      aria-label={`Open activity ${a}`}
+                      aria-label={`Open step ${a}`}
                       className={`h-[17px] min-w-[17px] rounded-[4px] px-1 font-mono text-[10px] tabular-nums ${press} ${
                         isDone(a) ? "bg-emerald-50 text-emerald-700" : a === focus ? "bg-sky-100 text-sky-800 ring-1 ring-sky-300" : "bg-slate-100 text-slate-500 hover:text-slate-800"
                       }`}
@@ -330,8 +330,8 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
           {submitted
             ? `Submitted ${new Date(submitted).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`
             : left
-              ? `${left} ${left === 1 ? "activity" : "activities"} left before you can submit`
-              : "Every activity is complete. Submitting seals the task."}
+              ? `${left} ${left === 1 ? "step" : "steps"} left before you can submit`
+              : "Every step is complete."}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {task.subs.map((x) => (
@@ -341,7 +341,10 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
             </span>
           ))}
         </div>
-        <p className="text-[12px] text-[#5B6474]">{task.rev}</p>
+        {/* Not task.rev: the pack's "Automated review within 24 h (assessors sample 10 %)" describes a review the platform does not run. */}
+        <p className="text-[12px] text-[#5B6474]">
+          {submitted ? "This task is sealed. Your work is on My Submissions, Reports and your CV." : "Submitting seals this task. Your submitted work appears on My Submissions, Reports and your CV."}
+        </p>
       </div>
       {!submitted && (
         <button

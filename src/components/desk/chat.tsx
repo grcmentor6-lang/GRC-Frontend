@@ -7,6 +7,8 @@ import type { Task } from "@/lib/desk/model";
 import { INJ_AT, released, waitingAt } from "@/lib/desk/inbox";
 import { api } from "@/lib/api";
 import type { DecisionFeedback } from "@/lib/desk/progress";
+import { useDeskIdentity } from "@/lib/desk/identity";
+import { canonAt, optionOrder, relabel } from "@/lib/desk/option-order";
 
 /*
  * The task messages, read and answered in Toolbar › Inbox. Each says what kind of message it is,
@@ -104,6 +106,8 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
   // A message with no key yet (404) stays answered without feedback, and says when its learning point comes.
   const fb = progress.decisions?.[id];
   const [nokey, setNokey] = useState(false);
+  // Each learner sees the replies in their own order (option-order.ts); the reply stored and sent stays canonical.
+  const order = optionOrder(useDeskIdentity().menteeId, id, m?.options?.length ?? 0);
   useEffect(() => {
     if (!m || !picked || notice || fb || nokey) return;
     let live = true;
@@ -158,12 +162,12 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
           <div className="pt-1">
             <p className="mb-2 text-center text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-400">Choose your reply</p>
             <div className="grid gap-2">
-              {m.options.map((o, i) => (
+              {order.map((ci, i) => [m.options[ci], canonAt(order, i)] as const).map(([o, letter], i) => (
                 <button
                   key={o}
                   type="button"
                   disabled={locked}
-                  onClick={() => reply(String.fromCharCode(65 + i))}
+                  onClick={() => reply(letter)}
                   className="flex w-full gap-2.5 rounded-xl bg-white px-3.5 py-2.5 text-left text-[13px] leading-relaxed tracking-tight text-slate-800 ring-1 ring-slate-200 transition-colors hover:bg-indigo-50/40 hover:ring-indigo-400 focus-ring active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[11px] font-semibold text-slate-500">{"ABCDEF"[i]}</span>
@@ -201,7 +205,7 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
         {picked && fb && (
           <div data-guide="message-result" className={`grid gap-1 rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed ring-1 ring-inset ${fb.correct ? "bg-emerald-50 text-emerald-900 ring-emerald-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
             <p className="font-semibold">{fb.correct ? "That was the best reply." : `Not the best reply. The best is: ${bestText}`}</p>
-            {fb.why && <p>{fb.why}</p>}
+            {fb.why && <p>{relabel(fb.why, order)}</p>}
           </div>
         )}
         {picked && here?.task === m.task && INJ_AT[id] === here.n && (

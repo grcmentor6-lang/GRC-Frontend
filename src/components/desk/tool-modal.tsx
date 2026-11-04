@@ -11,6 +11,7 @@ import { gridKey, lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { Inbox, MessageNotice } from "./chat";
 import { ToolScreen } from "./viewer";
 import { FloatWindow } from "./float-window";
+import { PreparedFor } from "./prepared-for";
 import { TableView } from "./ui";
 import { DocCitation } from "./doc-text";
 import { DOC_TEXT } from "@/lib/desk/docs";
@@ -361,8 +362,8 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
                   </div>
                 )}
                 {regHandIn && regsIn.length > 1 ? (
-                  // The sheet this step fills (T6.1's Sheet 4) first: the work, then the files it is handed in with.
-                  [...regsIn].sort((a, b) => +!!b.steps[s!.n]?.length - +!!a.steps[s!.n]?.length).map((r) => (
+                  // T6.1's Sheet 4 first: the work, then the files it is handed in with. T3.2's and T5.1's Sheet 2 stay below.
+                  [...regsIn].sort((a, b) => +!!b.first - +!!a.first).map((r) => (
                     <div key={r.code} className="shrink-0">
                       <RegisterWork task={task} s={s} of={r} readOnly={!!progress.submitted[task.id]} />
                     </div>
@@ -401,6 +402,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
             />
           )}
         </div>
+        <PreparedFor />
       </motion.div>
     </div>
   );
@@ -468,7 +470,7 @@ function Screen({ toolKey }: { toolKey: string }) {
         <div className="overflow-x-auto border-b border-[#DDE1E8] bg-white">
           <table className="w-full min-w-[640px] border-collapse text-[13px]">
             <thead className="bg-[#F7F8FA] text-left text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">
-              <tr>{["Task", "Title", "Org", "Due", "Activities", "Status"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
+              <tr>{["Task", "Title", "Org", "Due", "Steps", "Status"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {ids.map((t) => {
@@ -713,7 +715,7 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
             onClick={complete}
             className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] disabled:hover:brightness-100"
           >
-            Mark activity complete
+            Mark step complete
           </button>
         )}
       </footer>

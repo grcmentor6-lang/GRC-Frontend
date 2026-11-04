@@ -6,6 +6,7 @@ import { FloatWindow } from "./float-window";
 import { Icon } from "@/components/ui/icon";
 import { OrgLogo, logoFor } from "@/components/app/org-logo";
 import { loadDesk, type Desk, type Org } from "@/lib/desk/model";
+import { useDeskIdentity } from "@/lib/desk/identity";
 
 /** The full organisation record a mentee works for, as the engine issues it. */
 export type OrgFull = Org & {
@@ -39,9 +40,10 @@ function Monogram({ org, size = "h-11 w-11", icon = 36 }: { org: OrgFull; size?:
 
 function useDesk(): Desk | null {
   const [desk, setDesk] = useState<Desk | null>(null);
+  const who = useDeskIdentity(); // in the learner's organisation names
   useEffect(() => {
     loadDesk().then(setDesk, () => setDesk(null));
-  }, []);
+  }, [who]);
   return desk;
 }
 
