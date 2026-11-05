@@ -17,7 +17,7 @@ export const DECISION_CONTEXT: Record<string, string> = {
   "F1.2-D2":
     "GlobalConnect has four offices: Manila, the head office, and regional offices in Warsaw, Phoenix and Cape Town. BKB-ADD-16 Section 2 gives each office one row: its data-protection law, its authority and its sector laws. Column E of your map records the offices each standard applies to, and later tasks decide applicability from it.",
   "F1.2-D3":
-    "Column G, Evidence ref, records where a row's values came from. This map is the first page of the obligations register: the register and the crosswalk are built on it in week 3, and its review is automated, with assessors checking a sample. The Group's definition of an evidence ref is in Learn & Grow › Glossary.",
+    "Column G, Evidence ref, records where a row's values came from. This map is the first page of the obligations register: the register and the crosswalk are built on it in week 3, and its review is automated, with assessors checking a sample. The Group's definition of an evidence ref is in Learn › Glossary.",
   "F1.3-D1":
     "Section 4 of the context brief is headed “Mission Critical assets”. The asset register rates every asset of an office; for Manila, BKB-ADD-16 Section 8 counts 10 Mission Critical, 41 Business Critical, 29 Standard / Operational and 1 Non-Critical. A colleague notes that some of the Business Critical assets hold customer data.",
   "F1.3-D2":

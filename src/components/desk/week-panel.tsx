@@ -221,14 +221,20 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
 
         <div className={band}>Before the week closes</div>
         <ul className="text-[13px] text-[#111827]">
-          <li className="flex items-center gap-2.5 border-b border-[#DDE1E8] px-4 py-3">
-            <Icon name="checkSquare" size={15} className="shrink-0 text-[#8A91A3]" />
-            Knowledge check <span className="font-mono text-[12px] text-[#5B6474]">{w.kc?.split(" ")[0]}</span>
-          </li>
-          {w.gate && (
-            <li className="flex items-center gap-2.5 border-b border-[#DDE1E8] px-4 py-3">
-              <span className="grid w-[15px] shrink-0 place-items-center"><span className="h-2 w-2 rotate-45 bg-[#D97706]" /></span>
-              {w.gate}
+          {/* The week's test: one line, the exam's name in an exam week (it was listed twice, as "Knowledge check FGE" and
+              as the exam). The tests' questions are not on the desk yet, so the line says so and is not a control: it
+              looked clickable and opened nothing (tester, 4 Nov). */}
+          {w.kc && (
+            <li data-test={w.kc.split(" ")[0]} className="flex items-center gap-2.5 border-b border-[#DDE1E8] px-4 py-3 text-[#5B6474]">
+              {w.gate ? (
+                <span className="grid w-[15px] shrink-0 place-items-center"><span className="h-2 w-2 rotate-45 bg-[#D97706]" /></span>
+              ) : (
+                <Icon name="checkSquare" size={15} className="shrink-0 text-[#8A91A3]" />
+              )}
+              <span className="min-w-0 flex-1">
+                {w.gate || "Knowledge check"} <span className="font-mono text-[12px]">{w.kc.split(" ")[0]}</span>
+              </span>
+              <span className="shrink-0 rounded-[3px] border border-[#E3E6EC] bg-[#F7F8FA] px-1.5 py-0.5 text-[11px] text-[#5B6474]">Coming soon</span>
             </li>
           )}
           {hc && (

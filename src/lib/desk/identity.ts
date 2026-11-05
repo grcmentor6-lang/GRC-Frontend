@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
-import { CANONICAL, setDeskIdentity, type DeskIdentity } from "./names";
+import { CANONICAL, CANONICAL_START, setDeskIdentity, type DeskIdentity } from "./names";
 
 /**
  * A learner's own face on the shared desk (owner, 3 Nov 2026): their mentee ID and their two organisations' names.
@@ -24,7 +25,10 @@ export { CANONICAL, toLearner, toCanon, type DeskIdentity, type DeskOrg } from "
  */
 export function useDeskIdentity(): DeskIdentity {
   const { user } = useAuth();
-  const id = user?.deskIdentity ?? CANONICAL;
+  const base = user?.deskIdentity ?? CANONICAL;
+  // Their start date too: the programme-calendar dates the content writes from week 1 = Mon 05 Oct follow it (names.ts).
+  const start = user?.startDate?.slice(0, 10);
+  const id = useMemo(() => (start && start !== CANONICAL_START ? { ...base, start } : base), [base, start]);
   setDeskIdentity(id);
   return id;
 }

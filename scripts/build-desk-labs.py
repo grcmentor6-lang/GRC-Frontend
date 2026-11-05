@@ -131,7 +131,7 @@ public = {
          "where": "Tenant settings. Type part of the setting's name in Search so that only its row is left."},
         {"id": "types", "kind": "rows", "title": "The exception type of each",
          "ask": "Give each account its type, as you did in UAR-TEST.",
-         "where": "Learn & Grow › Reference pages › Ref-UAR codes. A policy deviation that no code describes takes No U code.",
+         "where": "Learn › Reference pages › Ref-UAR codes. A policy deviation that no code describes takes No U code.",
          "options": TYPES, "from": [{"part": "admins"}, {"part": "verdict", "keep": "Issue"}]},
     ],
 }

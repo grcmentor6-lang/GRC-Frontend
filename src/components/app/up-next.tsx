@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { userKey } from "@/lib/token";
 import { SOFT_TONES } from "@/lib/tones";
-import { DropdownPanel } from "@/components/ui/motion";
+import { DropdownPanel, useDismiss } from "@/components/ui/motion";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useDeskRecord } from "@/lib/desk-record";
 import { ALL_WEEKS_OPEN } from "@/lib/flags";
@@ -14,7 +14,7 @@ import { fmtDay } from "@/lib/desk/model";
 
 /** Only look this far ahead; beyond it is the Calendar page's job. */
 const HORIZON_DAYS = 7;
-interface Item { id: string; icon: string; tone: "rose" | "amber" | "indigo"; title: string; detail: string; when: string; href: string; blocking: boolean }
+interface Item { id: string; icon: string; tone: "rose" | "amber" | "indigo"; title: string; detail: string; when: string; href: string }
 // Scoped per account — an unscoped key lets one learner's dismissals silence the next learner's
 // bell on the same browser, including a blocking mentor note.
 const seenKey = () => `grcmentor:upnext-seen:${userKey()}`;
@@ -42,13 +42,7 @@ export function UpNext() {
   const { user } = useAuth();
   const { desk, progress, start } = useDeskRecord();
 
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
+  useDismiss(ref, open, useCallback(() => setOpen(false), []));
 
   const items: Item[] = useMemo(() => {
     if (!desk || !user?.startDate) return [];
@@ -63,10 +57,10 @@ export function UpNext() {
         detail: `Due ${fmtDay(t.due)} · ${t.stepsDone} of ${t.steps} steps done`,
         when: dueText(t),
         href: `/app/desk#${t.id}`,
-        blocking: t.state !== "upcoming",
       }));
   }, [desk, progress, start, user]);
-  const blocking = items.reduce((n, x) => n + (x.blocking && !seen.has(x.id) ? 1 : 0), 0);
+  // The badge counts everything in the list not yet seen, so "due tomorrow" lights the bell too; red when one is late.
+  const unseen = items.reduce((n, x) => n + (seen.has(x.id) ? 0 : 1), 0);
   const late = items.some((x) => x.tone === "rose" && !seen.has(x.id));
 
   const toggle = () => {
@@ -87,20 +81,22 @@ export function UpNext() {
     <div className="relative" ref={ref}>
       <button
         onClick={toggle}
-        aria-label="Up next"
-        className="focus-ring w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors relative"
+        aria-label={unseen ? `Up next, ${unseen} new` : "Up next"}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        className="focus-ring w-11 h-11 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors relative"
       >
         <Icon name="bell" size={17} />
-        {blocking > 0 && (
+        {unseen > 0 && (
           <span
             className={`absolute top-1 right-1 min-w-[15px] h-[15px] px-1 rounded-full text-white text-[9px] font-semibold flex items-center justify-center ring-2 ring-white tabular-nums ${late ? "bg-rose-500" : "bg-indigo-500"}`}
           >
-            {blocking > 9 ? "9+" : blocking}
+            {unseen > 9 ? "9+" : unseen}
           </span>
         )}
       </button>
 
-      <DropdownPanel open={open} className="absolute right-0 mt-2 w-[330px]">
+      <DropdownPanel open={open} className="fixed inset-x-3 top-[68px] sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-[330px]">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
           <span className="text-[13px] font-semibold text-slate-900 tracking-tight">Up next</span>
           <Link href="/app/calendar" onClick={() => setOpen(false)} className="text-[11px] text-slate-400 hover:text-slate-600 no-underline">

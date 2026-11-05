@@ -23,6 +23,9 @@ import { decisionChecked, stepKey, taskStatus, useProgress, useSaveState, type P
 
 /** Midnight of the mentee's start date. They may start any day; until they choose, today. */
 
+/** Windows that read the same from any task, kept open when the learner moves to another task. */
+const isReference = (key: string) => /^(home|learn|doc|page)\|/.test(key) || key === "policies|Policy Library";
+
 /** "#T5.1-4" → { task: "T5.1", step: 4 }. */
 function parseHash(desk: Desk): { task: string; step: number } | null {
   const m = location.hash.slice(1).match(/^([FT]\d+\.\d+)(?:-(\d+))?$/);
@@ -120,19 +123,32 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   const now = currentWeek(start);
   const isOpen = useCallback((w: number) => preview || weekOpen(w, start), [start, preview]);
 
+  // A #T… link is read here, at first render, not only in the effect below: the desk mounts twice on a reload (locked,
+  // then on the saved work), and starting each mount on the week overview and swapping to the task a frame later left a
+  // reloaded /app/desk#F1.3 on the overview (tester, 4 Nov).
+  const [linked] = useState(() => parseHash(desk));
   const [taskId, setTaskId] = useState<string>(
-    () => desk.order.find((id) => desk.tasks[id].week === now && !progress.submitted[id]) ?? desk.order.find((id) => desk.tasks[id].week === now) ?? desk.order[0],
+    () => linked?.task ?? desk.order.find((id) => desk.tasks[id].week === now && !progress.submitted[id]) ?? desk.order.find((id) => desk.tasks[id].week === now) ?? desk.order[0],
   );
-  const [focus, setFocus] = useState(1);
+  const [focus, setFocus] = useState(linked?.step || 1);
   const [tab, setTab] = useState<Tab>("how");
   // A week's overview, when one is open instead of a task.
   // Arriving on the desk opens this week's overview; a #T… link replaces it with the task.
-  const [weekView, setWeekView] = useState<number | null>(now);
+  const [weekView, setWeekView] = useState<number | null>(linked ? null : now);
   const [viewing, setViewing] = useState<ViewItem | null>(null);
   // The platform tool open in the modal ("evidence|Audit Requests (PBC)").
   const [toolKey, setToolKey] = useState<string | null>(null);
   // Tools open for reading, as floating windows; the last is on top.
   const [windows, setWindows] = useState<string[]>([]);
+  // Moving to another task closes the windows that belong to a task: a register, a task's own screen, a Tech Lab. They
+  // render against the task in hand, so left open they silently showed the next task's content under the old title. The
+  // reference shelf stays open on purpose: Home, Learn & Grow (Rule tables, Reference pages), the Policy Library and its
+  // documents read the same from any task.
+  const [windowsFor, setWindowsFor] = useState(taskId);
+  if (windowsFor !== taskId) {
+    setWindowsFor(taskId);
+    setWindows((w) => w.filter(isReference));
+  }
   // The week panel folds to a rail. It opens every time you arrive on the desk, and folds itself
   // when you pick a task from it, so the work gets the room.
   const [panelOpen, setPanel] = useState(true);
@@ -176,17 +192,26 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   // Work in a modal, reading in windows: the step in hand opens its tool as the modal while it is
   // still to do (or when asked to change it); anything else — a finished step's tool, a tool opened
   // for a look mid-step — opens as a floating, resizable window beside the work.
-  const openTool = (key: string, mode?: "work") => {
+  const [viewOnly, setViewOnly] = useState(false);
+  // "view": a finished step's View — its own window with the learner's work in it, read-only.
+  const openTool = (key: string, mode?: "work" | "view") => {
     const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
     const t = here ? desk.tasks[here.task] : undefined;
     // A decision is answered in its row first (Check my answer); until then its tool opens only to read.
     // A question with no part 2 (F1.2 step 5) is answered and completed in its row: its tool is only read, never
     // the step's modal, which would run the row's guide a second time over the first.
+    if (mode === "view" && step?.key === key) {
+      setViewOnly(true);
+      return setToolKey(key);
+    }
     const working = !!step && !!t && step.key === key && isOpen(t.week) && !progress.submitted[t.id] && (mode === "work" || !progress.done[stepKey(t.id, step.n)])
       && (step.kind !== "pick" || (decisionChecked(progress, t.id, step.n) && (!!thenOf(step) || !!ATTEST[t.id]?.[step.n])));
-    // The step's own tool, already open as the modal (READ-ME-FIRST over My Organisation, say):
+    // The step's own tool, already open as the modal (Onboarding record over My Organisation, say):
     // asking for it again from the toolbar opens its screen beside the work instead.
-    if (working && toolKey !== key) return setToolKey(key);
+    if (working && toolKey !== key) {
+      setViewOnly(false);
+      return setToolKey(key);
+    }
     // A document opened from Policies › Policy Library takes the library's place: the list has done
     // its job, and left open it covered the step's own panel. It is one click away on the toolbar.
     setWindows((w) => [...w.filter((x) => x !== key && !(key.startsWith("doc|") && x === "policies|Policy Library") && !(key.startsWith("page|") && x === "learn|Reference pages")), key]);
@@ -275,10 +300,12 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
       <Viewer item={viewing} onClose={() => setViewing(null)} />
       <ToolModal
         toolKey={toolKey}
+        viewOnly={viewOnly}
         onClose={() => {
           // The modal's own screen, opened beside it from the toolbar, closes with it.
           setWindows((w) => w.filter((x) => x !== toolKey));
           setToolKey(null);
+          setViewOnly(false);
         }}
       />
       <AnimatePresence>

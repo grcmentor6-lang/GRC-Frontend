@@ -27,7 +27,7 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "grcmentor — Become a job-ready GRC professional",
   description:
-    "Hands-on governance, risk and compliance mentorship. Practise on simulated enterprise engagements, graded against ISO 27001, NIST CSF, CIS v8, SOC 2 and GDPR.",
+    "Hands-on governance, risk and compliance experience. Work 25 tasks over 12 weeks for two simulated client organisations, against ISO 27001, SOC 2, GDPR and more.",
 };
 
 export default function RootLayout({

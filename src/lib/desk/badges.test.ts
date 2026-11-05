@@ -1,7 +1,7 @@
 // Run: npx tsx src/lib/desk/badges.test.ts
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { BADGES, CAPSTONE, PASS, capstoneStanding, checkMapping, shade, standing } from "./badges";
+import { BADGES, CAPSTONE, PASS, capstoneStanding, checkMapping, shade, standing, summarise } from "./badges";
 import type { Desk } from "./model";
 import type { Progress } from "./progress";
 
@@ -28,4 +28,13 @@ assert.equal(standing(b, sub, { "T7.1": 90, "T7.2": 80 }).state, "distinction");
 assert.equal(standing(b, sub, { "T7.1": 100, "T7.2": 74 }).state, "earned");
 assert.equal(capstoneStanding(empty).state, "not-started");
 assert.equal(CAPSTONE.label, "CAP");
+// A submitted task the server released no score for (null) counts as unscored, never as earned.
+assert.equal(standing(b, sub, { "T7.1": 90, "T7.2": null }).state, "in-progress");
+// The one count every page shows: all submitted at 100 → 10 / 10 and the capstone. Without the scores it is 0,
+// which is what the Dashboard and the CV showed while they counted from progress alone.
+const all = { ...empty, submitted: Object.fromEntries(desk.order.map((t) => [t, "x"])) };
+const full = summarise(all, Object.fromEntries(desk.order.map((t) => [t, 100])));
+assert.equal(full.earned, 10);
+assert.equal(full.capstone.state, "earned");
+assert.equal(summarise(all).earned, 0);
 console.log("badges ok");

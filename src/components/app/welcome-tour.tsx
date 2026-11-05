@@ -31,7 +31,7 @@ function steps(showNav: () => void, goto: (href: string) => void): TourStep[] {
 
   return [
     {
-      title: "Welcome — here's how this works",
+      title: "How the platform works",
       body: "You're joining a simulated Group GRC Office for 12 weeks, working two organisations. Two minutes now and you'll know where everything lives. Use Next, or Skip if you'd rather explore.",
       icon: "sparkle",
       getEl: () => null, // no target — the card floats, page dimmed
@@ -70,13 +70,13 @@ function steps(showNav: () => void, goto: (href: string) => void): TourStep[] {
       ...dash("dash-grid"),
     },
     {
-      title: "The Working Desk — where you actually work",
+      title: "The Working Desk",
       body: "Twelve weeks, a few tasks each, every task a list of steps. Each step names the screen to open from the toolbar at the bottom; an orange dot marks where to go. The desk has its own walkthrough, and \"Show me how\" replays a step's guide.",
       icon: "desk",
       ...nav("nav-desk"),
     },
     {
-      title: "Read the documents. That's the job.",
+      title: "The documents hold the facts",
       body: "Policies, registers and the organisation's own records hold the facts each step needs. Decisions are checked the moment you answer and tell you why each option is right or wrong.",
       icon: "book",
       ...nav("nav-desk"),

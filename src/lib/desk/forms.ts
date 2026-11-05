@@ -1,18 +1,18 @@
-import { dmy, dueDate, testDue, type Desk, type Step, type Task } from "./model";
+import { dmy, dueDate, RMF_TABLES, testDue, type Desk, type Step, type Task } from "./model";
 import { stepKey, type Progress } from "./progress";
 
 /**
- * READ-ME-FIRST (ONB-RMF): the file F1.1 issues with three empty tables, filled by three steps from
+ * Onboarding record (ONB-RMF): the file F1.1 issues with three empty tables, filled by three steps from
  * three screens. Titles and row labels are the engine's (GRC101_Engine/p_tasks.py, F1.1 ONB-RMF).
  */
 export const RMF = {
-  file: "READ-ME-FIRST",
+  file: "Onboarding record",
   tables: [
     // Row labels name the value to write, in the words of the screen it is copied from: My
     // Organisation calls the organisations Org A and Org B (the engine's "Organisation 1 / 2").
-    { title: "My assignment", from: "Home › My Organisation", rows: ["Org A name", "Org A home office", "Org B name", "Org B home office", "Task owner of F1.2", "Your start date"] },
-    { title: "My folders", from: "Home › My Tasks › F1.1", rows: ["00_Admin path", "01_Inputs path", "02_Working path", "03_Submission path"] },
-    { title: "My week-1 dates", from: "Home › My plan", rows: ["F1.2 due date", "F1.3 due date", "KC-01 due date"] },
+    { title: RMF_TABLES[0], from: "Home › My Organisation", rows: ["Org A name", "Org A home office", "Org B name", "Org B home office", "Task owner of F1.2", "Start date"] },
+    { title: RMF_TABLES[1], from: "Home › My Tasks › F1.1", rows: ["00_Admin path", "01_Inputs path", "02_Working path", "03_Submission path"] },
+    { title: RMF_TABLES[2], from: "Home › My plan", rows: ["F1.2 due date", "F1.3 due date", "KC-01 due date"] },
   ],
 };
 export const rmfKey = (taskId: string) => `${taskId}|${RMF.file}`;
@@ -117,7 +117,7 @@ export const attestKey = (taskId: string, code: string) => `${taskId}|${code}`;
 export const attestDone = (p: { grids?: Record<string, Record<string, string>> }, taskId: string, code: string) =>
   !!p.grids?.[attestKey(taskId, code)]?.at;
 
-/** The READ-ME-FIRST rows that hold a date: "Your start date" in table 1 and all of table 3. */
+/** The Onboarding record rows that hold a date: "Start date" in Assignment and all of Week 1 dates. */
 export const isDateRow = (t: number, i: number) => t === 2 || (t === 0 && i === 5);
 
 const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];

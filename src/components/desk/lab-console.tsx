@@ -106,6 +106,12 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
 
   const current = lab?.parts.find((p) => !partDone(p, state));
   const findings = labFindings(progress, ref.id);
+  // The last answer in: bring the findings and their Mark complete button into view.
+  const findingsBox = useRef<HTMLElement>(null);
+  const allAnswered = !!lab && !current;
+  useEffect(() => {
+    if (allAnswered && !state.done) findingsBox.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [allAnswered, state.done]);
 
   return (
     <FloatWindow
@@ -128,13 +134,18 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
               partDone(p, state) ? <DonePart key={p.id} n={i + 1} part={p} state={state} captures={captures} open={lab.parts[i + 1] === current} /> : p === current ? <Part key={p.id} n={i + 1} part={p} state={state} setState={setState} labId={ref.id} captures={mine} total={lab.parts.length} /> : null,
             )}
             {!current && (
-              <section data-lab="findings" className="grid gap-2 rounded border border-[#BBF7D0] bg-white p-3 text-[13px]">
+              // Answering the last question does not finish the lab: Mark complete does, and only then do the findings join
+              // the hand-in. Until it is pressed the box is amber and says so (tester, 4 Nov: missed in T10.1).
+              <section ref={findingsBox} data-lab="findings" data-state={state.done ? "done" : "open"} className={`grid gap-2 rounded border bg-white p-3 text-[13px] ${state.done ? "border-[#BBF7D0]" : "border-[#F59E0B] shadow-[inset_3px_0_0_#F59E0B]"}`}>
                 <p className="font-semibold text-[#111827]">Findings for {lab.feed.split(",")[0]}</p>
                 <ul className="grid list-disc gap-1.5 pl-4 leading-relaxed text-[#3F4757]">{findings.map((f) => <li key={f}>{f}</li>)}</ul>
                 {state.done ? (
                   <p className="text-[12.5px] text-[#15803D]">Complete. These lines are in {lab.feed}. Close this console to go back to your step and hand the files in.</p>
                 ) : (
-                  <button type="button" onClick={() => setState((s) => ({ ...s, done: new Date().toISOString() }))} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110">Mark complete</button>
+                  <>
+                    <p className="text-[12.5px] font-medium text-[#78350F]">Not complete yet. These findings join {lab.feed} only when you press Mark complete, before you submit the task.</p>
+                    <button type="button" onClick={() => setState((s) => ({ ...s, done: new Date().toISOString() }))} className="h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-110">Mark complete</button>
+                  </>
                 )}
               </section>
             )}

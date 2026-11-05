@@ -21,6 +21,8 @@ export interface DeskOrg {
 export interface DeskIdentity {
   menteeId: string;
   orgs: DeskOrg[];
+  /** The learner's start date ("2026-11-04"), the day week 1 opens. Absent: the content's own, CANONICAL_START. */
+  start?: string;
 }
 
 export const CANONICAL: DeskIdentity = {
@@ -31,12 +33,51 @@ export const CANONICAL: DeskIdentity = {
   ],
 };
 
+/** The programme calendar the content is written against: week 1 opens Mon 05 Oct 2026 (Home › Calendar). */
+export const CANONICAL_START = "2026-10-05";
+
+// ── The programme calendar, from a start date. UTC throughout, so no time zone or clock change moves a day. ──
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** `n` days after `start` ("2026-10-05"). */
+export const calDay = (start: string, n: number) => new Date(Date.parse(`${start.slice(0, 10)}T00:00:00Z`) + n * 86_400_000);
+/** "2026-12-21" */
+export const calIso = (d: Date) => d.toISOString().slice(0, 10);
+/** "Mon 05 Oct" (Home › Calendar's format), or "Sun 1 Nov" unpadded (Learn & Grow › Knowledge Checks'). */
+export const calWeekday = (d: Date, pad = true) => `${DOW[d.getUTCDay()]} ${pad ? String(d.getUTCDate()).padStart(2, "0") : d.getUTCDate()} ${MON[d.getUTCMonth()]}`;
+/** `k` calendar months after `d`, held to the month's last day (31 Mar + 1 month = 30 Apr). */
+export function calMonths(d: Date, k: number): Date {
+  const [y, m] = [d.getUTCFullYear(), d.getUTCMonth() + k];
+  return new Date(Date.UTC(y, m, Math.min(d.getUTCDate(), new Date(Date.UTC(y, m + 1, 0)).getUTCDate())));
+}
+/** The day week 12 opens: T7.2's objectives and plan are dated from it. */
+export const week12 = (start: string) => calDay(start, 77);
+
+/**
+ * The learner-facing dates that come from the programme calendar, as the content writes them for a start date.
+ * Only phrases that cannot be anything else: a bare date could be scenario history (T12.1's A-12 is due 2026-12-21,
+ * the day canonical week 12 opens) or a date the learner types for an answer key, and toCanon would rewrite it.
+ *   T11.1: the twelve week options of LI-COMM, "W11 · Mon 14 Dec" (keys T11.1-9);
+ *   T7.2: the objective options, "… by 2027-06-21" (week 12 + 6 months; + 1 month is the distractor), and the key's
+ *   "why" (keys T7.2-13). The Plan sheet's bare dates and its note are worked out in registers.ts.
+ */
+function calendarTerms(start: string): string[] {
+  const w12 = week12(start);
+  const [m1, m6] = [calIso(calMonths(w12, 1)), calIso(calMonths(w12, 6))];
+  return [
+    ...Array.from({ length: 12 }, (_, i) => `W${i + 1} · ${calWeekday(calDay(start, 7 * i))}`),
+    `week 12 opens on ${calIso(w12)} (Home › Calendar), so ${m6}`,
+    `by ${m1}`,
+    `by ${m6}`,
+  ];
+}
+
 const org = (id: DeskIdentity, k: "A" | "B") => id.orgs?.find((o) => o.key === k) ?? CANONICAL.orgs.find((o) => o.key === k)!;
 
-/** The strings that name an identity, longest first: full names, full names as file-name parts, short names, domains, mentee ID. */
+/** The strings that name an identity, longest first: full names, full names as file-name parts, short names, domains, mentee ID; then its calendar's dates. */
 function terms(id: DeskIdentity): string[] {
   const [a, b] = [org(id, "A"), org(id, "B")];
-  return [a.name, b.name, a.name.replace(/ /g, "_"), b.name.replace(/ /g, "_"), a.short, b.short, a.domain, b.domain, id.menteeId || CANONICAL.menteeId];
+  return [a.name, b.name, a.name.replace(/ /g, "_"), b.name.replace(/ /g, "_"), a.short, b.short, a.domain, b.domain, id.menteeId || CANONICAL.menteeId, ...calendarTerms(id.start || CANONICAL_START)];
 }
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

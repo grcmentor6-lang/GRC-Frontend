@@ -149,9 +149,10 @@ function Fact({ label, children, tone = "plain", last }: { label: string; childr
 
 /** The objective with its record codes, "(R15)", set as small chips rather than bracketed text. */
 function Objective({ text }: { text: string }) {
-  return text.split(/\s*\((R\d+)\)/).map((part, i) =>
+  // The space before "(R30)" stays in the text part, so the chip never glues to the word before it.
+  return text.split(/\((R\d+)\)/).map((part, i) =>
     i % 2 ? (
-      <span key={i} className="ml-1 inline-block translate-y-[-1px] rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-px align-middle font-mono text-[11px] font-semibold text-[#3730A3]">
+      <span key={i} className="inline-block translate-y-[-1px] rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-px align-middle font-mono text-[11px] font-semibold text-[#3730A3]">
         {part}
       </span>
     ) : (

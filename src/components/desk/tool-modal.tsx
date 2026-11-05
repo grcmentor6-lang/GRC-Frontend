@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
@@ -10,6 +10,7 @@ import { DECIDE_FROM, LADDER, STUDY, briefOf, deliverableFor, handedIn, regOf, s
 import { gridKey, lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { Inbox, MessageNotice } from "./chat";
 import { ToolScreen } from "./viewer";
+import { PathChip, StepInstruction } from "./step-text";
 import { FloatWindow } from "./float-window";
 import { PreparedFor } from "./prepared-for";
 import { TableView } from "./ui";
@@ -32,7 +33,10 @@ import { allCaptures, labOf } from "@/lib/desk/labs";
  * mid-step; those open as floating windows, never as a second modal. Completing walks on to the next
  * step, staying in the tool when the next step is done here too.
  */
-export function ToolModal({ toolKey, onClose }: { toolKey: string | null; onClose: () => void }) {
+/** Opened from a finished step's View: the learner's own work, shown as they left it and read-only (owner, 5 Nov 2026). */
+const ViewOnly = createContext(false);
+
+export function ToolModal({ toolKey, onClose, viewOnly = false }: { toolKey: string | null; onClose: () => void; viewOnly?: boolean }) {
   useEffect(() => {
     if (!toolKey) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !document.querySelector('[aria-label^="Guide:"]') && onClose();
@@ -40,7 +44,11 @@ export function ToolModal({ toolKey, onClose }: { toolKey: string | null; onClos
     return () => document.removeEventListener("keydown", onKey);
   }, [toolKey, onClose]);
 
-  return <AnimatePresence>{toolKey && <Dialog key="tool" toolKey={toolKey} onClose={onClose} />}</AnimatePresence>;
+  return (
+    <ViewOnly.Provider value={viewOnly}>
+      <AnimatePresence>{toolKey && <Dialog key="tool" toolKey={toolKey} onClose={onClose} />}</AnimatePresence>
+    </ViewOnly.Provider>
+  );
 }
 
 /** Section numbers in reading order: "2" before "2.1" before "3" before "10". */
@@ -208,6 +216,7 @@ function Guard({ text }: { text: string }) {
 
 function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) {
   const { desk, here, progress } = useDesk();
+  const viewOnly = useContext(ViewOnly);
   const sec = toolKey.split("|")[0];
   const mock = screenOf(desk, toolKey, here?.task);
   const section = desk.sections[sec];
@@ -224,10 +233,10 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
   // While the modal fades out, completing a step has already moved on: opening that step's sources
   // then would leave windows behind and hold the exit open.
   const present = useIsPresent();
-  // A step that fills READ-ME-FIRST works in the file; the screen it copies from (My Organisation,
+  // A step that fills Onboarding record works in the file; the screen it copies from (My Organisation,
   // My Tasks, My plan) is the source, open in its own window beside it.
   const rmf = s ? rmfTable(s) : null;
-  // The step that hands READ-ME-FIRST in (F1.1 step 6): the file is what the modal shows, as on the
+  // The step that hands Onboarding record in (F1.1 step 6): the file is what the modal shows, as on the
   // steps that fill it; My Tasks, where the folders are, opens from the toolbar like any screen.
   const handIn = !!task && !!s && submitCodes(task, s).includes("ONB-RMF");
   // A register handed in (F1.2 step 6, FAM-MAP): the file is what the modal shows, as above.
@@ -247,7 +256,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
   const guide = STEP_GUIDES[guideKey];
   const [guideAt, setGuideAt] = useState(-1);
   const startGuide = () => setGuideAt(0);
-  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && present, startGuide, 700);
+  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && present && !viewOnly, startGuide, 700);
   // A guide card that sent the learner to another window (the Inbox, a Tech Lab) ends the walk there; when that
   // window closes, the walk starts again and its cards for jobs already done pass by (T6.1 step 8).
   const [away, setAway] = useState<{ until: string | (() => boolean) } | null>(null);
@@ -314,10 +323,8 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
               <p className="flex shrink-0 items-start gap-2 border-b border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2 text-[12.5px] leading-relaxed text-[#78350F]">
                 <Icon name="chevronDown" size={14} className="mt-[3px] shrink-0" />
                 <span>
-                  {/* Named exactly as the toolbar names them: the section, then the tool. */}
-                  <strong className="font-semibold">Next:</strong> open <strong className="font-semibold">{section?.t ?? sec} › {toolKey.split("|")[1]}</strong> from the toolbar at
-                  the bottom of the screen (<strong className="font-semibold">{section?.t ?? sec}</strong>, then <strong className="font-semibold">{toolKey.split("|")[1]}</strong>). It
-                  opens beside this file.
+                  {/* Named exactly as the toolbar names them, as the toolbar's chip: the section, then the tool. */}
+                  <strong className="font-semibold">Next:</strong> open <PathChip path={`${section?.t ?? sec} › ${toolKey.split("|")[1]}`} />. It opens beside this file.
                 </span>
               </p>
             )}
@@ -329,7 +336,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
                 <span>
                   <span className="font-semibold">Read from </span>
                   {sources.map(([id, secs]) => `${id}${secs.length ? ` Section ${[...secs].sort(bySec).join(", Section ")}` : ""}`).join(" and ")}
-                  <span className="text-[#92400E]">: open it from Policies › Policy Library.</span>
+                  <span className="text-[#92400E]">: open it from <PathChip path="Policies › Policy Library" />.</span>
                   {/* The document's "This step reads" bar jumps to each cited section: say so, by name. */}
                   {(() => {
                     const secs = [...new Set(sources.filter(([id]) => DOC_TEXT.has(id)).flatMap(([, x]) => x))].sort(bySec);
@@ -351,7 +358,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
             ) : task && s && handIn ? (
               <RmfFile task={task} t={0} readOnly handIn={{ name: (progress.answers[`${stepKey(task.id, s.n)}#ONB-RMF`] ?? "").trim() }} />
             ) : task && rmf !== null ? (
-              <RmfFile task={task} t={rmf} readOnly={!!progress.submitted[task.id]} />
+              <RmfFile task={task} t={rmf} readOnly={viewOnly || !!progress.submitted[task.id]} />
             ) : task && deliverable === "register" ? (
               <>
                 {/* A compare step's calls sit over the table, so a document window opened beside the modal
@@ -365,24 +372,24 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
                   // T6.1's Sheet 4 first: the work, then the files it is handed in with. T3.2's and T5.1's Sheet 2 stay below.
                   [...regsIn].sort((a, b) => +!!b.first - +!!a.first).map((r) => (
                     <div key={r.code} className="shrink-0">
-                      <RegisterWork task={task} s={s} of={r} readOnly={!!progress.submitted[task.id]} />
+                      <RegisterWork task={task} s={s} of={r} readOnly={viewOnly || !!progress.submitted[task.id]} />
                     </div>
                   ))
                 ) : (
                   <div className="shrink-0">
-                    <RegisterWork task={task} s={s} readOnly={!!progress.submitted[task.id]} />
+                    <RegisterWork task={task} s={s} readOnly={viewOnly || !!progress.submitted[task.id]} />
                   </div>
                 )}
                 {/* A register handed in with its file's other tables (F2.1 CLS-RES: tier labels, transmission). */}
                 {regHandIn && s && briefOf(task.id, s.n) && <BriefWork task={task} s={s} readOnly />}
               </>
             ) : task && deliverable === "brief" ? (
-              <BriefWork task={task} s={s} readOnly={!!progress.submitted[task.id]} />
+              <BriefWork task={task} s={s} readOnly={viewOnly || !!progress.submitted[task.id]} />
             ) : toolKey === "home|My Organisation" ? (
               <BothOrgs />
             ) : task && s && (workKind(s, desk) === "grid" || progress.grids?.[gridKey(task.id, toolKey)]) ? (
               // The task's register as filled so far; only a fill-in step may edit it.
-              <GridWork taskId={task.id} toolKey={toolKey} readOnly={!!progress.submitted[task.id] || workKind(s, desk) !== "grid"} />
+              <GridWork taskId={task.id} toolKey={toolKey} readOnly={viewOnly || !!progress.submitted[task.id] || workKind(s, desk) !== "grid"} />
             ) : (
               <Screen toolKey={toolKey} />
             )}
@@ -458,6 +465,7 @@ function Screen({ toolKey }: { toolKey: string }) {
   if (toolKey === "policies|Policy Library") return <PolicyLibrary />;
   if (toolKey === "learn|Reference pages") return <ReferencePages />;
   if (toolKey === "home|My plan") return <Plan />;
+  if (toolKey === "learn|Knowledge Checks") return <Tests />;
   if (toolKey === "evidence|Capture Screenshot" && mock)
     return <ToolScreen mock={{ ...mock, pl: { ...(mock.pl as object), h: ["Evidence ref", "View", "Filter", "Rows", "UTC", "SHA-256"], r: allCaptures(progress).map((c) => [c.ref, c.viewTitle, c.filter, String(c.ids.length), c.utc, c.sha]) } }} flush />;
   if (mock?.dyn === "tasks") {
@@ -502,6 +510,21 @@ function Screen({ toolKey }: { toolKey: string }) {
     );
   }
   if (!mock) return <p className="p-4 text-[13.5px] text-[#5B6474]">This tool has no screen in this release.</p>;
+  // T7.2's and T12.1's review records are the case those tasks work from, with "accepted with review comments" planted
+  // in them: shown bare, they read as reviews of the learner's own hand-ins, asking for resubmits nobody made and
+  // contradicting their real scores (tester, 4 Nov). Said, above the table, for what they are.
+  if (toolKey === "home|Waiting On" && here && desk.tp[`${toolKey}#${here.task}`])
+    return (
+      <>
+        <p data-exercise-records className="flex items-start gap-2 border-b border-[#C7CBF5] bg-[#EEF0FF] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[#312E81]">
+          <Icon name="info" size={14} className="mt-[3px] shrink-0" />
+          <span>
+            <strong className="font-semibold">Exercise data for {here.task}.</strong> These are the review records this task works from, written for the exercise as if returned for your deliverables. They are not reviews of your actual hand-ins: no reviewer has read your work or asked you to resubmit it, and your scores are unchanged.
+          </span>
+        </p>
+        <ToolScreen mock={mock} flush />
+      </>
+    );
   return <ToolScreen mock={mock} flush />;
 }
 
@@ -525,7 +548,8 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
   const n = s.n;
   const key = stepKey(task.id, n);
   const done = !!progress.done[key];
-  const sealed = !!progress.submitted[task.id];
+  // A View of finished work reads like a sealed task: nothing to change, nothing to mark.
+  const sealed = useContext(ViewOnly) || !!progress.submitted[task.id];
   const next = task.steps[n];
   const kind = workKind(s, desk);
   const reading = kind === "read";
@@ -601,7 +625,8 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
               ) : (
                 <>
                   <h3 className="text-[16px] font-bold leading-[1.35] text-[#111827]">{s.t}</h3>
-                  <p className="mt-2 text-[14px] leading-[1.55] text-[#3F4757]">{w}</p>
+                  {/* What to do, as numbered actions; the title above already says the first words. */}
+                  <StepInstruction opened text={w.startsWith(s.t) ? w.slice(s.t.length).replace(/^[\s.?:]+/, "") : w} className="mt-2.5" />
                 </>
               );
             })()}
@@ -757,7 +782,7 @@ function Folders({ taskId }: { taskId: string }) {
     <div data-guide="folders" className="@container border-b border-[#DDE1E8] bg-white">
       <p className="border-b border-[#E9ECF1] bg-[#F7F8FA] px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">{taskId} · your folders</p>
       {/* The paths are copied character for character, so one is never broken across lines: in a
-          narrow window (the side window beside READ-ME-FIRST) each label sits above its path. */}
+          narrow window (the side window beside Onboarding record) each label sits above its path. */}
       <dl className="text-[13px]">
         {folders(desk, desk.tasks[taskId]).map((f, i) => (
           <div key={f} className="grid gap-0.5 border-b border-[#E9ECF1] px-3.5 py-2 last:border-b-0 @[520px]:grid-cols-[45%_1fr] @[520px]:gap-3">
@@ -800,6 +825,46 @@ function Plan() {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/**
+ * Learn & Grow › Knowledge Checks: the twelve tests, each due on the mentee's own date (the pack's screen lists the
+ * canonical calendar's). Their questions are not on the desk yet, so each says so: nothing here opens a test, and
+ * nothing pretends to (tester, 4 Nov: the screen opened nothing a learner could act on).
+ */
+function Tests() {
+  const { desk, start } = useDesk();
+  const pass = new Map(((screenOf(desk, "learn|Knowledge Checks")?.pl as { r?: string[][] })?.r ?? []).map((r) => [r[1]?.split(" ")[0], r[3]]));
+  const rows = desk.weeks.flatMap((w) => {
+    const m = (w.kc ?? "").match(/^(\S+)(?: \((.+)\))?$/);
+    return m ? [{ wk: w.n, id: m[1], title: m[2] ?? "Knowledge check", due: `${fmtDay(testDue(start, w.n))} ${testDue(start, w.n).getFullYear()}`, pass: pass.get(m[1]) ?? "" }] : [];
+  });
+  return (
+    <div data-guide="tests" className="border-b border-[#DDE1E8] bg-white">
+      <p className="flex items-start gap-2 border-b border-[#E9ECF1] bg-[#F7F8FA] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[#3F4757]">
+        <Icon name="info" size={14} className="mt-[3px] shrink-0 text-[#5B6474]" />
+        <span>The tests are not on the desk yet. This list shows where each one falls in your programme; a test opens here once it is released.</span>
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px] border-collapse text-[13px]">
+          <thead className="bg-[#F7F8FA] text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">
+            <tr>{["Wk", "Test", "Due", "Pass mark", "Status"].map((h) => <th key={h} className={th}>{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td className={`${td} font-mono text-[12px] text-[#5B6474]`}>{r.wk}</td>
+                <td className={`${td} text-[#111827]`}><span className="font-mono text-[12px] font-semibold">{r.id}</span> <span className="text-[#3F4757]">{r.title}</span></td>
+                <td className={`${td} whitespace-nowrap text-[#111827]`}>{r.due}</td>
+                <td className={`${td} text-[#3F4757]`}>{r.pass}</td>
+                <td className={td}><span className="inline-block whitespace-nowrap rounded-[3px] border border-[#E3E6EC] bg-[#F7F8FA] px-[7px] py-0.5 text-[12px] text-[#5B6474]">Coming soon</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

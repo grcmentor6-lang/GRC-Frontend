@@ -54,6 +54,14 @@ function useDesk(): Desk | null {
 export function OrgBox({ open, orgKey, onClose }: { open: boolean; orgKey: Key; onClose: () => void }) {
   const desk = useDesk();
   const org = desk?.orgs[orgKey] as OrgFull | undefined;
+  // Escape closes the box, like the header's other popups. It is a window, not a menu, so a click
+  // elsewhere leaves it open on purpose.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
   return (
     <AnimatePresence>
       {open && (
@@ -222,7 +230,7 @@ export function OrgInfoButton() {
             aria-expanded={open[k]}
             aria-label={`About Org ${k}, ${desk.orgs[k].name}`}
             title={`Org ${k}: ${desk.orgs[k].name}`}
-            className={`group flex h-9 items-center gap-2 rounded-full border bg-white py-1 pl-1 pr-2.5 text-[12.5px] font-medium shadow-[0_1px_2px_rgba(15,23,42,0.06)] ${press} ${
+            className={`group flex h-11 sm:h-9 items-center gap-2 rounded-full border bg-white py-1 pl-1 pr-2.5 text-[12.5px] font-medium shadow-[0_1px_2px_rgba(15,23,42,0.06)] ${press} ${
               open[k] ? "border-[#c9c3ff] bg-[#f5f3ff] text-[#4338ca] ring-2 ring-[#5b4fe9]/15" : "border-[#e2e2ec] text-[#34354a] hover:border-[#cfcfe0] hover:bg-[#fafaff]"
             }`}
           >

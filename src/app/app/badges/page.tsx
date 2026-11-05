@@ -9,7 +9,7 @@ import { MethodMedal } from "@/components/badges/method-medal";
 import { loadDesk, type Desk } from "@/lib/desk/model";
 import { useProgress, type Progress } from "@/lib/desk/progress";
 import { useTaskScores } from "@/lib/desk-record";
-import { BADGES, CAPSTONE, DIST_AVG, DIST_MIN, NO_BADGE, PASS, capstoneStanding, criteriaText, standing, type BadgeStanding, type BadgeState, type MethodBadge } from "@/lib/desk/badges";
+import { BADGES, CAPSTONE, DIST_AVG, DIST_MIN, NO_BADGE, PASS, criteriaText, summarise, type BadgeStanding, type BadgeState, type MethodBadge, type Scores } from "@/lib/desk/badges";
 
 /**
  * Badges — the GRC 101 method badges (pack v1.9.0): one per family of GRC work methods the mentee
@@ -81,10 +81,9 @@ function Badges({ desk, who }: { desk: Desk; who: string }) {
   return <BadgesBody desk={desk} p={p} scores={scores} />;
 }
 
-function BadgesBody({ desk, p, scores }: { desk: Desk; p: Progress; scores: Record<string, number> }) {
-  const rows = BADGES.map((b) => ({ b, g: standing(b, p, scores) }));
-  const cap = capstoneStanding(p, scores);
-  const earned = rows.filter((r) => r.g.state === "earned" || r.g.state === "distinction").length;
+function BadgesBody({ desk, p, scores }: { desk: Desk; p: Progress; scores: Scores }) {
+  // The same count the Dashboard and the CV show (summarise).
+  const { rows, capstone: cap, earned } = summarise(p, scores);
   const dist = rows.filter((r) => r.g.state === "distinction").length;
   // Same count and wording as /app/submissions: every desk task, done = submitted.
   const submitted = desk.order.filter((t) => p.submitted[t]).length;
@@ -178,7 +177,7 @@ function BadgesBody({ desk, p, scores }: { desk: Desk; p: Progress; scores: Reco
   );
 }
 
-function BadgeCard({ b, g, desk, p, scores }: { b: MethodBadge; g: BadgeStanding; desk: Desk; p: Progress; scores: Record<string, number> }) {
+function BadgeCard({ b, g, desk, p, scores }: { b: MethodBadge; g: BadgeStanding; desk: Desk; p: Progress; scores: Scores }) {
   return (
     <article id={b.code} className="flex scroll-mt-4 gap-4 rounded-md border border-[#DDE1E8] bg-white p-4">
       <div className="shrink-0">
@@ -197,7 +196,7 @@ function BadgeCard({ b, g, desk, p, scores }: { b: MethodBadge; g: BadgeStanding
         <div className="grid gap-1.5 text-[12px]">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="w-[108px] shrink-0 font-semibold text-[#3F4757]">Earned by</span>
-            {b.earn.map((t) => <TaskChip key={t} id={t} desk={desk} p={p} score={scores[t]} />)}
+            {b.earn.map((t) => <TaskChip key={t} id={t} desk={desk} p={p} score={scores[t] ?? undefined} />)}
           </div>
           {b.support.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">

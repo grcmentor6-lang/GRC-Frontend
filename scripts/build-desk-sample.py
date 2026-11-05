@@ -104,7 +104,8 @@ def main(src: str) -> None:
     s12 = w["tasks"]["F1.2"]["steps"][1]
     assert "Yes → Certifiable standard (rule R01, question 2)" in s12["w"], s12["w"]
     s12["t"] = "Apply rule R01 to the worked example in row 1"
-    s12["w"] = ("Apply rule R01 to the worked example in row 1, ISO/IEC 27001:2022: ask its questions in order "
+    # Row 1 named in brackets, so the title is a whole sentence and the instruction after it starts with a word.
+    s12["w"] = ("Apply rule R01 to the worked example in row 1 (ISO/IEC 27001:2022). Ask its questions in order "
                 "and stop at the first yes. The first yes gives the instrument type that row shows in column D.")
     s12["o"] = "Rule R01 walked on row 1, to its first yes"
     help12 = ("Row 1 is a finished row. Walk rule R01 on it: ask the questions in order and stop at the first "
@@ -260,7 +261,55 @@ def main(src: str) -> None:
     # reads it, and anything that did would make false claims (professional review, 3 Nov 2026): not shipped.
     for t in w["tasks"].values():
         t.pop("anchor", None)
+    titles_pass(w)
     blob = json.dumps(w, ensure_ascii=False, separators=(",", ":"))
+    # The toolbar's button says "Learn" (secs); 173 mentions and the menu's heading said "Learn & Grow", 363 said "Learn".
+    # One name, the one the learner clicks (tester report, 4 Nov 2026). Corrections item 113.
+    blob = blob.replace("Learn & Grow", "Learn")
+    # The onboarding file is named for what it is, and its tables by their subject (owner, 5 Nov 2026): "READ-ME-FIRST"
+    # and "My assignment" read as a classroom handout, not a work record. lib/desk/model.ts rmfTable reads the new name.
+    blob = blob.replace("READ-ME-FIRST", "Onboarding record")
+    for old, new in (("My assignment", "Assignment"), ("My folders", "Folders"), ("My week-1 dates", "Week 1 dates")):
+        blob = blob.replace(old, new)
+    # The same review, everywhere else a learner reads a name (owner, 5 Nov 2026): a task, a record, a week and a sheet
+    # are named for their subject, not addressed to the learner or labelled like a handout. Corrections item 114.
+    for old, new in (
+        ("Your first day in the Group GRC Office", "Onboarding to the Group GRC Office"),  # F1.1 title, card
+        ("Your organisation at a glance: context brief for the home office", "Organisation context brief for the home office"),
+        ("Your admin folder", "Admin folder"),  # orgs.A records, F1.1 card
+        ("Your weekly datasets", "Weekly datasets"),  # Search
+        ("Welcome to GRC: your rules, your organisation and what binds it", "The rules, the organisations and what binds them"),
+        ("README, Requirements, Tasks", "Overview, Requirements, Tasks"),  # the Task Library workbooks' sheets
+        ("read-me", "column guide"),  # T12.1 and T12.2 step 1; registers.ts names the tables "… Column guide"
+    ):
+        assert old in blob, old
+        blob = blob.replace(old, new)
+    # A table with a name is called by it, not by its position: "table 1" read as a worksheet (owner, 5 Nov 2026).
+    # lib/desk/model.ts rmfTable reads "Onboarding record · <table>" from each step's output line. Corrections item 114.
+    for old, new in (
+        ("Check table 1 of Onboarding record against", "Check the Assignment table of Onboarding record against"),
+        ("Check table 3 of Onboarding record against", "Check the Week 1 dates table of Onboarding record against"),
+        ("Onboarding record table 1 checked", "Onboarding record · Assignment checked"),
+        ("Onboarding record table 2 filled", "Onboarding record · Folders filled"),
+        ("Onboarding record table 3 checked", "Onboarding record · Week 1 dates checked"),
+        ('filled in table 1 \\"Assignment\\" from', "filled in the Assignment table from"),
+        ('In table 2 \\"Folders\\" copy', "In the Folders table copy"),
+        ('filled in table 3 \\"Week 1 dates\\" with', "filled in the Week 1 dates table with"),
+        ("has filled in table 1 of Onboarding record for you", "has filled in the Assignment table of Onboarding record for you"),
+        ("into table 2 — you will", "into the Folders table — you will"),
+        ("Table 3 was filled in for you", "The Week 1 dates table was filled in for you"),
+        ("Onboarding record tables 1 and 3 match", "Onboarding record's Assignment and Week 1 dates tables match"),
+        ("KR3 — Table 2 lists", "KR3 — The Folders table lists"),
+        ('three tables — 1 \\"Assignment\\" (6 rows) and 3 \\"Week 1 dates\\" (3 rows), filled in by the programme office for you to check; 2 \\"Folders\\"',
+         'three tables — \\"Assignment\\" (6 rows) and \\"Week 1 dates\\" (3 rows), filled in by the programme office for you to check; \\"Folders\\"'),
+    ):
+        assert old in blob, old
+        blob = blob.replace(old, new)
+    assert not re.search(r"(?i)\btables? [123]\b(?! and)[^.]{0,40}(Onboarding|Assignment|Folders|Week 1 dates)|Onboarding record tables? \d", blob), "an Onboarding record table is still called by its number"
+    # Rule L20 ends 'Otherwise "Not invoked"', while T10.2 step 10's option, the key's value, is "Do not invoke".
+    old_l20 = 'Otherwise \\"Not invoked\\".'
+    assert blob.count(old_l20) == 3, blob.count(old_l20)  # the rule, Learn › Rule tables, Ref-Rules
+    blob = blob.replace(old_l20, 'Otherwise \\"Do not invoke\\".')
     # T4.1 Q2 asked for password "rotation": current NIST guidance (SP 800-63B) says change on suspected compromise, not
     # on a schedule (professional review, 3 Nov 2026). Every copy (panel, POL-GAP, Gap Finder, Review & Redline); the
     # answer is unchanged, the policy still sets no password rules. registers.ts carries the same sentence.
@@ -5464,7 +5513,7 @@ def rework_t102(w: dict) -> None:
     # D4: "Post it on social media" and "speed matters" were dismissed unread, and option A named the answer. Letters and best unchanged.
     old_w6 = "DECIDE: Marketing wants to send the customer notice today, before legal review. What do you do? Options: A) Hold it; legal sign-off is required first  B) Post it on social media  C) Send it — speed matters."
     assert steps[5]["w"] == old_w6, steps[5]["w"]
-    titled(6, "Decide: Marketing wants to send the customer notice", "Decide: the notice to schools and families")
+    titled(6, "Decide: Marketing wants to send the customer notice", "Decide: When to send the notice to schools and families")
     steps[5]["w"] = f"DECIDE: Marketing wants the notice to schools and families sent this afternoon. What do you do? Options: A) {brc['d4'][0]}  B) {brc['d4'][1]}  C) {brc['d4'][2]}."
     steps[5]["opt"] = brc["d4"]
     # Step 6 receives J1, whose Guidance line reads R30 and Section 6.2. Done when is unchanged.
@@ -5860,7 +5909,8 @@ def rework_t122(w: dict) -> None:
     # What T12.2 carries from earlier tasks, re-checked on the final data.
     aud = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "aud-t122.json").read_text(encoding="utf8"))
     names = {s["code"]: s["name"] for k in w["tasks"].values() for s in k["subs"]} | {l["sub"]["code"]: l["sub"]["name"] for l in w["li"].values() if l.get("sub")}
-    assert all(names.get(r[0]) == r[1] for r in aud["versions"]), "Version History no longer matches the deliverables"
+    # aud-t122.json already carries main()'s final rename (item 114); this check runs before it.
+    assert all((names.get(r[0]) or "").replace("READ-ME-FIRST", "Onboarding record") == r[1] for r in aud["versions"]), "Version History no longer matches the deliverables"
     assert all(o in names for o in aud["fupOpts"][:-1]), aud["fupOpts"]
     assert w["tp"]["risk|Mitigation Tracker#T12.1"]["pl"]["r"][-1][0] == "A-22" and aud["action"][0] == "A-23"
     assert next(r for r in w["pages"]["Ref-Actions"]["r"] if r[0] == "CT") == aud["ct"]
@@ -6135,6 +6185,64 @@ def retro(w: dict) -> None:
             secs = [s[0] for s in d[2]]
             at = secs.index("9") + 1 if "9" in secs else len(d[2])
             d[2].insert(at, ["9.1", "System integrations"])
+
+
+def titles_pass(w: dict) -> None:
+    """Step titles end at a sentence or a word, never mid-word (tester report, 4 Nov 2026). Runs last, on the final text.
+
+    The pack builds a title from the step's first sentence and cuts it at 60 characters: "… so they can finish a step f…",
+    "… the GlobalConnect Customer Solut…" (a cut name the per-learner swap cannot match, so the learner read "Ostrell
+    Customer Solut…"), or stops at "(e.g" or at "and" ("The rule was published on 1 October"). The desk shows the
+    instruction after a title that starts it, so a cut title also splits the sentence in two. A title is now the whole
+    first sentence when that fits, or cut at a word with "…". Corrections item 113.
+    """
+    stop = {"a", "an", "and", "as", "at", "by", "each", "for", "from", "in", "is", "its", "of", "on", "or", "that", "the", "their",
+            "to", "which", "with", "your"}
+
+    def first_sentence(text: str) -> str:
+        text = re.sub(r"^\[[^\]]*\]\s*", "", text)  # "[LI-05 — Statement of Applicability (SoA)] "
+        text = re.sub(r"^DECIDE(?: \(for each item\))?:\s*", "", text)
+        m = re.search(r"(?<!e\.g)(?<!i\.e)[.?!][\"”’)]?(?=\s|$)", text)
+        return text[: m.end()] if m else text
+
+    def fit(sentence: str, room: int) -> str:
+        sentence = sentence[:-1] if sentence.endswith(".") else sentence
+        sentence = re.sub(r"\s*\(e\.g\.[^()]*\)", "", sentence)  # an example is the instruction's, not the title's
+        if len(sentence) <= room:
+            return sentence
+        bare = re.sub(r"\s*\([^()]*\)", "", sentence)  # "… _v1.docx (e.g. M2610-…_v1.docx)" → "… _v1.docx"
+        if len(bare) <= room:
+            return bare
+        cut = sentence[: room - 1].rsplit(" ", 1)[0]
+        if cut.count("(") > cut.count(")"):
+            cut = cut[: cut.rindex("(")]
+        words = cut.rstrip(" ,;:–—").split(" ")
+        while len(words) > 3 and words[-1].lower() in stop:
+            words.pop()
+        out = " ".join(words).rstrip(" ,;:–—") + "…"
+        return out + '"' if out.count('"') % 2 else out  # a quotation cut inside stays closed
+
+    for tid, t in w["tasks"].items():
+        notes = {r[0]: r for r in w["notes"].get(tid, [])}
+        for s in t["steps"]:
+            title = s["t"]
+            m = re.match(r"(Decide(?: for each row)?: )(.*)$", title)
+            head, body = (m.group(1), m.group(2)) if m else ("", title)
+            whole = first_sentence(s["w"])
+            if body.endswith("…"):
+                if not whole.startswith(body[:-1]):
+                    continue  # a title the pack wrote apart from the text: left as it is
+            elif not (whole.startswith(body) and (whole[len(body):len(body) + 1] == " " or body.count("(") > body.count(")"))):
+                continue  # a whole sentence, a clause ending at ":" or ",", or not cut from the text
+            new = head + fit(whole, 105 - len(head))
+            new = head + new[len(head)].upper() + new[len(head) + 1:]
+            s["t"] = new
+            if s["n"] in notes and notes[s["n"]][1] == title:
+                notes[s["n"]][1] = new
+    for t in w["tasks"].values():
+        for s in t["steps"]:
+            assert not re.search(r"\w…$", s["t"]) or s["t"][-2].isalnum(), s["t"]
+            assert s["t"].count("(") == s["t"].count(")"), s["t"]
 
 
 if __name__ == "__main__":

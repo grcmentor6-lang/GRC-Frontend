@@ -15,7 +15,7 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      router.replace("/");
+      router.replace("/signin"); // a signed-out visit to an app page asks you to sign in, not to read the landing page
     } else if (!user.isProfileComplete) {
       router.replace("/complete-profile");
     } else if (!entitled) {

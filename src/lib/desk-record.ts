@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { ALL_WEEKS_OPEN } from "@/lib/flags";
 import { loadDesk, startOf, weekOpen, type Desk } from "@/lib/desk/model";
 import { stepKey, useProgress, type Progress } from "@/lib/desk/progress";
+import type { Scores } from "@/lib/desk/badges";
 
 /**
  * The learner's record as My Submissions and Reports read it: the desk catalogue plus this account's
@@ -31,15 +32,16 @@ export function useDeskRecord() {
 /**
  * Released task scores (0-100), by task id, from GET /me/record: the server re-checks each pick against its
  * key at submission (backend services/desk_record.task_scores), so a score is never worked out in the browser.
- * Null while loading; an empty map when nothing is scored or the record cannot be read.
+ * A submitted task the server released no score for maps to null; a task not submitted is absent.
+ * Null while loading; an empty map when the record cannot be read.
  */
-export function useTaskScores(): Record<string, number> | null {
-  const [scores, setScores] = useState<Record<string, number> | null>(null);
+export function useTaskScores(): Scores | null {
+  const [scores, setScores] = useState<Scores | null>(null);
   useEffect(() => {
     let live = true;
     api
-      .get<{ tasks: { taskId: string; releasedScore: number | null }[] }>("/me/record")
-      .then((r) => Object.fromEntries(r.tasks.filter((t) => t.releasedScore !== null).map((t) => [t.taskId, t.releasedScore as number])))
+      .get<{ tasks: { taskId: string; submittedAt: string | null; releasedScore: number | null }[] }>("/me/record")
+      .then((r) => Object.fromEntries(r.tasks.filter((t) => t.submittedAt).map((t) => [t.taskId, t.releasedScore])))
       .catch(() => ({}))
       .then((s) => live && setScores(s));
     return () => {
@@ -47,6 +49,15 @@ export function useTaskScores(): Record<string, number> | null {
     };
   }, []);
   return scores;
+}
+
+/** Shown for a submitted task the server released no score for: it had no item an answer key could check. */
+export const NOT_SCORED = "Not scored: this task has no answer-key items";
+
+/** The average of the released scores, rounded to a whole number as on the Certificate and CV; null when none is released. */
+export function averageScore(scores: Scores): number | null {
+  const got = Object.values(scores).filter((s): s is number => typeof s === "number");
+  return got.length ? Math.round(got.reduce((x, y) => x + y, 0) / got.length) : null;
 }
 
 /** The counts both pages show. A decision is a step that asks for a pick ("pick" or per-row "each"). */

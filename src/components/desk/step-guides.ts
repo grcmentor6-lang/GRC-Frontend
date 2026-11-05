@@ -8,7 +8,7 @@ import { localizable, toLearner } from "@/lib/desk/names";
  * say: where a value lives, which control to press. The "do it" cards wait for the mentee's own
  * action (a cursor taps the control) rather than a Next button.
  *
- * Keyed "<task>-<step>". Targets are found by data-guide attributes (the READ-ME-FIRST table, a
+ * Keyed "<task>-<step>". Targets are found by data-guide attributes (the Onboarding record table, a
  * toolbar section, its open menu, the complete button), so a guide never depends on class names.
  */
 const $ = (sel: string) => document.querySelector<HTMLElement>(sel);
@@ -344,7 +344,7 @@ const openLib = (n: number, code: string, what: string, win: string): TourStep[]
 const POLICY_WINDOW = 'section[role="dialog"][aria-label^="BKB-POL-0"]';
 /** The first input of a register column that is still open on this step. */
 /** Rule L06's row in Learn › Reference pages › Ref-Rules (Rule tables shortens it). */
-const l06Row = () => [...document.querySelectorAll<HTMLElement>(`${PAGE_WINDOW("Ref-Rules")} tr`)].find((tr) => /^\s*L06/.test(tr.innerText)) ?? null;
+const l06Row = () => [...document.querySelectorAll<HTMLElement>(`${PAGE_WINDOW("Ref-Rules")} tr`)].find((tr) => /^\s*L06\b/.test(tr.innerText)) ?? null;
 const firstInput = (col: string) => $(`[data-guide="register"] [aria-label^="${col}, row "]`);
 
 const POL006_WINDOW = 'section[role="dialog"][aria-label^="BKB-POL-006"]';
@@ -498,7 +498,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Six values to check",
       icon: "table",
-      body: "Table 1 of READ-ME-FIRST was filled in for you by the programme office. Before you rely on a record someone else filled in, you check it against its source: here, Home › My Organisation. Open it first.",
+      body: "The Assignment table of Onboarding record was filled in for you by the programme office. Before you rely on a record someone else filled in, you check it against its source: here, Home › My Organisation. Open it first.",
       getEl: () => $('[data-guide="rmf-table"]'),
     },
     ...openFromHome("My Organisation", ORG_WINDOW, "Step 1"),
@@ -551,7 +551,10 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
         icon: "shield",
         body: "Part 2 is open now: the four data rules you agree to keep in every task. Tick each one, then click Save. Saving is final.",
         getEl: () => $('#act-3 [data-guide="part-two"]'),
-        nextWhen: () => !!$('#act-3 [data-guide="part-two"] [data-saved]'),
+        // waitFor, not nextWhen: Save is one click and final, so the walk moves on by itself once it lands. With nextWhen the
+        // card stayed on "Tick all four rules and click Save" after the save (tester, 4 Nov).
+        waitFor: () => !!$('#act-3 [data-guide="part-two"] [data-saved]'),
+        pointAt: () => $('#act-3 [data-guide="attest-save"]'),
         doIt: "Tick all four rules and click Save",
       },
       {
@@ -565,12 +568,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     false,
   ),
 
-  // The question was answered in the step's row (the file opens only then); here, table 2.
+  // The question was answered in the step's row (the file opens only then); here, the Folders table.
   "F1.1-4": [
     {
       title: "Now four paths",
       icon: "table",
-      body: "Your answer is in. Part 2 is table 2 of READ-ME-FIRST: the full path of each of your four task folders. They are on Home › My Tasks.",
+      body: "Your answer is in. Part 2 is the Folders table of Onboarding record: the full path of each of your four task folders. They are on Home › My Tasks.",
       getEl: () => $('[data-guide="rmf-table"]'),
     },
     ...openFromHome("My Tasks", TASKS_WINDOW, "Step 4"),
@@ -601,7 +604,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Three dates to check",
       icon: "calendar",
-      body: "Table 3 holds the due dates of F1.2, F1.3 and the knowledge check KC-01, filled in for you. The programme sets every due date, and Home › My plan is where they are. Check the file against it.",
+      body: "The Week 1 dates table holds the due dates of F1.2, F1.3 and the knowledge check KC-01, filled in for you. The programme sets every due date, and Home › My plan is where they are. Check the file against it.",
       getEl: () => $('[data-guide="rmf-table"]'),
     },
     ...openFromHome("My plan", PLAN_WINDOW, "Step 5"),
@@ -645,7 +648,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "The file you hand in",
       icon: "file",
-      body: "This is your READ-ME-FIRST, with the three tables you filled in steps 1, 4 and 5. This step saves it in 02_Working under its own name and submits it.",
+      body: "This is your Onboarding record, with the three tables you filled in steps 1, 4 and 5. This step saves it in 02_Working under its own name and submits it.",
       getEl: () => $('[data-guide="rmf-file"]'),
     },
     ...nameAndSubmit("docx", "1 to 5"),
@@ -875,12 +878,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
   ],
 
 
-  // Step 5 is its question only, answered in its row from the Group's definition in Learn & Grow › Glossary.
+  // Step 5 is its question only, answered in its row from the Group's definition in Learn › Glossary.
   "F1.2-5": [
     {
       title: "A question",
       icon: "help",
-      body: "This step is a question: which evidence ref another person could rely on. Read the situation in the box, then the three options. The Group's definition is in Learn & Grow › Glossary.",
+      body: "This step is a question: which evidence ref another person could rely on. Read the situation in the box, then the three options. The Group's definition is in Learn › Glossary.",
       getEl: () => $('#act-5 [data-guide="decision"]'),
     },
     ...openLearn("Glossary", "The Group's working terms, one line each.", GLOSSARY_WINDOW),
@@ -2745,7 +2748,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Now the redlines",
       icon: "table",
-      body: "A redline is the wording you propose to close a gap, in policy language. The policy owner reads it, and if approved it becomes a corrective action in T12.1. R13's frame, also in Learn & Grow › Sentence frames: “<Role> shall <action> within <time limit>.”",
+      body: "A redline is the wording you propose to close a gap, in policy language. The policy owner reads it, and if approved it becomes a corrective action in T12.1. R13's frame, also in Learn › Sentence frames: “<Role> shall <action> within <time limit>.”",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
     ...openLib(5, "BKB-POL-006", "The Access Control and Identity Management Policy", POL006_WINDOW),
@@ -4028,7 +4031,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "The Information Security Auditor has a question about one account. Open it from the Inbox on the toolbar and reply. You need Ref-UAR codes for it, and for the severities.",
       getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
     },
-    checkAnswers("Then the highest severity, their share of the 216 accounts, R19's conclusion, and the number the memo's sentence needs (Learn & Grow › Sentence frames, Memo conclusion). Check my answers then shows each line's answer and why. Your lines lock then, so check them first."),
+    checkAnswers("Then the highest severity, their share of the 216 accounts, R19's conclusion, and the number the memo's sentence needs (Learn › Sentence frames, Memo conclusion). Check my answers then shows each line's answer and why. Your lines lock then, so check them first."),
     finish("This button unlocks once your answers are checked and the message has its reply. UAR-MEMO's conclusion is then written from them."),
   ],
 
@@ -5102,7 +5105,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "A date of “week 3 + 2 months”, with week 3 opening on 19 October 2026, is 2026-12-19.",
       getEl: () => $(CAL_WINDOW),
     },
-    firstItem("The first objective yourself", "Leavers: choose the objective with L14's target and the right date. Next unlocks once it is right.", "Objective as measured (L14)", 1, () => selIs("Objective as measured (L14)", 1, "95 % of leavers are de-provisioned within 4 hours by 2027-06-21"), "Choose the leavers objective", CAL_WINDOW),
+    firstItem("The first objective yourself", "Leavers: choose the objective with L14's target and the right date. Next unlocks once it is right.", "Objective as measured (L14)", 1, () => selIs("Objective as measured (L14)", 1, toLearner("95 % of leavers are de-provisioned within 4 hours by 2027-06-21")), "Choose the leavers objective", CAL_WINDOW),
     checkAnswers("Then the other two. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
     finish("This button unlocks once your answers are checked."),
   ],
@@ -6728,10 +6731,10 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "The calendar",
       icon: "book",
-      body: "Each week with the day it opens and its tasks. For example, an event of T6.2 falls in W6, which opens Mon 09 Nov.",
+      body: "Each week with the day it opens and its tasks. For example, an event of T6.2 falls in W6, the row that lists T6.2, on the day W6 opens.",
       getEl: () => $(CAL_WINDOW),
     },
-    firstItem("The incident notice yourself", "Read its programme event, find that task's week in the calendar and compare it with the row. Where they differ, choose the calendar's week. Next unlocks once it is right.", "Week (Home › Calendar)", 3, () => selIs("Week (Home › Calendar)", 3, "W10 · Mon 07 Dec"), "Make its week agree with the calendar", CAL_WINDOW),
+    firstItem("The incident notice yourself", "Read its programme event, find that task's week in the calendar and compare it with the row. Where they differ, choose the calendar's week. Next unlocks once it is right.", "Week (Home › Calendar)", 3, () => selIs("Week (Home › Calendar)", 3, toLearner("W10 · Mon 07 Dec")), "Make its week agree with the calendar", CAL_WINDOW),
     checkAnswers("Check the other five the same way, and change only what differs. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
     finish("This button unlocks once your answers are checked."),
   ],
@@ -7100,7 +7103,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Read the tracker first",
       icon: "table",
-      body: "At work, a corrective-action tracker is read column by column before any closure is tested, so each test reads the right cell. This step reads ACT-TRACKER and the read-me of its template, T-ACT.",
+      body: "At work, a corrective-action tracker is read column by column before any closure is tested, so each test reads the right cell. This step reads ACT-TRACKER and the column guide of its template, T-ACT.",
       getEl: () => $('[data-guide="register"]'),
     },
     ...openScreen("risk", "Risk Register", "Mitigation Tracker", "ACT-TRACKER, tagged with this step.", MT_WINDOW),
@@ -7113,7 +7116,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "The first question yourself",
       icon: "edit",
-      body: "Question 1: R33's third test. Read the read-me's What it records column and click the column it asks for. Next unlocks once it is right.",
+      body: "Question 1: R33's third test. Read the column guide's What it records column and click the column it asks for. Next unlocks once it is right.",
       getEl: () => $('[data-guide="register"] table'),
       onEnter: () => { $(`${MT_WINDOW} button[aria-label^="Close"]`)?.click(); $('[data-guide="register"] thead th')?.scrollIntoView({ block: "nearest", inline: "nearest" }); },
       pointAt: () => $('[data-guide="register"] thead th'),
@@ -7236,7 +7239,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "The request is written",
       icon: "info",
-      body: "Request to the owner fills itself in the Evidence request frame of Learn & Grow › Sentence frames: what to send, for which action, by the next check date. For a K4, the Status cell says where its re-test stands: read it before you choose.",
+      body: "Request to the owner fills itself in the Evidence request frame of Learn › Sentence frames: what to send, for which action, by the next check date. For a K4, the Status cell says where its re-test stands: read it before you choose.",
       getEl: () => $('[data-guide="register"]'),
     },
     checkAnswers("Then the other six. Check my answers then shows each action's answer and why. Your rows lock then, so check them first."),
@@ -7459,7 +7462,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Read the index first",
       icon: "table",
-      body: "At work, the repository's index is read column by column before the first auditor request is answered, so each answer is checked in the right cell. This step reads EVIDENCE-INDEX and its read-me.",
+      body: "At work, the repository's index is read column by column before the first auditor request is answered, so each answer is checked in the right cell. This step reads EVIDENCE-INDEX and its column guide.",
       getEl: () => $('[data-guide="register"]'),
     },
     ...openScreen("evidence", "Evidence", "Evidence Library", "EVIDENCE-INDEX, tagged with this step.", EVLIB_WINDOW),
@@ -7472,7 +7475,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "The first question yourself",
       icon: "edit",
-      body: "Question 1: how a file was produced. Read the read-me's What it records column and click the column it asks for. Next unlocks once it is right.",
+      body: "Question 1: how a file was produced. Read the column guide's What it records column and click the column it asks for. Next unlocks once it is right.",
       getEl: () => $('[data-guide="register"] table'),
       onEnter: () => { $(`${EVLIB_WINDOW} button[aria-label^="Close"]`)?.click(); $('[data-guide="register"] thead th')?.scrollIntoView({ block: "nearest", inline: "nearest" }); },
       pointAt: () => $('[data-guide="register"] thead th'),

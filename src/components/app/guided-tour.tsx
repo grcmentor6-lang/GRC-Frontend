@@ -136,7 +136,7 @@ function place(r: Box | null, th: number, zoom: number, avoid: Box | null = null
 
 /**
  * The part of an element the mentee can actually see: its box cut to every ancestor that clips
- * (a scrolling pane, a modal body) and to the viewport. A tall target (the whole READ-ME-FIRST file)
+ * (a scrolling pane, a modal body) and to the viewport. A tall target (the whole Onboarding record file)
  * runs on below its pane's edge; lighting its full box lit whatever sat under that edge, the toolbar
  * included, and put the card's arrow on nothing.
  */

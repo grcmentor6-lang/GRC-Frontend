@@ -16,10 +16,11 @@ import { STEP_GUIDES } from "./step-guides";
 import { DECISION_CONTEXT } from "@/lib/desk/decision-context";
 import { FloatWindow } from "./float-window";
 import { UndertakingCard } from "./undertaking";
-import { lockedWhy, stepAnswered, submissionText } from "@/lib/desk/work";
+import { lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { MessageNotice } from "./chat";
 import { useDeskIdentity } from "@/lib/desk/identity";
 import { canonAt, optionOrder, relabel, reorderStep, shown } from "@/lib/desk/option-order";
+import { StepInstruction, Where } from "./step-text";
 
 const REF_ICON: Record<string, IconName> = { rule: "shield", page: "table", tpl: "file", ds: "grid", doc: "book", clause: "pin" };
 
@@ -134,15 +135,15 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                   </span>
                   {isNext && <span className="shrink-0 rounded-[3px] bg-[#4338CA] px-1.5 py-0.5 text-[11px] font-semibold text-white">UP NEXT</span>}
                   {s.li && <span title={`Lead Implementer extension: ${desk.li[s.li]?.title ?? s.li}`} className="shrink-0 rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#3730A3]">{s.li}</span>}
-                  {open && copy.detail && <span className="block w-full text-[13px] leading-snug text-[#5B6474]">{copy.detail}</span>}
+                  {open && copy.detail && s.kind === "pick" && <span className="block w-full text-[13px] leading-snug text-[#5B6474]">{copy.detail}</span>}
                   {/* Narrow sheet: the folded columns ride along under the step. */}
                   <span className="flex w-full flex-wrap items-center gap-2 text-[12px] text-[#5B6474] @[760px]:hidden">
-                    {decision && <TypeChip each={s.kind === "each"} />}
+                    {decision ? <TypeChip each={s.kind === "each"} /> : <ActivityChip />}
                     {tag && <span className="font-mono font-semibold text-[#3730A3]">{tag}</span>}
-                    <span>{s.tool}</span>
+                    <Where tool={s.tool} />
                   </span>
                 </span>
-                <span className={`${cell} hidden items-center px-3 text-[13px] text-[#3F4757] @[760px]:flex`}>{decision ? <TypeChip each={s.kind === "each"} /> : "Step"}</span>
+                <span className={`${cell} hidden items-center px-3 text-[13px] text-[#3F4757] @[760px]:flex`}>{decision ? <TypeChip each={s.kind === "each"} /> : <ActivityChip />}</span>
                 <span className={`${cell} hidden min-w-0 items-center gap-2 px-3 @[760px]:flex`} title={kr ? `${splitKr(kr.kr).tag}: ${splitKr(kr.kr).text}` : undefined}>
                   {kr ? (
                     <>
@@ -154,7 +155,7 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                   )}
                 </span>
                 <span className={`${cell} hidden min-w-0 items-center px-3 text-[13px] text-[#3F4757] @[760px]:flex`} title={s.tool}>
-                  <span className="truncate">{s.tool}</span>
+                  <span className="min-w-0 py-1.5"><Where tool={s.tool} wrap /></span>
                 </span>
                 <span aria-hidden className={cell} />
                 <span className={`flex items-center justify-center ${isNext && !open ? "text-[#4338CA]" : "text-[#8A91A3]"}`}>
@@ -215,7 +216,7 @@ export function thenLabel(task: Task, s: Step): string {
   const att = ATTEST[task.id]?.[s.n];
   if (att) return att.map((a) => a.then).join(", then ");
   const t = rmfTable(s);
-  if (t !== null) return `Fill table ${t + 1}, “${RMF.tables[t].title}”`;
+  if (t !== null) return `Fill the ${RMF.tables[t].title} table`;
   // A register's column: "Fill column E, “Offices (R02)”".
   const reg = regOf(task.id, s.n);
   // A report on the register's rows (F2.2 step 4). Read before the question is answered, so it says what to read, not what to do.
@@ -256,6 +257,11 @@ function stepCopy(s: Step): { short: string; title: string; detail: string } {
 function firstSentence(t: string): string {
   const m = t.match(/^.*?[.!?](?=\s|$)/);
   return (m ? m[0] : t).trim();
+}
+
+/** A step that is work, not a choice: an Activity (owner, 4 Nov 2026), in a quiet chip beside Decision's amber. */
+function ActivityChip() {
+  return <span className="whitespace-nowrap rounded-[3px] border border-[#DDE1E8] bg-[#F7F8FA] px-[7px] py-0.5 text-[12px] font-semibold text-[#3F4757]">Activity</span>;
 }
 
 /** "Decision" in the redesign's amber chip; a per-row decision says so. */
@@ -302,8 +308,11 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
     onNext();
   };
 
+  // Said once: a step worked in a tool shows its instruction in the tool's window, so the row keeps only where.
+  const detail = s.kind === "pick" || inTool ? "" : stepCopy(s).detail;
   return (
     <div className="border-t border-[#E9ECF1] bg-white px-4 pb-4 pt-3">
+      {detail && <StepInstruction text={detail} className="mb-3.5 max-w-[78ch]" />}
       {inTool ? (
         <>
           {/* A decision that continues in a tool (F1.1 step 4: decide, then fill table 2): the
@@ -330,22 +339,18 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
             </span>
             <span className="min-w-[11rem] flex-1">
               <span className="block text-[12px] text-indigo-700">{done ? "Done in" : checked ? "Do this step in" : "Opens once you check your answer"}</span>
-              <span className="block text-[14px] font-semibold text-slate-900">{rmfTable(s) !== null ? `READ-ME-FIRST (01_Inputs), ${/checked against/.test(s.o) ? "checking against" : "copying from"} ${s.tool}` : s.tool}</span>
+              <span className="block text-[14px] font-semibold text-slate-900">{/* Plain here: the row's Where column already carries the path's chip. */}
+                {rmfTable(s) !== null ? `Onboarding record, ${/checked against/.test(s.o) ? "checking against" : "copying from"} ${s.tool}` : s.tool}</span>
               <span className="block text-[12px] text-slate-500">Done when: {s.o}</span>
             </span>
             <span className="flex items-center gap-2">
               {done ? (
                 <>
                   <span className="inline-flex items-center gap-1.5 px-1 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
-                  {/* Done: the tool reopens as a read-only window; Edit brings the work back until submission. */}
-                  <button type="button" onClick={() => openTool(s.key)} className={`h-9 rounded border border-[#DDE1E8] bg-white px-3 text-[13px] font-medium text-[#3F4757] hover:border-[#C9CED8] ${press}`}>
+                  {/* Done: View opens the step's own window with the learner's work in it, read-only (owner, 5 Nov 2026: no Edit). */}
+                  <button type="button" onClick={() => openTool(s.key, "view")} className={`h-9 rounded border border-[#DDE1E8] bg-white px-3 text-[13px] font-medium text-[#3F4757] hover:border-[#C9CED8] ${press}`}>
                     View
                   </button>
-                  {!sealed && (
-                    <button type="button" onClick={() => openTool(s.key, "work")} className={`h-9 rounded border border-[#C7CBF5] bg-white px-3 text-[13px] font-medium text-[#3730A3] hover:bg-[#EEF0FF] ${press}`}>
-                      Edit
-                    </button>
-                  )}
                 </>
               ) : (
                 <button
@@ -354,13 +359,12 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
                   onClick={() => openTool(s.key)}
                   className={`inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
                 >
-                  Open {rmfTable(s) !== null ? "READ-ME-FIRST" : s.tool.split("›").pop()?.trim()} <Icon name="arrowUpRight" size={14} />
+                  Open {rmfTable(s) !== null ? "Onboarding record" : s.tool.split("›").pop()?.trim()} <Icon name="arrowUpRight" size={14} />
                 </button>
               )}
             </span>
           </div>
           {!readOnly && !done && <div className="mt-3"><MessageNotice task={task} n={s.n} /></div>}
-          <Submitted task={task} s={s} />
         </>
       ) : (
         <>
@@ -555,7 +559,7 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
   return (
     <FloatWindow
       title={`Help with step ${s.n}`}
-      eyebrow={`${task.id} · ${s.kind === "do" ? "Step" : "Decision"}`}
+      eyebrow={`${task.id} · ${s.kind === "do" ? "Activity" : "Decision"}`}
       leading={<span className="grid h-7 w-7 place-items-center rounded-full bg-[#4338CA] text-white"><Icon name="help" size={15} /></span>}
       onClose={onClose}
       width={460}
@@ -645,6 +649,7 @@ function Attestation({ task, a, readOnly }: { task: Task; a: Attest; readOnly: b
           <span className="text-[12.5px] text-[#5B6474]">Tick all four, then save. Saving is final.</span>
           <button
             type="button"
+            data-guide="attest-save"
             disabled={lock || !ready}
             onClick={() => set({ at: new Date().toISOString() })}
             className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
@@ -654,19 +659,6 @@ function Attestation({ task, a, readOnly }: { task: Task; a: Attest; readOnly: b
         </footer>
       )}
     </section>
-  );
-}
-
-/** What the mentee handed in for a step done in a tool, in one line under its bar. */
-function Submitted({ task, s }: { task: Task; s: Step }) {
-  const { desk, progress } = useDesk();
-  const text = submissionText(desk, progress, task, s, useDeskIdentity().menteeId);
-  if (!text) return null;
-  return (
-    <p className="mt-2 flex items-start gap-2 text-[13px] text-[#3F4757]">
-      <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">You submitted</span>
-      <span className="line-clamp-2 min-w-0">{text}</span>
-    </p>
   );
 }
 

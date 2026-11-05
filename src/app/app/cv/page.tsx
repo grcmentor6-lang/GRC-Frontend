@@ -103,11 +103,12 @@ export default function CvPage() {
         )}
       </div>
 
-      {loading ? (
+      {/* Waits for the badges too (null until progress and scores are read), so the sheet never says 0 earned first. */}
+      {loading || (cv && !methodBadges) ? (
         <Loader label="Loading your CV…" />
       ) : cv ? (
         <>
-          <CvSheet cv={cv} methodBadges={methodBadges} />
+          <CvSheet cv={cv} methodBadges={methodBadges ?? undefined} />
           <div className="text-center text-[11px] text-slate-400 pt-4 pb-2 cv-noprint">Updates automatically from your Working Desk. The public link leaves out your email.</div>
         </>
       ) : (

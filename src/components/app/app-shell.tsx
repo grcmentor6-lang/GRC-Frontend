@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
@@ -11,7 +11,7 @@ import { UpNext } from "./up-next";
 import { FeedbackWidget } from "./feedback-widget";
 import { OrgInfoButton } from "@/components/desk/org-drawer";
 import { useDeskIdentity } from "@/lib/desk/identity";
-import { DropdownPanel } from "@/components/ui/motion";
+import { DropdownPanel, useDismiss } from "@/components/ui/motion";
 import { useDeskRecord, recordCounts } from "@/lib/desk-record";
 import { certificateApi } from "@/lib/certificate";
 
@@ -48,7 +48,7 @@ function DashSidebar({
         "bg-white border-r border-slate-200 flex flex-col print:hidden",
         // Mobile: fixed off-canvas drawer that slides in over the content.
         "fixed inset-y-0 left-0 z-50 w-[244px] transition-transform duration-300",
-        mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full",
+        mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full max-md:invisible",
         // Desktop (md+): part of the flex flow, collapsible width, never translated.
         "md:static md:z-auto md:translate-x-0 md:shadow-none md:h-full md:shrink-0 md:transition-all",
         collapsed ? "md:w-[68px]" : "md:w-[244px] 2xl:w-[276px]",
@@ -123,13 +123,7 @@ function UserMenu() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, []);
+  useDismiss(ref, open, useCallback(() => setOpen(false), []));
 
   const initials = initialsOf(user?.firstName, user?.lastName, user?.email);
   const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || user?.email || "";
@@ -141,7 +135,7 @@ function UserMenu() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Account menu"
-        aria-haspopup="menu"
+        aria-haspopup="true"
         aria-expanded={open}
         className={`focus-ring flex items-center gap-2 h-11 pl-1.5 pr-2 rounded-xl transition-colors ${open ? "bg-slate-100" : "hover:bg-slate-100/70"}`}
       >
@@ -150,7 +144,7 @@ function UserMenu() {
         </div>
         <div className="hidden lg:block text-left leading-tight">
           <div className="text-[12.5px] font-medium text-slate-900 tracking-tight">{user?.firstName || "Account"}</div>
-          <div className="text-[10.5px] text-slate-500 capitalize">{user?.role || "Mentee"}</div>
+          <div className="text-[10.5px] text-slate-500">{user?.role === "admin" ? "Admin" : "Mentee"}</div>
         </div>
         <Icon name="chevronDown" size={14} className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -287,19 +281,7 @@ function ProgramProgress() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  useDismiss(ref, open, useCallback(() => setOpen(false), []));
 
   if (!desk || state !== "ready") return null;
   const c = recordCounts(desk, progress);
@@ -316,7 +298,7 @@ function ProgramProgress() {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={`GRC 101 ${pct}% done, ${done} of ${acts} steps done. Show progress details`}
-        className={`flex h-11 items-center gap-2.5 rounded-full border px-1 transition-[background,border-color,box-shadow] lg:pl-1 lg:pr-3 ${
+        className={`focus-ring flex h-11 items-center gap-2.5 rounded-full border px-1 transition-[background,border-color,box-shadow] lg:pl-1 lg:pr-3 ${
           open
             ? "border-[#d2ccff] bg-white shadow-[0_4px_14px_-8px_rgba(91,79,233,.35)]"
             : "border-[#e7e7f0] bg-[#f3f3f9] hover:border-[#d2ccff] hover:bg-white hover:shadow-[0_4px_14px_-8px_rgba(91,79,233,.35)]"
@@ -336,7 +318,7 @@ function ProgramProgress() {
         <Icon name="chevronDown" size={14} className={`hidden text-[#8a8ba3] transition-transform duration-200 lg:block ${open ? "rotate-180" : ""}`} />
       </button>
 
-      <DropdownPanel open={open} className="absolute right-0 mt-2.5 w-[330px] p-4">
+      <DropdownPanel open={open} className="fixed inset-x-3 top-[68px] p-4 sm:absolute sm:inset-x-auto sm:top-auto sm:right-0 sm:mt-2.5 sm:w-[330px]">
         <div className="flex items-center gap-3.5">
           <Gauge pct={pct} size={72} stroke={3}>
             <span className="whitespace-nowrap text-[19px] font-semibold tracking-[-0.02em] text-[#191a2c]">
@@ -388,7 +370,7 @@ function ProgramProgress() {
             <small className="block text-[11.5px] text-[#8a8ba3]">Left to go</small>
             <b className="my-[3px] block text-[20px] font-semibold tracking-[-0.02em] tabular-nums text-[#191a2c]">{acts - done}</b>
             <span className="whitespace-nowrap text-[11.5px] text-[#8a8ba3]">
-              {next ? `${next}% at ${Math.ceil((acts * next) / 100)}` : "All steps done"}
+              {next ? `${next}% at step ${Math.ceil((acts * next) / 100)}` : "All steps done"}
             </span>
           </div>
         </div>
@@ -418,7 +400,7 @@ function DashTopBar({ openMobile }: { openMobile: () => void }) {
           <Icon name="menu" size={20} />
         </button>
 
-        <Link href="/app" aria-label="GRC 101 Foundations, home" className="hidden shrink-0 items-center gap-2.5 no-underline md:flex">
+        <Link href="/app" aria-label="GRC 101 Foundations, home" className="focus-ring hidden shrink-0 items-center gap-2.5 no-underline md:flex">
           <span className="hidden leading-tight min-[1140px]:block">
             <b className="block text-[14.5px] font-semibold tracking-[-0.005em] text-[#191a2c]">GRC 101</b>
             <small className="block text-[12px] text-[#8a8ba3]">Foundations</small>

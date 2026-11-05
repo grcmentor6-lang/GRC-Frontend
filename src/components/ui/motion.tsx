@@ -6,7 +6,7 @@
  * with no animation (and crucially no lingering opacity:0 state).
  */
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode, type RefObject } from "react";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -26,6 +26,29 @@ const DROPDOWN_EASE = [0.16, 1, 0.3, 1] as const;
 const DROPDOWN_SURFACE =
   "rounded-[18px] bg-white ring-1 ring-slate-900/10 overflow-hidden z-50 " +
   "shadow-[0_1px_1px_rgba(15,23,42,0.04),0_12px_24px_-10px_rgba(15,23,42,0.16),0_32px_60px_-18px_rgba(15,23,42,0.28)]";
+
+/**
+ * How every header menu closes: a click or tap outside it, Escape, or focus leaving it (tabbing out).
+ * `ref` wraps the trigger and the panel together, so a click on the trigger is inside and its own
+ * toggle stays in charge.
+ */
+export function useDismiss(ref: RefObject<HTMLElement | null>, open: boolean, close: () => void) {
+  useEffect(() => {
+    if (!open) return;
+    const outside = (t: EventTarget | null) => !!ref.current && !ref.current.contains(t as Node);
+    const onDown = (e: PointerEvent) => outside(e.target) && close();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    const onFocus = (e: FocusEvent) => outside(e.target) && close();
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("focusin", onFocus);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("focusin", onFocus);
+    };
+  }, [ref, open, close]);
+}
 
 export function DropdownPanel({
   open,

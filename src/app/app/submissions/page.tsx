@@ -6,7 +6,8 @@ import { submissionText } from "@/lib/desk/work";
 import { useDeskIdentity } from "@/lib/desk/identity";
 import { dueDate, fmtDay, type Desk, type Task } from "@/lib/desk/model";
 import { stepKey, taskStatus, type Progress } from "@/lib/desk/progress";
-import { fmtWhen, recordCounts, recordEmpty, useDeskRecord } from "@/lib/desk-record";
+import { NOT_SCORED, fmtWhen, recordCounts, recordEmpty, useDeskRecord, useTaskScores } from "@/lib/desk-record";
+import type { Scores } from "@/lib/desk/badges";
 
 /**
  * My Submissions — everything the mentee has handed in, week by week and task by task: each step's
@@ -16,6 +17,7 @@ import { fmtWhen, recordCounts, recordEmpty, useDeskRecord } from "@/lib/desk-re
  */
 export default function SubmissionsPage() {
   const { state, desk, progress, start, weeks, retry } = useDeskRecord();
+  const scores = useTaskScores();
   if (state === "failed")
     return (
       <div className="page-shell grid justify-items-center gap-2 py-16 text-center">
@@ -70,7 +72,7 @@ export default function SubmissionsPage() {
             const todo = wk.filter((t) => !handedIn(desk, progress, t));
             return (
               <>
-                {wk.filter((t) => !todo.includes(t)).map((t) => <TaskRecord key={t.id} task={t} progress={progress} desk={desk} start={start} />)}
+                {wk.filter((t) => !todo.includes(t)).map((t) => <TaskRecord key={t.id} task={t} progress={progress} desk={desk} start={start} scores={scores} />)}
                 {todo.length > 0 && (
                   <p className="border border-[#E9ECF1] bg-white px-4 py-2.5 text-[13px] text-[#5B6474]">
                     Nothing handed in yet for{" "}
@@ -110,7 +112,7 @@ const lineOf = (desk: Desk, p: Progress, task: Task, menteeId?: string) =>
 /** Anything of this task's on record: a step done, work saved under a step, or the task submitted. */
 const handedIn = (desk: Desk, p: Progress, task: Task) => !!p.submitted[task.id] || lineOf(desk, p, task).some((l) => l.isDone || l.text);
 
-function TaskRecord({ task, progress, desk, start }: { task: Task; progress: Progress; desk: Desk; start: Date }) {
+function TaskRecord({ task, progress, desk, start, scores }: { task: Task; progress: Progress; desk: Desk; start: Date; scores: Scores | null }) {
   const st = taskStatus(progress, task);
   const n = task.steps.filter((s) => progress.done[stepKey(task.id, s.n)]).length;
   const lines = lineOf(desk, progress, task, useDeskIdentity().menteeId); // a pick in the learner's letter
@@ -126,6 +128,7 @@ function TaskRecord({ task, progress, desk, start }: { task: Task; progress: Pro
           {n}/{task.steps.length} steps · due {fmtDay(dueDate(start, task.dueDay))}
         </span>
         <span className={`whitespace-nowrap rounded-[3px] border px-[7px] py-0.5 text-[12px] font-semibold ${chip}`}>{label}</span>
+        <TaskScore score={scores?.[task.id]} />
         <Link href={`/app/desk#${task.id}`} className="text-[12.5px] font-medium text-[#4338CA] no-underline hover:underline">Open in desk</Link>
       </header>
       {lines.every((l) => !l.isDone && !l.text) ? (
@@ -146,5 +149,17 @@ function TaskRecord({ task, progress, desk, start }: { task: Task; progress: Pro
         </ol>
       )}
     </article>
+  );
+}
+
+/** A submitted task's released score (GET /me/record), or why it has none. Nothing before submission or while loading. */
+function TaskScore({ score }: { score: number | null | undefined }) {
+  if (score === undefined) return null;
+  return score === null ? (
+    <span className="text-[12px] text-[#8A91A3]">{NOT_SCORED}</span>
+  ) : (
+    <span title="Released at submission: the share of this task's keyed items that match the answer key" className="whitespace-nowrap rounded-[3px] border border-[#DDE1E8] bg-white px-[7px] py-0.5 font-mono text-[12px] font-semibold tabular-nums text-[#111827]">
+      Score {score}
+    </span>
   );
 }

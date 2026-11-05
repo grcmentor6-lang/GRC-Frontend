@@ -18,7 +18,7 @@ import { TRACK_PREVIEWS, type TrackPreview } from "@/lib/track-previews";
 import { startWelcomeTour } from "@/components/app/welcome-tour";
 import { AccessChip } from "@/components/app/access-chip";
 import { DashboardOrgs } from "@/components/desk/org-drawer";
-import { useDeskRecord, recordCounts, recordEmpty } from "@/lib/desk-record";
+import { useDeskRecord, useTaskScores, averageScore, recordCounts, recordEmpty } from "@/lib/desk-record";
 import { planOf, nextStep, dueText } from "@/lib/desk-plan";
 import { dueDate, fmtDay } from "@/lib/desk/model";
 import { ALL_WEEKS_OPEN } from "@/lib/flags";
@@ -135,6 +135,8 @@ function TrackPreviewSection({ preview, code }: { preview: TrackPreview; code?: 
 export default function DashboardPage() {
   const { user } = useAuth();
   const methodBadges = useMethodBadges();
+  const scores = useTaskScores();
+  const avgScore = scores ? averageScore(scores) : null;
   const [programId, setProgramId] = useState("grc101");
   const { data: programsRaw } = useCachedQuery("programs", () => catalog.programs());
   const programs: Program[] = useMemo(() => (programsRaw ? [...programsRaw].sort((a, b) => a.order - b.order) : []), [programsRaw]);
@@ -202,7 +204,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <span className="flex items-center gap-2">
               <span className={`w-1.5 h-1.5 rounded-full ${locked ? "bg-amber-300" : "bg-emerald-300"}`} />
-              <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-indigo-100">{locked ? `${program?.code ?? "Track"} · locked` : started ? "Pick up where you left off" : "Welcome aboard"}</span>
+              <span className="text-[11px] font-medium tracking-[0.1em] uppercase text-indigo-100">{locked ? `${program?.code ?? "Track"} · locked` : started ? "Pick up where you left off" : "Not started yet"}</span>
             </span>
             <AccessChip variant="dark" />
           </div>
@@ -298,9 +300,16 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <Link href="/app/badges" className="text-[12.5px] text-slate-600 tracking-tight no-underline hover:text-slate-900">Method badges earned</Link>
-                  <span className="text-[12px] font-semibold text-slate-900 tabular-nums">{methodBadges.earned} / {methodBadges.total}</span>
+                  <span className="text-[12px] font-semibold text-slate-900 tabular-nums">{methodBadges ? `${methodBadges.earned} / ${methodBadges.total}` : "—"}</span>
                 </div>
-                <Bar pct={(methodBadges.earned / methodBadges.total) * 100} tone="amber" />
+                <Bar pct={methodBadges ? (methodBadges.earned / methodBadges.total) * 100 : 0} tone="amber" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <Link href="/app/submissions" className="text-[12.5px] text-slate-600 tracking-tight no-underline hover:text-slate-900">Average task score</Link>
+                  <span className="text-[12px] font-semibold text-slate-900 tabular-nums">{avgScore !== null ? `${avgScore} / 100` : scores ? "None released yet" : "—"}</span>
+                </div>
+                <Bar pct={avgScore ?? 0} tone="emerald" />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1.5">

@@ -5,7 +5,7 @@
  * scripts/build-desk-sample.py. Phase 1 swaps the fetch for the backend's /me/desk, which runs the
  * engine per mentee and keeps answer keys server-side. Nothing else here changes.
  */
-import { CANONICAL, deepMap, deskIdentityNow, swapper, type DeskIdentity } from "./names";
+import { CANONICAL, CANONICAL_START, calDay, calWeekday, deepMap, deskIdentityNow, swapper, type DeskIdentity } from "./names";
 
 export type Table = { h: string[]; r: string[][] };
 export type StepKind = "do" | "pick" | "each";
@@ -128,8 +128,20 @@ export function loadDesk(): Promise<Desk> {
   });
   const who = deskIdentityNow();
   if (who === CANONICAL) return cached;
-  if (shown?.who !== who) shown = { who, desk: cached.then((d) => deepMap(d, swapper(CANONICAL, who))) };
+  if (shown?.who !== who) shown = { who, desk: cached.then((d) => onCalendar(deepMap(d, swapper(CANONICAL, who)), who.start || CANONICAL_START)) };
   return shown.desk;
+}
+
+/**
+ * The two screens that list the programme calendar, dated from the learner's start (in place, on the learner's copy):
+ * Home › Calendar's "Opens" (week n opens 7·(n−1) days after the start, as the desk header says) and Learn & Grow ›
+ * Knowledge Checks' "Due" (the week's last day, testDue). The content writes both for a Mon 05 Oct start.
+ */
+export function onCalendar(d: Desk, start: string): Desk {
+  const rows = (k: string) => ((d.tp[k]?.pl as { r?: string[][] } | undefined)?.r ?? []);
+  for (const r of rows("home|Calendar")) r[1] = calWeekday(calDay(start, 7 * (Number(r[0].slice(1)) - 1)));
+  for (const r of rows("learn|Knowledge Checks")) r[2] = calWeekday(calDay(start, 7 * Number(r[0]) - 1), false);
+  return d;
 }
 
 /** The eight questions, in the order the mentee meets them: what, how, why, then the rest.
@@ -166,7 +178,9 @@ export function krFor(task: Task, n: number): { kr: string; index: number } | nu
 
 /** "KR2 — Sample size … · Activities 3–4" → { tag: "KR2", text: "Sample size …" }. */
 export function splitKr(kr: string): { tag: string; text: string } {
-  const [tag, rest = ""] = kr.split(" — ");
+  // Split at the first dash only: KR2 of F1.2 quotes "Optional — not mapped".
+  const at = kr.indexOf(" — ");
+  const [tag, rest] = at < 0 ? [kr, ""] : [kr.slice(0, at), kr.slice(at + 3)];
   return { tag, text: rest.replace(/\s*·\s*Activit.*$/, "") };
 }
 
@@ -202,16 +216,18 @@ export const dmy = (d: Date) => `${String(d.getDate()).padStart(2, "0")}-${MON[d
 /**
  * A reading step ("Nothing to produce — you read …") is worked by reading the screen and confirming
  * it. Returns the parts to confirm, or null for a step that produces something. (v1.8.9 turned the
- * one step that read both organisations into copying from them, READ-ME-FIRST table 1.)
+ * one step that read both organisations into copying from them, Onboarding record · Assignment.)
  */
 export function readingParts(s: Step): string[] | null {
   return /^nothing to produce/i.test(s.o) ? ["read"] : null;
 }
 
-/** "READ-ME-FIRST table 2 filled (4 folder paths)" → 1: the READ-ME-FIRST table a step fills. */
+/** The Onboarding record's tables, in file order (forms.ts RMF names them from this). */
+export const RMF_TABLES = ["Assignment", "Folders", "Week 1 dates"] as const;
+/** "Onboarding record · Folders filled (4 folder paths)" → 1: the Onboarding record table a step fills. */
 export function rmfTable(s: Step): number | null {
-  const m = s.o.match(/READ-ME-FIRST table (\d)/);
-  return m ? Number(m[1]) - 1 : null;
+  const m = s.o.match(/Onboarding record · (Assignment|Folders|Week 1 dates)/);
+  return m ? RMF_TABLES.indexOf(m[1] as (typeof RMF_TABLES)[number]) : null;
 }
 
 /** A register cell the pack leaves for the mentee: "copy", "copy from …", "calc", or blank. */
@@ -224,7 +240,7 @@ export const isDecideCell = (c: unknown) => String(c ?? "").trim().startsWith("�
  *   read — "Nothing to produce — you read …": read it and confirm (readingParts);
  *   grid — "Values copied …" in a register with cells left to fill: fill them in the register;
  *   copy — "Values copied …" anywhere else: the value(s) plus where they came from;
- *   form — "READ-ME-FIRST table n filled": fill that table (lib/desk/forms);
+ *   form — "Onboarding record · <table> filled": fill that table (lib/desk/forms);
  *   submit — "… submitted with manifest": name each file by the convention, submit, get a receipt;
  *   log  — "Step ticked in the work log": tick it, time-stamped;
  *   note — anything else: a short note of what was done.

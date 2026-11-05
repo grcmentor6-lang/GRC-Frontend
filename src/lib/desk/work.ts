@@ -87,13 +87,19 @@ export function handInGaps(desk: Desk, p: Progress, task: Task, n: number): { co
     .filter((g) => g.n > 0);
 }
 
+/** "Fill the 2 empty cells in REG-BRIEF first.", or null when the step's hand-in has none. */
+function gapsWhy(desk: Desk, p: Progress, task: Task, n: number): string | null {
+  const gaps = handInGaps(desk, p, task, n);
+  return gaps.length ? `Fill ${gaps.map((g) => `the ${g.n} empty cell${g.n > 1 ? "s" : ""} in ${g.code}`).join(" and ")} first.` : null;
+}
+
 /** Why Submit is not open yet, naming the next thing to do; null once it is. */
 export function submitWhy(desk: Desk, p: Progress, task: Task, s: Step): string | null {
   if (waitingAt(desk, p, task.id, s.n).length) return "Reply to your message in the Inbox first.";
   const before = openBefore(p, task, s);
   if (before.length) return `Finish step${before.length > 1 ? "s" : ""} ${before.join(", ")} first.`;
-  const gaps = handInGaps(desk, p, task, s.n);
-  if (gaps.length) return `Fill ${gaps.map((g) => `the ${g.n} empty cell${g.n > 1 ? "s" : ""} in ${g.code}`).join(" and ")} first.`;
+  const gaps = gapsWhy(desk, p, task, s.n);
+  if (gaps) return gaps;
   if (handedIn(task.id, s.n).some((reg) => regEmpty(desk, p, task, s.n, reg).length)) return "Wait for the lines the platform writes from your answers.";
   const files = submitCodes(task, s).filter((c) => fileExts(task, c).length);
   if (files.some((c) => !fileNameOk(desk, task, c, p.answers[`${stepKey(task.id, s.n)}#${c}`] ?? ""))) return `Name ${files.length > 1 ? `the ${files.length} files` : "the file"} first.`;
@@ -116,7 +122,9 @@ export function lockedWhy(desk: Desk, p: Progress, task: Task, s: Step, start?: 
   if (reg?.steps[s.n]) {
     const g = regStatus(desk, p, task, s.n);
     const left = g.cells - g.filled;
-    if (!g.ok) return left > 0 ? `Fill or correct the ${left} cell${left > 1 ? "s" : ""} left in ${reg.code} first.` : `Fill ${reg.code} first.`;
+    // A hand-in step counts as Submit does: a cell the platform writes once the others are in (T11.2 step 9's
+    // "Found late") is not the learner's to fill, so "3 cells left" beside "2 empty cells" was one count too many.
+    if (!g.ok) return gapsWhy(desk, p, task, s.n) ?? (left > 0 ? `Fill or correct the ${left} cell${left > 1 ? "s" : ""} left in ${reg.code} first.` : `Fill ${reg.code} first.`);
     return submit ?? "Finish the step's work above first.";
   }
   if (submit) return submit;
@@ -157,7 +165,9 @@ function workText(desk: Desk, p: Progress, task: Task, s: Step): string {
   const t = rmfTable(s);
   if (t !== null) {
     const cells = p.grids?.[rmfKey(task.id)] ?? {};
-    return rmfFilled(p, task.id, t) ? `${RMF.file} table ${t + 1}: ${RMF.tables[t].rows.map((r, i) => `${r} ${(cells[`${t},${i}`] ?? "").trim()}`).join(" · ")}` : "";
+    // Only once checked or completed: tables 1 and 3 arrive pre-filled, and under "You submitted" before the learner had
+    // done anything the programme's values read as theirs (tester, 4 Nov, F1.1 step 1).
+    return rmfFilled(p, task.id, t) && (!!cells[rmfAt(t)] || !!p.done[key]) ? `${RMF.file} · ${RMF.tables[t].title}: ${RMF.tables[t].rows.map((r, i) => `${r} ${(cells[`${t},${i}`] ?? "").trim()}`).join(" · ")}` : "";
   }
   if (pick && typeof pick === "object") {
     const rows = task.panel.pl.r ?? [];

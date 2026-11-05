@@ -7,7 +7,8 @@ import { Card, Bar } from "@/components/ui/primitives";
 import { SkeletonCardGrid } from "@/components/ui/skeleton";
 import type { Desk, Task } from "@/lib/desk/model";
 import { stepKey, taskStatus, type Progress, type TaskStatus } from "@/lib/desk/progress";
-import { fmtWhen, recordCounts, recordEmpty, useDeskRecord } from "@/lib/desk-record";
+import { NOT_SCORED, fmtWhen, recordCounts, recordEmpty, useDeskRecord, useTaskScores } from "@/lib/desk-record";
+import type { Scores } from "@/lib/desk/badges";
 
 /**
  * Reports — the learner's GRC 101 record as a register: each opened task with its organisation, the
@@ -25,9 +26,11 @@ const STATUS: Record<TaskStatus, { label: string; cls: string }> = {
 interface Row {
   task: Task; org: string; industry: string; domains: string[]; clauses: string[];
   status: TaskStatus; done: number; total: number; submittedAt: string | null;
+  /** Released at submission; null: submitted and not scored; undefined: not submitted, or scores not read yet. */
+  score: number | null | undefined;
 }
 
-function toRow(desk: Desk, p: Progress, t: Task): Row {
+function toRow(desk: Desk, p: Progress, t: Task, scores: Scores | null): Row {
   const orgs = t.org === "AB" ? [desk.orgs.A, desk.orgs.B] : [desk.orgs[t.org]];
   return {
     task: t,
@@ -39,6 +42,7 @@ function toRow(desk: Desk, p: Progress, t: Task): Row {
     done: t.steps.filter((s) => p.done[stepKey(t.id, s.n)]).length,
     total: t.steps.length,
     submittedAt: p.submitted[t.id] ?? null,
+    score: scores?.[t.id],
   };
 }
 
@@ -94,6 +98,11 @@ function ReportTask({ row, desk, p, defaultOpen }: { row: Row; desk: Desk; p: Pr
           <Bar pct={pct} tone={row.status === "todo" ? "slate" : "indigo"} className="flex-1" />
           <span className="text-[11px] font-medium text-slate-500 tabular-nums shrink-0">{row.done}/{row.total}</span>
         </div>
+        {row.score !== undefined && (
+          <span title={row.score === null ? NOT_SCORED : "Released at submission: the share of this task's keyed items that match the answer key"} className="shrink-0 px-2 py-0.5 rounded-full text-[10.5px] font-medium ring-1 tracking-tight tabular-nums bg-white text-slate-700 ring-slate-200">
+            {row.score === null ? "Not scored" : `Score ${row.score}`}
+          </span>
+        )}
         <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10.5px] font-medium ring-1 tracking-tight ${st.cls}`}>{st.label}</span>
         <Icon name="chevronDown" size={16} className={`text-slate-400 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -158,13 +167,14 @@ function ReportTask({ row, desk, p, defaultOpen }: { row: Row; desk: Desk; p: Pr
 
 export default function ReportsPage() {
   const { state, desk, progress, weeks, retry } = useDeskRecord();
+  const scores = useTaskScores();
   const [q, setQ] = useState("");
   const [domain, setDomain] = useState("All domains");
 
   const open = useMemo(() => new Set(weeks.map((w) => w.n)), [weeks]);
   const allRows = useMemo(
-    () => (desk ? desk.order.map((id) => desk.tasks[id]).filter((t) => open.has(t.week)).map((t) => toRow(desk, progress, t)) : []),
-    [desk, progress, open],
+    () => (desk ? desk.order.map((id) => desk.tasks[id]).filter((t) => open.has(t.week)).map((t) => toRow(desk, progress, t, scores)) : []),
+    [desk, progress, open, scores],
   );
   const domains = useMemo(() => ["All domains", ...Array.from(new Set(allRows.flatMap((r) => r.domains)))], [allRows]);
   const rows = useMemo(() => allRows.filter((r) => {
@@ -175,10 +185,10 @@ export default function ReportsPage() {
   }), [allRows, q, domain]);
 
   const exportCsv = () => {
-    const head = ["Task", "Title", "Week", "Organisation", "Industry", "Domains", "ISO/IEC 27001 clauses cited", "Deliverables", "Status", "Steps done", "Steps", "Submitted at"];
+    const head = ["Task", "Title", "Week", "Organisation", "Industry", "Domains", "ISO/IEC 27001 clauses cited", "Deliverables", "Status", "Steps done", "Steps", "Submitted at", "Score"];
     const esc = (v: unknown) => `"${String(v).replace(/"/g, '""')}"`;
     const lines = [head.map(esc).join(",")];
-    rows.forEach((r) => lines.push([r.task.id, r.task.title, r.task.week, r.org, r.industry, r.domains.join("; "), r.clauses.join("; "), r.task.subs.map((d) => d.code).join("; "), STATUS[r.status].label, r.done, r.total, r.submittedAt ?? ""].map(esc).join(",")));
+    rows.forEach((r) => lines.push([r.task.id, r.task.title, r.task.week, r.org, r.industry, r.domains.join("; "), r.clauses.join("; "), r.task.subs.map((d) => d.code).join("; "), STATUS[r.status].label, r.done, r.total, r.submittedAt ?? "", r.score ?? (r.score === null ? "Not scored" : "")].map(esc).join(",")));
     const url = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" }));
     const a = document.createElement("a");
     a.href = url; a.download = "grcmentor-report-grc101.csv";

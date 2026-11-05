@@ -9,7 +9,7 @@ import { isDecideCell, isFillCell, type Desk, type Step, type Task } from "@/lib
 import { stepKey, type Progress, type RowsFeedback } from "@/lib/desk/progress";
 import { api } from "@/lib/api";
 import { gridKey, gridStatus, submitWhy } from "@/lib/desk/work";
-import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
+import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
 import { useDoc, useDocs } from "./doc-text";
 import { RMF, dmyToIso, fileExts, fileNameOk, isDateRow, isoToDmy, receiptHash, rmfAt, rmfExpected, rmfGiven, rmfKey, rmfMiss, same, submitCodes } from "@/lib/desk/forms";
 
@@ -152,7 +152,7 @@ export function LogWork({ task, s, readOnly }: { task: Task; s: Step; readOnly: 
 }
 
 /**
- * One table of READ-ME-FIRST, as the file has it: a label column and a column to fill. Each row
+ * One table of Onboarding record, as the file has it: a label column and a column to fill. Each row
  * is checked against the screen it is copied from, since KR1 asks for an exact copy.
  */
 export function RmfForm({ task, t, readOnly }: { task: Task; t: number; readOnly: boolean }) {
@@ -175,7 +175,7 @@ export function RmfForm({ task, t, readOnly }: { task: Task; t: number; readOnly
   return (
     <div className="mt-3 grid gap-1.5">
       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">
-        {RMF.file} · table {t + 1} “{table.title}”
+        {RMF.file} · {table.title}
       </p>
       <p className="text-[12.5px] text-[#5B6474]">
         {given && !readOnly ? (
@@ -250,11 +250,20 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
   // A message placed at the hand-in is answered first; a register handed in here (F1.2 FAM-MAP) goes in with no
   // empty cell in the columns it hands in; each file is named. The line beside Submit names the next of these.
   const why = submitWhy(desk, progress, task, s);
+  // A Tech Lab whose findings join this hand-in, not marked complete yet: said beside Submit, where the learner looks
+  // last (tester, 4 Nov: T10.1's DataSentry answered in full, Mark complete missed, the findings never joined ROPA).
+  const lab = LABS.find((l) => l.task === task.id && l.after === stepKey(task.id, s.n - 1));
+  const labLeft = !!lab && !progress.labs?.[lab.id]?.done;
   const submit = async () => {
     const list = files.map((c) => name(c).trim());
     const hash = await receiptHash(desk, progress, task, list);
-    update((p) => ({ ...p, logs: { ...(p.logs ?? {}), [key]: new Date().toISOString() }, answers: { ...p.answers, [key]: (list.length ? list : codes).join(", "), [`${key}#hash`]: hash } }));
+    // Each file its own fingerprint (tester, 4 Nov: a two-file receipt showed one hash for both). `#hash` stays the
+    // hand-in's as a whole, which the step's one-line summary quotes.
+    const each = list.length > 1 ? await Promise.all(list.map((f) => receiptHash(desk, progress, task, [f]))) : [];
+    update((p) => ({ ...p, logs: { ...(p.logs ?? {}), [key]: new Date().toISOString() }, answers: { ...p.answers, [key]: (list.length ? list : codes).join(", "), [`${key}#hash`]: hash, ...Object.fromEntries(each.map((h, i) => [`${key}#hash#${files[i]}`, h])) } }));
   };
+  // A receipt from before per-file hashes has the one hash; it is shown once, as it was.
+  const perFile = files.length > 1 && files.every((c) => progress.answers[`${key}#hash#${c}`]);
   return (
     <div className="mt-3 grid gap-3">
       {!readOnly && <HandInJobs task={task} s={s} />}
@@ -308,8 +317,19 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
       {at ? (
         <dl data-guide="receipt" className="grid gap-1 rounded border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2.5 text-[12.5px] text-[#14532D]">
           <dt className="text-[11px] font-semibold uppercase tracking-[0.08em]">Receipt</dt>
-          <dd>{progress.answers[key]}</dd>
-          <dd className="break-all font-mono text-[11.5px]">SHA-256 {progress.answers[`${key}#hash`]}</dd>
+          {perFile ? (
+            files.map((c, i) => (
+              <dd key={c} className="grid gap-0.5">
+                <span>{(progress.answers[key] ?? "").split(", ")[i] || c}</span>
+                <span className="break-all font-mono text-[11.5px]">SHA-256 {progress.answers[`${key}#hash#${c}`]}</span>
+              </dd>
+            ))
+          ) : (
+            <>
+              <dd>{progress.answers[key]}</dd>
+              <dd className="break-all font-mono text-[11.5px]">SHA-256 {progress.answers[`${key}#hash`]}</dd>
+            </>
+          )}
           <dd className="font-mono text-[11.5px]">{at.replace("T", " ").slice(0, 19)} UTC</dd>
         </dl>
       ) : null}
@@ -319,6 +339,15 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
             {at ? "Submit again" : "Submit"}
           </button>
           {why && <span data-guide="submit-why" className="text-[12.5px] text-[#5B6474]">{why}</span>}
+          {!at && labLeft && (
+            <span data-lab-left role="note" className="flex basis-full items-start gap-1.5 rounded border border-[#FDE68A] bg-[#FFFBEB] px-2.5 py-1.5 text-[12.5px] leading-snug text-[#78350F]">
+              <Icon name="info" size={14} className="mt-px shrink-0" />
+              <span>
+                The Tech Lab <strong className="font-semibold">{lab!.tool.split("|")[1]}</strong> is not marked complete. Its findings join your file only if you press{" "}
+                <strong className="font-semibold">Mark complete</strong> at the end of the lab before you submit.
+              </span>
+            </span>
+          )}
         </div>
       )}
     </div>
@@ -385,7 +414,7 @@ const listed = (v: string) =>
   v ? v.split(", ").map((x, i, a) => <Fragment key={i}><span className="whitespace-nowrap">{x}</span>{i < a.length - 1 ? ", " : ""}</Fragment>) : "";
 
 /** A reason with every hyphenated ID ("E-035", "temp-user-99") kept on one line: a line never breaks inside one. */
-const keepIds = (t: string) => t.split(/([A-Za-z][A-Za-z0-9]*-[A-Za-z0-9-]*[A-Za-z0-9])/).map((x, i) => (i % 2 ? <span key={i} className="whitespace-nowrap">{x}</span> : x));
+const keepIds = (t: string) => t.split(/(\b[A-Za-z][A-Za-z0-9]*-[A-Za-z0-9-]*[A-Za-z0-9]\b)/).map((x, i) => (i % 2 ? <span key={i} className="whitespace-nowrap">{x}</span> : x));
 
 /** A phone-width screen (≤ 600 px), where a checked row's reason moves under the row. */
 const PHONE = "(width < 600px)";
@@ -730,6 +759,10 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                     <td key={ci} className={`${td} px-3 py-2 ${(working || checking) && ci === stick ? "sticky left-0 z-[1] bg-white shadow-[1px_0_0_#DDE1E8] max-[600px]:max-w-[132px] max-[600px]:text-[12px]" : ""} ${mine && v.length <= 24 && !c.wrap ? "whitespace-nowrap" : ""} ${empty.has(cell) ? "bg-[#FEF3C7] shadow-[inset_0_0_0_2px_#F59E0B]" : ""} ${c.auto ? "sticky left-0 z-[1] whitespace-nowrap bg-white font-mono text-[12px] font-semibold text-[#111827] shadow-[1px_0_0_#DDE1E8]" : ci === 1 && mine ? "font-medium text-[#111827]" : mine ? "text-[#3F4757]" : ""}`}>
                       {c.list && v ? listed(v) : v || (mine ? <span className="text-[#C9CED8]">—</span> : "")}
                       {c.auto && by > 0 && <span className="block text-[10.5px] font-normal text-[#8A91A3]">step {by}</span>}
+                      {mine && (() => {
+                        const answer = checkedAnswer(reg, progress, task.id, ri, ci);
+                        return answer ? <span data-checked-answer className="mt-0.5 block whitespace-normal text-[12px] font-normal text-[#78350F]">Checked · answer: <strong className="font-semibold">{answer}</strong></span> : null;
+                      })()}
 
                     </td>
                   );
@@ -936,7 +969,7 @@ export function RegisterProgress({ task, s }: { task: Task; s: Step }) {
  * A fixed-section document template (lib/desk/registers BRIEFS) drawn as a page: the worked section
  * as given, the others as the mentee fills them, with the step's own section open and each section's
  * "Source:" line. The label sits in the footer, where the pack says it is printed. A copied value
- * that differs from its source (open beside it) is flagged under it, as READ-ME-FIRST flags a value
+ * that differs from its source (open beside it) is flagged under it, as Onboarding record flags a value
  * that differs from its screen. On a finding step (STUDY) the worked section's lines are the answers.
  * On the hand-in step the page is drawn at A4 and says whether it fits on one.
  */
@@ -1190,7 +1223,8 @@ export function BriefProgress({ task, s }: { task: Task; s: Step }) {
       <p className="mt-3 flex items-start gap-2 text-[13.5px] leading-relaxed text-[#111827]">
         <Icon name="edit" size={15} className="mt-0.5 shrink-0 text-[#4338CA]" />
         <span>
-          Check section <strong>{sec.h}</strong> on the page against <strong>{sec.src?.(desk)}</strong>: open it from the toolbar at the bottom of the screen. Correct any line that differs, fill the Source line, then click Check my answers under the section.
+          {/* The step's numbered instruction above says how; this only says where, against what. */}
+          Work in section <strong>{sec.h}</strong> on the page, against <strong>{sec.src?.(desk)}</strong>.
         </span>
       </p>
     );
@@ -1222,7 +1256,7 @@ export function BriefProgress({ task, s }: { task: Task; s: Step }) {
 }
 
 /**
- * The READ-ME-FIRST file, opened at the table this step fills — each table is its own step (1, 4,
+ * The Onboarding record file, opened at the table this step fills — each table is its own step (1, 4,
  * 5), so the others are not shown here. It is what the step's modal shows; the screen the values
  * come from opens in its own window beside it, from the toolbar.
  */
@@ -1245,7 +1279,7 @@ export function RmfFile({ task, t, readOnly, handIn }: {
           <p className="text-[12.5px] text-[#5B6474]">
             {handIn
               ? "The file you hand in: all three tables, as you checked and filled them in steps 1, 4 and 5."
-              : `Table ${t + 1} of ${RMF.tables.length}. The other tables are filled in their own steps.`}
+              : `The other tables, ${RMF.tables.filter((_, i) => i !== t).map((x) => x.title).join(" and ")}, are filled in their own steps.`}
           </p>
         </header>
         {handIn ? (
@@ -1316,23 +1350,10 @@ export function RmfProgress({ task, t }: { task: Task; t: number }) {
   const want = rmfExpected(desk, start, t);
   const filled = table.rows.filter((_, i) => (cells[`${t},${i}`] ?? "").trim() && same(cells[`${t},${i}`], want[i])).length;
   // A pre-filled table is checked under the table (RmfCheck); no count here, it would say how many slips are left.
-  if (rmfGiven(desk, start, t))
-    return (
-      <p className="mt-3 flex items-start gap-2 text-[13.5px] leading-relaxed text-[#111827]">
-        <Icon name="edit" size={15} className="mt-0.5 shrink-0 text-[#4338CA]" />
-        <span>
-          Check table {t + 1} <strong>“{table.title}”</strong> in READ-ME-FIRST, on the left, against <strong>{table.from}</strong>: open it from the toolbar at the bottom of the screen and it appears beside the file. Correct any value that differs, then click Check my answers under the table.
-        </span>
-      </p>
-    );
+  // No note: the window's top bar names the screen the values are on, and the instruction says what to do.
+  if (rmfGiven(desk, start, t)) return null;
   return (
     <div className="mt-3 grid gap-2">
-      <p className="flex items-start gap-2 text-[13.5px] leading-relaxed text-[#111827]">
-        <Icon name="edit" size={15} className="mt-0.5 shrink-0 text-[#4338CA]" />
-        <span>
-          Fill table {t + 1} <strong>“{table.title}”</strong> in READ-ME-FIRST, on the left. The values are on <strong>{table.from}</strong>: open it from the toolbar at the bottom of the screen and it appears beside the file.
-        </span>
-      </p>
       <dl className="border border-[#DDE1E8] px-3 py-2">
         <dt className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">Values that match the screen</dt>
         <dd className="font-mono text-[15px] font-semibold tabular-nums text-[#111827]">{filled} / {table.rows.length}</dd>
@@ -2013,6 +2034,9 @@ function RowCheck({ task, s, chk }: { task: Task; s: Step; chk: RowCheckSpec }) 
       <div data-guide="row-result" className="rounded border border-[#DDE1E8] bg-[#F7F8FA] px-3 py-2.5 text-[13px] text-[#111827]">
         <p className="font-semibold">{right} of {scored} right{scored < all.length ? ` · ${all.length - scored} not scored` : ""}</p>
         <p className="mt-0.5 text-[12.5px] text-[#5B6474]">Each row in the table now shows the answer and why. Rows are locked.</p>
+        {/* Checked here from the learner's own rows by the step's rule, so the server holds no key for it and
+            task_scores leaves it out (backend desk_record.py): say so, or "8 of 10" beside a score of 100 looks wrong. */}
+        {chk.rule && <p className="mt-1 text-[12px] text-[#5B6474]">A practice check: it shows how you did, but it is not part of the task score.</p>}
         {scored < all.length && fb.note && <p className="mt-1 text-[12px] text-[#78350F]">{fb.note}</p>}
       </div>
     );

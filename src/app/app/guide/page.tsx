@@ -310,10 +310,10 @@ export default function GuidePage() {
             />
           </Sec>
 
-          <Sec id="example" title="Your first task, step by step" icon="play" lead="Week 1 opens with F1.1, “Your first day in the Group GRC Office”. Here is what it asks, so you know what the work feels like before you start.">
+          <Sec id="example" title="Your first task, step by step" icon="play" lead="Week 1 opens with F1.1, “Onboarding to the Group GRC Office”. Here is what it asks, so you know what the work feels like before you start.">
             <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
-              <Step n={1} title="Fill table 1 of READ-ME-FIRST">
-                <p>Open READ-ME-FIRST and copy six values from Home › My Organisation and your task list: each organisation&apos;s name and home office, the owner of task F1.2, and your start date. A value that does not match the screen is flagged under its row.</p>
+              <Step n={1} title="Check the Assignment table of Onboarding record">
+                <p>The programme office has filled in six values: each organisation&apos;s name and home office, the owner of task F1.2, and your start date. Check each against Home › My Organisation, correct any that differ, then press Check my answers.</p>
               </Step>
               <Step n={2} title="Two decisions about conduct">
                 <p>A colleague asks for your login; you do not understand a rule. Pick what you would do and press Check my answer. The feedback tells you the best option and why for every option.</p>
@@ -321,8 +321,8 @@ export default function GuidePage() {
               <Step n={3} title="The data rules and your undertaking">
                 <p>Tick and save the four data and AI rules, then open and sign the undertaking with your full name, your mentee ID and a signature. Nothing touches data until you have signed.</p>
               </Step>
-              <Step n={4} title="Your folders and your week-1 dates">
-                <p>After one more decision about a dataset, fill table 2 with your four folder paths, then table 3 with the due dates of F1.2, F1.3 and the week-1 knowledge check, picked from Home › My plan.</p>
+              <Step n={4} title="Folders and Week 1 dates">
+                <p>After one more decision about a dataset, fill the Folders table with your four folder paths, then check the Week 1 dates table, the due dates of F1.2, F1.3 and the week 1 knowledge check, against Home › My plan.</p>
               </Step>
               <Step n={5} title="Name the file and hand it in">
                 <p>Type the file name from its four parts, then Submit. You get a receipt with the time; the task is sealed and F1.2 is next.</p>

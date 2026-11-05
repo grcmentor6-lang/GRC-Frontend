@@ -71,6 +71,9 @@ export const NO_BADGE: [string, string][] = [
 /** The badge a task earns towards (none for F1.1). */
 export const badgeOfTask = (taskId: string) => BADGES.find((b) => b.earn.includes(taskId)) ?? null;
 
+/** Released task scores, taskId → 0–100, or null for a submitted task the server released no score for. */
+export type Scores = Record<string, number | null>;
+
 export type BadgeState = "distinction" | "earned" | "in-progress" | "not-started";
 export interface BadgeStanding {
   state: BadgeState;
@@ -86,7 +89,7 @@ export interface BadgeStanding {
  * submission, each pick re-checked against its key on the server). Without scores a badge is at most
  * "in progress".
  */
-export function standing(b: MethodBadge, p: Progress, scores: Record<string, number> = {}): BadgeStanding {
+export function standing(b: MethodBadge, p: Progress, scores: Scores = {}): BadgeStanding {
   const total = b.earn.length;
   const submitted = b.earn.filter((t) => p.submitted[t]).length;
   const got = b.earn.map((t) => scores[t]).filter((s): s is number => typeof s === "number");
@@ -97,7 +100,7 @@ export function standing(b: MethodBadge, p: Progress, scores: Record<string, num
   return { state: distinction ? "distinction" : earned ? "earned" : begun ? "in-progress" : "not-started", submitted, scored: got.length, total, average };
 }
 
-export function capstoneStanding(p: Progress, scores: Record<string, number> = {}): BadgeStanding {
+export function capstoneStanding(p: Progress, scores: Scores = {}): BadgeStanding {
   const all = BADGES.map((b) => standing(b, p, scores));
   const earned = all.filter((s) => s.state === "earned" || s.state === "distinction").length;
   return {
@@ -107,6 +110,21 @@ export function capstoneStanding(p: Progress, scores: Record<string, number> = {
     total: BADGES.length,
     average: null,
   };
+}
+
+export interface MethodBadgeSummary {
+  rows: { b: MethodBadge; g: BadgeStanding }[];
+  earned: number;
+  total: number;
+  capstone: BadgeStanding;
+}
+
+export const isEarned = (g: BadgeStanding) => g.state === "earned" || g.state === "distinction";
+
+/** The one badge count: the Badges page, the Dashboard and the CV all read it, from progress and the released scores. */
+export function summarise(p: Progress, scores: Scores = {}): MethodBadgeSummary {
+  const rows = BADGES.map((b) => ({ b, g: standing(b, p, scores) }));
+  return { rows, earned: rows.filter((r) => isEarned(r.g)).length, total: BADGES.length, capstone: capstoneStanding(p, scores) };
 }
 
 export const criteriaText = (b: MethodBadge) =>

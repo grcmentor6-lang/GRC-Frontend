@@ -2,7 +2,7 @@ import type { Desk, Task } from "./model";
 import { bullets, docLines, docNow, docTable } from "./docs";
 import type { Progress } from "./progress";
 import { labFeed } from "./labs";
-import { localizable, toLearner } from "./names";
+import { CANONICAL_START, calIso, calMonths, deskIdentityNow, localizable, onIdentityChange, toLearner, week12 } from "./names";
 import UAR from "./uar-t61.json";
 import LVR from "./lvr-t62.json";
 import RRU from "./rru-t71.json";
@@ -836,6 +836,16 @@ const RAM_AUTH = [...R36_OPTS, "Org CEO", "Group GRC Steering Committee"];
 /** L15's owners to choose from: each ISMS process's Accountable role (Ref-ISMS processes) and Ref-Milestones' owners. */
 const ROLES_T72 = (d: Desk) => uniq([...isms(d).filter((r) => !r[0].startsWith("Climate")).map((r) => r[1].split(" (")[0].split(";")[0].trim()), ...(TOP.plan as string[][]).map((m) => m[4]), "Control owners"]);
 const MILES = (TOP.plan as string[][]).map((m) => `${m[0]} ${m[1]}`);
+/** The learner's start (names.ts): T7.2 dates its objectives and plan from the day their week 12 opens, not the content's 21 Dec. */
+const calStart = () => deskIdentityNow().start || CANONICAL_START;
+/** LI-PLAN's Plan sheet, its dates worked out for the learner: rule L15, start = week 12 + 1 month, one month each. */
+const T72_PLAN = (TOP.plan as string[][]).map((m) => [m[0], m[1], m[2], m[3], ""]);
+const datePlan = () => {
+  const w12 = week12(calStart());
+  T72_PLAN.forEach((r, i) => { r[2] = calIso(calMonths(w12, i + 1)); r[3] = calIso(calMonths(w12, i + 2)); });
+};
+datePlan();
+onIdentityChange(datePlan);
 /** Deliverable codes typed as a list ("LI-FAM; act-upd"): each one the clause's row lists, in its order, joined "; ". */
 const codesIn = (v: string, dels: string) => {
   const allowed = dels.split(",").map((x) => x.trim());
@@ -1851,7 +1861,7 @@ export const REGISTERS: Record<string, Register> = {
       1: () => "Start with BKB-POL-000 Section 8, then read the requirement: a key word in Policies › Map to Framework points to a narrower policy only where that policy's title (Section 3) is about what the requirement asks.",
       2: () => "Each requirement offers three candidate controls. Frameworks › Crosswalk View gives the controls of the policy you chose in step 1; read the requirement to choose among them.",
       3: () => "Each policy's Section 6 lists its procedures by name. Open the row's policy in Policies › Policy Library. A number that is not one of its procedures is flagged; which procedure fits is your call, and an assessor reviews it at checkpoint HC2.",
-      5: () => "The Gap frame is in Learn & Grow › Sentence frames. Each owner is checked against BKB-POL-000 Section 3 as you type. What you name as missing is reviewed by an assessor at checkpoint HC2.",
+      5: () => "The Gap frame is in Learn › Sentence frames. Each owner is checked against BKB-POL-000 Section 3 as you type. What you name as missing is reviewed by an assessor at checkpoint HC2.",
       4: (d) => `Rule R11: ${d.rules.R11?.[1] ?? ""}`,
       6: () => "Evidence ref says where a reader can check the row: its BKB policy and the section you read. A policy other than the row's, or a section it does not have, is flagged; the section you cite is reviewed at checkpoint HC2.",
     },
@@ -2039,9 +2049,9 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 6, cols: [3, 4, 5, 6, 7], ident: [0, 1] },
     note: {
       2: () => "Search BKB-POL-006 and BKB-ADD-16 for each requirement's action words, and choose the clause that holds them, or none. A bullet of Section 3.1 is counted from the top: the first is bullet 1. Q7 is the Compliance Manager's, from the Inbox.",
-      3: () => "Rule R13, in Learn & Grow › Rule tables, sets the three ratings. Your clause from step 2 is beside each row.",
-      4: () => "Rule R13, in Learn & Grow › Rule tables, says where a fix belongs; BKB-POL-000 Section 5 says what an addendum may do. A covered row has no gap: it shows —.",
-      5: () => "Write a redline for each row you rated Partly or Not covered: “<Role> shall <action> within <time limit>.” Learn & Grow › Sentence frames holds the frame. The role is one BKB-POL-006 Section 5 or Section 6 names. A redline that would make a Group value weaker is “Exception needed” (BKB-POL-000 Section 6). The frame and the role are checked as you type; what each redline says is reviewed at checkpoint HC2.",
+      3: () => "Rule R13, in Learn › Rule tables, sets the three ratings. Your clause from step 2 is beside each row.",
+      4: () => "Rule R13, in Learn › Rule tables, says where a fix belongs; BKB-POL-000 Section 5 says what an addendum may do. A covered row has no gap: it shows —.",
+      5: () => "Write a redline for each row you rated Partly or Not covered: “<Role> shall <action> within <time limit>.” Learn › Sentence frames holds the frame. The role is one BKB-POL-006 Section 5 or Section 6 names. A redline that would make a Group value weaker is “Exception needed” (BKB-POL-000 Section 6). The frame and the role are checked as you type; what each redline says is reviewed at checkpoint HC2.",
     },
     reads: { 3: ["learn|Rule tables"], 4: ["learn|Rule tables"], 5: ["learn|Rule tables", "learn|Sentence frames"] },
     extra: {
@@ -2579,7 +2589,7 @@ export const REGISTERS: Record<string, Register> = {
     note: {
       7: (_d, p) => {
         const ex = UAR_LISTED.filter(([id]) => uarExc(p, id) === "Exception").map(([id]) => `${id} ${uarType(p, id)}`);
-        return `Rule R19 is on Control Testing › Record Result, each type's severity on Ref-UAR codes (Learn › Reference pages), and the memo's sentence on Learn & Grow › Sentence frames. Sheet 3's exceptions, as steps 4 and 5 checked them: ${ex.join("; ") || "none yet"}. The population is the ${UAR_X.length} accounts of the review. Sheet 2 walked ${UAR_SAMPLE.length} of them through all six attributes; the analytics ran on all ${UAR_X.length}, and Sheet 3 comes from them.`;
+        return `Rule R19 is on Control Testing › Record Result, each type's severity on Ref-UAR codes (Learn › Reference pages), and the memo's sentence on Learn › Sentence frames. Sheet 3's exceptions, as steps 4 and 5 checked them: ${ex.join("; ") || "none yet"}. The population is the ${UAR_X.length} accounts of the review. Sheet 2 walked ${UAR_SAMPLE.length} of them through all six attributes; the analytics ran on all ${UAR_X.length}, and Sheet 3 comes from them.`;
       },
     },
     reads: { 7: ["testing|Record Result", "learn|Sentence frames", "learn|Reference pages"] },
@@ -3070,7 +3080,7 @@ export const REGISTERS: Record<string, Register> = {
     note: {
       1: (d) => `Rule R23 (Learn › Rule tables): ${(d.rules.R23?.[1] ?? "").split(" Trend:")[0]} The updated register, 28 risks, is on Risk Register › Score Risk.`,
       2: () => `Rule R23: score went up ↑, down ↓, no change →. Compare each risk's residual score now with its score at the last board report, ${TOP.board}; Risk Register › Heat Map with KRIs lists what moved since then. A risk added since that report had no score then: its score went up.`,
-      3: (d) => `Rule R23 (Learn › Rule tables): ${(d.rules.R23?.[1] ?? "").match(/"So what" frame: "[^"]+"/)?.[0] ?? ""} Each risk's statement is under its row. Learn & Grow › Business Risk Translator takes one statement apart, on a risk outside your Top-5.`,
+      3: (d) => `Rule R23 (Learn › Rule tables): ${(d.rules.R23?.[1] ?? "").match(/"So what" frame: "[^"]+"/)?.[0] ?? ""} Each risk's statement is under its row. Learn › Business Risk Translator takes one statement apart, on a risk outside your Top-5.`,
     },
     reads: { 1: ["risk|Score Risk", "learn|Rule tables"], 3: ["learn|Rule tables", "learn|Business Risk Translator"], 5: ["learn|Rule tables"] },
     handIn: { step: 5, cols: [1, 6, 10], ident: [0, 2] },
@@ -3152,7 +3162,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 13: [1] },
     checkRows: { 13: { label: 0, col: 4 } },
-    note: { 13: (d) => `Rule L14 (Learn › Rule tables): ${d.rules.L14?.[1] ?? ""} Ref-Objectives dates all three "Programme week 12 + 6 months": count from the day week 12 opens, on Home › Calendar (the programme runs from October 2026 to January 2027).` },
+    note: { 13: (d) => `Rule L14 (Learn › Rule tables): ${d.rules.L14?.[1] ?? ""} Ref-Objectives dates all three "Programme week 12 + 6 months": count from the day week 12 opens, on Home › Calendar (your week 1 opened on your start date, so week 12 opens 77 days after it).` },
     reads: { 13: ["learn|Rule tables", "home|Calendar"] },
     handIn: { step: 16, cols: [4], ident: [0] },
   },
@@ -3161,13 +3171,13 @@ export const REGISTERS: Record<string, Register> = {
     title: "LI-PLAN · Plan sheet (template T-LI-PLAN)",
     on: [14],
     cols: [{ h: "ID" }, { h: "Milestone", wrap: true, w: 220 }, { h: "Start" }, { h: "End" }, { h: "Owner (L15)", wrap: true, w: 200, opts: (d) => ROLES_T72(d) }],
-    rows: (TOP.plan as string[][]).map((m) => [m[0], m[1], m[2], m[3], ""]),
+    rows: T72_PLAN,
     mine: () => true,
     steps: { 14: [4] },
     ident: [0],
     view: { 14: [1, 2, 3] },
     checkRows: { 14: { label: 0, col: 4 } },
-    note: { 14: (d) => `Rule L15 (Learn › Rule tables): ${d.rules.L15?.[1] ?? ""} Ref-Milestones (Learn › Reference pages) names the owner itself where no ISMS process covers the milestone. Elsewhere it names the process: read that process's Accountable role in Ref-ISMS processes, column Owner (Accountable), the role it names first. Start and end are worked out for you from week 12 (${TOP.week12}, Home › Calendar).` },
+    note: { 14: (d) => `Rule L15 (Learn › Rule tables): ${d.rules.L15?.[1] ?? ""} Ref-Milestones (Learn › Reference pages) names the owner itself where no ISMS process covers the milestone. Elsewhere it names the process: read that process's Accountable role in Ref-ISMS processes, column Owner (Accountable), the role it names first. Start and end are worked out for you from week 12 (${calIso(week12(calStart()))}, Home › Calendar).` },
     reads: { 14: ["learn|Rule tables", "learn|Reference pages"] },
     handIn: { step: 16, cols: [4], ident: [0] },
   },
@@ -3786,7 +3796,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 5: [1] },
     ident: [0],
     checkRows: { 5: { label: 0, col: 1 } },
-    note: { 5: () => "For each trigger, is it involved in the processing: Yes or No? The processing description is in Regulatory Watch › RoPA & Data Flows; BKB-POL-017 Section 6.2 (Policies › Policy Library) says what each trigger means. The last row records whether a DPIA is required: rule R29 in Learn › Rule tables says how that follows." },
+    note: { 5: () => "For each trigger, is it involved in the processing: Yes or No? The processing description is the screen of Regulatory Watch › RoPA & Data Flows, the tool this table is open in: click Regulatory Watch › RoPA & Data Flows on the toolbar again and the description opens in a window beside this table. BKB-POL-017 Section 6.2 (Policies › Policy Library) says what each trigger means. The last row records whether a DPIA is required: rule R29 in Learn › Rule tables says how that follows." },
     handIn: { step: 6, cols: [1], ident: [0] },
   },
   "T10.1 DFM": {
@@ -4295,13 +4305,13 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 14, cols: [1, 2, 3], ident: [0] },
   },
 
-  // T12.1 (desk-step-builder, 30 Oct 2026). All in Risk Register › Mitigation Tracker. T-ACT's read-me (1, STUDY); the closure
+  // T12.1 (desk-step-builder, 30 Oct 2026). All in Risk Register › Mitigation Tracker. T-ACT's column guide (1, STUDY); the closure
   // tests of each action reported Closed (2, R33 walked in order); the code of each reopened one (3); the open actions: escalation
   // (4), days past due (5), what each owner must send (6); ACT-MRI's counts (7, STUDY); ACT-UPD, the updated tracker, with the
   // repeat issues (9, part 2 of D5), handed in with ACT-MRI at 10. LI-MR (LI-17): the 9.3.2 inputs (12), the objectives (13),
   // Stage 1 readiness (14), the audit programme (written from D6 and the tracker), handed in at 15.
   "T12.1": {
-    code: "T-ACT Read me",
+    code: "T-ACT Column guide",
     title: "ACT-UPD · How the tracker reads (template T-ACT)",
     on: [1],
     // Narrow least widths: on a phone both columns fit the screen (the third question clicks the second).
@@ -4375,7 +4385,7 @@ export const REGISTERS: Record<string, Register> = {
     note: {
       4: (_d, p) => (p.rowChecks?.["T12.1-3"] ? "Every action open after your tests: those their owners report Open, and those your tests reopened. Rule R33: an open action more than 14 days past its due date at the test date, 23 December 2026, and not escalated yet, goes to the owner's manager (K5)." : "This step opens once steps 2 and 3 are checked."),
       5: (_d, p) => (p.rowChecks?.["T12.1-3"] ? `Type the days from each open action's due date to the test date, 23 December 2026: 0 where the due date has not passed. The next check date is the test date + 14 days (rule R33), ${actNext}, written for you.` : "This step opens once steps 2 and 3 are checked."),
-      6: (_d, p) => (p.rowChecks?.["T12.1-3"] ? "Each action your tests reopened goes back to its owner. Choose what the owner must send: what the test it failed needs. For a K4, read where its re-test stands, in the Status cell: what closes it depends on that. The request is written for you in the Evidence request frame (Learn & Grow › Sentence frames), due by the next check date." : "This step opens once steps 2 and 3 are checked."),
+      6: (_d, p) => (p.rowChecks?.["T12.1-3"] ? "Each action your tests reopened goes back to its owner. Choose what the owner must send: what the test it failed needs. For a K4, read where its re-test stands, in the Status cell: what closes it depends on that. The request is written for you in the Evidence request frame (Learn › Sentence frames), due by the next check date." : "This step opens once steps 2 and 3 are checked."),
     },
     reads: { 4: ["learn|Rule tables"], 6: ["learn|Rule tables", "learn|Sentence frames"] },
   },
@@ -4533,13 +4543,13 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 15, cols: [3, 4], ident: [0] },
   },
 
-  // T12.2 (desk-step-builder, 31 Oct 2026). All in Evidence › Audit Requests (PBC). The index's read-me (1, STUDY); D1 (2, no part
+  // T12.2 (desk-step-builder, 31 Oct 2026). All in Evidence › Audit Requests (PBC). The index's column guide (1, STUDY); D1 (2, no part
   // 2); each request's file by R34 (3); the SHA-256 of each file sent (4); the follow-up requests answered from the mentee's own
   // hand-ins (5, Policies › Version History); D3, then the owner of R-3's action (6, Charter RACI); NC-1's response and
   // corrective action (7, AUD-NCR); AUD-LOG and AUD-NCR handed in (8); D5 (9); NC-1's evidence row (10, L25, STUDY); D6 (11);
   // LI-NCR-R, written from 7, 9, 10 and 11, handed in (12).
   "T12.2": {
-    code: "EVIDENCE-INDEX Read me",
+    code: "EVIDENCE-INDEX Column guide",
     title: "EVIDENCE-INDEX · How the repository's index reads",
     on: [1],
     cols: [{ h: "Column", wrap: true, w: 100 }, { h: "What it records", wrap: true, w: 220 }],
@@ -4977,6 +4987,24 @@ export function cellValue(reg: Register, p: Progress, taskId: string, ri: number
 export function derivedAt(reg: Register, p: Progress, taskId: string, ri: number, ci: number): string | null {
   const d = reg.derived?.[ci];
   return d && !reg.rows[ri]?.[ci] ? d.value((c) => cellValue(reg, p, taskId, ri, c), p) : null;
+}
+
+/**
+ * The key's value for a cell an earlier step checked and found wrong, where it differs from what the cell holds; else
+ * null. The hand-in shows it beside the learner's pick, as a checked row does in its own step: the pick stays (it is
+ * what was scored), and the file no longer reads as if the wrong value stood unchallenged (tester, 4 Nov: T10.1's DFM
+ * still said Collect for F5 after step 3 gave Transfer). A `with` column takes its half of "<col> · <with>".
+ */
+export function checkedAnswer(reg: Register, p: Progress, taskId: string, ri: number, ci: number): string | null {
+  for (const [n, rc] of Object.entries(reg.checkRows ?? {})) {
+    const part = ci === rc.col ? 0 : ci === rc.with ? 1 : -1;
+    if (part < 0) continue;
+    const fb = p.rowChecks?.[`${taskId}-${n}`]?.rows[cellValue(reg, p, taskId, ri, rc.label)];
+    if (fb?.correct !== false || !fb.best) continue;
+    const want = (rc.with === undefined ? fb.best : fb.best.split(" · ")[part])?.trim();
+    if (want && !same(want, cellValue(reg, p, taskId, ri, ci))) return want;
+  }
+  return null;
 }
 
 /** How far a step's columns are filled on the rows it answers for; done when every one is. */
@@ -5760,7 +5788,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
     ],
   },
-  // T12.1 step 1: "Open ACT-TRACKER" made into reading T-ACT's read-me.
+  // T12.1 step 1: "Open ACT-TRACKER" made into reading T-ACT's column guide.
   "T12.1": {
     1: [
       {
@@ -5789,7 +5817,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
     ],
   },
-  // T12.2 step 1: "Open AUD-REQUESTS and EVIDENCE-INDEX" made into reading the index's read-me; step 10: "Apply rule L25 to the
+  // T12.2 step 1: "Open AUD-REQUESTS and EVIDENCE-INDEX" made into reading the index's column guide; step 10: "Apply rule L25 to the
   // evidence file" made into reading NC-1's evidence row in the index.
   "T12.2": {
     1: [

@@ -23,7 +23,7 @@ export interface DeskCtx {
    * Opens a platform tool. The step in hand, not yet done, is worked in the tool modal (as is any
    * step opened with mode "work", to change it); every other opening is a floating read-only window.
    */
-  openTool: (key: string, mode?: "work") => void;
+  openTool: (key: string, mode?: "work" | "view") => void;
   /** Closes a floating window (the Inbox, once its message is answered). */
   closeTool: (key: string) => void;
 }

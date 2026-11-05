@@ -2,27 +2,20 @@
 
 import { useMemo } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
-import { useProgress, type Progress } from "@/lib/desk/progress";
-import { BADGES, capstoneStanding, standing, type BadgeStanding, type MethodBadge } from "@/lib/desk/badges";
+import { useProgress } from "@/lib/desk/progress";
+import { useTaskScores } from "@/lib/desk-record";
+import { summarise, type MethodBadgeSummary } from "@/lib/desk/badges";
 
-export interface MethodBadgeSummary {
-  rows: { b: MethodBadge; g: BadgeStanding }[];
-  earned: number;
-  total: number;
-  capstone: BadgeStanding;
-}
+export { summarise, type MethodBadgeSummary };
 
-const isEarned = (g: BadgeStanding) => g.state === "earned" || g.state === "distinction";
-
-/** The method badges from a given progress (no scores released yet: the desk does not score tasks). */
-export function summarise(p: Progress): MethodBadgeSummary {
-  const rows = BADGES.map((b) => ({ b, g: standing(b, p) }));
-  return { rows, earned: rows.filter((r) => isEarned(r.g)).length, total: BADGES.length, capstone: capstoneStanding(p) };
-}
-
-/** The signed-in mentee's method badges, read from the shared copy of their desk progress. */
-export function useMethodBadges(): MethodBadgeSummary {
+/**
+ * The signed-in mentee's method badges: the shared copy of their desk progress plus the scores released at
+ * submission, counted by the same summarise() the Badges page uses. Null until both are read, so a page never
+ * shows "0 earned" for work it has not loaded yet.
+ */
+export function useMethodBadges(): MethodBadgeSummary | null {
   const { user } = useAuth();
-  const { progress } = useProgress(user?.email ?? "");
-  return useMemo(() => summarise(progress), [progress]);
+  const { progress, status } = useProgress(user?.email ?? "");
+  const scores = useTaskScores();
+  return useMemo(() => (status === "ready" && scores ? summarise(progress, scores) : null), [progress, status, scores]);
 }
