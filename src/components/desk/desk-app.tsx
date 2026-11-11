@@ -10,6 +10,8 @@ import { Ctx, type DeskCtx, type ViewItem } from "./desk-context";
 import { TaskFile, type Tab } from "./task-file";
 import { Ring, WeekPanel, WeekRail, WeekTimeline } from "./week-panel";
 import { WeekOverview } from "./week-overview";
+import { KnowledgeCheck } from "./knowledge-check";
+import { KC_HASH } from "@/lib/desk/kc";
 import { Toolbar } from "./toolbar";
 import { Viewer } from "./viewer";
 import { DeskIntro, INTRO_KEY } from "./desk-intro";
@@ -135,19 +137,28 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   // A week's overview, when one is open instead of a task.
   // Arriving on the desk opens this week's overview; a #T… link replaces it with the task.
   const [weekView, setWeekView] = useState<number | null>(linked ? null : now);
+  // A knowledge check or exam open as the screen (#KC-01, #FGE, #FEX): read at first render too, so a reload stays on it.
+  const [testView, setTestView] = useState<string | null>(() => location.hash.match(KC_HASH)?.[1] ?? null);
   const [viewing, setViewing] = useState<ViewItem | null>(null);
   // The platform tool open in the modal ("evidence|Audit Requests (PBC)").
   const [toolKey, setToolKey] = useState<string | null>(null);
+  // Opened from a finished step's View: read-only.
+  const [viewOnly, setViewOnly] = useState(false);
   // Tools open for reading, as floating windows; the last is on top.
   const [windows, setWindows] = useState<string[]>([]);
   // Moving to another task closes the windows that belong to a task: a register, a task's own screen, a Tech Lab. They
   // render against the task in hand, so left open they silently showed the next task's content under the old title. The
   // reference shelf stays open on purpose: Home, Learn & Grow (Rule tables, Reference pages), the Policy Library and its
   // documents read the same from any task.
+  // The step's modal goes too: a task reached by a #T… link or the back button while it was up kept the old task's
+  // tool open over the new task, its window beside it (tester, 5 Nov: T4.1's Review & Redline over T8.1). Nothing is
+  // restored from storage: windows and the modal live only in this state.
   const [windowsFor, setWindowsFor] = useState(taskId);
   if (windowsFor !== taskId) {
     setWindowsFor(taskId);
     setWindows((w) => w.filter(isReference));
+    setToolKey(null);
+    setViewOnly(false);
   }
   // The week panel folds to a rail. It opens every time you arrive on the desk, and folds itself
   // when you pick a task from it, so the work gets the room.
@@ -161,12 +172,20 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
     setTab(t);
     setViewing(null);
     setWeekView(null);
+    setTestView(null);
     history.replaceState(null, "", `#${id}${step ? `-${step}` : ""}`);
   }, []);
 
   // Deep links: #T5.1 opens a task, #T5.1-4 its fourth activity.
   useEffect(() => {
     const go = () => {
+      const kc = location.hash.match(KC_HASH);
+      if (kc) {
+        setTestView(kc[1]);
+        setViewing(null);
+        return;
+      }
+      setTestView(null);
       const wk = location.hash.match(/^#W(\d{1,2})$/);
       if (wk && desk.weeks[Number(wk[1]) - 1]) {
         setWeekView(Number(wk[1]));
@@ -188,11 +207,10 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   // The step in hand: the open one, or — with every row closed — the next one still to do, so the
   // tool that step is done in stays unlocked in the toolbar either way.
   const nextUp = desk.tasks[taskId].steps.find((x) => !progress.done[stepKey(taskId, x.n)])?.n ?? 0;
-  const here = weekView ? null : focus || nextUp ? { task: taskId, n: focus || nextUp } : null;
+  const here = weekView || testView ? null : focus || nextUp ? { task: taskId, n: focus || nextUp } : null;
   // Work in a modal, reading in windows: the step in hand opens its tool as the modal while it is
   // still to do (or when asked to change it); anything else — a finished step's tool, a tool opened
   // for a look mid-step — opens as a floating, resizable window beside the work.
-  const [viewOnly, setViewOnly] = useState(false);
   // "view": a finished step's View — its own window with the learner's work in it, read-only.
   const openTool = (key: string, mode?: "work" | "view") => {
     const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
@@ -224,10 +242,12 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   const openWeek = (n: number) => {
     setTaskId(desk.order.find((x) => desk.tasks[x].week === n && !progress.submitted[x]) ?? desk.order.find((x) => desk.tasks[x].week === n)!);
     setWeekView(n);
+    setTestView(null);
     setViewing(null);
     history.replaceState(null, "", `#W${n}`);
   };
-  const week = weekView ?? desk.tasks[taskId].week;
+  const testWeek = testView ? desk.weeks.find((w) => w.kc?.split(" ")[0] === testView)?.n : undefined;
+  const week = testWeek ?? weekView ?? desk.tasks[taskId].week;
 
   const task = desk.tasks[taskId];
 
@@ -236,7 +256,7 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
       <div className="flex h-desk flex-col bg-[#F7F8FA] text-[#111827]" inert={locked} aria-busy={locked}>
         {/* The desk's header band: what this is, then the twelve weeks as cells. */}
         <header className="flex h-[52px] shrink-0 items-stretch border-b border-[#DDE1E8] bg-[#F7F8FA] max-md:h-auto max-md:flex-col">
-          <div className="flex shrink-0 flex-col justify-center border-r border-[#DDE1E8] bg-white px-4 max-md:border-b max-md:border-r-0 max-md:py-2 lg:w-[300px]">
+          <div className="flex shrink-0 flex-col justify-center border-r border-[#DDE1E8] bg-white px-4 max-md:border-b max-md:border-r-0 max-md:py-2 lg:w-[340px]">
             <p className="flex items-baseline justify-between gap-2 text-[14px] font-bold leading-tight text-[#111827]">
               Working Desk {locked ? <span className="text-[11.5px] font-normal text-[#5B6474]">Opening your work…</span> : <SaveNote who={who} />}
             </p>
@@ -253,25 +273,25 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
           <aside
             aria-label="This week"
             className={`desk-panel hidden shrink-0 border-r border-[#DDE1E8] bg-white transition-[width] duration-200 ease-out lg:block ${
-              panelOpen ? "w-[300px]" : "w-[60px] overflow-y-auto"
+              panelOpen ? "w-[340px]" : "w-[60px] overflow-y-auto"
             }`}
           >
             {panelOpen ? (
-              <WeekPanel week={week} taskId={weekView ? null : task.id} overview={weekView !== null} onOverview={() => openWeek(week)} onCollapse={() => setPanel(false)} />
+              <WeekPanel week={week} taskId={weekView || testView ? null : task.id} overview={weekView !== null} onOverview={() => openWeek(week)} onCollapse={() => setPanel(false)} />
             ) : (
-              <WeekRail week={week} taskId={weekView ? null : task.id} overview={weekView !== null} onOverview={() => openWeek(week)} onExpand={() => setPanel(true)} />
+              <WeekRail week={week} taskId={weekView || testView ? null : task.id} overview={weekView !== null} onOverview={() => openWeek(week)} onExpand={() => setPanel(true)} />
             )}
           </aside>
           <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
             <div className="border-b border-[#DDE1E8] bg-white px-3 py-2 lg:hidden">
-              <TaskPills week={week} taskId={weekView ? "" : task.id} desk={desk} progress={progress} openTask={openTask} />
+              <TaskPills week={week} taskId={weekView || testView ? "" : task.id} desk={desk} progress={progress} openTask={openTask} />
             </div>
             <main className="desk-panel min-h-0 min-w-0 flex-1 overflow-y-auto bg-white pb-28">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   // @container: the task file's step bar bleeds to the column's width (see StepBar).
                   className="@container"
-                  key={weekView ? `W${weekView}` : task.id}
+                  key={testView ?? (weekView ? `W${weekView}` : task.id)}
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, transition: { duration: 0.08 } }}
@@ -283,6 +303,8 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
                         <div key={i} className={`${h} animate-pulse rounded-md bg-slate-200/70`} />
                       ))}
                     </div>
+                  ) : testView ? (
+                    <KnowledgeCheck id={testView} />
                   ) : weekView ? (
                     <WeekOverview week={weekView} />
                   ) : (

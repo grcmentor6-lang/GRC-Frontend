@@ -33,7 +33,10 @@ export function FloatWindow({
   left,
   fit,
   tall,
+  accent,
 }: {
+  /** A colour for the title bar's top edge: an organisation's, so its window reads as that organisation. */
+  accent?: string;
   title: string;
   eyebrow?: string;
   /** Shown before the title: an icon tile, an organisation's badge. */
@@ -105,7 +108,7 @@ export function FloatWindow({
         }}
         className={`pointer-events-auto absolute flex ${tall ? "h-[max(320px,calc(100dvh/var(--app-zoom)-152px))]" : fit ? "max-h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[160px]" : "h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[220px]"} min-w-[300px] max-w-[calc(100vw/var(--app-zoom)-24px)] resize flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_-20px_rgba(17,24,39,0.45)] ${pos ? "" : "max-md:!left-3"}`}
       >
-        <header onPointerDown={startDrag} className="flex shrink-0 cursor-grab touch-none select-none items-stretch border-b border-[#DDE1E8] active:cursor-grabbing">
+        <header onPointerDown={startDrag} style={accent ? { borderTop: `3px solid ${accent}` } : undefined} className="flex shrink-0 cursor-grab touch-none select-none items-stretch border-b border-[#DDE1E8] active:cursor-grabbing">
           {leading && <span className="grid shrink-0 place-items-center pl-3">{leading}</span>}
           <div className="min-w-0 flex-1 px-3 py-2">
             {eyebrow && <p className="truncate text-[11.5px] text-[#5B6474]">{eyebrow}</p>}

@@ -8,6 +8,7 @@ import { dueDate, fmtDay, type Desk, type Task } from "@/lib/desk/model";
 import { stepKey, taskStatus, type Progress } from "@/lib/desk/progress";
 import { NOT_SCORED, fmtWhen, recordCounts, recordEmpty, useDeskRecord, useTaskScores } from "@/lib/desk-record";
 import type { Scores } from "@/lib/desk/badges";
+import { OrgName } from "@/lib/desk/org-tone";
 
 /**
  * My Submissions — everything the mentee has handed in, week by week and task by task: each step's
@@ -124,6 +125,7 @@ function TaskRecord({ task, progress, desk, start, scores }: { task: Task; progr
       <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#DDE1E8] px-4 py-2.5">
         <span className="rounded bg-[#111827] px-1.5 py-0.5 font-mono text-[12px] font-semibold text-white">{task.id}</span>
         <h3 className="min-w-0 flex-1 text-[14.5px] font-semibold text-[#111827]">{task.title}</h3>
+        <span className="text-[12.5px]"><OrgName org={task.org} orgs={desk.orgs} size={14} /></span>
         <span className="text-[12px] text-[#5B6474] tabular-nums">
           {n}/{task.steps.length} steps · due {fmtDay(dueDate(start, task.dueDay))}
         </span>

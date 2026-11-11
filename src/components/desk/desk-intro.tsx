@@ -13,7 +13,7 @@ const STEPS: TourStep[] = [
   {
     title: "This is your Working Desk",
     icon: "desk",
-    body: "Every piece of GRC 101 is done here: twelve weeks of tasks for the organisations you are placed at. This guide shows you round once and does not come back, so read each card before you click Next.",
+    body: "Every piece of GRC 101 is done here: twelve weeks of tasks for the organisations you are placed at. This guide shows you round **once**, so read each card before you click Next.",
     getEl: () => null,
   },
   {
@@ -45,13 +45,22 @@ const STEPS: TourStep[] = [
   {
     title: "The platform tools",
     icon: "grid",
-    body: "Home, Evidence, Risk, Policies, your Inbox and the rest: the screens the organisation runs on. A tool unlocks when a step needs it, and the step you are on is marked against its tool.",
+    body: "Home, Evidence, Risk, Policies, your Inbox and the rest: the screens the organisation runs on.",
+    steps: [
+      { lead: "A tool unlocks when a step needs it", text: "Until then it does not open." },
+      { lead: "Follow the orange dot", text: "It marks each place the step you are on uses. Click the section, then the screen in its menu." },
+    ],
     getEl: shown('nav[aria-label="Platform tools"]'),
   },
   {
     title: "Start with this week's first task",
     icon: "play",
-    body: "Open it from the week's tasks and begin with step 1. The step's own guide takes it from there.",
+    body: "Every task runs the same way:",
+    steps: [
+      { lead: "Open the task from the week's tasks", text: "Its steps appear one after the other." },
+      { lead: "Begin with step 1", text: "The step's own guide runs the first time you open it, and again from **▶ Show me how**." },
+      { lead: "Click Mark step complete", text: "It unlocks once the step's work is done and checked.", mark: "stop" },
+    ],
     getEl: () => null,
   },
 ];

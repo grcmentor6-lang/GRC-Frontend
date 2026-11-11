@@ -9,7 +9,7 @@ import { MethodMedal } from "@/components/badges/method-medal";
 import { loadDesk, type Desk } from "@/lib/desk/model";
 import { useProgress, type Progress } from "@/lib/desk/progress";
 import { useTaskScores } from "@/lib/desk-record";
-import { BADGES, CAPSTONE, DIST_AVG, DIST_MIN, NO_BADGE, PASS, criteriaText, summarise, type BadgeStanding, type BadgeState, type MethodBadge, type Scores } from "@/lib/desk/badges";
+import { BADGES, CAPSTONE, DIST_AVG, DIST_MIN, NO_BADGE, PASS, badgeOfTask, criteriaText, summarise, type BadgeStanding, type BadgeState, type MethodBadge, type Scores } from "@/lib/desk/badges";
 
 /**
  * Badges — the GRC 101 method badges (pack v1.9.0): one per family of GRC work methods the mentee
@@ -165,7 +165,15 @@ function BadgesBody({ desk, p, scores }: { desk: Desk; p: Progress; scores: Scor
             {NO_BADGE.map(([f, why]) => (
               <tr key={f}>
                 <th scope="row" className="w-[30%] border-b border-r border-[#E9ECF1] px-4 py-2 text-left align-top font-semibold text-[#111827]">{f}</th>
-                <td className="border-b border-[#E9ECF1] px-4 py-2 text-[#3F4757]">{why}</td>
+                <td className="border-b border-[#E9ECF1] px-4 py-2 text-[#3F4757]">
+                  {why}
+                  {/* A task that earns no badge (F1.1) is still scored: its score shows here, as on My Submissions and Reports. */}
+                  {desk.order.filter((t) => !badgeOfTask(t) && why.includes(t)).map((t) => (
+                    <span key={t} className="ml-1.5 inline-block align-baseline">
+                      <TaskChip id={t} desk={desk} p={p} score={scores[t] ?? undefined} />
+                    </span>
+                  ))}
+                </td>
               </tr>
             ))}
           </tbody>

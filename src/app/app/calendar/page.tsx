@@ -9,6 +9,8 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { useDeskRecord } from "@/lib/desk-record";
 import { ALL_WEEKS_OPEN } from "@/lib/flags";
 import { planOf, dueText, type DueState, type PlanTask } from "@/lib/desk-plan";
+import { OrgMarks } from "@/lib/desk/org-tone";
+import type { Desk } from "@/lib/desk/model";
 
 const MotionLink = motion.create(Link);
 
@@ -49,7 +51,7 @@ function relativeDay(iso: string, todayISO: string): string {
   return parseISO(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 }
 
-function EventCard({ t, reduce }: { t: PlanTask; reduce: boolean }) {
+function EventCard({ t, reduce, orgs }: { t: PlanTask; reduce: boolean; orgs: Desk["orgs"] }) {
   const v = TONE[t.state];
   return (
     <MotionLink
@@ -64,7 +66,7 @@ function EventCard({ t, reduce }: { t: PlanTask; reduce: boolean }) {
       <span className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ring-1 ${v.avatar}`}><Icon name={t.state === "submitted" ? "check" : "bolt"} size={15} /></span>
       <div className="min-w-0 flex-1">
         <span className="text-[9.5px] font-semibold uppercase tracking-[0.08em] text-slate-400">{v.label} · week {t.week}</span>
-        <div className="text-[12.5px] font-medium text-slate-800 tracking-tight leading-snug mt-0.5 group-hover:text-slate-950">{t.id} · {t.title}</div>
+        <div className="text-[12.5px] font-medium text-slate-800 tracking-tight leading-snug mt-0.5 group-hover:text-slate-950"><OrgMarks org={t.org} orgs={orgs} /> {t.id} · {t.title}</div>
         <div className="flex items-center gap-1.5 mt-1.5 text-[10.5px] text-slate-500">
           <span>{t.stepsDone} of {t.steps} steps · {dueText(t)}</span>
           <span className="inline-flex items-center gap-0.5 font-medium text-slate-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">Open<Icon name="arrowRight" size={11} /></span>
@@ -260,7 +262,7 @@ export default function CalendarPage() {
                 </div>
               ) : (
                 <motion.div key={selected} variants={listV} initial="hidden" animate="show" className="space-y-2.5">
-                  {selectedEvents.map((t) => <EventCard key={t.id} t={t} reduce={reduce} />)}
+                  {selectedEvents.map((t) => <EventCard key={t.id} t={t} reduce={reduce} orgs={desk!.orgs} />)}
                 </motion.div>
               )}
             </Card>
@@ -273,7 +275,7 @@ export default function CalendarPage() {
                 <h2 className="text-[14px] font-semibold tracking-tight text-slate-900">Overdue</h2>
               </div>
               <motion.div variants={listV} initial="hidden" animate="show" className="space-y-2.5">
-                {overdue.map((t) => <EventCard key={t.id} t={t} reduce={reduce} />)}
+                {overdue.map((t) => <EventCard key={t.id} t={t} reduce={reduce} orgs={desk!.orgs} />)}
               </motion.div>
             </Card>
           )}

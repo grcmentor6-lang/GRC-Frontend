@@ -8,8 +8,8 @@ export interface CvProfile {
   initials: string;
   name: string;
   location: string;
-  /** Null on the public CV: a shared link never carries the learner's address. */
-  email: string | null;
+  /** Not sent: the learner has no setting to put their address on the CV, so it is never printed. */
+  email?: null;
   linkedin?: string | null;
   /** Not sent: nobody has been asked, so it is not claimed for them. */
   openToWork?: boolean;

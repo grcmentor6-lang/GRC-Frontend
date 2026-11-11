@@ -9,9 +9,26 @@ import { isDecideCell, isFillCell, type Desk, type Step, type Task } from "@/lib
 import { stepKey, type Progress, type RowsFeedback } from "@/lib/desk/progress";
 import { api } from "@/lib/api";
 import { gridKey, gridStatus, submitWhy } from "@/lib/desk/work";
+import { Toned } from "./ui";
+import { tierTone } from "@/lib/desk/cell-tone";
 import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
 import { useDoc, useDocs } from "./doc-text";
 import { RMF, dmyToIso, fileExts, fileNameOk, isDateRow, isoToDmy, receiptHash, rmfAt, rmfExpected, rmfGiven, rmfKey, rmfMiss, same, submitCodes } from "@/lib/desk/forms";
+
+/**
+ * The row in hand: the design's indigo dot with its halo, before the row's ID. Named by aria-label, never by
+ * text: the cell's textContent is the row's ID, which the desk reads back (cellValue, rows sent to /me/desk/rows).
+ */
+const LiveDot = () => (
+  <span role="img" aria-label="Row in hand" className="mr-1.5 inline-block h-[7px] w-[7px] rounded-full bg-[#4338CA] align-middle shadow-[0_0_0_3px_#DFE2FB]" />
+);
+
+/** The register look every table on the desk shares (register.html). */
+const REG_TH = "min-w-[84px] border-y border-b-[#E3E5EA] border-t-[#E8EAEF] px-3.5 py-3 text-left align-bottom font-semibold leading-[1.4]";
+const REG_THEAD = "bg-[#F8F9FB] font-sans text-[10.5px] uppercase tracking-[0.08em] text-[#6B7280]";
+const REG_TD = "border-b border-[#EEF0F3] align-top";
+/** The row in hand: tinted, an indigo bar on its first cell, which takes the indigo ID. */
+const LIVE_ROW = "[&>td]:!bg-[#F5F6FF] [&>td:first-child]:!text-[#4338CA] [&>td:first-child]:!shadow-[inset_3px_0_0_#4338CA]";
 
 /*
  * The work a "do" step asks for, in the shape the pack gives it (see workKind in lib/desk/model):
@@ -31,30 +48,32 @@ export function GridWork({ taskId, toolKey, readOnly }: { taskId: string; toolKe
   const gk = gridKey(taskId, toolKey);
   const fills = progress.grids?.[gk] ?? {};
   const set = (cell: string, v: string) => update((p) => ({ ...p, grids: { ...p.grids, [gk]: { ...(p.grids?.[gk] ?? {}), [cell]: v } } }));
-  const th = "whitespace-nowrap border-b border-r border-[#DDE1E8] border-r-[#E9ECF1] px-3 py-[9px] font-semibold last:border-r-0";
-  const td = "border-b border-r border-[#E9ECF1] align-top last:border-r-0";
+  // The columns the mentee fills are the register's output columns, tinted as such; the first row with an
+  // empty one is the row in hand.
+  const outCols = new Set(rows.flatMap((r) => r.map((c, ci) => (isFillCell(c) ? ci : -1))).filter((ci) => ci >= 0));
+  const live = readOnly ? -1 : rows.findIndex((r, ri) => r.some((c, ci) => isFillCell(c) && !(fills[`${ri},${ci}`] ?? "").trim()));
   return (
     <div className="overflow-x-auto border-b border-[#DDE1E8] bg-white">
-      <table className="w-full border-collapse text-[13px]">
-        <thead className="bg-[#F7F8FA] text-left text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">
-          <tr>{h.map((x) => <th key={x} className={th}>{x}</th>)}</tr>
+      <table className="w-full border-collapse text-[13.5px] leading-[1.5] text-[#4B5563]">
+        <thead className={REG_THEAD}>
+          <tr>{h.map((x, ci) => <th key={x} className={`${REG_TH} ${outCols.has(ci) ? "!bg-[#F1F2FF] text-[#4338CA]" : ""}`}>{x}</th>)}</tr>
         </thead>
         <tbody>
           {rows.map((r, ri) => (
-            <tr key={ri}>
+            <tr key={ri} className={live === ri ? LIVE_ROW : ""}>
               {r.map((c, ci) => {
                 const cell = `${ri},${ci}`;
                 if (isFillCell(c)) {
                   const v = fills[cell] ?? "";
                   return (
-                    <td key={ci} className={`${td} p-0`}>
+                    <td key={ci} className={`${REG_TD} p-0`}>
                       <input
                         value={v}
                         readOnly={readOnly}
                         onChange={(e) => set(cell, e.target.value)}
                         placeholder={String(c || "fill in")}
                         aria-label={`${h[ci] ?? "Cell"}, row ${ri + 1}`}
-                        className={`block h-full min-h-[38px] w-full min-w-[110px] px-3 py-2 text-[13px] outline-none placeholder:italic placeholder:text-[#8A91A3] focus:bg-white focus:shadow-[inset_0_0_0_2px_#4338CA] ${
+                        className={`block h-full min-h-[46px] w-full min-w-[110px] px-3.5 py-3 text-[13.5px] outline-none placeholder:italic placeholder:text-[#8A91A3] focus:bg-white focus:shadow-[inset_0_0_0_2px_#4338CA] ${
                           v.trim() ? "bg-white text-[#111827]" : "bg-[#EEF0FF]/70"
                         } ${readOnly ? "cursor-default" : ""}`}
                       />
@@ -62,8 +81,9 @@ export function GridWork({ taskId, toolKey, readOnly }: { taskId: string; toolKe
                   );
                 }
                 return (
-                  <td key={ci} className={`${td} px-3 py-2 ${ci === 0 ? "font-mono text-[12px] font-semibold text-[#111827]" : "text-[#3F4757]"}`}>
-                    {isDecideCell(c) ? <span className="whitespace-nowrap text-[12px] font-semibold text-[#92400E]" title="Filled by a decision step">◆ decided in a decision step</span> : String(c)}
+                  <td key={ci} className={`${REG_TD} px-3.5 py-3 ${outCols.has(ci) ? "bg-[#FBFBFF]" : ""} ${ci === 0 ? "whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-[#6B7280]" : ci === 1 ? "text-[14px] font-semibold leading-[1.4] text-[#111827]" : ""}`}>
+                    {ci === 0 && live === ri && <LiveDot />}
+                    {isDecideCell(c) ? <span className="whitespace-nowrap text-[12px] font-semibold text-[#92400E]" title="Filled by a decision step">◆ decided in a decision step</span> : String(c) ? <Toned v={String(c)} h={h[ci]} /> : <span className="text-[#C4C8D0]">—</span>}
                   </td>
                 );
               })}
@@ -184,7 +204,7 @@ export function RmfForm({ task, t, readOnly }: { task: Task; t: number; readOnly
           <>Copy from <strong className="font-semibold text-[#111827]">{table.from}</strong>, exactly as written there.</>
         )}
       </p>
-      <table className="w-full border-collapse border border-[#DDE1E8] text-[13px]">
+      <table className="w-full border-collapse border border-[#E3E5EA] text-[13.5px]">
         <tbody>
           {table.rows.map((r, i) => {
             const cell = `${t},${i}`;
@@ -193,8 +213,8 @@ export function RmfForm({ task, t, readOnly }: { task: Task; t: number; readOnly
             const off = !!v.trim() && !same(v, want[i]) && (!given || checked || readOnly);
             return (
               <tr key={i}>
-                <th scope="row" className="w-[38%] border-b border-r border-[#E9ECF1] bg-[#F7F8FA] px-3 py-2 text-left align-top font-mono text-[12px] font-semibold text-[#111827]">{r}</th>
-                <td className="border-b border-[#E9ECF1] p-0 align-top">
+                <th scope="row" className="w-[38%] border-b border-r border-[#EEF0F3] bg-[#F8F9FB] px-3.5 py-3 text-left align-top text-[12.5px] font-semibold text-[#4B5563]">{r}</th>
+                <td className="border-b border-[#EEF0F3] p-0 align-top">
                   {isDateRow(t, i) ? (
                     // A date picker; what is stored (and checked) is the pack's DD-MMM-YYYY.
                     <span className="block">
@@ -451,8 +471,9 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
     const fixed = reg.cells?.[ci]?.fix(v, liveRow(reg, progress, task.id, ri), desk, ri, addedBy(reg, progress, task.id, ri));
     if (fixed && fixed !== v) set(`${ri},${ci}`, fixed);
   };
-  const th = "whitespace-nowrap border-b border-r border-[#DDE1E8] border-r-[#E9ECF1] px-3 py-[9px] text-left font-semibold last:border-r-0";
-  const td = "border-b border-r border-[#E9ECF1] align-top last:border-r-0";
+  // No rules between columns: rows are read across, and the step's own columns are told apart by their tint.
+  const th = REG_TH;
+  const td = REG_TD;
   // A working step shows what it needs and no more: the row's identity (the columns before the first
   // one it fills), the columns it fills, and nothing a later step fills. Column A goes when every row
   // shown belongs to one organisation, and the worked rows fold away behind one line.
@@ -542,16 +563,32 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
   const studyHide = (ci: number) => (ci === 0 && sameFirst) || worked.every((ri) => !cellValue(reg, progress, task.id, ri, ci)) || (stepCols.has(ci) && worked.every((ri) => !rows[ri][ci]));
   const filledBy = new Set([...Object.values(reg.steps).flat(), ...Object.keys(reg.derived ?? {}).map(Number)]);
   const firstFill = Math.min(...Object.keys(reg.steps).map(Number));
+  // Output columns: the ones this step fills; on a register only read (a hand-in, a View), every column the mentee filled.
+  const out = (ci: number) => open.has(ci) || (!working && filledBy.has(ci));
+  // The row in hand, where no walk picks one: the first of the step's own rows with a cell still to fill. A row
+  // with all of them filled carries a quiet check (filled, not marked right: the step's check says that).
+  const toFill = (ri: number, ci: number) => !rows[ri][ci] && !awaits(ri, ci) && derivedAt(reg, progress, task.id, ri, ci) === null;
+  const ownRow = (ri: number) => reg.mine(rows[ri], desk) && (!adding || addedBy(reg, progress, task.id, ri) === s!.n) && (!s || !reg.only?.[s.n] || reg.only[s.n](rows[ri].map(String), progress));
+  const filling = working && !study && !reporting && !cons && walkCol === undefined && !rowsChecked && open.size > 0;
+  const fillCols = (ri: number) => [...open].filter((ci) => toFill(ri, ci));
+  const live = filling ? rows.findIndex((_, ri) => ownRow(ri) && fillCols(ri).some((ci) => !cellValue(reg, progress, task.id, ri, ci).trim())) : -1;
+  const rowFilled = (ri: number) => filling && ownRow(ri) && fillCols(ri).length > 0 && fillCols(ri).every((ci) => !!cellValue(reg, progress, task.id, ri, ci).trim());
+  const inHand = walking ?? (live >= 0 ? live : undefined);
+  const firstShown = reg.cols.findIndex((_, ci) => shown(ci));
+  // "CLS-RES · Classification worksheet (template T-CLS)": the template sits beside the caption, quieter.
+  const tm = reg.title.match(/^(.*?)\s*\((template [^)]*)\)$/i);
+  const caption = tm ? tm[1] : reg.title;
+  const template = tm ? tm[2][0].toUpperCase() + tm[2].slice(1) : "";
   return (
     <div data-guide="register" data-reg={reg.code} className="overflow-x-auto border-b border-[#DDE1E8] bg-white">
-      <p className="sticky left-0 flex items-center gap-2 border-b border-[#E9ECF1] bg-[#F7F8FA] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">
-        <span>
-          {reg.title}
-          {!study && (!working || showWorked) && reg.rows.some((r) => !reg.mine(r, desk)) && (
-            <> · <span className="text-[#3730A3]">your rows</span> · <span className="text-[#8A91A3]">worked examples (grey)</span></>
-          )}
-        </span>
-        {reg.grow && <span className={`ml-auto font-mono tabular-nums ${full ? "text-[#15803D]" : "text-[#3F4757]"}`}>{rows.length} / {reg.grow.target} rows</span>}
+      {/* The sheet's caption: its code and name, then the template it is built on, quieter. */}
+      <p className="sticky left-0 flex flex-wrap items-baseline gap-x-2.5 gap-y-1 bg-white px-4 pb-3 pt-4 sm:px-5">
+        <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.09em] text-[#111827]">{caption}</span>
+        {template && <span className="text-[12.5px] text-[#6B7280]">{template}</span>}
+        {!study && (!working || showWorked) && reg.rows.some((r) => !reg.mine(r, desk)) && (
+          <span className="text-[12.5px] text-[#6B7280]"><span className="font-medium text-[#4338CA]">Your rows</span> · worked examples in grey</span>
+        )}
+        {reg.grow && <span className={`ml-auto text-[12.5px] font-semibold tabular-nums ${full ? "text-[#15803D]" : "text-[#4B5563]"}`}>{rows.length} / {reg.grow.target} rows</span>}
       </p>
       {working && s && reg.helper?.[s.n] && (
         // Where every row's answer is read, said once: the same place serves all of them.
@@ -589,11 +626,11 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
           {studyAll && Object.values(reg.steps).some((c) => c.length) ? `${reg.code} lists ${rows.length} rows. Your decisions fill them from step ${firstFill}.` : studyAll || mineCount === 0 ? `${reg.code} is given and fixed: ${rows.length} rows, read-only.` : <>Showing the {rows.length - mineCount} worked rows {sameFirst ? `of ${rows[worked[0]]?.[0]}` : `(${worked.map((ri) => rows[ri][0]).join(", ")})`}. Your {mineCount} rows are filled from step {firstFill}, the same way.</>}
         </p>
       )}
-      <table className="w-full border-collapse text-[13px]">
-        <thead className="bg-[#F7F8FA] text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">
+      <table className="w-full border-collapse text-[13.5px] leading-[1.5] text-[#4B5563]">
+        <thead className="bg-[#F8F9FB] font-sans text-[10.5px] uppercase tracking-[0.08em] text-[#6B7280]">
           <tr>
             {/* In a finding step column A is the same organisation on every row: named above instead. */}
-            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F7F8FA] shadow-[1px_0_0_#DDE1E8]" : ""} ${open.has(ci) || (study && filledBy.has(ci)) ? "bg-[#EEF0FF] text-[#3730A3]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F7F8FA] shadow-[1px_0_0_#DDE1E8]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""}`}>{c.h}</th>)}
+            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${out(ci) ? "!bg-[#F1F2FF] text-[#4338CA]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""}`}>{c.h}</th>)}
             {(adding || trimming) && <th className={th}><span className="sr-only">Remove</span></th>}
           </tr>
         </thead>
@@ -625,7 +662,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                           aria-label={`${c.h}, ${r[1]}: ${v || "empty"}`}
                           className={`block min-h-[38px] w-full px-3 py-2 text-left text-[13px] text-[#111827] focus-ring disabled:cursor-default ${tone}`}
                         >
-                          {v}
+                          {v ? <Toned v={v} h={c.h} /> : null}
                         </button>
                       </td>
                     );
@@ -641,7 +678,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
             const rowFb = rcRow && mine && shown(rcRow.col) ? progress.rowChecks?.[`${task.id}-${s!.n}`]?.rows[cellValue(reg, progress, task.id, ri, rcRow.label)] : undefined;
             return (
               <Fragment key={ri}>
-              <tr data-row={ri} className={mine ? (walking === ri ? "bg-[#F7F8FF] shadow-[inset_3px_0_0_#4338CA]" : "") : "bg-[#FAFAFB] text-[#8A91A3]"}>
+              <tr data-row={ri} data-live={inHand === ri || undefined} className={mine ? (inHand === ri ? LIVE_ROW : "") : "bg-[#FAFAFB] text-[#8A91A3]"}>
                 {reg.cols.map((c, ci) => {
                   if (!shown(ci)) return null;
                   const v = cellValue(reg, progress, task.id, ri, ci);
@@ -650,7 +687,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                   // Awaiting even where a split copied a value in (T3.1: an article the new duty does not name).
                   if (mine && !r[ci] && (!v.trim() || reg.split) && awaits(ri, ci))
                     return (
-                      <td key={ci} className={`${td} px-3 py-2 text-[12.5px] italic text-[#8A91A3]`} title="Not in the pack yet: see the note above the table">
+                      <td key={ci} className={`${td} px-3.5 py-3 text-[12.5px] italic text-[#8A91A3]`} title="Not in the pack yet: see the note above the table">
                         Awaiting content
                       </td>
                     );
@@ -660,7 +697,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                   const fb = rc && ci === rc.col && mine ? progress.rowChecks?.[`${task.id}-${s!.n}`]?.rows[cellValue(reg, progress, task.id, ri, rc.label)] : undefined;
                   if (fb)
                     return (
-                      <td key={ci} data-verdict={fb.correct === true ? "right" : fb.correct === false ? "wrong" : "unscored"} className={`${td} px-3 py-2 ${fb.correct === true ? "bg-[#F0FDF4]" : fb.correct === false ? "bg-[#FFFBEB]" : "bg-[#F7F8FA]"}`}>
+                      <td key={ci} data-verdict={fb.correct === true ? "right" : fb.correct === false ? "wrong" : "unscored"} className={`${td} px-3.5 py-3 ${fb.correct === true ? "bg-[#F0FDF4]" : fb.correct === false ? "bg-[#FFFBEB]" : "bg-[#F7F8FA]"}`}>
                         <span className="flex items-start gap-1.5 text-[13px] font-medium text-[#111827]">
                           <Icon name={fb.correct === true ? "checkCircle" : "info"} size={14} className={`mt-0.5 shrink-0 ${fb.correct === true ? "text-[#15803D]" : fb.correct === false ? "text-[#B45309]" : "text-[#5B6474]"}`} />
                           {fb.pick}
@@ -676,24 +713,29 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                     );
                   if (walkCol !== undefined && mine && ci === walkCol)
                     return (
-                      <td key={ci} className={`${td} p-0`}>
+                      <td key={ci} className={`${td} bg-[#FBFBFF] p-0`}>
                         <button
                           type="button"
                           data-walked={v ? "true" : undefined}
                           disabled={rowsChecked}
                           onClick={() => update((p) => ({ ...p, answers: { ...p.answers, [`${sk}#row`]: String(ri) } }))}
                           aria-label={tree ? `Walk the tree for ${r[0]}` : `Check ${r[0]} against the checklist`}
-                          className={`block min-h-[38px] w-full min-w-[170px] px-3 py-2 text-left text-[12.5px] leading-snug focus-ring enabled:hover:bg-[#EEF0FF] disabled:cursor-default ${v ? "text-[#111827]" : "italic text-[#8A91A3]"}`}
+                          className={`block min-h-[46px] w-full min-w-[170px] px-3.5 py-3 text-left text-[12.5px] leading-snug focus-ring enabled:hover:bg-[#EEF0FF] disabled:cursor-default ${v ? "text-[13.5px] text-[#111827]" : "text-[#9CA3AF]"}`}
                         >
-                          {v || (walking === ri ? (tree ? "Walking it now" : "Checking it now") : tree ? "Not walked yet" : "Not checked yet")}
+                          {v || (walking === ri ? (
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#4338CA]">
+                              <span aria-hidden className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#4338CA] shadow-[0_0_0_3px_#DFE2FB]" />
+                              {tree ? "Walking it now" : "Checking it now"}
+                            </span>
+                          ) : tree ? "Not walked yet" : "Not checked yet")}
                         </button>
                       </td>
                     );
                   if ((tree && mine && ci === tree.tier) || (chk?.codes === ci && mine))
-                    return <td key={ci} className={`${td} whitespace-nowrap px-3 py-2 ${v ? "font-medium text-[#111827]" : "text-[#C9CED8]"}`}>{v || "—"}</td>;
+                    return <td key={ci} className={`${td} whitespace-nowrap bg-[#FBFBFF] px-3.5 py-3 ${v ? "font-medium text-[#111827]" : "text-[#C4C8D0]"}`}>{v ? <Toned v={v} h={c.h} /> : "—"}</td>;
                   if (reporting && mine && ci === reg.report!.col)
                     return (
-                      <td key={ci} className={`${td} px-3 py-2`}>
+                      <td key={ci} className={`${td} px-3.5 py-3`}>
                         <span className="block text-[#111827]">{v}</span>
                         {!readOnly && (
                           <button
@@ -711,7 +753,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                     );
                   // A value the platform writes on this row (F2.2: an accepted item's defect code "none").
                   if (mine && open.has(ci) && derivedAt(reg, progress, task.id, ri, ci) !== null)
-                    return <td key={ci} className={`${td} ${c.wrap ? "" : "whitespace-nowrap"} px-3 py-2 text-[#3F4757]`} title="Recorded by itself">{v}</td>;
+                    return <td key={ci} className={`${td} ${c.wrap ? "" : "whitespace-nowrap"} bg-[#FBFBFF] px-3.5 py-3`} title="Recorded by itself"><Toned v={v} h={c.h} /></td>;
                   if (mine && !r[ci] && !c.auto && open.has(ci) && (!adding || by === s!.n)) {
                     const base = `block min-h-[38px] w-full min-w-[150px] px-3 py-2 text-[13px] outline-none focus:shadow-[inset_0_0_0_2px_#4338CA] ${v.trim() ? "bg-white text-[#111827]" : "bg-[#EEF0FF]/70"}`;
                     const opts = c.opts === "step" ? s?.opt : typeof c.opts === "function" ? c.opts(desk, liveRow(reg, progress, task.id, ri)) : c.opts;
@@ -751,13 +793,15 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                   const waits = mine && !v.trim() && derivedAt(reg, progress, task.id, ri, ci) !== null ? reg.derived?.[ci]?.waits?.((x) => cellValue(reg, progress, task.id, ri, x)) : undefined;
                   if (waits)
                     return (
-                      <td key={ci} data-waits className={`${td} px-3 py-2 text-[12.5px] italic text-[#5B6474]`}>
+                      <td key={ci} data-waits className={`${td} px-3.5 py-3 text-[12.5px] italic text-[#5B6474]`}>
                         {waits}
                       </td>
                     );
                   return (
-                    <td key={ci} className={`${td} px-3 py-2 ${(working || checking) && ci === stick ? "sticky left-0 z-[1] bg-white shadow-[1px_0_0_#DDE1E8] max-[600px]:max-w-[132px] max-[600px]:text-[12px]" : ""} ${mine && v.length <= 24 && !c.wrap ? "whitespace-nowrap" : ""} ${empty.has(cell) ? "bg-[#FEF3C7] shadow-[inset_0_0_0_2px_#F59E0B]" : ""} ${c.auto ? "sticky left-0 z-[1] whitespace-nowrap bg-white font-mono text-[12px] font-semibold text-[#111827] shadow-[1px_0_0_#DDE1E8]" : ci === 1 && mine ? "font-medium text-[#111827]" : mine ? "text-[#3F4757]" : ""}`}>
-                      {c.list && v ? listed(v) : v || (mine ? <span className="text-[#C9CED8]">—</span> : "")}
+                    <td key={ci} className={`${td} px-3.5 py-3 ${mine && out(ci) && !empty.has(cell) ? "bg-[#FBFBFF]" : ""} ${(working || checking) && ci === stick ? "sticky left-0 z-[1] bg-white shadow-[1px_0_0_#DDE1E8] max-[600px]:max-w-[132px] max-[600px]:text-[12px]" : ""} ${mine && v.length <= 24 && !c.wrap ? "whitespace-nowrap" : ""} ${empty.has(cell) ? "bg-[#FEF3C7] shadow-[inset_0_0_0_2px_#F59E0B]" : ""} ${c.auto ? "sticky left-0 z-[1] whitespace-nowrap bg-white text-[12.5px] font-semibold tabular-nums text-[#6B7280] shadow-[1px_0_0_#E3E5EA]" : ci === 1 && mine ? "text-[14px] font-semibold leading-[1.4] text-[#111827]" : ci === 0 && mine && /^[A-Z][A-Z0-9]*-[A-Z0-9.-]+$/.test(v) ? "whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-[#6B7280]" : ""}`}>
+                      {ci === firstShown && live === ri && <LiveDot />}
+                      {c.list && v ? listed(v) : v ? <Toned v={v} h={c.h} /> : mine ? <span className="text-[#C4C8D0]">—</span> : ""}
+                      {ci === firstShown && rowFilled(ri) && <span role="img" aria-label="Row filled" title="Every cell of this row is filled" className="ml-1.5 inline-block align-middle text-[#9CA3AF]"><Icon name="check" size={12} /></span>}
                       {c.auto && by > 0 && <span className="block text-[10.5px] font-normal text-[#8A91A3]">step {by}</span>}
                       {mine && (() => {
                         const answer = checkedAnswer(reg, progress, task.id, ri, ci);
@@ -821,9 +865,12 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
         </div>
       )}
       {(working || checking) && workedCount > 0 && (
-        <button type="button" onClick={() => setShowWorked(!showWorked)} className="sticky left-0 flex w-full items-center gap-1.5 border-t border-[#E9ECF1] bg-[#F7F8FA] px-3 py-2 text-left text-[12.5px] text-[#3F4757] hover:bg-[#F3F4F7] focus-ring">
-          <Icon name={showWorked ? "chevronDown" : "chevronRight"} size={13} />
-          {showWorked ? "Hide" : "Show"} the {workedCount} worked rows ({sameFirst ? rows[worked[0]]?.[0] : worked.length > 4 ? `${rows[worked[0]][0]} to ${rows[worked[worked.length - 1]][0]}` : worked.map((ri) => rows[ri][0]).join(", ")})
+        <button type="button" onClick={() => setShowWorked(!showWorked)} className="sticky left-0 flex w-full flex-wrap items-center gap-2 bg-white px-4 py-3.5 text-left text-[13.5px] font-medium text-[#4B5563] hover:bg-[#F8F9FB] focus-ring sm:px-5">
+          <Icon name={showWorked ? "chevronDown" : "chevronRight"} size={14} className="text-[#9CA3AF]" />
+          {showWorked ? "Hide" : "Show"} the {workedCount} worked rows
+          {(sameFirst ? [rows[worked[0]]?.[0]] : worked.length > 4 ? [`${rows[worked[0]][0]} to ${rows[worked[worked.length - 1]][0]}`] : worked.map((ri) => rows[ri][0])).map((x) => (
+            <span key={String(x)} className="whitespace-nowrap rounded-[5px] border border-[#E0E3EA] bg-white px-[7px] py-px text-[12.5px] font-semibold text-[#4B5563]">{x}</span>
+          ))}
         </button>
       )}
       {adding && rows.some((_, ri) => addedBy(reg, progress, task.id, ri) !== s!.n) && (
@@ -1104,7 +1151,7 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
                                 {flags?.[li] && flag(flags[li]!)}
                               </>
                             ) : (
-                              <span className={`block pt-1.5 text-[#111827] ${m("max-[480px]:pt-0")}`}>{v[`${i},${li}`] || <span className="text-[#C9CED8]">—</span>}</span>
+                              <span className={`block pt-1.5 text-[#111827] ${m("max-[480px]:pt-0")}`}>{v[`${i},${li}`] ? <Toned v={v[`${i},${li}`]} h={l.l} /> : <span className="text-[#C4C8D0]">—</span>}</span>
                             )}
                           </dd>
                         </div>
@@ -1431,6 +1478,53 @@ function quickRef(desk: Desk, name: string): string | undefined {
   return undefined;
 }
 
+/**
+ * A question walk (a decision tree, a rule's questions in order), drawn the way the owner's guide draws its steps
+ * (docs/redesign-guide/guide.html): a round marker on a rail, the question beside it, its answer as a tag. Answered
+ * questions stay, greyed; the one in hand is lit; later ones stay hidden until reached; an outcome ends in a green tick.
+ */
+const MARK = {
+  done: "text-[#9CA3AF]",
+  now: "text-[#4338CA]",
+  default: "text-[#111827]",
+  stop: "text-[#16A34A]",
+} as const;
+const walkBtn = "h-11 w-[100px] rounded-lg border border-[#C7CBF5] bg-white text-[14px] font-bold text-[#111827] hover:border-[#4338CA] hover:bg-[#F5F6FF] focus-ring";
+const walkRecord = (v: string) => `h-9 rounded-lg border px-3 text-[13px] font-semibold hover:brightness-95 focus-ring ${tierTone(v)}`;
+/** The walk's card (owner, 11 Nov 2026): an indigo "Decision tree · Your work" bar over a light body, so the walk reads as
+ *  the learner's own instrument, set apart from the step text around it. */
+function WalkCard({ title, guide, children }: { title: string; guide?: string; children: React.ReactNode }) {
+  return (
+    <section data-guide={guide} className="overflow-hidden rounded-2xl border-2 border-[#4338CA] bg-[#F7F7FF] shadow-[0_10px_24px_-14px_rgba(67,56,202,0.45)]">
+      <header className="flex items-center justify-between gap-2 bg-[#4338CA] px-4 py-2.5 text-white">
+        <span className="flex items-center gap-2 font-sans text-[12.5px] font-bold uppercase tracking-[0.08em]"><Icon name="treeDown" size={15} />{title}</span>
+        <span className="flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-[0.06em] text-[#3730A3]">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#F97316]" />Your work
+        </span>
+      </header>
+      <div className="px-4 pb-4 pt-3.5">{children}</div>
+    </section>
+  );
+}
+const walkLabel = "text-[13px] font-semibold tracking-[0.07em] text-[#4338CA] [font-variant-caps:all-small-caps]";
+
+function WalkStep({ q, mark, label, text, tag, guide, children }: {
+  q?: number; mark: keyof typeof MARK; label: React.ReactNode; text: React.ReactNode; tag?: "Yes" | "No"; guide?: string; children?: React.ReactNode;
+}) {
+  return (
+    <li data-q={q} data-guide={guide} className="grid grid-cols-[34px_1fr] gap-2 border-t border-[#E6E8F6] py-3 first:border-t-0 first:pt-0 last:pb-0">
+      <span className={`pt-px text-[13.5px] font-semibold tabular-nums ${MARK[mark]}`}>{label}</span>
+      <div className="min-w-0 text-[14.5px] leading-[1.5]">
+        <p className={`flex items-start justify-between gap-3 ${mark === "done" ? "text-[#6B7280]" : "font-medium text-[#111827]"}`}>
+          <span>{text}</span>
+          {tag && <span className={`h-fit shrink-0 rounded-full px-2.5 py-[3px] text-[11px] font-bold uppercase tracking-[0.06em] ${tag === "Yes" ? "bg-[#DCFCE7] text-[#166534]" : "bg-[#ECEDF2] text-[#4B5563]"}`}>{tag}</span>}
+        </p>
+        {children}
+      </div>
+    </li>
+  );
+}
+
 export function LadderWork({ task, s, ladder }: { task: Task; s: Step; ladder: Ladder }) {
   const { desk, progress, update } = useDesk();
   const reg = regOf(task.id, s.n)!;
@@ -1455,7 +1549,8 @@ export function LadderWork({ task, s, ladder }: { task: Task; s: Step; ladder: L
         Rule {ladder.rule}, applied to the lit row: <strong className="font-semibold">{String(row[1])}</strong>. Ask the questions in order and
         stop at the first yes.
       </p>
-      <ol className="grid gap-1.5">
+      <WalkCard title={`Rule ${ladder.rule}`}>
+      <ol>
         {steps.map((x, i) => {
           const last = i === steps.length - 1; // "Otherwise": not a question
           const answered = i < at;
@@ -1463,24 +1558,15 @@ export function LadderWork({ task, s, ladder }: { task: Task; s: Step; ladder: L
           if (i > at && !done) return null;
           if (done && i > stop) return null;
           return (
-            <li key={i} data-q={i} className={`rounded border px-3 py-2 ${on ? "border-[#C7CBF5] bg-[#F7F8FF]" : "border-[#E9ECF1] bg-white"}`}>
-              <p className="flex items-start gap-2 text-[13.5px] text-[#111827]">
-                <span className="mt-px font-mono text-[12px] text-[#8A91A3]">{i + 1}.</span>
-                <span className="flex-1">{last ? "Otherwise" : x.q}</span>
-                {answered && (
-                  <span className={`shrink-0 rounded-[3px] px-1.5 py-0.5 text-[11.5px] font-semibold ${i === stop ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F3F4F7] text-[#3F4757]"}`}>
-                    {i === stop ? "Yes" : "No"}
-                  </span>
-                )}
-              </p>
+            <WalkStep key={i} q={i} mark={on ? "now" : last ? "default" : "done"} label={i + 1} text={last ? "Otherwise" : x.q} tag={answered ? (i === stop ? "Yes" : "No") : undefined}>
               {on && !last && (
-                <div className="mt-2 flex gap-2 pl-5">
-                  <button type="button" onClick={() => answer(i, true)} className="h-8 rounded border border-[#C9CED8] bg-white px-4 text-[13px] font-semibold text-[#111827] hover:border-[#4338CA] focus-ring">Yes</button>
-                  <button type="button" onClick={() => answer(i, false)} className="h-8 rounded border border-[#C9CED8] bg-white px-4 text-[13px] font-semibold text-[#111827] hover:border-[#4338CA] focus-ring">No</button>
+                <div className="mt-2.5 flex gap-2">
+                  <button type="button" onClick={() => answer(i, true)} className={walkBtn}>Yes</button>
+                  <button type="button" onClick={() => answer(i, false)} className={walkBtn}>No</button>
                 </div>
               )}
               {on && miss === i && (
-                <p className="mt-1.5 pl-5 text-[12.5px] text-[#92400E]">
+                <p className="mt-2 rounded-[10px] border border-[#F5E3B0] bg-[#FFFAEB] px-3 py-2.5 text-[12.5px] leading-snug text-[#78350F]">
                   {/* About this question only: what the standard is, in the reference's words. Never the
                       answer, the question that stops, or the type: the walk is how the learner gets there. */}
                   {(() => {
@@ -1491,15 +1577,18 @@ export function LadderWork({ task, s, ladder }: { task: Task; s: Step; ladder: L
                   })()}
                 </p>
               )}
-            </li>
+            </WalkStep>
           );
         })}
+        {done && (
+          <WalkStep guide="ladder-done" mark="stop" label={<Icon name="check" size={13} strokeWidth={3} />} text={<span className={`inline-block rounded border px-2 py-0.5 text-[13px] font-semibold ${tierTone(value)}`}>{value}</span>}>
+            <p className="mt-1 text-[13px] leading-snug text-[#4B5563]">
+              First yes at question {stop + 1} → <strong className="font-semibold text-[#111827]">{value}</strong>. That is what the row shows in column D. In step 3 you ask these questions for each of your own rows.
+            </p>
+          </WalkStep>
+        )}
       </ol>
-      {done && (
-        <p data-guide="ladder-done" className="rounded border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 text-[13.5px] text-[#14532D]">
-          First yes at question {stop + 1} → <strong className="font-semibold">{value}</strong>. That is what the row shows in column D. In step 3 you ask these questions for each of your own rows.
-        </p>
-      )}
+      </WalkCard>
     </div>
   );
 }
@@ -1537,39 +1626,34 @@ export function RuleHelper({ task, s, helper }: { task: Task; s: Step; helper: {
       {ri === undefined ? (
         <p className="rounded border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 text-[13.5px] text-[#14532D]">Every row has a type. Check them, then mark the step complete.</p>
       ) : (
-        <section className="rounded border border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2.5">
-          <p className="text-[12px] text-[#5B6474]">Not sure? Work it out with rule {helper.rule}:</p>
-          <p className="mt-0.5 text-[14px] font-semibold text-[#111827]">{String(reg.rows[ri][1])}</p>
-          <p className="mt-0.5 text-[12px] text-[#5B6474]">Read what it is in Learn › Framework Quick Reference.</p>
-          <ol className="mt-2 grid gap-1.5">
+        <WalkCard title={`Rule ${helper.rule}`}>
+          <p className={walkLabel}>Not sure? Work it out with rule {helper.rule}:</p>
+          <p className="mt-1 text-[16px] font-bold text-[#111827]">{String(reg.rows[ri][1])}</p>
+          <p className="mt-0.5 text-[12.5px] text-[#6B7280]">Read what it is in Learn › Framework Quick Reference.</p>
+          <ol className="mt-3.5 border-t border-[#EEF0F3] pt-3.5">
             {steps.map((x, i) => {
               if (i > at) return null;
               const last = i === steps.length - 1;
               return (
-                <li key={i} data-q={i} className="text-[13.5px] text-[#111827]">
-                  <p className="flex items-start gap-2">
-                    <span className="mt-px font-mono text-[12px] text-[#8A91A3]">{i + 1}.</span>
-                    <span className="flex-1">{last ? `Otherwise: ${x.then}` : x.q}</span>
-                    {i < at && <span className="shrink-0 rounded-[3px] bg-[#F3F4F7] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#3F4757]">No</span>}
-                  </p>
+                <WalkStep key={i} q={i} mark={i < at ? "done" : last ? "default" : "now"} label={i + 1} text={last ? `Otherwise: ${x.then}` : x.q} tag={i < at ? "No" : undefined}>
                   {i === at && (
-                    <div className="mt-1.5 flex gap-2 pl-5">
+                    <div className="mt-2.5 flex gap-2">
                       {last ? (
-                        <button type="button" onClick={() => write(x.then)} className="h-8 rounded bg-[#4338CA] px-3 text-[13px] font-semibold text-white hover:brightness-90 focus-ring">Use {x.then}</button>
+                        <button type="button" onClick={() => write(x.then)} className="h-9 rounded-lg bg-[#4338CA] px-3.5 text-[13.5px] font-semibold text-white hover:bg-[#3730A3] focus-ring">Use {x.then}</button>
                       ) : (
                         <>
-                          <button type="button" onClick={() => write(x.then)} className="h-8 rounded border border-[#C9CED8] bg-white px-4 text-[13px] font-semibold text-[#111827] hover:border-[#4338CA] focus-ring">Yes</button>
-                          <button type="button" onClick={() => setAt(i + 1)} className="h-8 rounded border border-[#C9CED8] bg-white px-4 text-[13px] font-semibold text-[#111827] hover:border-[#4338CA] focus-ring">No</button>
+                          <button type="button" onClick={() => write(x.then)} className={walkBtn}>Yes</button>
+                          <button type="button" onClick={() => setAt(i + 1)} className={walkBtn}>No</button>
                         </>
                       )}
                     </div>
                   )}
-                </li>
+                </WalkStep>
               );
             })}
           </ol>
-          <p className="mt-2 text-[12px] text-[#5B6474]">A yes writes that type into the row. You can change any row in the table.</p>
-        </section>
+          <p className="mt-3 text-[12px] text-[#6B7280]">A yes writes that type into the row. You can change any row in the table.</p>
+        </WalkCard>
       )}
       {left.length > 1 && (
         <p className="text-[12px] text-[#5B6474]">
@@ -1626,8 +1710,6 @@ export function TreeWork({ task, s, tree }: { task: Task; s: Step; tree: { doc: 
     }));
     setWalk({ at: 0, yes: false });
   };
-  const btn = "h-8 rounded border border-[#C9CED8] bg-white px-4 text-[13px] font-semibold text-[#111827] hover:border-[#4338CA] focus-ring";
-  const rec = "h-8 rounded bg-[#4338CA] px-3 text-[13px] font-semibold text-white hover:brightness-90 focus-ring";
   return (
     <div data-guide="tree" className="mt-3 grid gap-2">
       <p className="flex items-center justify-between gap-2 text-[13.5px] text-[#111827]">
@@ -1644,57 +1726,57 @@ export function TreeWork({ task, s, tree }: { task: Task; s: Step; tree: { doc: 
           {rc && <RowCheck task={task} s={s} chk={rc} />}
         </>
       ) : (
-        <section data-guide="tree-row" className="rounded border border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2.5">
-          <p className="text-[12px] text-[#5B6474]">{cellValue(reg, progress, task.id, ri, tree.path) ? "Walking again" : "Now walking"} · lit in the table</p>
-          <p className="mt-0.5 text-[14px] font-semibold text-[#111827]">{reg.rows[ri][0]} · {reg.rows[ri][1]}</p>
-          <p className="mt-0.5 text-[12px] text-[#5B6474]">Answer from the row&apos;s facts. The questions of {tree.doc} Section {tree.sec}, in order: stop at the first yes.</p>
+        <WalkCard title="Decision tree" guide="tree-row">
+          <p className={walkLabel}>{cellValue(reg, progress, task.id, ri, tree.path) ? "Walking again" : "Now walking"} · highlighted in the table</p>
+          <p className="mt-1 text-[16px] font-bold text-[#111827]"><span className="text-[#4338CA]">{reg.rows[ri][0]}</span> · {reg.rows[ri][1]}</p>
+          <p className="mt-0.5 text-[12.5px] text-[#6B7280]">Answer from the row&apos;s facts. The questions of {tree.doc} Section {tree.sec}, in order: stop at the first yes.</p>
           {!qs ? (
-            <div className="mt-2 h-20 animate-pulse rounded bg-[#EEF0FF]" aria-busy="true" />
+            <div className="mt-3 h-20 animate-pulse rounded bg-[#EEF0FF]" aria-busy="true" />
           ) : (
-            <ol className="mt-2 grid gap-1.5">
+            <ol className="mt-3.5 border-t border-[#EEF0F3] pt-3.5">
               {qs.map((x, i) => {
                 if (i > cur.at) return null;
                 const last = i === qs.length - 1; // "Otherwise": not a question
                 const tiers = [...x.then.matchAll(/Tier (\d)/g)].map((m) => m[1]);
+                const on = i === cur.at;
                 return (
-                  <li key={i} data-q={i} className="text-[13.5px] text-[#111827]">
-                    <p className="flex items-start gap-2">
-                      <span className="mt-px text-[12px] font-semibold text-[#8A91A3]">Q{i + 1}</span>
-                      <span className="flex-1">{last ? `Otherwise → ${x.then}` : x.q}</span>
-                      {i < cur.at && <span className="shrink-0 rounded-[3px] bg-[#F3F4F7] px-1.5 py-0.5 text-[11.5px] font-semibold text-[#3F4757]">No</span>}
-                    </p>
-                    {i === cur.at && (
-                      <div className="mt-1.5 flex flex-wrap items-center gap-2 pl-6">
-                        {last ? (
-                          <button type="button" onClick={() => write(tierOf(tiers[0]), "Otherwise")} className={rec}>Record {tierOf(tiers[0])}</button>
-                        ) : cur.yes && tiers.length ? (
-                          <>
-                            <span className="w-full text-[12.5px] text-[#3F4757]">Yes → {x.then}.</span>
-                            {tiers.map((t) => (
-                              <button key={t} type="button" onClick={() => write(tierOf(t), `Q${i + 1} Yes`)} className={rec}>Record {tierOf(t)}</button>
-                            ))}
-                            <button type="button" onClick={() => setWalk({ ...cur, yes: false })} className="text-[12.5px] font-medium text-[#3730A3] underline-offset-2 hover:underline focus-ring">Back</button>
-                          </>
-                        ) : cur.yes ? (
-                          // An outcome that is not a Group tier (Section 5: "apply the national scheme (Section 4.1)").
-                          <p className="text-[12.5px] leading-snug text-[#92400E]">
-                            Yes → {x.then}. That is not a Group tier: read in {tree.doc} which organisations it covers, then answer again.{" "}
-                            <button type="button" onClick={() => setWalk({ ...cur, yes: false })} className="font-semibold underline underline-offset-2 focus-ring">Answer again</button>
-                          </p>
-                        ) : (
-                          <>
-                            <button type="button" onClick={() => setWalk({ ...cur, yes: true })} className={btn}>Yes</button>
-                            <button type="button" onClick={() => setWalk({ ...cur, at: i + 1 })} className={btn}>No</button>
-                          </>
-                        )}
-                      </div>
+                  <Fragment key={i}>
+                    <WalkStep q={i} mark={!on ? "done" : last ? "default" : "now"} label={`Q${i + 1}`} text={last ? `Otherwise → ${x.then}` : x.q} tag={!on ? "No" : cur.yes ? "Yes" : undefined}>
+                      {on && last && (
+                        <div className="mt-2.5 flex flex-wrap gap-2">
+                          <button type="button" onClick={() => write(tierOf(tiers[0]), "Otherwise")} className={walkRecord(tierOf(tiers[0]))}>Record {tierOf(tiers[0])}</button>
+                        </div>
+                      )}
+                      {on && !last && !cur.yes && (
+                        <div className="mt-2.5 flex gap-2">
+                          <button type="button" onClick={() => setWalk({ ...cur, yes: true })} className={walkBtn}>Yes</button>
+                          <button type="button" onClick={() => setWalk({ ...cur, at: i + 1 })} className={walkBtn}>No</button>
+                        </div>
+                      )}
+                      {on && !last && cur.yes && !tiers.length && (
+                        // An outcome that is not a Group tier (Section 5: "apply the national scheme (Section 4.1)").
+                        <p className="mt-2 rounded-[10px] border border-[#F5E3B0] bg-[#FFFAEB] px-3 py-2.5 text-[12.5px] leading-snug text-[#78350F]">
+                          Yes → {x.then}. That is not a Group tier: read in {tree.doc} which organisations it covers, then answer again.{" "}
+                          <button type="button" onClick={() => setWalk({ ...cur, yes: false })} className="font-semibold underline underline-offset-2 focus-ring">Answer again</button>
+                        </p>
+                      )}
+                    </WalkStep>
+                    {on && !last && cur.yes && tiers.length > 0 && (
+                      <WalkStep mark="stop" label={<Icon name="check" size={13} strokeWidth={3} />} text={`Yes → ${x.then}.`}>
+                        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                          {tiers.map((t) => (
+                            <button key={t} type="button" onClick={() => write(tierOf(t), `Q${i + 1} Yes`)} className={walkRecord(tierOf(t))}>Record {tierOf(t)}</button>
+                          ))}
+                          <button type="button" onClick={() => setWalk({ ...cur, yes: false })} className="px-1.5 text-[13px] font-semibold text-[#4B5563] hover:text-[#111827] focus-ring">Back</button>
+                        </div>
+                      </WalkStep>
                     )}
-                  </li>
+                  </Fragment>
                 );
               })}
             </ol>
           )}
-        </section>
+        </WalkCard>
       )}
       {ri !== undefined && walked > 0 && <p className="text-[12px] text-[#5B6474]">Click a row&apos;s path in the table to walk it again.</p>}
     </div>

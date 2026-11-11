@@ -9,6 +9,8 @@ import { press } from "./ui";
 import { dayIndex, dueDate, fmtDay, krActivities, splitKr, type Task } from "@/lib/desk/model";
 import { stepKey, taskStatus } from "@/lib/desk/progress";
 import { badgeOfTask, standing as badgeStanding } from "@/lib/desk/badges";
+import { lockedWhy } from "@/lib/desk/work";
+import { OrgName } from "@/lib/desk/org-tone";
 import { MethodMedal } from "@/components/badges/method-medal";
 import Link from "next/link";
 
@@ -21,7 +23,7 @@ export type Tab = "task" | "how" | "refs" | "deliver" | "msgs";
  * finished without them.
  */
 export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: number; onFocus: (n: number) => void; tab: Tab; setTab: (t: Tab) => void }) {
-  const { progress, start, isOpen } = useDesk();
+  const { desk, progress, start, isOpen } = useDesk();
   const locked = !isOpen(task.week);
   const isDone = (n: number) => !!progress.done[stepKey(task.id, n)];
   const doneCount = task.steps.filter((s) => isDone(s.n)).length;
@@ -101,7 +103,13 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
           <Fact label="Due" tone={st === "submitted" ? "done" : locked ? "plain" : due.level === "later" ? "plain" : "due"}>
             {st === "submitted" ? "Submitted" : locked ? `Opens ${fmtDay(dueDate(start, (task.week - 1) * 7))}` : `${due.text.replace(/^Due /, "").replace(/^./, (c) => c.toUpperCase())} · ${fmtDay(dueDate(start, task.dueDay))}`}
           </Fact>
-          <Fact label="Organisation">{task.orglbl}</Fact>
+          <Fact label="Organisation">
+            <OrgName org={task.org} orgs={desk.orgs} />
+            {/* "Org A · Manila": which client slot, and the office, the name above does not say. */}
+            <span className="block text-[12px] text-[#5B6474]">
+              {[task.orglbl.split("·")[0].trim(), task.orglbl.split(",").slice(1).join(",").trim()].filter(Boolean).join(" · ")}
+            </span>
+          </Fact>
           <Fact label="Assigned by">{task.owner}</Fact>
           <Fact label="Time">{task.hrs} h</Fact>
           <Fact label="Progress" last>
@@ -321,9 +329,13 @@ function FloatingChecklist({ task, focus, onFocus, watch, open, setOpen }: {
 
 /** Submitting seals the task. It opens once every activity is complete. */
 function Submit({ task, locked }: { task: Task; locked: boolean }) {
-  const { progress, update } = useDesk();
+  const { desk, progress, update, start } = useDesk();
   const submitted = progress.submitted[task.id];
-  const left = task.steps.filter((s) => !progress.done[stepKey(task.id, s.n)]).length;
+  const open = task.steps.filter((s) => !progress.done[stepKey(task.id, s.n)]);
+  const left = open.length;
+  // A locked button says why, naming the next thing to do (owner, 2 Nov 2026): the first open step, and what it waits on.
+  const first = open[0];
+  const why = first ? lockedWhy(desk, progress, task, first, start) : null;
   return (
     <footer aria-label="Submit" className="flex flex-wrap items-stretch justify-between gap-4 bg-[#F7F8FA] pl-4">
       <div className="grid gap-1.5 py-3">
@@ -334,6 +346,12 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
               ? `${left} ${left === 1 ? "step" : "steps"} left before you can submit`
               : "Every step is complete."}
         </p>
+        {!submitted && !locked && first && (
+          <p data-guide="submit-task-why" className="inline-flex items-start gap-1.5 text-[12.5px] font-medium text-[#78350F]">
+            <Icon name="info" size={14} className="mt-px shrink-0" />
+            Next: step {first.n}. {why ?? "Mark it complete."}
+          </p>
+        )}
         <div className="flex flex-wrap gap-1.5">
           {task.subs.map((x) => (
             <span key={x.code} className="inline-flex items-center gap-1.5 rounded-[3px] border border-[#DDE1E8] bg-white px-2 py-0.5 text-[12px] text-[#3F4757]">

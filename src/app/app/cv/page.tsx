@@ -109,7 +109,7 @@ export default function CvPage() {
       ) : cv ? (
         <>
           <CvSheet cv={cv} methodBadges={methodBadges ?? undefined} />
-          <div className="text-center text-[11px] text-slate-400 pt-4 pb-2 cv-noprint">Updates automatically from your Working Desk. The public link leaves out your email.</div>
+          <div className="text-center text-[11px] text-slate-400 pt-4 pb-2 cv-noprint">Updates automatically from your Working Desk. Your email address is not on the CV.</div>
         </>
       ) : (
         <div className="text-center text-[13px] text-slate-400 py-24">Couldn&apos;t load your CV. Please try again.</div>

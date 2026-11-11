@@ -3,6 +3,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { SectionHead } from "@/components/ui/primitives";
 import { Stagger, StaggerItem } from "@/components/ui/motion";
 import { Faq, type FaqEntry } from "@/components/landing/faq";
+import { DeskDemo } from "@/components/landing/desk-demo";
 import { CTA_HREF, Nav, SiteFooter } from "@/components/landing/chrome";
 import { GLOW, SOFT_TONES } from "@/lib/tones";
 import { WAITLIST_MODE } from "@/lib/flags";
@@ -93,7 +94,7 @@ function Hero() {
           ))}
         </dl>
         </div>
-        <DeskPreview />
+        <DeskDemo />
       </div>
     </section>
   );
@@ -101,59 +102,6 @@ function Hero() {
 
 // GRC 101 at a glance — counts from the desk catalogue (backend/_seed/grc101_desk_catalog.json).
 const STATS: [string, string][] = [["25", "tasks"], ["255", "steps"], ["120", "decisions"], ["12", "weeks"]];
-
-// A still of one real step (F1.1, decision F1.1-D1, wording from the answer key) so the hero shows the
-// product rather than describing it. Static markup on purpose: nothing here is interactive.
-function DeskPreview() {
-  const opts: [string, string][] = [
-    ["A", "Share it but change the password later"],
-    ["B", "Share it just for today"],
-    ["C", "Refuse and tell the programme office with “Report a problem”"],
-  ];
-  return (
-    <div className="relative" aria-hidden="true">
-      <div className="absolute -inset-6 rounded-[32px] bg-gradient-to-br from-indigo-200/40 via-violet-100/30 to-emerald-100/40 blur-2xl" />
-      <div className="relative rounded-2xl bg-white ring-1 ring-slate-200/80 shadow-[0_30px_60px_-30px_rgba(30,27,75,0.35)] overflow-hidden text-left">
-        <div className="flex items-center justify-between gap-3 px-5 h-11 border-b border-slate-100 bg-slate-50/70">
-          <span className="text-[12px] font-semibold text-slate-700 tracking-tight">Working Desk</span>
-          <span className="font-mono text-[11px] text-slate-400">Week 1 · step 2 of 6</span>
-        </div>
-        <div className="p-5 md:p-6">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[11px] font-semibold text-indigo-700 bg-indigo-50 ring-1 ring-indigo-100 rounded px-1.5 py-0.5">F1.1</span>
-            <span className="text-[12.5px] text-slate-500 tracking-tight truncate">Onboarding to the Group GRC Office</span>
-          </div>
-          <p className="mt-4 text-[15px] font-semibold text-slate-900 tracking-tight leading-snug">
-            A colleague asks for your login so they can finish a step for you. What do you do?
-          </p>
-          <div className="mt-4 flex flex-col gap-2">
-            {opts.map(([k, t]) => {
-              const best = k === "C";
-              return (
-                <div key={k} className={`flex items-start gap-3 rounded-xl px-3.5 py-2.5 ring-1 text-[13px] tracking-tight leading-snug ${best ? "ring-emerald-300 bg-emerald-50/70 text-slate-900" : "ring-slate-200 text-slate-500"}`}>
-                  <span className={`mt-px w-5 h-5 shrink-0 rounded-md flex items-center justify-center font-mono text-[11px] font-semibold ${best ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"}`}>
-                    {best ? <Icon name="check" size={12} /> : k}
-                  </span>
-                  {t}
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-4 rounded-xl bg-slate-50 ring-1 ring-slate-200/70 px-4 py-3">
-            <div className="text-[11px] font-semibold tracking-[0.12em] uppercase text-emerald-700">The call a practitioner backs</div>
-            <p className="mt-1 text-[12.5px] text-slate-600 leading-relaxed tracking-tight">
-              Your account is personal. Refusing keeps it that way, and reporting lets the programme office deal with the request.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-3 px-5 h-10 border-t border-slate-100 text-[11px] text-slate-400">
-          <span className="truncate">Prepared for you · your own mentee ID</span>
-          <span className="font-mono shrink-0">BKB-POL-024 §3.1</span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function Frameworks() {
   // The standards GRC 101's tasks actually cite, most-cited first (public/desk/sample.json).

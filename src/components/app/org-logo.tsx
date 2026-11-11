@@ -1,3 +1,5 @@
+import { ORG_TONE, type OrgKey } from "@/lib/desk/org-tone";
+
 /**
  * Organisation logos: a monogram on a round, sector-coloured badge.
  *
@@ -41,12 +43,14 @@ export interface OrgLogoProps {
   className?: string;
   /** Monogram size in px. */
   iconSize?: number;
+  /** A desk client (Org A / Org B): draw it in that organisation's colour, the one every other mark of it uses. */
+  orgKey?: OrgKey;
 }
 
-export function OrgLogo({ org, className = "w-11 h-11", iconSize = 22 }: OrgLogoProps) {
+export function OrgLogo({ org, className = "w-11 h-11", iconSize = 22, orgKey }: OrgLogoProps) {
   const brand = BRAND[org.id];
   const ini = brand?.ini ?? org.initials;
-  const { from, to } = brand ?? FALLBACK;
+  const { from, to } = orgKey ? { from: ORG_TONE[orgKey].solid, to: ORG_TONE[orgKey].text } : brand ?? FALLBACK;
   const locked = org.status === "locked" || org.status === "upcoming";
   const long = ini.length > 2;
 

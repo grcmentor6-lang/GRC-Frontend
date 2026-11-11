@@ -18,3 +18,10 @@ export const LINKEDIN_ENABLED = process.env.NEXT_PUBLIC_LINKEDIN_ENABLED === "1"
  * release (week n opens 7·(n−1) days after the mentee's start).
  */
 export const ALL_WEEKS_OPEN = true;
+
+/**
+ * Every knowledge check and exam open regardless of the week's submissions (owner, 11 Nov 2026, for testing).
+ * ponytail: a constant like ALL_WEEKS_OPEN; backend/app/services/desk_kc.py KC_ALL_OPEN must say the same, since the
+ * server enforces the rule too. Set both to false to restore "opens once the week's tasks are submitted".
+ */
+export const KC_ALL_OPEN = true;

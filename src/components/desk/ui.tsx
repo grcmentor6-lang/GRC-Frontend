@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import type { Table } from "@/lib/desk/model";
+import { cellTone } from "@/lib/desk/cell-tone";
 
 /** Press feedback shared by every clickable on the desk. */
 export const press = "transition-transform duration-150 ease-out active:scale-[0.97] focus-ring";
@@ -13,11 +14,12 @@ export function TableView({ t, max, flush }: { t: Partial<Table>; max?: number; 
   if (!t.h?.length) return null;
   return (
     <div className={`overflow-x-auto bg-white ${flush ? "border-b border-[#DDE1E8]" : "rounded border border-[#DDE1E8]"}`}>
-      <table className="w-full border-collapse text-[13px] tabular-nums">
-        <thead className="bg-[#F7F8FA] text-left text-[11px] uppercase tracking-[0.06em] text-[#5B6474]">
+      {/* The register look (register.html): no column rules, a quiet header, the register's vocabulary as chips. */}
+      <table className="w-full border-collapse text-[13.5px] leading-[1.5] tabular-nums text-[#4B5563]">
+        <thead className="bg-[#F8F9FB] font-sans text-left text-[10.5px] uppercase tracking-[0.08em] text-[#6B7280]">
           <tr>
             {t.h.map((h) => (
-              <th key={h} className="whitespace-nowrap border-b border-r border-[#DDE1E8] border-r-[#E9ECF1] px-3.5 py-[9px] font-semibold last:border-r-0">{h}</th>
+              <th key={h} className="min-w-[84px] border-y border-b-[#E3E5EA] border-t-[#E8EAEF] px-3.5 py-3 align-bottom font-semibold leading-[1.4]">{h}</th>
             ))}
           </tr>
         </thead>
@@ -25,7 +27,7 @@ export function TableView({ t, max, flush }: { t: Partial<Table>; max?: number; 
           {rows.map((r, i) => (
             <tr key={i} className="hover:[&>td]:bg-[#FAFAFC]">
               {r.map((c, j) => (
-                <td key={j} className="border-b border-r border-[#E9ECF1] px-3.5 py-[11px] align-top text-[#3F4757] last:border-r-0 first:font-medium first:text-[#111827]">{c}</td>
+                <td key={j} className="border-b border-[#EEF0F3] px-3.5 py-3 align-top first:font-semibold first:text-[#111827]">{typeof c === "string" && c ? <Toned v={c} h={t.h?.[j]} /> : c}</td>
               ))}
             </tr>
           ))}
@@ -36,6 +38,18 @@ export function TableView({ t, max, flush }: { t: Partial<Table>; max?: number; 
       )}
     </div>
   );
+}
+
+/**
+ * A register's value as a real register draws it (redesign, register.html): its vocabulary as a coloured
+ * chip, Yes/No in bold, "See description" quiet; anything else as written (lib/desk/cell-tone).
+ */
+export function Toned({ v, h }: { v: string; h?: string }) {
+  const t = cellTone(v, h);
+  if (!t) return <>{v}</>;
+  if (t.kind === "strong") return <span className="font-semibold text-[#111827]">{v}</span>;
+  if (t.kind === "muted") return <span className="italic text-[#6B7280]">{v}</span>;
+  return <span data-tone className={`inline-block rounded-md border px-2 py-[2px] text-[12px] font-semibold leading-[1.4] ${t.cls.includes("border-[") ? t.cls : `border-transparent ${t.cls}`}`}>{v}</span>;
 }
 
 export function Label({ children }: { children: ReactNode }) {

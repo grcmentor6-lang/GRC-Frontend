@@ -4,10 +4,30 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExter
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { appZoom } from "@/lib/zoom";
+import { ACTION, Marked, sentences } from "@/components/desk/step-text";
+
+/** One numbered instruction on a guide card: a bold lead phrase ("Read the highlighted row first"), then one or two
+ *  plain sentences. Every string is set by `Marked` (step-text.tsx): documents amber, buttons as buttons, paths tinted, codes as chips. */
+export type GuideItem = {
+  lead: string;
+  text?: string;
+  /** Where the answer branches, side by side under the text: the first case in green (the one that settles it),
+   *  the rest neutral. E.g. [{ when: "If Yes", then: "Stop: …" }, { when: "If No", then: "The next question …" }]. */
+  fork?: { when: string; then: string }[];
+  /** "stop": the closing move (a tick in a green disc); "default": the fallback when nothing else applies (dark disc). */
+  mark?: "stop" | "default";
+};
+/** A box under the list: "avoid" (amber) for where learners commonly go wrong, "unsure" (indigo) for where to look
+ *  when stuck, "note" (grey) for anything else worth knowing. */
+export type GuideTip = { kind: "avoid" | "unsure" | "note"; text: string };
 
 export type TourStep = {
   title: string;
+  /** The card's intro line (or its whole text, when it needs no list). Same markup as `GuideItem`. */
   body: string;
+  /** The numbered instructions, drawn as the design's step rail. Only where a card holds more than one action. */
+  steps?: GuideItem[];
+  tips?: GuideTip[];
   /** Icon shown in the card header — match it to the highlighted section's own icon. */
   icon?: IconName;
   /** Resolve the element to spotlight at the moment the step runs (so conditional/responsive targets work). */
@@ -59,7 +79,7 @@ type Pos = { side: Side; top: number; left: number; arrow: number };
 const GAP = 12; // tooltip ↔ target
 const MARGIN = 14; // tooltip ↔ viewport edge
 const PAD = 6; // spotlight padding around target
-const TIP_W = 340;
+const TIP_W = 360;
 const OFFSCREEN: Box = { top: -9999, left: -9999, width: 0, height: 0 }; // sentinel: no target → plain full-screen dim, no hole
 
 /** Angles of the click sparks around the cursor's tip — clear of the 20–80° wedge its body covers. */
@@ -358,6 +378,108 @@ function useTourTurn(wants: boolean): boolean {
     return () => { tourQueue = tourQueue.filter((x) => x !== id); tourSubs.forEach((f) => f()); };
   }, [wants, id]);
   return useSyncExternalStore(subscribeTours, () => tourQueue[0] === id, () => false);
+}
+
+/**
+ * A card's body as a list (owner, 11 Nov 2026: "text in the step guide is still not in bullets"): one item per
+ * sentence. Numbered when two or more of them are actions in order, the explanations between them bulleted quietly;
+ * bulleted otherwise, a one-sentence card included. Above a step rail (`intro`) it is always bulleted, so the rail
+ * keeps the only numbers on the card.
+ */
+function GuideLines({ body, intro }: { body: string; intro: boolean }) {
+  const lines = sentences(body);
+  if (!lines.length) return null;
+  const acts = lines.map((l) => ACTION.test(l));
+  const numbered = !intro && acts.filter(Boolean).length > 1;
+  let n = 0;
+  return (
+    <ul className="mx-5 mt-3 flex flex-col gap-1.5">
+      {lines.map((l, i) => (
+        <li key={i} className="flex gap-2.5 text-[14px] leading-[1.6] text-[#374151]" style={{ textWrap: "pretty" }}>
+          {numbered && acts[i] ? (
+            <span aria-hidden className="mt-[3px] grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full bg-[#4338CA] text-[10.5px] font-bold tabular-nums text-white">{++n}</span>
+          ) : (
+            <span aria-hidden className={`mt-[9px] h-[6px] w-[6px] shrink-0 rounded-full ${numbered ? "mx-[6px] bg-[#C7CBF5]" : "bg-[#4338CA]"}`} />
+          )}
+          <span className="min-w-0"><Marked text={l} /></span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** A rail step's lead or text, a fork outcome or a tip: one sentence inline, more as a list of its sentences. */
+function Said({ text, as: As = "p", className = "" }: { text: string; as?: "p" | "div"; className?: string }) {
+  const lines = sentences(text);
+  if (lines.length < 2) return <As className={className} style={{ textWrap: "pretty" }}><Marked text={text} /></As>;
+  return (
+    <ul className={`flex flex-col gap-0.5 ${className}`}>
+      {lines.map((l, i) => (
+        <li key={i} className="flex gap-2" style={{ textWrap: "pretty" }}>
+          <span aria-hidden className="mt-[0.6em] h-[5px] w-[5px] shrink-0 rounded-full bg-current opacity-50" />
+          <span className="min-w-0"><Marked text={l} /></span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const TIP: Record<GuideTip["kind"], { box: string; icon: IconName; color: string; label: string }> = {
+  avoid: { box: "bg-[#FFFAEB] text-[#78350F] border-[#F5E3B0]", icon: "alertTriangle", color: "text-[#B45309]", label: "Avoid:" },
+  unsure: { box: "bg-[#F5F6FF] text-[#312E81] border-[#DFE2F5]", icon: "help", color: "text-[#4338CA]", label: "Unsure?" },
+  note: { box: "bg-[#F8F9FB] text-[#374151] border-[#E3E5EA]", icon: "info", color: "text-[#6B7280]", label: "Note:" },
+};
+
+/** The card's structured content, drawn as `docs/redesign-guide/guide.html` does: a numbered rail with bold leads, a
+ *  fork of outcome boxes where an answer branches, then the tip boxes. */
+function GuideBody({ steps, tips }: Pick<TourStep, "steps" | "tips">) {
+  return (
+    <>
+      {!!steps?.length && (
+        <ol className="mx-5 mt-4">
+          {steps.map((s, i) => (
+            <li key={i} className="relative grid grid-cols-[26px_1fr] gap-3 pb-3.5 last:pb-0">
+              {i < steps.length - 1 && <span aria-hidden className="absolute left-3 top-7 bottom-0.5 w-0.5 bg-[#E6E8F6]" />}
+              <span
+                aria-hidden
+                className={`grid place-items-center w-[26px] h-[26px] rounded-full border text-[12px] font-bold ${
+                  s.mark === "stop" ? "bg-[#16A34A] border-[#16A34A] text-white" : s.mark === "default" ? "bg-[#111827] border-[#111827] text-white" : "bg-[#F1F2FF] border-[#C7CCF5] text-[#4338CA]"
+                }`}
+              >
+                {s.mark === "stop" ? <Icon name="check" size={13} strokeWidth={3} /> : i + 1}
+              </span>
+              <div className="min-w-0">
+                <Said text={s.lead} className="pt-[3px] text-[14px] font-semibold leading-[1.4] text-[#111827]" />
+                {s.text && <Said text={s.text} className="mt-0.5 text-[13.5px] leading-[1.55] text-[#4B5563]" />}
+                {!!s.fork?.length && (
+                  <div className={`mt-2 grid gap-2 ${s.fork.length > 1 ? "grid-cols-2" : ""}`}>
+                    {s.fork.map((f, j) => (
+                      <div key={j} className={`rounded-lg border px-2.5 py-2 text-[12.5px] leading-[1.45] ${j ? "bg-[#F8F9FB] text-[#374151] border-[#E3E5EA]" : "bg-[#EFFBF3] text-[#166534] border-[#C8ECD5]"}`}>
+                        <b className="block mb-0.5 text-[10.5px] font-bold tracking-[0.08em] uppercase">{f.when}</b>
+                        <Said text={f.then} as="div" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+      {!!tips?.length && (
+        <div className="mx-5 mt-4 grid gap-2">
+          {tips.map((t, i) => (
+            <div key={i} className={`grid grid-cols-[16px_1fr] gap-2.5 rounded-[10px] border px-3 py-2.5 text-[13px] leading-[1.5] ${TIP[t.kind].box}`}>
+              <Icon name={TIP[t.kind].icon} size={16} strokeWidth={2.2} className={`mt-px ${TIP[t.kind].color}`} />
+              {sentences(t.text).length < 2 ? <p><b className="font-semibold">{TIP[t.kind].label}</b> <Marked text={t.text} /></p> : (
+                <div><b className="font-semibold">{TIP[t.kind].label}</b><Said text={t.text} className="mt-0.5" /></div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
 }
 
 /** A spotlight coach-mark tour: dims the page, cuts a hole around the current target, and shows a
@@ -667,19 +789,12 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
   const side: Side = pos?.side ?? "float";
   const floating = side === "float";
 
-  // Caret: a triangle on the card edge facing the target, two-toned (white face + soft slate base
-  // line) so it reads as part of the bordered card rather than a loose shape.
-  const caret: Record<Exclude<Side, "float">, React.CSSProperties> = {
-    bottom: { top: -8, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderBottom: "8px solid white", filter: "drop-shadow(0 -1px 0 rgba(148,163,184,0.4))" },
-    top: { bottom: -8, borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderTop: "8px solid white", filter: "drop-shadow(0 1px 0 rgba(148,163,184,0.4))" },
-    right: { left: -8, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderRight: "8px solid white", filter: "drop-shadow(-1px 0 0 rgba(148,163,184,0.4))" },
-    left: { right: -8, borderTop: "8px solid transparent", borderBottom: "8px solid transparent", borderLeft: "8px solid white", filter: "drop-shadow(1px 0 0 rgba(148,163,184,0.4))" },
-  };
+  // Caret: a small white square turned 45° and half tucked under the card edge that faces the target.
   const caretPos: React.CSSProperties =
     pos && pos.side !== "float"
       ? pos.side === "top" || pos.side === "bottom"
-        ? { left: pos.arrow - 8, ...caret[pos.side] }
-        : { top: pos.arrow - 8, ...caret[pos.side] }
+        ? { left: pos.arrow - 7, [pos.side === "bottom" ? "top" : "bottom"]: -7 }
+        : { top: pos.arrow - 7, [pos.side === "right" ? "left" : "right"]: -7 }
       : {};
 
   return createPortal(
@@ -693,11 +808,11 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
         /* spotlight cutout — one div: the giant shadow dims the page, while a crisp white separation
            ring + indigo halo + soft glow make the target read as "lit", on-brand and not harsh. */
         <div
-          className="absolute rounded-lg pointer-events-none"
+          className="absolute rounded-xl pointer-events-none"
           style={{
             ...box,
             boxShadow:
-              "0 0 0 9999px rgba(15,23,42,0.62), 0 0 0 1.5px #fff, 0 0 0 3.5px rgba(67,56,202,0.85)",
+              "0 0 0 9999px rgba(15,23,42,0.62), 0 0 0 3px #818CF8, 0 0 0 7px rgba(129,140,248,0.25)",
           }}
         />
       )}
@@ -738,6 +853,7 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: TIP_W,
+          maxHeight: window.innerHeight / appZoom() - 2 * MARGIN,
           top: pos?.top ?? window.innerHeight / 2,
           left: pos?.left ?? (window.innerWidth - TIP_W) / 2,
           opacity: shown ? 1 : 0,
@@ -745,45 +861,52 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
         }}
         // Fades in only: hidden at once between cards, or the next card's text showed in the old card's fading box (a
         // card passed over flashed up for a frame).
-        className={`absolute pointer-events-auto rounded-xl bg-white ring-1 ring-slate-200 shadow-[0_18px_40px_-12px_rgba(15,23,42,0.45)] p-4 ${shown ? "transition-[opacity,transform] duration-200 ease-out" : ""}`}
+        className={`absolute pointer-events-auto flex flex-col rounded-[14px] bg-white shadow-[0_12px_32px_rgba(17,24,39,0.28)] ${shown ? "transition-[opacity,transform] duration-200 ease-out" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-label={`Guide: ${current.title}`}
       >
-        {!floating && <span className="absolute w-0 h-0" style={caretPos} aria-hidden />}
+        {!floating && <span className="absolute h-3.5 w-3.5 rotate-45 rounded-[2px] bg-white" style={caretPos} aria-hidden />}
 
-        {/* header — icon tile + title + step counter */}
-        <div className="flex items-start gap-3">
-          <span className="shrink-0 grid place-items-center w-9 h-9 rounded-lg bg-[#4338CA] text-white">
-            <Icon name={current.icon ?? "sparkle"} size={17} />
+        {/* header: icon tile, "Guide · Step X of N" over the title, close */}
+        <div className="relative shrink-0 flex items-start gap-3 px-5 pt-5">
+          <span className="shrink-0 grid place-items-center w-[38px] h-[38px] rounded-[10px] bg-[#4338CA] text-white">
+            <Icon name={current.icon ?? "sparkle"} size={18} />
           </span>
-          <div className="min-w-0 flex-1 pt-0.5">
-            <h3 className="text-[15px] font-semibold tracking-tight text-slate-900 leading-snug" style={{ textWrap: "balance" }}>{current.title}</h3>
-            <p className="font-mono text-[11px] font-semibold tracking-[0.06em] uppercase text-[#4338CA] mt-0.5 tabular-nums">Step {step + 1} of {steps.length}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold tracking-[0.09em] uppercase text-[#4338CA] tabular-nums">Guide · Step {step + 1} of {steps.length}</p>
+            <h3 className="mt-0.5 text-[18px] font-bold tracking-[-0.012em] text-[#111827] leading-snug" style={{ textWrap: "balance" }}>{current.title}</h3>
           </div>
-          {!required && <button onClick={onClose} aria-label="Skip guide" className="focus-ring shrink-0 -mr-1 -mt-1 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
-            <Icon name="x" size={14} />
+          {!required && <button onClick={onClose} aria-label="Skip guide" className="focus-ring shrink-0 -mr-1.5 -mt-1 w-7 h-7 rounded-md flex items-center justify-center text-[#9CA3AF] hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
+            <Icon name="x" size={16} />
           </button>}
         </div>
 
-        <p className="text-[13.5px] text-slate-700 leading-relaxed mt-3" style={{ textWrap: "pretty" }}>{current.body}</p>
-        {current.demo}
+        {/* The middle scrolls when a long card would not fit the screen; header and controls stay put. */}
+        <div className="min-h-0 overflow-y-auto">
+          <GuideLines body={current.body} intro={!!current.steps?.length} />
+          <GuideBody steps={current.steps} tips={current.tips} />
+          {current.demo && <div className="px-5">{current.demo}</div>}
+        </div>
         {(current.waitFor || current.nextWhen) && <p className="sr-only">{current.doIt ?? "Do it now to continue"}</p>}
 
-        {/* footer — progress dots left, controls right */}
-        <div className="flex items-center justify-between gap-3 mt-4">
-          <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
-            {steps.map((_, i) => (
-              <span key={i} className={`shrink-0 h-1.5 rounded-full transition-all duration-300 ${i === step ? "w-4 bg-[#4338CA]" : i < step ? "w-1.5 bg-[#A5B4FC]" : "w-1.5 bg-slate-200"}`} />
-            ))}
+        {/* footer: progress dots and count left, controls right */}
+        <div className="shrink-0 flex items-center justify-between gap-3 mt-4 px-5 pt-3.5 pb-4 border-t border-[#EEF0F3]">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-[5px] min-w-0 overflow-hidden">
+              {steps.map((_, i) => (
+                <span key={i} className={`shrink-0 h-1.5 rounded-full transition-all duration-300 ${i === step ? "w-5 bg-[#4338CA]" : i < step ? "w-1.5 bg-[#A5B4FC]" : "w-1.5 bg-[#DFE2EA]"}`} />
+              ))}
+            </div>
+            <span className="shrink-0 text-[12px] text-[#6B7280] tabular-nums">{step + 1} / {steps.length}</span>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {canBack ? (
-              <button onClick={() => onStep(step - 1)} className="focus-ring h-8 px-2.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-[12.5px] font-medium inline-flex items-center gap-1 cursor-pointer transition-colors">
-                <Icon name="arrowLeft" size={13} /> Back
+              <button onClick={() => onStep(step - 1)} className="focus-ring h-9 px-2.5 rounded-lg text-[#4B5563] hover:text-slate-900 hover:bg-slate-100 text-[13.5px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors">
+                <Icon name="arrowLeft" size={14} /> Back
               </button>
             ) : required ? null : (
-              <button onClick={onClose} className="focus-ring h-8 px-2.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-[12.5px] font-medium cursor-pointer transition-colors">
+              <button onClick={onClose} className="focus-ring h-9 px-2.5 rounded-lg text-[#4B5563] hover:text-slate-900 hover:bg-slate-100 text-[13.5px] font-semibold cursor-pointer transition-colors">
                 Skip
               </button>
             )}
@@ -793,9 +916,9 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
               onClick={() => (typeof current.away === "function" ? (onClose(), onAway?.(current.away)) : isLast ? onClose() : onStep(step + 1))}
               disabled={!!current.nextWhen && !ready && box !== OFFSCREEN}
               title={current.nextWhen && !ready ? current.doIt : undefined}
-              className="focus-ring disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:active:scale-100 h-8 px-3.5 rounded-lg bg-[#4338CA] hover:bg-[#3730A3] active:scale-[0.97] text-white text-[12.5px] font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-[background-color,transform] duration-150"
+              className="focus-ring disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:active:scale-100 h-9 px-4 rounded-lg bg-[#4338CA] hover:bg-[#3730A3] active:scale-[0.97] text-white text-[13.5px] font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-[background-color,transform] duration-150"
             >
-              {isLast || typeof current.away === "function" ? "Got it" : "Next"} <Icon name={isLast || typeof current.away === "function" ? "check" : "arrowRight"} size={13} strokeWidth={isLast ? 3 : 2} />
+              {isLast || typeof current.away === "function" ? "Got it" : "Next"} <Icon name={isLast || typeof current.away === "function" ? "check" : "arrowRight"} size={14} strokeWidth={isLast ? 3 : 2} />
             </button>}
           </div>
         </div>

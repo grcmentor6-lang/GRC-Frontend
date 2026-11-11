@@ -7,6 +7,7 @@ import { Icon } from "@/components/ui/icon";
 import { OrgLogo, logoFor } from "@/components/app/org-logo";
 import { loadDesk, type Desk, type Org } from "@/lib/desk/model";
 import { useDeskIdentity } from "@/lib/desk/identity";
+import { ORG_TONE } from "@/lib/desk/org-tone";
 
 /** The full organisation record a mentee works for, as the engine issues it. */
 export type OrgFull = Org & {
@@ -35,7 +36,7 @@ const press = "transition-transform duration-150 ease-out active:scale-[0.97] fo
 
 /** The organisation's badge, the same one the rest of the app draws for it. */
 function Monogram({ org, size = "h-11 w-11", icon = 36 }: { org: OrgFull; size?: string; icon?: number }) {
-  return <OrgLogo org={logoFor(org.name)} className={size} iconSize={icon} />;
+  return <OrgLogo org={logoFor(org.name)} orgKey={org.key} className={size} iconSize={icon} />;
 }
 
 function useDesk(): Desk | null {
@@ -71,6 +72,7 @@ export function OrgBox({ open, orgKey, onClose }: { open: boolean; orgKey: Key; 
           eyebrow={`Org ${orgKey} · ${orgKey === "A" ? "your main organisation" : "your second organisation"}`}
           leading={org ? <Monogram org={org} size="h-8 w-8" icon={28} /> : undefined}
           onClose={onClose}
+          accent={ORG_TONE[orgKey].solid}
           index={orgKey === "A" ? 0 : 1}
           left={orgKey === "A" ? "84px" : "min(660px, 40vw)"}
           z={orgKey === "A" ? 66 : 67}
@@ -129,7 +131,7 @@ function Overview({ org }: { org: OrgFull }) {
       <p className="rounded-xl bg-indigo-50/70 px-4 py-3 text-[13px] leading-relaxed text-indigo-950 ring-1 ring-inset ring-indigo-100">{org.obj}</p>
       <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-slate-200 ring-1 ring-slate-200">
         {[
-          ["Home office", org.office],
+          ["Your office", org.office],
           ["Assets", org.assets],
           ["Audit focus", org.audit],
           ["Classification labels", org.labels.replaceAll("‣", "·")],
@@ -153,7 +155,7 @@ function Offices({ org }: { org: OrgFull }) {
           <li key={o} className={`flex items-center gap-3 rounded-xl px-4 py-3 ring-1 ring-inset ${home ? "bg-indigo-50/70 ring-indigo-200" : "bg-white ring-slate-200"}`}>
             <Icon name="mapPin" size={16} className={home ? "text-indigo-500" : "text-slate-400"} />
             <span className="flex-1 text-[13.5px] text-slate-800">{o}</span>
-            {home && <span className="rounded-md bg-indigo-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">Home office</span>}
+            {home && <span className="rounded-md bg-indigo-600 px-1.5 py-0.5 text-[11px] font-semibold text-white">Your office</span>}
           </li>
         );
       })}
@@ -230,14 +232,14 @@ export function OrgInfoButton() {
             aria-expanded={open[k]}
             aria-label={`About Org ${k}, ${desk.orgs[k].name}`}
             title={`Org ${k}: ${desk.orgs[k].name}`}
-            className={`group flex h-11 sm:h-9 items-center gap-2 rounded-full border bg-white py-1 pl-1 pr-2.5 text-[12.5px] font-medium shadow-[0_1px_2px_rgba(15,23,42,0.06)] ${press} ${
-              open[k] ? "border-[#c9c3ff] bg-[#f5f3ff] text-[#4338ca] ring-2 ring-[#5b4fe9]/15" : "border-[#e2e2ec] text-[#34354a] hover:border-[#cfcfe0] hover:bg-[#fafaff]"
-            }`}
+            className={`group flex h-11 sm:h-9 items-center gap-2 rounded-full border py-1 pl-1 pr-2.5 text-[12.5px] font-medium shadow-[0_1px_2px_rgba(15,23,42,0.06)] ${press} ${open[k] ? "ring-2" : ""}`}
+            // The organisation's colour: its ring always, its tint once its window is open.
+            style={{ borderColor: ORG_TONE[k].ring, background: open[k] ? ORG_TONE[k].tint : "#fff", color: ORG_TONE[k].text, ["--tw-ring-color" as string]: `${ORG_TONE[k].ring}99` }}
           >
-            <OrgLogo org={logoFor(desk.orgs[k].name)} className="h-7 w-7" iconSize={24} />
+            <OrgLogo org={logoFor(desk.orgs[k].name)} orgKey={k} className="h-7 w-7" iconSize={24} />
             <span className="hidden xl:inline">{desk.orgs[k].short}</span>
             <span className="hidden whitespace-nowrap sm:inline xl:hidden">Org {k}</span>
-            <Icon name="info" size={14} className={open[k] ? "text-[#5b4fe9]" : "text-slate-400 group-hover:text-slate-600"} />
+            <Icon name="info" size={14} className={open[k] ? "" : "opacity-60 group-hover:opacity-100"} />
           </button>
         ))}
       </div>
@@ -271,7 +273,8 @@ export function DashboardOrgs() {
               key={o.key}
               type="button"
               onClick={() => setOpen((x) => ({ ...x, [o.key]: true }))}
-              className={`group flex h-full flex-col gap-3 rounded-xl bg-slate-50/60 p-4 text-left ring-1 ring-slate-200 transition-[background-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-card hover:ring-indigo-200/70 ${press}`}
+              style={{ borderLeftColor: ORG_TONE[o.key].solid }}
+              className={`group flex h-full flex-col gap-3 rounded-xl border-l-[3px] bg-slate-50/60 p-4 text-left ring-1 ring-slate-200 transition-[background-color,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:bg-white hover:shadow-card hover:ring-indigo-200/70 ${press}`}
             >
               <div className="flex items-center gap-3">
                 <Monogram org={o} />
@@ -279,7 +282,12 @@ export function DashboardOrgs() {
                   <div className="truncate text-[13.5px] font-semibold tracking-tight text-slate-900">{o.name}</div>
                   <div className="truncate text-[11.5px] text-slate-500">{o.industry}</div>
                 </div>
-                <span className="shrink-0 rounded-full bg-indigo-50 px-2 py-0.5 text-[10.5px] font-semibold text-indigo-700 ring-1 ring-indigo-100">Org {o.key}</span>
+                <span
+                  className="shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-semibold ring-1"
+                  style={{ background: ORG_TONE[o.key].tint, color: ORG_TONE[o.key].text, ["--tw-ring-color" as string]: ORG_TONE[o.key].ring }}
+                >
+                  Org {o.key}
+                </span>
               </div>
               <p className="line-clamp-2 text-[12px] leading-relaxed text-slate-500">{o.context}</p>
               <div className="grid grid-cols-3 gap-2">

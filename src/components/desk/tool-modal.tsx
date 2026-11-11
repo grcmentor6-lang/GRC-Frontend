@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { Fragment, createContext, useContext, useEffect, useRef, useState } from "react";
+import { KcChip, openKc } from "./knowledge-check";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
@@ -10,13 +11,14 @@ import { DECIDE_FROM, LADDER, STUDY, briefOf, deliverableFor, handedIn, regOf, s
 import { gridKey, lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { Inbox, MessageNotice } from "./chat";
 import { ToolScreen } from "./viewer";
-import { PathChip, StepInstruction } from "./step-text";
+import { Marked, PathChip, StepInstruction } from "./step-text";
 import { FloatWindow } from "./float-window";
 import { PreparedFor } from "./prepared-for";
 import { TableView } from "./ui";
 import { DocCitation } from "./doc-text";
 import { DOC_TEXT } from "@/lib/desk/docs";
 import { OrgDetails, type OrgFull } from "./org-drawer";
+import { ORG_TONE, OrgMark, OrgName } from "@/lib/desk/org-tone";
 import { dmy, dueDate, fmtDay, rmfTable, screenOf, testDue, workKind, type Desk, type Step, type Task } from "@/lib/desk/model";
 import { RMF, folders, submitCodes } from "@/lib/desk/forms";
 import { decisionChecked, stepKey, type Progress } from "@/lib/desk/progress";
@@ -53,6 +55,13 @@ export function ToolModal({ toolKey, onClose, viewOnly = false }: { toolKey: str
 
 /** Section numbers in reading order: "2" before "2.1" before "3" before "10". */
 const bySec = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
+
+/** The bar over a step's work that says where its values are read: one sentence, amber, the places as chips. */
+const READ_BAR = "flex shrink-0 items-start gap-2.5 border-b border-[#F5E3B0] bg-[#FFFAEB] px-4 py-3 text-[13.5px] leading-relaxed text-[#78350F] sm:px-5";
+/** A document and its sections, named in the read-from bar: grey, since it is read, not opened from here. */
+const DocTag = ({ children }: { children: string }) => (
+  <span className="whitespace-nowrap rounded-[5px] border border-[#E0E3EA] bg-white px-[7px] py-px text-[12.5px] font-semibold text-[#4B5563]">{children}</span>
+);
 
 /** A tool opened for reading: a floating, resizable window with just its screen. */
 /** A document from Policies › Policy Library, in its own window: the text where the platform has it
@@ -297,55 +306,75 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
         exit={{ opacity: 0, y: 4, transition: { duration: 0.12 } }}
         transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
         data-desk-modal
-        className={`relative flex max-h-full w-full max-w-[1240px] flex-col min-[981px]:h-full overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_rgba(17,24,39,0.35)]`}
+        className={`relative flex max-h-full w-full max-w-[1320px] flex-col min-[981px]:h-full overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_rgba(17,24,39,0.35)]`}
       >
-        <header className="flex shrink-0 items-stretch border-b border-[#DDE1E8]">
-          <span className="grid w-14 shrink-0 place-items-center bg-[#111827] text-white">
-            <Icon name="grid" size={18} />
+        <header className="flex shrink-0 items-stretch border-b border-[#E3E5EA]">
+          <span className="grid w-12 shrink-0 place-items-center bg-[#111827] text-white sm:w-[68px]">
+            <Icon name="grid" size={20} />
           </span>
-          <div className="min-w-0 flex-1 px-4 py-2.5">
-            <p className="text-[12px] text-[#5B6474]">
+          <div className="min-w-0 flex-1 px-4 py-3 sm:px-[22px] sm:py-4">
+            <p className="truncate text-[12.5px] text-[#6B7280]">
               {(handIn || regHandIn || briefHandIn) && task ? `File${briefHandIn || new Set(regsIn.map((r) => r.title.split(" · ")[0])).size > 1 ? "s" : ""} · ${task.id} · 02_Working` : rmf !== null && task ? `File · ${task.id} · 01_Inputs` : `${section?.t ?? sec}${stamp ? ` · ${stamp}` : ""}`}
             </p>
-            <h2 className="truncate text-[17px] font-bold text-[#111827]">{heading}</h2>
+            {/* A tool's path reads as a breadcrumb: its separators recede, the names carry the line. */}
+            <h2 className="mt-[3px] truncate text-[17px] font-bold leading-tight tracking-[-0.015em] text-[#111827] sm:text-[20px]">
+              {heading.split(" › ").map((p, i) => <Fragment key={i}>{i > 0 && <span className="font-normal text-[#C4C8D0]"> › </span>}{p}</Fragment>)}
+            </h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close tool" className="grid w-14 shrink-0 place-items-center border-l border-[#DDE1E8] text-[#3F4757] hover:bg-[#F3F4F7] focus-ring">
-            <Icon name="x" size={18} />
+          <button type="button" onClick={onClose} aria-label="Close tool" className="grid w-12 shrink-0 place-items-center border-l border-[#E3E5EA] text-[#6B7280] hover:bg-[#F3F4F7] hover:text-[#111827] focus-ring sm:w-16">
+            <Icon name="x" size={20} />
           </button>
         </header>
 
         {/* Side by side (wide), the work and the step scroll apart, so the step's button stays in view
             however long the work is; stacked (narrow), the whole body scrolls. */}
         <div className="flex min-h-0 flex-1 flex-wrap overflow-y-auto min-[981px]:flex-nowrap min-[981px]:overflow-hidden">
-          <div className="flex min-w-0 flex-[999_1_560px] flex-col bg-[#F7F8FA] min-[981px]:max-h-full min-[981px]:overflow-y-auto">
+          <div className={`flex min-w-0 flex-[999_1_560px] flex-col ${deliverable === "register" ? "bg-white" : "bg-[#F7F8FA]"} min-[981px]:max-h-full min-[981px]:overflow-y-auto`}>
             {rmf !== null && (
               // The file is open; the values are on a platform screen the mentee opens from the toolbar.
-              <p className="flex shrink-0 items-start gap-2 border-b border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2 text-[12.5px] leading-relaxed text-[#78350F]">
-                <Icon name="chevronDown" size={14} className="mt-[3px] shrink-0" />
+              <p className={READ_BAR}>
+                <Icon name="chevronDown" size={16} className="mt-[3px] shrink-0 text-[#B45309]" />
                 <span>
                   {/* Named exactly as the toolbar names them, as the toolbar's chip: the section, then the tool. */}
                   <strong className="font-semibold">Next:</strong> open <PathChip path={`${section?.t ?? sec} › ${toolKey.split("|")[1]}`} />. It opens beside this file.
                 </span>
               </p>
             )}
+            {task && s && !viewOnly && regOf(task.id, s.n)?.screen?.[s.n] && (
+              // The step reads its own tool's screen, which the register stands in for here (T9.2: Lumen's report). Named
+              // with how it opens, never opened for the learner.
+              <p data-guide="read-screen" className={READ_BAR}>
+                <Icon name="book" size={16} className="mt-[3px] shrink-0 text-[#B45309]" />
+                <span>
+                  <span className="font-semibold">Read from </span>
+                  {regOf(task.id, s.n)!.screen![s.n]}: pick <PathChip path={`${section?.t ?? sec} › ${toolKey.split("|")[1]}`} /> on the toolbar and it opens in a window beside this table.
+                </span>
+              </p>
+            )}
             {sources.length > 0 && (
               // Where to read: named, not opened. The mentee opens it from the toolbar (Policies ›
               // Policy Library, which carries the step's dot), the way the work is done.
-              <p data-guide="read-from" className="flex shrink-0 items-start gap-2 border-b border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2 text-[12.5px] leading-relaxed text-[#78350F]">
-                <Icon name="book" size={14} className="mt-[3px] shrink-0" />
+              <p data-guide="read-from" className={READ_BAR}>
+                <Icon name="book" size={16} className="mt-[3px] shrink-0 text-[#B45309]" />
                 <span>
                   <span className="font-semibold">Read from </span>
-                  {sources.map(([id, secs]) => `${id}${secs.length ? ` Section ${[...secs].sort(bySec).join(", Section ")}` : ""}`).join(" and ")}
-                  <span className="text-[#92400E]">: open it from <PathChip path="Policies › Policy Library" />.</span>
-                  {/* The document's "This step reads" bar jumps to each cited section: say so, by name. */}
+                  {sources.map(([id, secs], i) => (
+                    <Fragment key={id}>
+                      {i > 0 && " and "}
+                      <DocTag>{`${id}${secs.length ? ` Section ${[...secs].sort(bySec).join(", Section ")}` : ""}`}</DocTag>
+                    </Fragment>
+                  ))}
+                  : open {sources.length > 1 ? "them" : "it"} from <PathChip path="Policies › Policy Library" />
+                  {/* The document's "This step reads" bar jumps to each cited section: said in the same sentence, by name. */}
                   {(() => {
                     const secs = [...new Set(sources.filter(([id]) => DOC_TEXT.has(id)).flatMap(([, x]) => x))].sort(bySec);
                     return secs.length > 0 ? (
-                      <span data-guide="jump-hint" className="text-[#92400E]">
-                        {" "}In the document, click {secs.map((x) => `Section ${x}`).join(secs.length > 2 ? ", " : " or ").replace(/, (?=[^,]*$)/, " or ")} at the top to jump to {secs.length > 1 ? "each" : "it"}.
+                      <span data-guide="jump-hint">
+                        , then click {secs.map((x) => `Section ${x}`).join(secs.length > 2 ? ", " : " or ").replace(/, (?=[^,]*$)/, " or ")} at the top to jump to {secs.length > 1 ? "each" : "it"}
                       </span>
                     ) : null;
                   })()}
+                  .
                   {task && s && regOf(task.id, s.n)?.readHow?.[s.n] && <span data-guide="read-how" className="mt-1 block text-[#78350F]">{regOf(task.id, s.n)!.readHow![s.n]}</span>}
                 </span>
               </p>
@@ -431,9 +460,12 @@ function BothOrgs() {
             onClick={() => setK(x)}
             className={`relative flex-1 border-r border-[#DDE1E8] px-4 py-2.5 text-left last:border-r-0 focus-ring ${k === x ? "bg-white" : "bg-[#F7F8FA] hover:bg-[#F3F4F7]"}`}
           >
-            <span className="block text-[11.5px] text-[#5B6474]">Org {x} · {x === "A" ? "your main organisation" : "your second organisation"}</span>
+            <span className="flex items-center gap-1.5 text-[11.5px] text-[#5B6474]">
+              <OrgMark k={x} orgs={desk.orgs} />
+              <span><span className="font-semibold" style={{ color: ORG_TONE[x].text }}>Org {x}</span> · {x === "A" ? "your main organisation" : "your second organisation"}</span>
+            </span>
             <span className={`block text-[14px] leading-snug ${k === x ? "font-bold text-[#111827]" : "font-semibold text-[#3F4757]"}`}>{desk.orgs[x].name}</span>
-            {k === x && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-[#4338CA]" aria-hidden />}
+            {k === x && <span className="absolute inset-x-0 -bottom-px h-[3px]" style={{ background: ORG_TONE[x].solid }} aria-hidden />}
           </button>
         ))}
       </div>
@@ -492,7 +524,7 @@ function Screen({ toolKey }: { toolKey: string }) {
                   <tr key={t} className="hover:[&>td]:bg-[#FAFAFC]">
                     <td className={`${td} ${bg} font-mono text-[12px] font-semibold ${cur ? "text-[#3730A3] shadow-[inset_3px_0_0_#4338CA]" : "text-[#111827]"}`}>{t}</td>
                     <td className={`${td} ${bg} ${cur ? "font-semibold" : "font-medium"} text-[#111827]`}>{x.title}</td>
-                    <td className={`${td} ${bg} text-[#3F4757]`}>{x.orglbl}</td>
+                    <td className={`${td} ${bg} text-[#3F4757]`}><OrgName org={x.org} orgs={desk.orgs} /></td>
                     <td className={`${td} ${bg} whitespace-nowrap ${cur ? "font-semibold text-[#92400E]" : "text-[#111827]"}`}>{fmtDay(dueDate(start, x.dueDay))}</td>
                     <td className={`${td} ${bg} whitespace-nowrap font-mono`}>{n} / {x.steps.length}</td>
                     <td className={`${td} ${bg}`}>
@@ -571,11 +603,11 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
   };
 
   return (
-    <aside aria-label={`Your work for step ${n}`} className="flex min-w-0 flex-[1_1_380px] flex-col border-l border-[#DDE1E8] bg-white max-[980px]:border-l-0 max-[980px]:border-t min-[981px]:max-h-full min-[981px]:overflow-hidden">
-      <div className="flex items-center gap-2.5 border-b border-[#DDE1E8] bg-[#F7F8FA] px-4 py-2.5">
+    <aside aria-label={`Your work for step ${n}`} className="flex min-w-0 flex-[1_1_380px] flex-col border-l border-[#E3E5EA] bg-white max-[980px]:border-l-0 max-[980px]:border-t min-[981px]:max-h-full min-[981px]:flex-[0_0_400px] min-[981px]:overflow-hidden">
+      <div className="flex items-center gap-2.5 border-b border-[#E3E5EA] bg-white px-4 py-3 sm:px-5 sm:py-3.5">
         <span className={`grid h-[26px] w-[26px] place-items-center rounded-full text-[13px] font-bold text-white tabular-nums ${done ? "bg-[#16A34A]" : "bg-[#4338CA]"}`}>{n}</span>
-        <span className="font-mono text-[12px] font-semibold uppercase tracking-[0.06em] text-[#3F4757]">
-          {task.id} · Step {n} of {task.steps.length}
+        <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.09em] text-[#111827]">
+          {task.id}<span className="mx-1 text-[#9CA3AF]">·</span>Step {n} of {task.steps.length}
         </span>
         {done && !sealed && <span className="ml-auto text-[12px] text-[#15803D]">{s.kind === "pick" ? "Done · decision locked" : "Done · you can still change it"}</span>}
         {onGuide && (
@@ -583,7 +615,7 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
             data-guide="show-me-how"
             type="button"
             onClick={onGuide}
-            className={`${done && !sealed ? "" : "ml-auto"} inline-flex items-center gap-1 rounded border border-[#DDE1E8] bg-white px-2 py-1 text-[12px] font-semibold text-[#3730A3] hover:border-[#C7CBF5] hover:bg-[#EEF0FF] focus-ring`}
+            className={`${done && !sealed ? "" : "ml-auto"} inline-flex items-center gap-1.5 rounded-lg border border-[#DFE2F5] bg-white px-3 py-[7px] text-[13px] font-semibold text-[#4338CA] hover:border-[#C7CBF5] hover:bg-[#EEF0FF] focus-ring`}
           >
             <Icon name="play" size={12} /> Show me how
           </button>
@@ -598,7 +630,7 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
           transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
           className="flex min-h-0 flex-1 flex-col overflow-y-auto"
         >
-          <div data-guide="step-text" className="border-b border-[#DDE1E8] px-4 py-3.5">
+          <div data-guide="step-text" className="border-b border-[#E3E5EA] px-4 py-4 sm:px-5 sm:pb-5 sm:pt-[22px]">
             {/* One statement of the step: the full instruction when the title is only its start. */}
             {(() => {
               const stem = s.t.replace(/(…|\.\.\.)$/, "").trim();
@@ -611,27 +643,27 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
                 const guidance = rest.split(/(?<=\.)\s+(?=Guidance:)/)[1] ?? "";
                 return (
                   <>
-                    <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{head}</h3>
+                    <h3 className="text-[17px] font-bold leading-[1.35] tracking-[-0.01em] text-[#111827] [text-wrap:balance]">{head}</h3>
                     {guidance && <p className="mt-2 text-[14px] leading-[1.55] text-[#3F4757]">{guidance.replace(/^Guidance:\s*(\w)/, (_, c: string) => c.toUpperCase())}</p>}
                   </>
                 );
               }
               if (s.kind === "pick") {
                 const question = s.w.split(/\s*Options:/)[0].replace(LI_TAG, "").replace(/^decide:\s*/i, "").trim();
-                return <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{question}</h3>;
+                return <h3 className="text-[17px] font-bold leading-[1.35] tracking-[-0.01em] text-[#111827] [text-wrap:balance]">{question}</h3>;
               }
               return repeats ? (
-                <h3 className="text-[15.5px] font-bold leading-[1.4] text-[#111827]">{w || s.t}</h3>
+                <h3 className="text-[17px] font-bold leading-[1.35] tracking-[-0.01em] text-[#111827] [text-wrap:balance]"><Marked text={w || s.t} /></h3>
               ) : (
                 <>
-                  <h3 className="text-[16px] font-bold leading-[1.35] text-[#111827]">{s.t}</h3>
+                  <h3 className="text-[17px] font-bold leading-[1.35] tracking-[-0.01em] text-[#111827] [text-wrap:balance]"><Marked text={s.t} /></h3>
                   {/* What to do, as numbered actions; the title above already says the first words. */}
                   <StepInstruction opened text={w.startsWith(s.t) ? w.slice(s.t.length).replace(/^[\s.?:]+/, "") : w} className="mt-2.5" />
                 </>
               );
             })()}
           </div>
-          <div className="flex-1 border-b border-[#DDE1E8] px-4 pb-3.5 [&>*:first-child]:mt-3">
+          <div className="flex-1 border-b border-[#E3E5EA] px-4 pb-4 sm:px-5 [&>*:first-child]:mt-4">
             {/* A decision first; then the work the pack puts after it, in the shape that work takes. */}
             {s.kind === "pick" ? (
               <>
@@ -641,7 +673,7 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
                 <DecisionSummary task={task} s={s} />
                 <PartHead n={2} label={thenLabel(task, s)} />
                 {rmfTable(s) === null && !regOf(task.id, n)?.steps[n] && briefOf(task.id, n)?.steps[n] === undefined && (
-                  <p className="text-[14px] leading-snug text-[#111827]">{thenOf(s)}</p>
+                  <StepInstruction text={thenOf(s)} />
                 )}
               </>
             ) : (
@@ -691,10 +723,10 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
               <Work task={task} s={s} readOnly={sealed} />
             )}
           </div>
-          <p className="flex items-center gap-2 border-b border-[#DDE1E8] bg-[#F0FDF4] px-4 py-2.5 text-[13px] text-[#14532D]">
-            <Icon name="checkCircle" size={15} className="shrink-0" />
+          <p className="flex items-center gap-2 border-b border-[#C8ECD5] bg-[#EFFBF3] px-4 py-3.5 text-[13.5px] text-[#166534] sm:px-5">
+            <Icon name="checkCircle" size={16} className="shrink-0 text-[#16A34A]" />
             <span>
-              <strong className="font-bold">Done when</strong> {LADDER[task.id]?.[n] ? `you reach rule ${LADDER[task.id][n].rule}'s first yes for the lit row` : STUDY[task.id]?.[n] ? `you have found all ${STUDY[task.id][n].length} in ${STUDY[task.id][n][0]?.col === -1 ? "the worked section" : regOf(task.id, n)?.rows.every((r) => !regOf(task.id, n)!.mine(r, desk)) ? regOf(task.id, n)!.code : regOf(task.id, n)?.rows.some((r) => !regOf(task.id, n)!.mine(r, desk)) ? "the worked rows" : "the template"}` : reading ? "you have read the screen and confirmed it" : s.o}
+              <strong className="font-semibold">Done when</strong> {LADDER[task.id]?.[n] ? `you reach rule ${LADDER[task.id][n].rule}'s first yes for the lit row` : STUDY[task.id]?.[n] ? `you have found all ${STUDY[task.id][n].length} in ${STUDY[task.id][n][0]?.col === -1 ? "the worked section" : regOf(task.id, n)?.rows.every((r) => !regOf(task.id, n)!.mine(r, desk)) ? regOf(task.id, n)!.code : regOf(task.id, n)?.rows.some((r) => !regOf(task.id, n)!.mine(r, desk)) ? "the worked rows" : "the template"}` : reading ? "you have read the screen and confirmed it" : s.o}
             </span>
           </p>
         </motion.div>
@@ -803,7 +835,7 @@ function Plan() {
     // "KC-01", or "FGE (Foundation Gate Exam)"
     const m = (w.kc ?? "").match(/^(\S+)(?: \((.+)\))?$/);
     return [
-      ...desk.order.filter((t) => desk.tasks[t].week === w.n).map((t) => ({ wk: w.n, id: t, org: desk.tasks[t].orglbl, title: desk.tasks[t].title, due: date(dueDate(start, desk.tasks[t].dueDay)) })),
+      ...desk.order.filter((t) => desk.tasks[t].week === w.n).map((t) => ({ wk: w.n, id: t, org: desk.tasks[t].org as string, title: desk.tasks[t].title, due: date(dueDate(start, desk.tasks[t].dueDay)) })),
       ...(m ? [{ wk: w.n, id: m[1], org: "", title: m[2] ?? "Knowledge check", due: date(testDue(start, w.n)) }] : []),
     ];
   });
@@ -820,7 +852,7 @@ function Plan() {
               <td className={`${td} font-mono text-[12px] font-semibold text-[#111827]`}>{r.id}</td>
               <td className={`${td} whitespace-nowrap font-semibold text-[#111827]`}>{r.due}</td>
               <td className={`${td} text-[#111827]`}>{r.title}</td>
-              <td className={`${td} text-[#3F4757]`}>{r.org}</td>
+              <td className={`${td} text-[#3F4757]`}>{r.org && <OrgName org={r.org} orgs={desk.orgs} />}</td>
             </tr>
           ))}
         </tbody>
@@ -831,11 +863,11 @@ function Plan() {
 
 /**
  * Learn & Grow › Knowledge Checks: the twelve tests, each due on the mentee's own date (the pack's screen lists the
- * canonical calendar's). Their questions are not on the desk yet, so each says so: nothing here opens a test, and
- * nothing pretends to (tester, 4 Nov: the screen opened nothing a learner could act on).
+ * canonical calendar's), its standing (best score, open, or what it waits for) and a button that opens it as the
+ * desk's screen (knowledge-check.tsx).
  */
 function Tests() {
-  const { desk, start } = useDesk();
+  const { desk, start, closeTool } = useDesk();
   const pass = new Map(((screenOf(desk, "learn|Knowledge Checks")?.pl as { r?: string[][] })?.r ?? []).map((r) => [r[1]?.split(" ")[0], r[3]]));
   const rows = desk.weeks.flatMap((w) => {
     const m = (w.kc ?? "").match(/^(\S+)(?: \((.+)\))?$/);
@@ -845,7 +877,7 @@ function Tests() {
     <div data-guide="tests" className="border-b border-[#DDE1E8] bg-white">
       <p className="flex items-start gap-2 border-b border-[#E9ECF1] bg-[#F7F8FA] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[#3F4757]">
         <Icon name="info" size={14} className="mt-[3px] shrink-0 text-[#5B6474]" />
-        <span>The tests are not on the desk yet. This list shows where each one falls in your programme; a test opens here once it is released.</span>
+        <span>A test opens once you submit the tasks of its week. Open one to take it, or to read your results.</span>
       </p>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] border-collapse text-[13px]">
@@ -859,7 +891,12 @@ function Tests() {
                 <td className={`${td} text-[#111827]`}><span className="font-mono text-[12px] font-semibold">{r.id}</span> <span className="text-[#3F4757]">{r.title}</span></td>
                 <td className={`${td} whitespace-nowrap text-[#111827]`}>{r.due}</td>
                 <td className={`${td} text-[#3F4757]`}>{r.pass}</td>
-                <td className={td}><span className="inline-block whitespace-nowrap rounded-[3px] border border-[#E3E6EC] bg-[#F7F8FA] px-[7px] py-0.5 text-[12px] text-[#5B6474]">Coming soon</span></td>
+                <td className={td}>
+                  <span className="flex items-center gap-2">
+                    <KcChip id={r.id} />
+                    <button type="button" data-test-open={r.id} onClick={() => { openKc(r.id); closeTool("learn|Knowledge Checks"); }} className="whitespace-nowrap rounded-md border border-[#DDE1E8] bg-white px-2 py-0.5 text-[12px] font-semibold text-[#3730A3] hover:bg-[#F5F6FF] focus-ring">Open</button>
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>

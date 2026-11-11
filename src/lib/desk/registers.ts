@@ -88,6 +88,10 @@ export interface Register {
   view?: Record<number, number[]>;
   /** Step → a line said above the step's work: where its rows come from and how many there are. */
   note?: Record<number, (desk: Desk, p: Progress) => string>;
+  /** Step → what the step reads on its own tool's screen (T9.2: Lumen's report on Vendors › SOC Report Review). The modal shows
+   *  the register in its place, so a banner over the table names the screen and how it opens beside the table: the
+   *  toolbar again. Nothing opens by itself. */
+  screen?: Record<number, string>;
   /** Step → how to read the cited sources, said in the "Read from" banner above the table (which
    *  stays in view while a document window covers the step panel). Where to look, never the answer. */
   readHow?: Record<number, string>;
@@ -167,7 +171,8 @@ export interface Register {
 }
 
 const A = (row: string[], desk: Desk) => row[0] === desk.orgs.A.name;
-const addendum = (desk: Desk) => (desk.orgs.A as { addendum?: string }).addendum ?? "";
+// Never empty: notes say "… is in <addendum> Section 2.2", which must always name a place.
+const addendum = (desk: Desk) => (desk.orgs.A as { addendum?: string }).addendum || "Org A's addendum";
 /** Copy checks: spacing and case aside, the same words. */
 const same = (a: string, b: string) => a.trim().replace(/\s+/g, " ").toLowerCase() === b.trim().replace(/\s+/g, " ").toLowerCase();
 /** A document reference typed with or without the word "section", a pasted section sign, dashes and spaces. */
@@ -1185,9 +1190,13 @@ function actProgramme(area: string, p: Progress): string {
 const AUD = AUDD as unknown as {
   period: string; requests: string[][]; followups: string[][]; index: string[][]; readme: string[][]; finding: string[]; versions: string[][];
   action: string[]; owners: string[]; actOpts: string[]; respOpts: string[]; fupOpts: string[]; ct: string[];
+  /** Records the Group GRC Office keeps in the repository, not hand-ins (SOA-GCS, corrections item 117): index-shaped rows. */
+  records: string[][];
 };
 const audBest = (p: Progress, step: number, label: string) => p.rowChecks?.[`T12.2-${step}`]?.rows[label]?.best ?? "";
-const audFile = (id: string) => AUD.index.find((r) => r[0] === id);
+const audFile = (id: string) => [...AUD.records, ...AUD.index].find((r) => r[0] === id);
+/** A follow-up answered with a repository record: logged by its SHA-256, not as a sealed hand-in. */
+const audRecord = (id: string) => AUD.records.find((r) => r[0] === id);
 /** When a step's files went, as the log records it: the simulated fieldwork day, by rule R16 the 30th after the audit period ends
  *  (step 4; follow-ups, step 5, the day after), at the time the answers were checked (decision, 1 Nov). "" before. */
 const audAt = (p: Progress, step: number) => { const at = p.rowChecks?.[`T12.2-${step}`]?.at; return at ? `${step === 4 ? "2027-01-20" : "2027-01-21"} ${at.slice(11, 16)} UTC` : ""; };
@@ -3445,7 +3454,7 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 5: { label: 0, col: 1 } },
     note: {
       5: (_d, p) => {
-        const dev = CT_DEV.map((id) => `${id} ${ctBest(p, 3, id)} (${ctBest(p, 4, id) || "?"})`);
+        const dev = CT_DEV.map((id) => [id, ctBest(p, 3, id), `(${ctBest(p, 4, id) || "?"})`].filter(Boolean).join(" "));
         return `Rule R19 is the first row of Control Testing › Record Result: read all of it. Sheet 3's deviations, as steps 3 and 4 checked them: ${dev.join("; ")}. ${CT_SAMPLE.length} records were tested.`;
       },
     },
@@ -3683,6 +3692,8 @@ export const REGISTERS: Record<string, Register> = {
     steps: {},
     ident: [0],
     reads: { 1: ["vendors|SOC Report Review"] },
+    // The questions name the report's lines: the report is said, above the checklist, before the first one (tester, 5 Nov).
+    screen: { 1: "Lumen's SOC 2 report summary, whose lines the questions name" },
   },
   "T9.2": {
     code: "SOC-REV",
@@ -3694,7 +3705,8 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 2: [2] },
     ident: [0, 1],
     checkRows: { 2: { label: 0, col: 2 } },
-    note: { 2: () => `Lumen's SOC 2 report summary, with your review date, is in Vendors › SOC Report Review. BKB-POL-013 Section 7.1 (Policies › Policy Library) says how each check is read and which line it reads; S7 and S9 also read Lumen's intake form (Vendors › Vendor Intake).` },
+    screen: { 2: "Lumen's SOC 2 report summary, with your review date under it" },
+    note: { 2: () => `BKB-POL-013 Section 7.1 (Policies › Policy Library) says how each check is read and which line it reads; S7 and S9 also read Lumen's intake form (Vendors › Vendor Intake).` },
     reads: { 2: ["vendors|Vendor Intake"] },
     handIn: { step: 5, cols: [2], ident: [0] },
   },
@@ -4141,7 +4153,7 @@ export const REGISTERS: Record<string, Register> = {
           if (v(0) === "Who it affects") return `${(REGD.offices as string[][]).filter(([o]) => regBest(p, 6, o) === "Applies").map(([o]) => o).join("; ")}.`;
           if (v(0) === "Found late") return regLine(p, 2) && regLine(p, 3) && regLogged(p) ? `Yes: its 30 days ended on ${regLine(p, 2)}, before it was logged on ${longDate(regLogged(p))}.` : "";
           if (v(0) === "What we must do") return `${Object.keys(p.rowChecks?.["T11.2-8"]?.rows ?? {}).length} actions, each with its owner, on the Actions sheet.`;
-          if (v(0) === "Source") return (["s1", "s2"] as const).map((k) => `${REGD.src[k].title}, ${REGD.src[k].url}, read on ${regLogged(p) ? longDate(regLogged(p)) : ""}.`).join(" ");
+          if (v(0) === "Source") return (["s1", "s2"] as const).map((k) => `${REGD.src[k].title}, ${REGD.src[k].url}${regLogged(p) ? `, read on ${longDate(regLogged(p))}` : ""}.`).join(" ");
           return null;
         },
       },
@@ -4595,15 +4607,15 @@ export const REGISTERS: Record<string, Register> = {
     code: "AUD-LOG Follow-ups",
     title: "AUD-LOG · The auditor's follow-up requests R-9 to R-12",
     on: [5],
-    cols: [{ h: "Request", w: 70 }, { h: "Control / clause", wrap: true }, { h: "Auditor asks for", wrap: true, w: 260, prose: true }, { h: "Answer with (your deliverable)", wrap: true, w: 190, opts: AUD.fupOpts }],
+    cols: [{ h: "Request", w: 70 }, { h: "Control / clause", wrap: true }, { h: "Auditor asks for", wrap: true, w: 260, prose: true }, { h: "Answer with (record)", wrap: true, w: 190, opts: AUD.fupOpts }],
     rows: AUD.followups.map((r) => [r[0], r[1], r[2], ""]),
     mine: () => true,
     steps: { 5: [3] },
     ident: [0],
     view: { 5: [1, 2] },
     checkRows: { 5: { label: 0, col: 3 } },
-    note: { 5: () => `Follow-up requests from the first day of fieldwork. Each asks for a record the Group GRC Office produced this year: one of your own hand-ins, from F1.1 to T12.1. Policies › Version History lists them by code and name, each sealed when you submitted it. Choose the deliverable that is the record asked for, or No evidence available.` },
-    reads: { 5: ["policies|Version History"] },
+    note: { 5: () => `Follow-up requests from the first day of fieldwork. Each asks for a record of GlobalConnect's ISMS from this year: one of your own hand-ins, from F1.1 to T12.1, or a record the Group GRC Office keeps in the repository. Policies › Version History lists your hand-ins by code and name, each sealed when you submitted it; Evidence › Evidence Library lists the repository's records. Choose the record asked for, or No evidence available.` },
+    reads: { 5: ["policies|Version History", "evidence|Evidence Library"] },
   },
   "T12.2 ACT": {
     code: "ACT-UPD A-23",
@@ -4633,8 +4645,8 @@ export const REGISTERS: Record<string, Register> = {
     steps: {},
     ident: [0],
     derived: {
-      3: { from: [], value: (v, p) => (isFollowUp(v(0)) ? (audBest(p, 5, v(0)) ? `${audBest(p, 5, v(0))}${audBest(p, 5, v(0)) === AUD_NOEV ? "" : " v1"}` : "") : audBest(p, 3, v(0))) },
-      4: { from: [], value: (v, p) => { if (isFollowUp(v(0))) return audBest(p, 5, v(0)) ? (audBest(p, 5, v(0)) === AUD_NOEV ? "—" : "Sealed in Policies › Version History") : ""; const f = audBest(p, 3, v(0)); return f === AUD_NOEV ? "—" : audBest(p, 4, v(0)); } },
+      3: { from: [], value: (v, p) => (isFollowUp(v(0)) ? (audBest(p, 5, v(0)) ? `${audBest(p, 5, v(0))}${audBest(p, 5, v(0)) === AUD_NOEV || audRecord(audBest(p, 5, v(0))) ? "" : " v1"}` : "") : audBest(p, 3, v(0))) },
+      4: { from: [], value: (v, p) => { if (isFollowUp(v(0))) return audBest(p, 5, v(0)) ? (audBest(p, 5, v(0)) === AUD_NOEV ? "—" : audRecord(audBest(p, 5, v(0)))?.[5] ?? "Sealed in Policies › Version History") : ""; const f = audBest(p, 3, v(0)); return f === AUD_NOEV ? "—" : audBest(p, 4, v(0)); } },
       5: { from: [], value: (v, p) => audAt(p, isFollowUp(v(0)) ? 5 : 4) },
       6: { from: [], value: (v, p) => (v(0) === AUD.action[1] ? (audBest(p, 6, AUD.action[0]) ? `${AUD.action[0]} · ${audBest(p, 6, AUD.action[0])}` : "") : "—") },
     },
@@ -4663,7 +4675,7 @@ export const REGISTERS: Record<string, Register> = {
     title: "EVIDENCE-INDEX · The repository's index (Evidence › Evidence Library)",
     on: [10],
     cols: [{ h: "File", w: 80 }, { h: "Control" }, { h: "Description", wrap: true, w: 200 }, { h: "Date" }, { h: "Source", wrap: true }, { h: "SHA-256", w: 150 }, { h: "Result", wrap: true, w: 140 }],
-    rows: AUD.index.map((r) => r.map((c) => c || "—")),
+    rows: [...AUD.records, ...AUD.index].map((r) => r.map((c) => c || "—")),
     mine: () => false,
     steps: {},
     ident: [0],

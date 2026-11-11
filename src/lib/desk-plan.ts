@@ -1,4 +1,4 @@
-import { dayIndex, dueDate, weekOpen, type Desk } from "@/lib/desk/model";
+import { dayIndex, dueDate, weekOpen, type Desk, type Task } from "@/lib/desk/model";
 import { stepKey, type Progress } from "@/lib/desk/progress";
 
 /**
@@ -12,6 +12,8 @@ export interface PlanTask {
   id: string;
   title: string;
   week: number;
+  /** The organisation(s) it is for. */
+  org: Task["org"];
   due: Date;
   /** Whole days from today to the due date; negative once past. */
   left: number;
@@ -28,7 +30,7 @@ export function planOf(desk: Desk, p: Progress, start: Date, preview = false, no
     const open = preview || weekOpen(t.week, start, now);
     const state: DueState = p.submitted[id] ? "submitted" : !open ? "not-open" : left < 0 ? "overdue" : left === 0 ? "today" : "upcoming";
     return {
-      id, title: t.title, week: t.week, due: dueDate(start, t.dueDay), left, state,
+      id, title: t.title, week: t.week, org: t.org, due: dueDate(start, t.dueDay), left, state,
       stepsDone: t.steps.filter((s) => p.done[stepKey(id, s.n)]).length, steps: t.steps.length,
     };
   });

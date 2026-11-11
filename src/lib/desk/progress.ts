@@ -41,6 +41,9 @@ export interface Progress {
   labs?: Record<string, import("./labs").LabState>;
   /** Every Capture evidence, in order: E1, E2 …, shown on Evidence › Capture Screenshot. */
   labCaptures?: import("./labs").LabCapture[];
+  /** Knowledge-check id ("KC-01") → its graded attempts. Written only by the server (POST /me/desk/kc/{id}); the desk's
+   *  saves never send it (progress-sync OBJECT_SECTIONS), so a local copy after a submission is display only. */
+  kc?: Record<string, { attempts?: import("./kc").KcAttemptStored[] }>;
   /** When this copy last changed (ms): the newer of the browser's and the server's copy wins. */
   savedAt?: number;
 }

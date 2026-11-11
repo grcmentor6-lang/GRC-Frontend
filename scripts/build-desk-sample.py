@@ -257,6 +257,7 @@ def main(src: str) -> None:
     rework_t112(w)
     rework_t121(w)
     rework_t122(w)
+    t122_soa(w)
     # The pack's `anchor` line pairs a control with unrelated work ("A.5.7 Threat intelligence — verify backups"). Nothing
     # reads it, and anything that did would make false claims (professional review, 3 Nov 2026): not shipped.
     for t in w["tasks"].values():
@@ -5760,7 +5761,7 @@ def rework_t112(w: dict) -> None:
     assert j3["notice"].startswith("I have put REG-EXTRA in your 01_Inputs folder"), j3
     j2.update(notice="Amsterdam's Regional Managing Director has seen your applicability line. His point: Article 19 keeps micro and small enterprises out of Article 28, and his office has 46 staff, fewer than 50, so Amsterdam should read “Does not apply”. He wants it changed before the brief goes to the CRCO. What do I tell him?",
               options=["Change the line to Does not apply: the office is under 50 staff. Record the threshold.", "Keep Applies: the threshold is measured on LearnTech, not on one office. Record the threshold.", "Keep Applies for now, and mark the line provisional until Group General Counsel has ruled on the threshold."])
-    j3.update(notice="REG-EXTRA is in: what each LearnTech office runs for learners, and LearnTech's headcount and turnover. I have put it straight into REG-BRIEF's applicability sheet, a line beside each office and the totals above the table, so you have nothing to open.",
+    j3.update(notice="REG-EXTRA has arrived: what each LearnTech office runs for learners, and LearnTech's headcount and turnover. I have put it straight into REG-BRIEF's applicability sheet, a line beside each office and the totals above the table, so you have nothing to open.",
               steps=["Read each office's line on the applicability sheet.", "Decide, office by office, whether the guidelines apply."])
     blob = json.dumps([t["card"], t["refs"], t["krs"], steps, w["notes"]["T11.2"], w["cards"]["T11.2"], j2, j3], ensure_ascii=False)
     for bad in ("inject T11.2", "01_Inputs folder", "No deadline", "A vendor webinar", "verify AI-generated", "1 October next year", "already past"):
@@ -5867,6 +5868,31 @@ def rework_t121(w: dict) -> None:
     assert not re.search(r"repeat issue|root cause", seen(9)), "D5 is answered before it is asked"
 
 
+def t122_soa(w: dict) -> None:
+    """GlobalConnect's Statement of Applicability, SOA-GCS (owner, 11 Nov 2026; corrections item 117). R-12 asks GlobalConnect's
+    surveillance audit for its SoA, and the only one on the desk was LI-SOA (T3.2), built from LearnTech's TSA-36. SOA-GCS is a
+    record the Group GRC Office keeps in the repository, not a hand-in: a row of Evidence › Evidence Library, its extract a data
+    file of week 12 (read at step 1), and an option of step 5. Runs after rework_t122()."""
+    aud = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "aud-t122.json").read_text(encoding="utf8"))
+    (rec,) = aud["records"]
+    t = w["tasks"]["T12.2"]
+    ev = w["ds"]["EVIDENCE-INDEX"]
+    w["ds"][rec[0]] = {"h": aud["soa"]["h"], "r": aud["soa"]["r"], "n": len(aud["soa"]["r"]), "task": "T12.2", "cols": len(aud["soa"]["h"]), "file": ev["file"]}
+    t["steps"][0]["refs"]["ds"].append(rec[0])
+    lib = w["tp"]["evidence|Evidence Library#T12.2"]
+    lib["pl"]["r"].insert(0, [c or "—" for c in rec])
+    lib["stamp"] = f"{len(lib['pl']['r'])} files"
+    lib["pl"]["note"] += f" {rec[0]}, the Statement of Applicability, is a controlled document of the ISMS: its extract is the data file {rec[0]}."
+    s, note = t["steps"][4], next(n for n in w["notes"]["T12.2"] if n[0] == 5)
+    old_w = "Each is a record the Group GRC Office produced this year: one of your own hand-ins, from F1.1 to T12.1, listed in Policies › Version History. For each request, choose the deliverable that is the record it asks for, or No evidence available."
+    assert old_w in s["w"], s["w"]
+    s["w"] = s["w"].replace(old_w, "Each is a record of GlobalConnect's ISMS from this year: one of your own hand-ins, from F1.1 to T12.1 (Policies › Version History), or a record the Group GRC Office keeps in the repository (Evidence › Evidence Library). For each request, choose the record it asks for, or No evidence available.")
+    old_h = "Version History gives each deliverable's name."
+    assert old_h in s["help"] and note[2] == s["help"], s["help"]
+    s["help"] = note[2] = s["help"].replace(old_h, "Version History gives each deliverable's name; Evidence Library lists the repository's records.")
+    s["t"] = note[1] = "Answer the auditor's follow-up requests from GlobalConnect's records"
+
+
 def rework_t122(w: dict) -> None:
     """REWORK T12.2 (owner, 30 Oct 2026; decisions 1 Nov). Runs after rework_t121().
 
@@ -5911,7 +5937,7 @@ def rework_t122(w: dict) -> None:
     names = {s["code"]: s["name"] for k in w["tasks"].values() for s in k["subs"]} | {l["sub"]["code"]: l["sub"]["name"] for l in w["li"].values() if l.get("sub")}
     # aud-t122.json already carries main()'s final rename (item 114); this check runs before it.
     assert all((names.get(r[0]) or "").replace("READ-ME-FIRST", "Onboarding record") == r[1] for r in aud["versions"]), "Version History no longer matches the deliverables"
-    assert all(o in names for o in aud["fupOpts"][:-1]), aud["fupOpts"]
+    assert all(o in names or o in {r[0] for r in aud["records"]} for o in aud["fupOpts"][:-1]), aud["fupOpts"]
     assert w["tp"]["risk|Mitigation Tracker#T12.1"]["pl"]["r"][-1][0] == "A-22" and aud["action"][0] == "A-23"
     assert next(r for r in w["pages"]["Ref-Actions"]["r"] if r[0] == "CT") == aud["ct"]
     assert w["rules"]["R16"][1].startswith("Fieldwork starts 30 days after the end of the audit period.")
@@ -5922,6 +5948,25 @@ def rework_t122(w: dict) -> None:
     everywhere("Challenging an external audit finding", "Responding to an external audit finding")
     everywhere("Executed test scripts are evidence of control operation the auditor may request.", "Executed test scripts are workpapers of how a control operated.")
     everywhere("LI-18 adds the requirement clause and the appeal route to the finding response (submit LI-NCR-R with AUD-NCR).", "LI-18 adds the clause-based finding response (submit LI-NCR-R with AUD-NCR).")
+    # R-10 (corrections item 116): a certification body audits one organisation's ISMS, and T8.2's CT-SCRIPT tested
+    # LearnTech's. The pack's T8.2 → T12.2 link moves to GlobalConnect's own executed access test, UAR-TEST (T6.1, A.5.18);
+    # aud-t122.json's R-10 and key T12.2-5 follow it.
+    old_line, line = "Executed test scripts are workpapers of how a control operated.", "An executed test workbook is a workpaper of how a control operated."
+    everywhere("Feeds: T8.2 (LI extension) (CT-MEMO); T12.1 (CT-MEMO); T12.2 (CT-SCRIPT).", "Feeds: T8.2 (LI extension) (CT-MEMO); T12.1 (CT-MEMO).")
+    everywhere("Feeds: T12.1 (UAR-TEST); T7.1 (UAR-TEST); FEX (UAR-TEST).", "Feeds: T12.1 (UAR-TEST); T7.1 (UAR-TEST); T12.2 (UAR-TEST); FEX (UAR-TEST).")
+    everywhere("EVP-IDX from T5.2; CT-SCRIPT from T8.2;", "EVP-IDX from T5.2; UAR-TEST from T6.1;")
+    everywhere("ACT-TRACKER (T12.1) and evidence for T12.2", "ACT-TRACKER (T12.1)")
+    tk, links = w["tasks"], w["connections"]["links"]
+    tk["T8.2"]["feeds"].remove(["CT-SCRIPT", "T12.2", old_line])
+    tk["T8.2"]["meta"]["feeds"].remove("T12.2 ← CT-SCRIPT")
+    tk["T6.1"]["feeds"].insert(2, ["UAR-TEST", "T12.2", line])
+    tk["T6.1"]["meta"]["feeds"].insert(tk["T6.1"]["meta"]["feeds"].index("FEX ← UAR-TEST"), "T12.2 ← UAR-TEST")
+    b, mb = tk["T12.2"]["builds"], tk["T12.2"]["meta"]["builds"]
+    b[b.index(["CT-SCRIPT", "T8.2", old_line])] = ["UAR-TEST", "T6.1", line]
+    mb[mb.index("CT-SCRIPT (T8.2)")] = "UAR-TEST (T6.1)"
+    links.remove(["T8.2", "CT-SCRIPT", "T12.2", old_line])
+    links.insert(links.index(next(l for l in links if l[:3] == ["T6.1", "UAR-TEST", "FEX"])), ["T6.1", "UAR-TEST", "T12.2", line])
+    assert old_line not in json.dumps(w, ensure_ascii=False)
     t = w["tasks"]["T12.2"]
     steps = t["steps"]
     notes = {r[0]: r for r in w["notes"]["T12.2"]}

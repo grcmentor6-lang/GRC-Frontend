@@ -20,7 +20,7 @@ import { lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { MessageNotice } from "./chat";
 import { useDeskIdentity } from "@/lib/desk/identity";
 import { canonAt, optionOrder, relabel, reorderStep, shown } from "@/lib/desk/option-order";
-import { StepInstruction, Where } from "./step-text";
+import { Marked, StepInstruction, Where } from "./step-text";
 
 const REF_ICON: Record<string, IconName> = { rule: "shield", page: "table", tpl: "file", ds: "grid", doc: "book", clause: "pin" };
 
@@ -131,7 +131,7 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                   {/* Closed: one line, full wording on hover. Open: the step in full — the whole question
                       for a decision, and whatever the instruction adds beyond the title, in small type. */}
                   <span className={`min-w-0 text-[14px] leading-snug ${open ? "" : "@[760px]:truncate"}`} title={open ? undefined : copy.title === copy.short ? (copy.detail ? `${copy.short}. ${copy.detail}` : copy.short) : copy.title}>
-                    {open ? copy.title : copy.short}
+                    <Marked text={open ? copy.title : copy.short} />
                   </span>
                   {isNext && <span className="shrink-0 rounded-[3px] bg-[#4338CA] px-1.5 py-0.5 text-[11px] font-semibold text-white">UP NEXT</span>}
                   {s.li && <span title={`Lead Implementer extension: ${desk.li[s.li]?.title ?? s.li}`} className="shrink-0 rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#3730A3]">{s.li}</span>}
@@ -310,6 +310,36 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
 
   // Said once: a step worked in a tool shows its instruction in the tool's window, so the row keeps only where.
   const detail = s.kind === "pick" || inTool ? "" : stepCopy(s).detail;
+  // The step's action. A checked decision with no part 2 draws it on its rule's row instead of a row of its own.
+  const besideRule = s.kind === "pick" && !thenOf(s) && !inTool && decisionChecked(progress, task.id, s.n);
+  const action = (
+    <span className="flex items-center gap-2">
+      {done && s.kind === "pick" ? (
+        <>
+          <span className="inline-flex items-center gap-1.5 px-1 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
+          <button type="button" onClick={onNext} className={`inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 ${press}`}>
+            Next step <Icon name="arrowRight" size={14} />
+          </button>
+        </>
+      ) : done ? (
+        <span className="inline-flex items-center gap-1.5 px-1 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
+      ) : (
+        <>
+          {/* A locked button says why, naming the next thing to do (owner, 2 Nov 2026). */}
+          {!readOnly && lockedWhy(desk, progress, task, s, start) && <span data-guide="complete-why" className="text-[12.5px] text-[#78350F]">{lockedWhy(desk, progress, task, s, start)}</span>}
+          <button
+            type="button"
+            data-guide="step-complete"
+            disabled={readOnly || !stepAnswered(desk, progress, task, s, start)}
+            onClick={markDone}
+            className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+          >
+            Mark step complete
+          </button>
+        </>
+      )}
+    </span>
+  );
   return (
     <div className="border-t border-[#E9ECF1] bg-white px-4 pb-4 pt-3">
       {detail && <StepInstruction text={detail} className="mb-3.5 max-w-[78ch]" />}
@@ -329,7 +359,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
               </div>
               <Work task={task} s={s} readOnly={readOnly} bare />
               <PartHead n={2} label={thenLabel(task, s)} />
-              <p className="mb-2 text-[14px] leading-snug text-[#111827]">{thenOf(s)}</p>
+              <StepInstruction text={thenOf(s)} className="mb-2" />
             </>
           )}
           {/* The work happens in the platform tool the step names: the step guides, the tool is where. */}
@@ -381,13 +411,13 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
               </button>
             )}
           </div>
-          <Work task={task} s={s} readOnly={readOnly} bare />
+          <Work task={task} s={s} readOnly={readOnly} bare aside={besideRule ? action : undefined} />
           {thenOf(s) && (
             <div data-guide="part-two">
               <PartHead n={2} label={thenLabel(task, s)} />
               {checked ? (
                 <>
-                  <p className="text-[14px] leading-snug text-[#111827]">{thenOf(s)}</p>
+                  <StepInstruction text={thenOf(s)} />
                   {/* The undertaking is a document, signed as a new joiner signs one; the rules are ticked here. */}
                   {/* In order: a form opens once the one before it is saved (the rules before the undertaking). */}
                   {(ATTEST[task.id]?.[s.n] ?? []).map((a, i, all) => {
@@ -405,37 +435,17 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
             </div>
           )}
           {!readOnly && !done && <div className="mt-4"><MessageNotice task={task} n={s.n} /></div>}
+          {!besideRule && (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[12.5px] text-slate-500">
-              <span className="font-medium text-slate-700">Done when:</span> {s.o}
-            </p>
-            <span className="flex items-center gap-2">
-              {done && s.kind === "pick" ? (
-                <>
-                  <span className="inline-flex items-center gap-1.5 px-1 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
-                  <button type="button" onClick={onNext} className={`inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 ${press}`}>
-                    Next step <Icon name="arrowRight" size={14} />
-                  </button>
-                </>
-              ) : done ? (
-                <span className="inline-flex items-center gap-1.5 px-1 text-[13px] font-medium text-emerald-700"><Icon name="checkCircle" size={16} />Complete</span>
-              ) : (
-                <>
-                {/* A locked button says why, naming the next thing to do (owner, 2 Nov 2026). */}
-                {!readOnly && lockedWhy(desk, progress, task, s, start) && <span data-guide="complete-why" className="text-[12.5px] text-[#78350F]">{lockedWhy(desk, progress, task, s, start)}</span>}
-                <button
-                  type="button"
-                  data-guide="step-complete"
-                  disabled={readOnly || !stepAnswered(desk, progress, task, s, start)}
-                  onClick={markDone}
-                  className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
-                >
-                  Mark step complete
-                </button>
-                </>
-              )}
-            </span>
+            {/* A decision's "Done when" is always "Decision recorded": it says nothing the step does not. */}
+            {s.kind === "pick" ? <span /> : (
+              <p className="text-[12.5px] text-slate-500">
+                <span className="font-medium text-slate-700">Done when:</span> {s.o}
+              </p>
+            )}
+            {action}
           </div>
+          )}
         </>
       )}
       {guide && (
@@ -603,9 +613,9 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
 /** The numbered halves of a decision step: 1 Decide, 2 Then. */
 export function PartHead({ n, label }: { n: number; label: string }) {
   return (
-    <p className={`flex items-center gap-2 ${n > 1 ? "mt-5" : ""} mb-1.5`}>
-      <span className="grid h-5 w-5 place-items-center rounded-full bg-[#111827] text-[11px] font-bold text-white tabular-nums">{n}</span>
-      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">{label}</span>
+    <p className={`flex items-center gap-2.5 ${n > 1 ? "mt-6" : ""} mb-1.5`}>
+      <span className="grid h-6 w-6 place-items-center rounded-full bg-[#111827] text-[12px] font-bold text-white tabular-nums">{n}</span>
+      <span className="font-sans text-[12px] font-semibold uppercase tracking-[0.1em] text-[#111827]">{label}</span>
     </p>
   );
 }
@@ -663,13 +673,13 @@ function Attestation({ task, a, readOnly }: { task: Task; a: Attest; readOnly: b
 }
 
 /** Where the mentee does the activity. File uploads replace the typed box in Phase 3. */
-export function Work({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: boolean; /** The caller draws the heading (and its own controls beside it). */ bare?: boolean }) {
+export function Work({ task, s, readOnly, bare, aside }: { task: Task; s: Step; readOnly: boolean; /** The caller draws the heading (and its own controls beside it). */ bare?: boolean; /** A decision's action, on the row of its rule. */ aside?: ReactNode }) {
   const { progress, update } = useDesk();
   const key = stepKey(task.id, s.n);
   const pick = progress.picks[key];
   const setPick = (v: string | Record<string, string>) => update((p) => ({ ...p, picks: { ...p.picks, [key]: v } }));
 
-  if (s.kind === "pick" && s.opt) return <Decision task={task} s={s} readOnly={readOnly} bare={bare} />;
+  if (s.kind === "pick" && s.opt) return <Decision task={task} s={s} readOnly={readOnly} bare={bare} aside={aside} />;
 
   if (s.kind === "each" && s.opt) {
     const rows = task.panel.pl.r ?? [];
@@ -715,7 +725,7 @@ export function Work({ task, s, readOnly, bare }: { task: Task; s: Step; readOnl
  * the best option, and for each option why it is right or wrong and what happens if you take it.
  * The key is fetched from the backend only then, so it is never in the browser before the choice.
  */
-function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: boolean; bare?: boolean }) {
+function Decision({ task, s, readOnly, bare, aside }: { task: Task; s: Step; readOnly: boolean; bare?: boolean; aside?: ReactNode }) {
   const { progress, update } = useDesk();
   const key = stepKey(task.id, s.n);
   const raw = progress.picks[key];
@@ -749,15 +759,22 @@ function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: 
 
   const best = fb?.best;
   return (
-    <fieldset data-guide="decision" className={`${bare ? "mt-2" : "mt-4"} grid gap-2`} disabled={readOnly || checked}>
+    // Layout from docs/redesign-guide/decide.html. The situation keeps the prompt well's recess (an inset
+    // shadow under the design's indigo rule): it is the one surface below the page; the options sit on it, raised.
+    <>
+    <fieldset data-guide="decision" className={`${bare ? "mt-3" : "mt-4"} grid min-w-0 gap-2.5`} disabled={readOnly || checked}>
       {!bare && <legend className="mb-2"><Label>Your decision</Label></legend>}
       {context && (
         // The situation the question sits in: something to reason with before choosing.
-        <p data-guide="decision-context" className="rounded border-l-2 border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2 text-[13.5px] leading-relaxed text-[#111827]">{context}</p>
+        <div data-guide="decision-context" className="mb-2 rounded-r-[10px] border-l-[3px] border-[#4338CA] bg-[#F5F6FF] px-4 py-3.5 shadow-[inset_0_2px_6px_rgba(17,24,39,0.07)] sm:px-6 sm:py-[18px]">
+          {situationParas(context).map((t, i) => (
+            <p key={i} className={`max-w-[84ch] text-[14.5px] leading-[1.65] text-[#374151] [text-wrap:pretty] sm:text-[15px] ${i ? "mt-2" : ""}`}>{emphasise(t)}</p>
+          ))}
+        </div>
       )}
       {fb && (
-        <p data-guide="decision-result" className={`flex items-center gap-2 rounded px-3 py-2 text-[13.5px] font-semibold ${fb.correct === false ? "bg-[#FFFBEB] text-[#78350F]" : "bg-[#F0FDF4] text-[#14532D]"}`}>
-          <Icon name={fb.correct === false ? "info" : "checkCircle"} size={16} className="shrink-0" />
+        <p data-guide="decision-result" className={`flex items-center gap-2.5 rounded-[10px] border px-4 py-3 text-[14px] font-semibold ${fb.correct === false ? "border-[#FCD34D] bg-[#FFFBEB] text-[#78350F]" : "border-[#86EFAC] bg-[#F0FDF4] text-[#14532D]"}`}>
+          <Icon name={fb.correct === false ? "info" : "checkCircle"} size={18} className="shrink-0" />
           {fb.correct === true ? "You chose the best option." : fb.correct === false ? `Not the best option. The best is ${shown(order, best ?? "")}.` : "Your choice is recorded. The reviewer checks it against your material."}
         </p>
       )}
@@ -768,39 +785,44 @@ function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: 
         const isBest = !!fb && best === letter;
         const why = fb?.options?.[i];
         const tone = fb
-          ? isBest ? "border-[#86EFAC] bg-[#F0FDF4]" : on ? "border-[#FCD34D] bg-[#FFFBEB]" : "border-[#DDE1E8] bg-white"
-          : on ? "border-[#4338CA] bg-[#F3F4FF]" : "border-[#DDE1E8] hover:border-[#C9CED8] hover:bg-[#FAFAFC]";
+          ? isBest ? "border-[#86EFAC] bg-[#F0FDF4]" : on ? "border-[#FCD34D] bg-[#FFFBEB]" : "border-[#E3E5EA] bg-white"
+          : on ? "border-[#4338CA] bg-[#F5F6FF] shadow-[0_0_0_1px_#4338CA]" : "border-[#E3E5EA] bg-white hover:border-[#C9CCD4] hover:bg-[#FAFAFC]";
+        const chip = fb ? (isBest ? "bg-[#DCFCE7] text-[#15803D]" : on ? "bg-[#FEF3C7] text-[#92400E]" : "bg-[#F1F2F5] text-[#4B5563]") : on ? "bg-[#4338CA] text-white" : "bg-[#F1F2F5] text-[#4B5563]";
         return (
-          <label key={o} className={`grid gap-1.5 rounded border px-3 py-2.5 text-[14px] ${done ? "" : "cursor-pointer"} ${tone}`}>
-            <span className="flex items-start gap-3">
-              <input type="radio" name={group} checked={on} onChange={() => update((p) => ({ ...p, picks: { ...p.picks, [key]: letter } }))} className="mt-0.5 accent-indigo-600" />
-              <span className="min-w-0 flex-1">
-                <span className="mr-1.5 font-semibold text-slate-500">{String.fromCharCode(65 + d)}</span>{o}
-                {fb && (isBest || on) && (
-                  <span className={`ml-2 inline-block whitespace-nowrap rounded-[3px] px-1.5 py-0.5 align-[1px] text-[11.5px] font-semibold ${isBest ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#FEF3C7] text-[#92400E]"}`}>
-                    {isBest && on ? "Your choice · best" : isBest ? "Best" : "Your choice"}
-                  </span>
-                )}
-              </span>
+          <label key={o} className={`flex items-start gap-3 rounded-[10px] border px-4 py-3.5 transition-colors sm:gap-3.5 sm:px-5 sm:py-4 ${done ? "" : "cursor-pointer"} ${tone}`}>
+            <input
+              type="radio"
+              name={group}
+              checked={on}
+              onChange={() => update((p) => ({ ...p, picks: { ...p.picks, [key]: letter } }))}
+              className="mt-[3px] h-[18px] w-[18px] shrink-0 cursor-pointer appearance-none rounded-full border-2 border-[#C9CCD4] bg-white transition-[border] checked:border-[5px] checked:border-[#4338CA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4338CA]/30 disabled:cursor-default"
+            />
+            <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-md text-[12.5px] font-bold ${chip}`}>{String.fromCharCode(65 + d)}</span>
+            <span className="min-w-0 flex-1">
+              <span className="text-[15px] font-medium leading-6 tracking-[-0.005em] text-[#111827] sm:text-[15.5px]">{emphasise(o)}</span>
+              {fb && (isBest || on) && (
+                <span className={`ml-2 inline-block whitespace-nowrap rounded-[4px] px-1.5 py-0.5 align-[2px] text-[11.5px] font-semibold ${isBest ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#FEF3C7] text-[#92400E]"}`}>
+                  {isBest && on ? "Your choice · best" : isBest ? "Best" : "Your choice"}
+                </span>
+              )}
+              {why && (
+                <span className="mt-2 grid gap-x-6 gap-y-1 text-[13.5px] leading-[1.55] text-[#374151] md:grid-cols-2">
+                  <span><strong className="font-semibold text-[#111827]">Why: </strong>{relabel(why.reason, order)}</span>
+                  <span><strong className="font-semibold text-[#111827]">If you do this: </strong>{relabel(why.consequence, order)}</span>
+                </span>
+              )}
             </span>
-            {why && (
-              <span className="ml-7 grid gap-x-6 gap-y-0.5 text-[13px] leading-snug text-[#3F4757] md:grid-cols-2">
-                <span><strong className="font-semibold text-[#111827]">Why: </strong>{relabel(why.reason, order)}</span>
-                <span><strong className="font-semibold text-[#111827]">If you do this: </strong>{relabel(why.consequence, order)}</span>
-              </span>
-            )}
           </label>
         );
       })}
-      {fb?.why && <p className="text-[12.5px] leading-snug text-[#5B6474]"><strong className="font-semibold text-[#3F4757]">The rule: </strong>{relabel(fb.why, order)}</p>}
       {!checked && (
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="mt-1.5 flex flex-wrap items-center gap-3">
           <button
             type="button"
             data-guide="check-answer"
             disabled={readOnly || !pick}
             onClick={check}
-            className={`h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+            className={`h-10 rounded-lg bg-[#111827] px-5 text-[13.5px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
           >
             Check my answer
           </button>
@@ -816,7 +838,44 @@ function Decision({ task, s, readOnly, bare }: { task: Task; s: Step; readOnly: 
         <p className="text-[12.5px] text-slate-500">Loading the explanation…</p>
       ))}
     </fieldset>
+    {/* The rule on one row, with the step's action beside it (owner, 11 Nov 2026: no row of its own for the button).
+        Outside the fieldset: a checked decision disables it, and a button inside would be disabled with it. */}
+    {(fb?.why || aside) && (
+      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        {fb?.why ? <p className="min-w-0 flex-1 text-[13.5px] leading-[1.6] text-[#4B5563]"><strong className="font-semibold text-[#111827]">The rule: </strong>{relabel(fb.why, order)}</p> : <span />}
+        {aside}
+      </div>
+    )}
+    </>
   );
+}
+
+/**
+ * A situation of three sentences or more opens with its first as a paragraph of its own (decide.html):
+ * the setting, then the facts to reason with.
+ */
+function situationParas(t: string): string[] {
+  const s = t.split(/(?<=[.?!”])\s+(?=[A-Z“])/);
+  return s.length >= 3 ? [s[0], s.slice(1).join(" ")] : [t];
+}
+
+// ponytail: the context data is plain strings, so emphasis is by pattern, not markup; a defined term like
+// "working copy" stays plain until the data marks it. A toolbar path is only greyed: its chip is the Where column's.
+const EMPH = /(\((?:[A-Z][\w ]*› )[^)]*\))|(\b[A-Z]{2,}(?:-[A-Z0-9]+)+\b|\b\d{2}_[A-Za-z]+\b)|(Tier \d(?:, [A-Z][a-z]+)?)/g;
+function emphasise(t: string): ReactNode {
+  const out: ReactNode[] = [];
+  let at = 0;
+  for (const m of t.matchAll(EMPH)) {
+    out.push(t.slice(at, m.index));
+    const [x, crumb] = m;
+    out.push(
+      crumb ? <span key={m.index} className="text-[0.9em] text-[#6B7280]">{x}</span>
+        : <b key={m.index} className="whitespace-nowrap font-semibold text-[#111827]">{x}</b>,
+    );
+    at = m.index + x.length;
+  }
+  out.push(t.slice(at));
+  return out;
 }
 
 export function KrProgress({ task, kr }: { task: Task; kr: string }) {

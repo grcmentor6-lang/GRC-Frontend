@@ -71,8 +71,7 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
             </div>
             <div className="flex items-center gap-4 mt-3 text-[12px] text-indigo-100/90 flex-wrap">
               {p.location && p.location !== "—" && <span className="inline-flex items-center gap-1.5"><Icon name="user" size={13} /> {p.location}</span>}
-              {/* The email stays off the public page: anyone holding the link could harvest it. */}
-              {!isPublic && p.email && <span className="inline-flex items-center gap-1.5"><Icon name="mail" size={13} /> {p.email}</span>}
+              {/* No email: the sheet is printed and shared, and the learner never chose to put their address on it. */}
               {p.linkedin && (
                 <a href={p.linkedin.startsWith("http") ? p.linkedin : `https://${p.linkedin}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-indigo-50 hover:underline">
                   <Icon name="linkedin" size={13} /> LinkedIn

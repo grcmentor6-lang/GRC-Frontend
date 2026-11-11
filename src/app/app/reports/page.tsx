@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { KcRecord } from "@/components/app/kc-record";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Card, Bar } from "@/components/ui/primitives";
@@ -9,6 +10,7 @@ import type { Desk, Task } from "@/lib/desk/model";
 import { stepKey, taskStatus, type Progress, type TaskStatus } from "@/lib/desk/progress";
 import { NOT_SCORED, fmtWhen, recordCounts, recordEmpty, useDeskRecord, useTaskScores } from "@/lib/desk-record";
 import type { Scores } from "@/lib/desk/badges";
+import { OrgName } from "@/lib/desk/org-tone";
 
 /**
  * Reports — the learner's GRC 101 record as a register: each opened task with its organisation, the
@@ -89,7 +91,7 @@ function ReportTask({ row, desk, p, defaultOpen }: { row: Row; desk: Desk; p: Pr
           <div className="text-[14px] font-semibold tracking-tight text-slate-900">{t.title}</div>
           <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500 tracking-tight flex-wrap">
             <span>Week {t.week}</span>
-            <span className="text-slate-300">·</span><span className="inline-flex items-center gap-1"><Icon name="briefcase" size={11} /> {row.org}</span>
+            <span className="text-slate-300">·</span><OrgName org={t.org} orgs={desk.orgs} size={13} />
             {row.domains.length > 0 && <><span className="text-slate-300">·</span><span>{row.domains.join(" · ")}</span></>}
             {row.submittedAt && <><span className="text-slate-300">·</span><span>Submitted {fmtWhen(row.submittedAt)}</span></>}
           </div>
@@ -219,6 +221,7 @@ export default function ReportsPage() {
       ) : (
         <>
           <Kpis desk={desk} p={progress} />
+          <KcRecord />
           {recordEmpty(progress) && (
             <Card className="text-[13px] text-slate-600">
               Nothing on your record yet. These numbers move as you complete steps and submit tasks on the{" "}

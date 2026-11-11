@@ -152,6 +152,13 @@ export default function DashboardPage() {
 
   const plan = useMemo(() => (desk ? planOf(desk, progress, start, preview) : []), [desk, progress, start, preview]);
   const counts = desk ? recordCounts(desk, progress) : null;
+  // The certification path GRC 101 builds toward: its ISO/IEC 27001 Lead Implementer modules (LI-01…), each run as
+  // steps inside a host task. A module is done when every step tagged with it is done.
+  const liModules = desk
+    ? Object.keys(desk.li).map((id) =>
+        Object.values(desk.tasks).every((t) => t.steps.every((s) => s.li !== id || !!progress.done[`${t.id}-${s.n}`])),
+      )
+    : [];
   const next = desk ? nextStep(desk, progress, plan) : null;
   const started = !recordEmpty(progress);
   const allIn = !!counts && counts.tasksSubmitted === counts.tasks;
@@ -211,7 +218,8 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={startWelcomeTour}
-              className="focus-ring inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-white/10 ring-1 ring-white/20 backdrop-blur-sm text-white hover:bg-white/20 text-[12.5px] font-medium tracking-tight transition-colors cursor-pointer"
+              // Its own colour (owner, 11 Nov 2026): the see-through white sank into the banner beside the tabs.
+              className="focus-ring inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-amber-50 ring-1 ring-amber-200 text-amber-900 shadow-[0_6px_16px_-10px_rgba(120,53,15,0.45)] hover:bg-amber-100 text-[12.5px] font-semibold tracking-tight transition-colors cursor-pointer"
             >
               <Icon name="help" size={14} /> Guide
             </button>
@@ -258,7 +266,7 @@ export default function DashboardPage() {
 
       {!locked && counts && (
         <Reveal delay={0.08}>
-        <div data-tour="dash-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div data-tour="dash-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Stat icon="checkSquare" tone="indigo" value={counts.stepsDone} sub={`/ ${counts.steps}`} label="Steps done" />
           <Stat icon="bullseye" tone="emerald" value={counts.decisionsDone} sub={`/ ${counts.decisions}`} label="Decisions made" />
           {noStart ? (
@@ -267,6 +275,11 @@ export default function DashboardPage() {
             <Stat icon="calendar" tone={dueNext.state === "overdue" ? "rose" : "amber"} value={dueNext.id} sub={dueText(dueNext)} label={`Next task due · ${fmtDay(dueNext.due)}`} />
           ) : (
             <Stat icon="calendar" tone="emerald" value="—" label="Nothing open is due" />
+          )}
+          {liModules.length > 0 && (
+            <Link href="/app/certification" className="focus-ring rounded-2xl no-underline transition-transform hover:-translate-y-0.5" title="Your certification path: ISO/IEC 27001 Lead Implementer">
+              <Stat icon="ribbon" tone="indigo" value={liModules.filter(Boolean).length} sub={`/ ${liModules.length}`} label="Lead Implementer modules · ISO/IEC 27001" />
+            </Link>
           )}
         </div>
         </Reveal>

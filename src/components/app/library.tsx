@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { loadDesk } from "@/lib/desk/model";
+import { OrgName } from "@/lib/desk/org-tone";
+import type { Desk } from "@/lib/desk/model";
 import { nameOf, summaryOf, type LibGroup, type LibItem, type LibStandard } from "@/lib/library";
 
 /*
@@ -304,13 +306,13 @@ export function LibraryProvenance({ standard }: { standard?: LibStandard }) {
 /** "You came here from a task" — the organisation whose work this reading is for, and the way back. */
 export function TaskContext({ task }: { task: string }) {
   // The Working Desk's own task (T3.2 …), read from its catalogue; an id it does not hold shows no banner.
-  const [t, setT] = useState<{ title: string; org: string } | null>(null);
+  const [t, setT] = useState<{ title: string; org: string; orgs: Desk["orgs"] } | null>(null);
   useEffect(() => {
     let off = false;
     loadDesk()
       .then((d) => {
         const x = d.tasks[task];
-        if (!off && x) setT({ title: x.title, org: x.orglbl });
+        if (!off && x) setT({ title: x.title, org: x.org, orgs: d.orgs });
       })
       .catch(() => {});
     return () => { off = true; };
@@ -320,9 +322,10 @@ export function TaskContext({ task }: { task: string }) {
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-l-2 border-sky-700 bg-sky-50/60 px-3.5 py-2.5">
       <div className="min-w-0 flex-1">
         <span className="block font-mono text-[10px] uppercase tracking-[0.08em] text-sky-700">
-          Reading for {task}{t.org ? ` · ${t.org}` : ""}
+          Reading for {task}
         </span>
         <span className="block text-[13px] text-slate-800 tracking-tight">{t.title}</span>
+        <span className="mt-0.5 block text-[12px]"><OrgName org={t.org} orgs={t.orgs} size={14} /></span>
       </div>
       <Link href={`/app/desk#${task}`} className="focus-ring inline-flex items-center gap-1.5 text-[12px] font-medium text-sky-700 hover:text-sky-900">
         Back to the task <Icon name="arrowRight" size={13} />
