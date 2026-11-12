@@ -40,13 +40,20 @@ export function stepUses(task: Task, n: number): string[] {
   ].filter((k): k is string => !!k);
 }
 
-/** Tool key → the first step (in programme order) that uses it. */
-const firstUse = new WeakMap<Desk, Map<string, Here>>();
-function firstUses(desk: Desk): Map<string, Here> {
+/** Tool key → the first step (in programme order) that uses it, and every task with a step that uses it. */
+type Use = Here & { tasks: Set<string> };
+const firstUse = new WeakMap<Desk, Map<string, Use>>();
+function firstUses(desk: Desk): Map<string, Use> {
   let m = firstUse.get(desk);
   if (m) return m;
   m = new Map();
-  for (const id of desk.order) for (const s of desk.tasks[id].steps) for (const k of stepUses(desk.tasks[id], s.n)) if (!m.has(k)) m.set(k, { task: id, n: s.n });
+  for (const id of desk.order)
+    for (const s of desk.tasks[id].steps)
+      for (const k of stepUses(desk.tasks[id], s.n)) {
+        const u = m.get(k);
+        if (u) u.tasks.add(id);
+        else m.set(k, { task: id, n: s.n, tasks: new Set([id]) });
+      }
   firstUse.set(desk, m);
   return m;
 }
@@ -61,8 +68,11 @@ export function toolOpen(desk: Desk, isOpen: (w: number) => boolean, key: string
   if (lab) return labOpen(lab, p);
   if (UTILITIES.has(sec)) return true;
   if (!isOpen(weekOf(desk, key))) return false;
-  if (SHELF.has(sec) || !p || !firstUses(desk).has(key)) return true;
-  return desk.order.some((id) => reached(desk, p, here, id) && desk.tasks[id].steps.some((s) => stepUses(desk.tasks[id], s.n).includes(key)));
+  const use = firstUses(desk).get(key);
+  if (SHELF.has(sec) || !p || !use) return true;
+  // The tasks that use the tool come from the index built once per desk: walking every step of every reached task
+  // for every tool, on each render of the toolbar, took tens of milliseconds (tools.test.ts holds the two equal).
+  return desk.order.some((id) => use.tasks.has(id) && reached(desk, p, here, id));
 }
 
 export function sectionOpen(desk: Desk, isOpen: (w: number) => boolean, sec: string, p?: Progress, here?: Here | null): boolean {
