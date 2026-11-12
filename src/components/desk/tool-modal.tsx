@@ -25,7 +25,7 @@ import { decisionChecked, stepKey, type Progress } from "@/lib/desk/progress";
 import { appZoom } from "@/lib/zoom";
 import { useAuth } from "@/components/auth/auth-provider";
 import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
-import { STEP_GUIDES } from "./step-guides";
+import { STEP_GUIDES, autoGuideKey } from "./step-guides";
 import { LabWindow } from "./lab-console";
 import { allCaptures, labOf } from "@/lib/desk/labs";
 
@@ -209,7 +209,7 @@ function useBeside(index: number) {
     const m = typeof document === "undefined" ? null : document.querySelector("[data-desk-modal]")?.getBoundingClientRect();
     const off = 12 + index * 28;
     const gap = m ? m.left / appZoom() - off - 12 : Infinity;
-    return gap >= 320 ? { left: `${off}px`, width: Math.min(420, gap) } : { left: `calc(100vw / var(--app-zoom) - ${420 + off}px)`, width: 420 };
+    return gap >= 320 ? { left: `${off}px`, width: Math.min(420, gap) } : { left: `calc(100vw / var(--app-zoom) - var(--test-dock, 0px) - ${420 + off}px)`, width: 420 };
   });
   return place;
 }
@@ -259,13 +259,13 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
   // "2 worked + 6"): its stamp describes what the modal shows, the tool's generic one does not.
   const stamp = (task && s && regOf(task.id, s.n)?.stamp) || (task && deliverable && ownView(task, mock?.tool) ? task.panel.stamp : mock?.stamp);
   // A walk-through of the step, where one is written: it runs the first time the mentee opens the
-  // step, and again from "Show me how".
+  // step only for the first task's step 1 (autoGuideKey); every other step's runs from "Show me how".
   const { user } = useAuth();
   const guideKey = task && s ? `${task.id}-${s.n}` : "";
   const guide = STEP_GUIDES[guideKey];
   const [guideAt, setGuideAt] = useState(-1);
   const startGuide = () => setGuideAt(0);
-  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && present && !viewOnly, startGuide, 700);
+  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && present && !viewOnly && guideKey === autoGuideKey(desk), startGuide, 700);
   // A guide card that sent the learner to another window (the Inbox, a Tech Lab) ends the walk there; when that
   // window closes, the walk starts again and its cards for jobs already done pass by (T6.1 step 8).
   const [away, setAway] = useState<{ until: string | (() => boolean) } | null>(null);

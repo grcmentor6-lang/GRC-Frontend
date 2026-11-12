@@ -20,8 +20,17 @@ export const LINKEDIN_ENABLED = process.env.NEXT_PUBLIC_LINKEDIN_ENABLED === "1"
 export const ALL_WEEKS_OPEN = true;
 
 /**
- * Every knowledge check and exam open regardless of the week's submissions (owner, 11 Nov 2026, for testing).
+ * Every knowledge check and exam open regardless of the week's submissions. Off since 12 Nov 2026 (owner: "enable the
+ * locking now"); it was on from 11 Nov for testing.
  * ponytail: a constant like ALL_WEEKS_OPEN; backend/app/services/desk_kc.py KC_ALL_OPEN must say the same, since the
  * server enforces the rule too. Set both to false to restore "opens once the week's tasks are submitted".
  */
-export const KC_ALL_OPEN = true;
+export const KC_ALL_OPEN = false;
+
+/**
+ * The accounts for whom the desk's order is lifted (owner, 12 Nov 2026): every task and step opens whatever came
+ * before it, and every knowledge check whatever was submitted. Everyone else works in order (lib/desk/locks.ts).
+ * backend/app/core/config.py `desk_open_for` must list the same addresses: the server enforces the checks' rule.
+ */
+export const OPEN_DESK_FOR = ["anshulchutani37@gmail.com"];
+export const deskOpenFor = (email: string | null | undefined) => !!email && OPEN_DESK_FOR.includes(email.trim().toLowerCase());

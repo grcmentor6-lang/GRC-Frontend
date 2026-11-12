@@ -1,9 +1,11 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import type { Table } from "@/lib/desk/model";
 import { cellTone } from "@/lib/desk/cell-tone";
+import { ladderCell } from "@/lib/desk/tree-text";
+import { TreeCard } from "./walk-card";
 
 /** Press feedback shared by every clickable on the desk. */
 export const press = "transition-transform duration-150 ease-out active:scale-[0.97] focus-ring";
@@ -13,7 +15,7 @@ export function TableView({ t, max, flush }: { t: Partial<Table>; max?: number; 
   const rows = (t.r ?? []).slice(0, max);
   if (!t.h?.length) return null;
   return (
-    <div className={`overflow-x-auto bg-white ${flush ? "border-b border-[#DDE1E8]" : "rounded border border-[#DDE1E8]"}`}>
+    <div className={`@container overflow-x-auto bg-white ${flush ? "border-b border-[#DDE1E8]" : "rounded border border-[#DDE1E8]"}`}>
       {/* The register look (register.html): no column rules, a quiet header, the register's vocabulary as chips. */}
       <table className="w-full border-collapse text-[13.5px] leading-[1.5] tabular-nums text-[#4B5563]">
         <thead className="bg-[#F8F9FB] font-sans text-left text-[10.5px] uppercase tracking-[0.08em] text-[#6B7280]">
@@ -24,13 +26,42 @@ export function TableView({ t, max, flush }: { t: Partial<Table>; max?: number; 
           </tr>
         </thead>
         <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className="hover:[&>td]:bg-[#FAFAFC]">
-              {r.map((c, j) => (
-                <td key={j} className="border-b border-[#EEF0F3] px-3.5 py-3 align-top first:font-semibold first:text-[#111827]">{typeof c === "string" && c ? <Toned v={c} h={t.h?.[j]} /> : c}</td>
-              ))}
-            </tr>
-          ))}
+          {rows.map((r, i) => {
+            // A numbered ladder cell (Ref-Rules R01) is drawn as the tree card: inside its cell where the table is wide
+            // enough, else in a full-width row under it, so a phone reads it without a sideways scroll.
+            const lj = r.findIndex((c) => typeof c === "string" && ladderCell(c));
+            const lad = lj >= 0 ? ladderCell(r[lj] as string) : null;
+            const card = lad && <TreeCard title={t.h?.[0] === "Rule" ? `Rule ${r[0]}` : "Decision tree"} steps={lad.steps} />;
+            return (
+              <Fragment key={i}>
+                <tr className="hover:[&>td]:bg-[#FAFAFC]">
+                  {r.map((c, j) => (
+                    <td key={j} className={`border-b border-[#EEF0F3] px-3.5 py-3 align-top first:font-semibold first:text-[#111827] ${lad ? "@max-xl:border-b-0" : ""}`}>
+                      {j === lj && lad ? (
+                        <div className="grid gap-2 @xl:min-w-[260px]">
+                          {lad.lead && <p>{lad.lead}</p>}
+                          <div className="@max-xl:hidden">{card}</div>
+                          {lad.tail && <p>{lad.tail}</p>}
+                        </div>
+                      ) : typeof c === "string" && c ? (
+                        <Toned v={c} h={t.h?.[j]} />
+                      ) : (
+                        c
+                      )}
+                    </td>
+                  ))}
+                </tr>
+                {card && (
+                  <tr className="@xl:hidden">
+                    <td colSpan={t.h?.length} className="border-b border-[#EEF0F3] px-3.5 pb-3">
+                      {/* The table may still scroll sideways (a long word elsewhere): the card keeps to the visible width. */}
+                      <div className="sticky left-3.5 w-[calc(100cqw-1.75rem)]">{card}</div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
       {max && (t.r?.length ?? 0) > max && (

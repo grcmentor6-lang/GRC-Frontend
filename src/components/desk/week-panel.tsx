@@ -63,7 +63,7 @@ const ON_LIGHT: Record<Urgency, string> = {
  * screen is the white cell with an indigo underline; today's week carries a dot; locked weeks a lock.
  * Exam weeks (amber diamond) and checkpoint weeks (dark dot) are marked in the cell.
  */
-export function WeekTimeline({ week, onWeek }: { week: number; onWeek: (n: number) => void }) {
+export function WeekTimeline({ week, onWeek, fit }: { week: number; onWeek: (n: number) => void; /** All twelve weeks in the width there is, none scrolled off: the desk beside a docked test. */ fit?: boolean }) {
   const { desk, progress, isOpen, start } = useDesk();
   const today = currentWeek(start);
   // On a screen too narrow for twelve cells the strip scrolls; keep the week on screen in view.
@@ -74,7 +74,7 @@ export function WeekTimeline({ week, onWeek }: { week: number; onWeek: (n: numbe
     if (el && cell && el.scrollWidth > el.clientWidth) el.scrollTo({ left: cell.offsetLeft - (el.clientWidth - cell.offsetWidth) / 2 });
   }, [week]);
   return (
-    <nav ref={nav} role="tablist" aria-label="Weeks" className="flex h-full min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
+    <nav ref={nav} role="tablist" aria-label="Weeks" className="@container flex h-full min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
       {desk.weeks.map((w) => {
         const ts = weekTasks(desk, w.n);
         const total = ts.reduce((n, t) => n + t.steps.length, 0);
@@ -94,7 +94,7 @@ export function WeekTimeline({ week, onWeek }: { week: number; onWeek: (n: numbe
             aria-selected={here}
             onClick={() => onWeek(w.n)}
             title={`Week ${w.n}, ${w.ph}: ${w.th}. ${orgs.map((k) => desk.orgs[k].name).join(" and ")}${notes ? `. ${notes}` : ""}. ${open ? `${got} of ${total} steps done` : `Opens ${fmtDay(dueDate(start, (w.n - 1) * 7))}`}`}
-            className={`relative flex min-w-[108px] flex-[1_0_108px] flex-col justify-center gap-1.5 border-r border-[#DDE1E8] px-2.5 text-left focus-ring ${
+            className={`relative flex ${fit ? "min-w-0 flex-[1_1_0] overflow-hidden last:border-r-0" : "min-w-[108px] flex-[1_0_108px]"} flex-col justify-center gap-1.5 border-r border-[#DDE1E8] px-2.5 text-left focus-ring ${
               here ? "bg-white" : "bg-[#F7F8FA] hover:bg-[#F3F4F7]"
             }`}
           >
@@ -102,7 +102,7 @@ export function WeekTimeline({ week, onWeek }: { week: number; onWeek: (n: numbe
               <span className={`font-mono text-[12px] font-semibold ${here ? "text-[#111827]" : "text-[#6B7280]"}`}>W{w.n}</span>
               {w.n === today && <span className="h-1.5 w-1.5 rounded-full bg-[#4338CA]" aria-label="this week" />}
               {/* Who this week's work is for: the organisations' badges, overlapped when both. */}
-              <span className={`ml-1 flex shrink-0 items-center gap-0.5 ${open ? "" : "opacity-60 grayscale"}`} aria-label={`for ${orgs.map((k) => desk.orgs[k].short).join(" and ")}`}>
+              <span className={`ml-1 flex shrink-0 items-center gap-0.5 ${fit ? "@max-[1080px]:hidden" : ""} ${open ? "" : "opacity-60 grayscale"}`} aria-label={`for ${orgs.map((k) => desk.orgs[k].short).join(" and ")}`}>
                 {orgs.map((k) => (
                   <span key={k} title={desk.orgs[k].name}>
                     <OrgLogo org={logoFor(desk.orgs[k].name)} orgKey={k} className="h-4 w-4 text-[6.5px]" iconSize={11} />
@@ -141,7 +141,7 @@ const Dot = () => <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-[#C4
 
 /** The left column: the week and its tasks first, then the long view. */
 export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { week: number; taskId: string | null; overview: boolean; onOverview: () => void; onCollapse: () => void }) {
-  const { desk, progress, start, openTask, isOpen } = useDesk();
+  const { desk, progress, start, openTask, isOpen, taskLock } = useDesk();
   const all = desk.order.map((id) => desk.tasks[id]);
   const w = desk.weeks[week - 1];
   const tasks = weekTasks(desk, week);
@@ -196,8 +196,9 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
             const st = taskStatus(progress, t);
             const n = doneSteps(progress, t);
             const d = isOpen(t.week) ? due(start, t.dueDay, st === "submitted") : null;
+            const gate = taskLock(t.id);
             return (
-              <li key={t.id}>
+              <li key={t.id} data-task-gate={gate ?? undefined} title={gate ? `Opens once you submit ${gate}` : undefined}>
                 <button
                   type="button"
                   onClick={() => {
@@ -213,6 +214,7 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
                   <span className="min-w-0">
                     <span className="mb-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#4338CA]">
                       {t.id}
+                      {gate && <Icon name="lock" size={11} strokeWidth={2.5} className="text-[#8A91A3]" aria-label="not open yet" />}
                       <OrgMarks org={t.org} orgs={desk.orgs} />
                     </span>
                     <span className="block text-balance text-[14.5px] font-semibold leading-[1.35] tracking-[-0.005em] text-[#111827]">{t.title}</span>
@@ -280,7 +282,7 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
  * progress ring stay one click away; the top cell unfolds the panel.
  */
 export function WeekRail({ week, taskId, overview, onOverview, onExpand }: { week: number; taskId: string | null; overview: boolean; onOverview: () => void; onExpand: () => void }) {
-  const { desk, progress, openTask } = useDesk();
+  const { desk, progress, openTask, taskLock } = useDesk();
   const tasks = weekTasks(desk, week);
   const w = desk.weeks[week - 1];
   const kc = w ? checkOf(w) : null;
@@ -308,10 +310,10 @@ export function WeekRail({ week, taskId, overview, onOverview, onExpand }: { wee
             type="button"
             onClick={() => openTask(t.id)}
             aria-label={`${t.id} ${t.title}`}
-            title={`${t.id} ${t.title}`}
+            title={taskLock(t.id) ? `${t.id} opens once you submit ${taskLock(t.id)}` : `${t.id} ${t.title}`}
             className={`${cell} gap-1 py-2 ${here ? "bg-[#F3F4FF] shadow-[inset_3px_0_0_#4338CA]" : "hover:bg-[#F3F4F7]"}`}
           >
-            <Ring value={doneSteps(progress, t) / t.steps.length} done={st === "submitted"} size={18} />
+            {taskLock(t.id) ? <Icon name="lock" size={14} className="text-[#8A91A3]" /> : <Ring value={doneSteps(progress, t) / t.steps.length} done={st === "submitted"} size={18} />}
             <span className={`font-mono text-[9.5px] ${here ? "text-[#4338CA]" : "text-[#5B6474]"}`}>{t.id}</span>
           </button>
         );

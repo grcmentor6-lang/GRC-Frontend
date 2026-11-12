@@ -11,7 +11,7 @@ import { camelToSnake, snakeToCamel } from "./case";
 import { getAccessToken } from "./token";
 import { deepMap, toCanon, toLearner } from "./desk/names";
 
-const DESK_CHECKS = /^\/me\/desk\/(decision|rows|message|lab|kc\/[A-Z0-9-]+)(\?|$)/;
+const DESK_CHECKS = /^\/me\/desk\/(decision|rows|message|lab|kc\/[A-Z0-9-]+(?:\/(?:start|picks))?)(\?|$)/;
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:8000";

@@ -26,6 +26,18 @@ export interface DeskCtx {
   openTool: (key: string, mode?: "work" | "view") => void;
   /** Closes a floating window (the Inbox, once its message is answered). */
   closeTool: (key: string) => void;
+  /** The desk's order is lifted for this account (flags.ts OPEN_DESK_FOR): nothing below ever locks. */
+  free: boolean;
+  /** The task to submit before `taskId` opens, or null when it is open (lib/desk/locks.ts). */
+  taskLock: (taskId: string) => string | null;
+  /** The step to complete before step `n` of `taskId` opens, or null when it is open. */
+  stepLock: (taskId: string, n: number) => number | null;
+  /** The knowledge check whose attempt is in progress, held in the test dock beside the desk. */
+  liveTest: string | null;
+  /** Shows a started check in the test dock (unfolded). */
+  openTest: (id: string) => void;
+  /** Takes the test dock away: the attempt was submitted, or there is none. */
+  endTest: () => void;
 }
 
 export const Ctx = createContext<DeskCtx | null>(null);

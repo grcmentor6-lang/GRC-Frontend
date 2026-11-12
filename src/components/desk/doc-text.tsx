@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { blocks, clean, docNow, loadDoc, pick, type DocSection } from "@/lib/desk/docs";
+import { treeRun } from "@/lib/desk/tree-text";
+import { TreeCard } from "./walk-card";
 
 /** Sections of a source document, drawn as the pack writes them: paragraphs and tables. */
 export function DocText({ sections }: { sections: DocSection[] }) {
@@ -13,19 +15,23 @@ export function DocText({ sections }: { sections: DocSection[] }) {
             <span className="mr-2 font-mono text-[12.5px] text-[#4338CA]">{/^\d/.test(s.num) ? `Section ${s.num}` : s.num}</span>
             {s.title}
           </h3>
-          <Body md={s.body} />
+          <Body md={s.body} tree={/decision tree/i.test(s.title)} />
         </section>
       ))}
     </div>
   );
 }
 
-function Body({ md }: { md: string }) {
+/** `tree`: a "decision tree" section, whose "question? → outcome … Otherwise → outcome" lines are drawn as the tree card. */
+function Body({ md, tree }: { md: string; tree?: boolean }) {
   const parts = blocks(md);
+  const run = tree ? treeRun(parts.map((b) => (b.t === "p" ? clean(b.text) : ""))) : null;
   return (
     <div className="grid gap-2">
       {parts.map((b, i) =>
-        b.t === "p" ? (
+        run && i >= run.start && i < run.end ? (
+          i === run.start && <div key={i} className="my-1"><TreeCard title="Decision tree" steps={run.steps} /></div>
+        ) : b.t === "p" ? (
           <p key={i} className="text-[13.5px] leading-relaxed text-[#3F4757]">{clean(b.text)}</p>
         ) : (
           <div key={i} className="overflow-x-auto rounded border border-[#DDE1E8] bg-white">

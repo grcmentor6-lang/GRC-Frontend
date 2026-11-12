@@ -12,7 +12,7 @@ import { ATTEST, RMF, attestDone, attestKey, type Attest } from "@/lib/desk/form
 import { briefOf, regOf } from "@/lib/desk/registers";
 import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
 import { useAuth } from "@/components/auth/auth-provider";
-import { STEP_GUIDES } from "./step-guides";
+import { STEP_GUIDES, autoGuideKey } from "./step-guides";
 import { DECISION_CONTEXT } from "@/lib/desk/decision-context";
 import { FloatWindow } from "./float-window";
 import { UndertakingCard } from "./undertaking";
@@ -33,7 +33,7 @@ export function isStepComplete(p: Progress, task: Task, s: Step): boolean {
  * away. One step is open at a time: opening another closes it, and the key results follow.
  */
 export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: number; onFocus: (n: number) => void; locked: boolean }) {
-  const { desk, progress } = useDesk();
+  const { desk, progress, stepLock } = useDesk();
   const doneCount = task.steps.filter((x) => isStepComplete(progress, task, x)).length;
   // The first step not yet done is the one to do next; it carries the UP NEXT tag.
   const next = locked ? 0 : (task.steps.find((x) => !isStepComplete(progress, task, x))?.n ?? 0);
@@ -88,6 +88,8 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
           const decision = s.kind !== "do";
           const copy = stepCopy(s);
           const helpOpen = help?.n === s.n;
+          // Not its turn yet: the steps before it come first (lib/desk/locks.ts). The row says which.
+          const gate = locked ? null : stepLock(task.id, s.n);
           return (
             <Fragment key={s.n}>
             {ext && (
@@ -108,8 +110,11 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                 type="button"
                 onClick={() => onFocus(open ? 0 : s.n)}
                 aria-expanded={open}
+                aria-disabled={gate ? true : undefined}
+                data-step-locked={gate ?? undefined}
+                title={gate ? `Opens once step ${gate} is complete` : undefined}
                 className={`${cols} w-full items-stretch text-left focus-ring ${
-                  open || isNext ? "bg-[#F3F4FF] shadow-[inset_3px_0_0_#4338CA]" : "bg-white hover:bg-[#FAFAFC]"
+                  open || isNext ? "bg-[#F3F4FF] shadow-[inset_3px_0_0_#4338CA]" : gate ? "cursor-not-allowed bg-[#FAFAFB]" : "bg-white hover:bg-[#FAFAFC]"
                 }`}
               >
                 <span className={`${cell} flex items-center justify-center`}>
@@ -119,15 +124,15 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                       <Icon name="check" size={11} strokeWidth={3.5} />
                       {s.n}
                     </span>
-                  ) : locked ? (
-                    <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EEF0F4] text-[#8A91A3]"><Icon name="lock" size={12} /></span>
+                  ) : locked || gate ? (
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EEF0F4] text-[#8A91A3]" aria-label={`Step ${s.n}, not open yet`}><Icon name="lock" size={12} /></span>
                   ) : isNext || open ? (
                     <span className="grid h-6 w-6 place-items-center rounded-full border-2 border-[#4338CA] bg-white text-[12px] font-bold text-[#4338CA] tabular-nums">{s.n}</span>
                   ) : (
                     <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EEF0F4] text-[12px] font-semibold text-[#5B6474] tabular-nums">{s.n}</span>
                   )}
                 </span>
-                <span className={`${cell} flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-3.5 py-3 ${open ? "" : "@[760px]:flex-nowrap"} ${locked ? "text-[#6B7280]" : "text-[#111827]"}`}>
+                <span className={`${cell} flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 px-3.5 py-3 ${open ? "" : "@[760px]:flex-nowrap"} ${locked || gate ? "text-[#6B7280]" : "text-[#111827]"}`}>
                   {/* Closed: one line, full wording on hover. Open: the step in full — the whole question
                       for a decision, and whatever the instruction adds beyond the title, in small type. */}
                   <span className={`min-w-0 text-[14px] leading-snug ${open ? "" : "@[760px]:truncate"}`} title={open ? undefined : copy.title === copy.short ? (copy.detail ? `${copy.short}. ${copy.detail}` : copy.short) : copy.title}>
@@ -288,7 +293,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
   // forms of part 2 restate the rules the question tests.
   const checked = s.kind !== "pick" || decisionChecked(progress, task.id, s.n);
   // A step worked here, in its row, carries its own walk-through (a step worked in a tool runs its
-  // guide in the tool's modal). It runs the first time the step is open, and again from "Show me how".
+  // guide in the tool's modal). It runs from "Show me how"; by itself only on the first task's step 1 (autoGuideKey).
   const { user } = useAuth();
   // A decision whose second part is done in a tool may carry a guide for its question, run here in the
   // row: keyed "<task>-<n>q", since "<task>-<n>" is the tool's guide for part 2 (T3.2 step 12).
@@ -300,7 +305,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
     const go = () => (document.querySelector('[aria-label^="Guide:"]') ? setTimeout(go, 800) : setGuideAt(0));
     go();
   }, []);
-  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && !readOnly && !done, startGuide, 1600);
+  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && !readOnly && !done && guideKey === autoGuideKey(desk), startGuide, 1600);
   // A decision stays open once marked: completing it reveals why each option is right or wrong,
   // and moving on there and then would fold that away unread. The mentee moves on with Next step.
   const markDone = () => {

@@ -104,7 +104,8 @@ export function FloatWindow({
         style={{
           top: pos ? pos.y : 72 + index * 28,
           left: pos ? pos.x : (left ?? `calc(84px + ${index * 28}px)`),
-          width: `min(${width}px, calc(100vw - 24px))`,
+          // --test-dock: the width the knowledge check's dock takes while it is open (knowledge-check.tsx), 0 otherwise.
+          width: `min(${width}px, calc(100vw - 24px - var(--test-dock, 0px)))`,
         }}
         className={`pointer-events-auto absolute flex ${tall ? "h-[max(320px,calc(100dvh/var(--app-zoom)-152px))]" : fit ? "max-h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[160px]" : "h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[220px]"} min-w-[300px] max-w-[calc(100vw/var(--app-zoom)-24px)] resize flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_-20px_rgba(17,24,39,0.45)] ${pos ? "" : "max-md:!left-3"}`}
       >

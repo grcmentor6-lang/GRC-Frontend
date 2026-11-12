@@ -47,8 +47,9 @@ export function bestScore(p: Progress, id: string): number | null {
 }
 
 /** What one line of the week panel or the test list says about a check. */
-export function kcStatus(desk: Desk, p: Progress, id: string): { label: string; tone: "closed" | "open" | "done"; why: string | null } {
-  const why = KC_ALL_OPEN ? null : whyClosed(desk, p, id);
+export function kcStatus(desk: Desk, p: Progress, id: string, free = false): { label: string; tone: "closed" | "open" | "done"; why: string | null } {
+  // `free`: an account for whom the desk's order is lifted (flags.ts OPEN_DESK_FOR).
+  const why = KC_ALL_OPEN || free ? null : whyClosed(desk, p, id);
   const best = bestScore(p, id);
   if (best !== null) return { label: `Best ${best}%`, tone: "done", why };
   if (why) return { label: "Not open yet", tone: "closed", why };
@@ -62,10 +63,11 @@ export const KC_HASH = /^#(KC-\d{2}|FGE|FEX)$/;
 // What GET and POST /me/desk/kc/{id} return (camelCase after lib/api.ts).
 export interface KcQuestion { qid: string; stem: string; options: string[] }
 export interface KcResultQuestion extends KcQuestion { reasons: string[]; best: number; pick: number | null; correct: boolean }
-export interface KcAttempt { n: number; at: string | null; score: number | null; passed: boolean | null; questions: KcResultQuestion[] }
+export interface KcAttempt { n: number; at: string | null; score: number | null; passed: boolean | null; late: boolean; questions: KcResultQuestion[] }
 export interface KcState {
   id: string; title: string; kind: "kc" | "gate" | "final"; week: number; weeks: number[];
   size: number; minutes: number; attemptsAllowed: number; passMark: number | null; opensAfter: string[];
   open: boolean; whyClosed: string | null; attempts: KcAttempt[]; bestScore: number | null; passed: boolean | null;
-  form: { attempt: number; questions: KcQuestion[] } | null;
+  /** The next attempt. Its questions are served only once it is started: the clock is the server's. */
+  form: { attempt: number; started: boolean; secondsLeft: number; questions: KcQuestion[]; picks: [string, number][] } | null;
 }

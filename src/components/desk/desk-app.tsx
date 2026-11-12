@@ -1,16 +1,18 @@
 "use client";
 
-import { ALL_WEEKS_OPEN } from "@/lib/flags";
+import { ALL_WEEKS_OPEN, deskOpenFor } from "@/lib/flags";
+import { stepGate, taskGate } from "@/lib/desk/locks";
+import { Icon } from "@/components/ui/icon";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useDeskIdentity } from "@/lib/desk/identity";
-import { Ctx, type DeskCtx, type ViewItem } from "./desk-context";
+import { Ctx, useDesk, type DeskCtx, type ViewItem } from "./desk-context";
 import { TaskFile, type Tab } from "./task-file";
 import { Ring, WeekPanel, WeekRail, WeekTimeline } from "./week-panel";
 import { WeekOverview } from "./week-overview";
-import { KnowledgeCheck } from "./knowledge-check";
+import { KnowledgeCheck, TestDock, liveStored, storeLive } from "./knowledge-check";
 import { KC_HASH } from "@/lib/desk/kc";
 import { Toolbar } from "./toolbar";
 import { Viewer } from "./viewer";
@@ -27,6 +29,24 @@ import { decisionChecked, stepKey, taskStatus, useProgress, useSaveState, type P
 
 /** Windows that read the same from any task, kept open when the learner moves to another task. */
 const isReference = (key: string) => /^(home|learn|doc|page)\|/.test(key) || key === "policies|Policy Library";
+
+/**
+ * A task opened before its turn: the locked slip (docs/FORM_LANGUAGE.md form 13: dashed edge, mute, and its release
+ * condition stated on it), with the way to the task that opens it.
+ */
+function TaskLocked({ task, title, first, between, onOpen }: { task: string; title: string; first: string; /** Other tasks sit between `first` and this one. */ between: boolean; onOpen: (id: string) => void }) {
+  return (
+    <div data-task-locked={task} className="mx-auto mt-10 w-full max-w-[560px] px-4">
+      <div className="rounded-2xl border border-dashed border-[#C9CED8] px-6 py-7 text-center">
+        <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-[#F3F4F7] text-[#8A91A3]"><Icon name="lock" size={20} /></span>
+        <h1 className="mt-3 text-[16px] font-semibold text-[#3F4757]"><span className="font-mono text-[14px]">{task}</span> is not open yet</h1>
+        <p className="mt-1 text-[13.5px] text-[#5B6474] [text-wrap:pretty]">{title}</p>
+        <p className="mt-3 text-[13.5px] leading-relaxed text-[#3F4757] [text-wrap:pretty]">Tasks open in order. This one opens as soon as you submit <strong className="font-semibold text-[#111827]">{first}</strong>{between ? " and the tasks between" : ""}.</p>
+        <button type="button" onClick={() => onOpen(first)} className={`mt-4 h-9 rounded-lg bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-110 ${press}`}>Go to {first}</button>
+      </div>
+    </div>
+  );
+}
 
 /** "#T5.1-4" → { task: "T5.1", step: 4 }. */
 function parseHash(desk: Desk): { task: string; step: number } | null {
@@ -207,7 +227,14 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   // The step in hand: the open one, or — with every row closed — the next one still to do, so the
   // tool that step is done in stays unlocked in the toolbar either way.
   const nextUp = desk.tasks[taskId].steps.find((x) => !progress.done[stepKey(taskId, x.n)])?.n ?? 0;
-  const here = weekView || testView ? null : focus || nextUp ? { task: taskId, n: focus || nextUp } : null;
+  // The desk's order: a task waits for the tasks before it, a step for the steps before it (lib/desk/locks.ts).
+  const free = deskOpenFor(who);
+  const taskLock = useCallback((id: string) => (free ? null : taskGate(desk, progress, id)), [free, desk, progress]);
+  const stepLock = useCallback((id: string, n: number) => (free ? null : stepGate(progress, desk.tasks[id], n)), [free, desk, progress]);
+  const lockedBy = taskLock(taskId);
+  // A step reached before its turn (a #T5.1-4 link, the key results list) is not opened: the list shows instead.
+  const shown = focus && stepLock(taskId, focus) ? 0 : focus;
+  const here = weekView || testView || lockedBy ? null : shown || nextUp ? { task: taskId, n: shown || nextUp } : null;
   // Work in a modal, reading in windows: the step in hand opens its tool as the modal while it is
   // still to do (or when asked to change it); anything else — a finished step's tool, a tool opened
   // for a look mid-step — opens as a floating, resizable window beside the work.
@@ -237,7 +264,15 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   // A tool asked for through the viewer opens like any other; references still open in the sheet.
   const view = (item: ViewItem) => (item.kind === "tool" ? openTool(item.id) : setViewing(item));
   const closeTool = (key: string) => setWindows((w) => w.filter((x) => x !== key));
-  const ctx: DeskCtx = { desk, progress, update, start, isOpen, openTask, view, here, openTool, closeTool };
+  // The check in progress: its questions stay in the dock while the learner moves about the desk (owner, 12 Nov 2026:
+  // "when I start the test and go back to my tasks it shows the start button again").
+  const [liveTest, setLiveTest] = useState<string | null>(liveStored);
+  const [testFolded, setTestFolded] = useState(false);
+  // The week panel folds to its rail so the desk column keeps its width (and the whole toolbar) beside the test.
+  const openTest = (id: string) => { setLiveTest(id); storeLive(id); setTestFolded(false); setPanel(false); };
+  const endTest = useCallback(() => { setLiveTest(null); storeLive(null); }, []);
+  const docked = !!liveTest && !testFolded;
+  const ctx: DeskCtx = { desk, progress, update, start, isOpen, openTask, view, here, openTool, closeTool, free, taskLock, stepLock, liveTest, openTest, endTest };
   // A week opens on its overview; its first task still to submit becomes the task in hand.
   const openWeek = (n: number) => {
     setTaskId(desk.order.find((x) => desk.tasks[x].week === n && !progress.submitted[x]) ?? desk.order.find((x) => desk.tasks[x].week === n)!);
@@ -253,6 +288,10 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
 
   return (
     <Ctx.Provider value={ctx}>
+      <div className="flex h-desk">
+      {/* With the test docked, this column is the containing block of the desk's own overlays (the step modal, the
+          reference sheet): they cover the desk, never the test beside it. */}
+      <div className={`relative min-w-0 flex-1 ${docked ? "lg:[transform:translateZ(0)]" : ""}`}>
       <div className="flex h-desk flex-col bg-[#F7F8FA] text-[#111827]" inert={locked} aria-busy={locked}>
         {/* The desk's header band: what this is, then the twelve weeks as cells. */}
         <header className="flex h-[52px] shrink-0 items-stretch border-b border-[#DDE1E8] bg-[#F7F8FA] max-md:h-auto max-md:flex-col">
@@ -265,7 +304,7 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
             </p>
           </div>
           <div className="flex min-w-0 flex-1 max-md:h-[48px]">
-            <WeekTimeline week={week} onWeek={openWeek} />
+            <WeekTimeline week={week} onWeek={openWeek} fit={docked} />
           </div>
         </header>
 
@@ -308,7 +347,11 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
                   ) : weekView ? (
                     <WeekOverview week={weekView} />
                   ) : (
-                    <TaskFile task={task} focus={focus} onFocus={setFocus} tab={tab} setTab={setTab} />
+                    lockedBy ? (
+                      <TaskLocked task={task.id} title={task.title} first={lockedBy} between={desk.order.indexOf(task.id) - desk.order.indexOf(lockedBy) > 1} onOpen={openTask} />
+                    ) : (
+                      <TaskFile task={task} focus={shown} onFocus={(n) => (n && stepLock(taskId, n) ? undefined : setFocus(n))} tab={tab} setTab={setTab} />
+                    )
                   )}
                 </motion.div>
               </AnimatePresence>
@@ -335,6 +378,9 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
           <ToolWindow key={k} toolKey={k} index={i} beside={!!toolKey} plain={k === toolKey} onClose={() => setWindows((w) => w.filter((x) => x !== k))} />
         ))}
       </AnimatePresence>
+      </div>
+      {liveTest && !locked && <TestDock key={liveTest} id={liveTest} folded={testFolded} onFold={setTestFolded} />}
+      </div>
     </Ctx.Provider>
   );
 }
@@ -342,6 +388,7 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
 /** The chosen week's tasks, each with its own progress ring, so the week reads at a glance. */
 function TaskPills({ week, taskId, desk, progress, openTask }: { week: number; taskId: string; desk: Desk; progress: Progress; openTask: (id: string) => void }) {
   const tasks = desk.order.map((id) => desk.tasks[id]).filter((t) => t.week === week);
+  const { taskLock } = useDesk();
   return (
     <nav aria-label={`Week ${week} tasks`} className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
       {tasks.map((t) => {
@@ -359,7 +406,7 @@ function TaskPills({ week, taskId, desk, progress, openTask }: { week: number; t
           >
             {here && <motion.span layoutId="task-active" className="absolute inset-0 rounded-lg bg-indigo-50 ring-1 ring-indigo-200" transition={{ type: "spring", duration: 0.3, bounce: 0.12 }} />}
             <span className="relative"><Ring value={done / t.steps.length} done={st === "submitted"} /></span>
-            <span className={`relative shrink-0 font-mono text-[11.5px] ${here ? "text-indigo-700" : "text-slate-500"}`}>{t.id}</span>
+            <span className={`relative flex shrink-0 items-center gap-1 font-mono text-[11.5px] ${here ? "text-indigo-700" : "text-slate-500"}`}>{t.id}{taskLock(t.id) && <Icon name="lock" size={10} strokeWidth={2.5} aria-label="not open yet" />}</span>
             <span className={`relative min-w-0 truncate text-[12.5px] max-sm:hidden ${here ? "font-semibold text-slate-900" : "text-slate-700"}`}>{t.title}</span>
             {t.hc ? <span className="relative shrink-0 text-[10.5px] font-semibold text-amber-700">{t.hc}</span> : null}
             {t.li.length > 0 && <span title={`Includes Lead Implementer extension ${t.li.join(", ")}`} className="relative shrink-0 rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-[5px] py-px font-mono text-[10px] font-semibold text-[#3730A3]">LI</span>}

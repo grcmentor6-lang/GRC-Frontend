@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef } from "react";
+import { Icon } from "@/components/ui/icon";
 import { KcChip, openKc } from "./knowledge-check";
 import { useDesk } from "./desk-context";
 import { dueDate, fmtDay } from "@/lib/desk/model";
@@ -49,7 +50,7 @@ function linesOf(obj: string, ids: string[]): { lines: Record<string, string>; n
  * practises. The tasks themselves open from the left panel.
  */
 export function WeekOverview({ week }: { week: number }) {
-  const { desk, start, isOpen, progress, openTask } = useDesk();
+  const { desk, start, isOpen, progress, openTask, taskLock } = useDesk();
   const w = desk.weeks[week - 1];
   const plan = planOf(desk, progress, start);
   const ids = desk.order.filter((id) => desk.tasks[id].week === week);
@@ -97,6 +98,7 @@ export function WeekOverview({ week }: { week: number }) {
                   <span className="pl-4">
                     <span className="flex items-center gap-1.5 font-mono text-[13px] font-semibold text-[#3730A3]">
                       {id}
+                      {taskLock(id) && <span title={`Opens once you submit ${taskLock(id)}`} className="text-[#8A91A3]"><Icon name="lock" size={12} strokeWidth={2.5} aria-label="not open yet" /></span>}
                       {/* Narrow: the organisation column is folded away, so its marks ride beside the code. */}
                       <span className="@[860px]:hidden"><OrgMarks org={t.org} orgs={desk.orgs} /></span>
                     </span>

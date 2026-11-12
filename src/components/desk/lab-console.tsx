@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/auth/auth-provider";
-import { GuidedTour, markTourSeen, useTourOnce, type TourStep } from "@/components/app/guided-tour";
+import { GuidedTour, markTourSeen, type TourStep } from "@/components/app/guided-tour";
 import { useDesk } from "./desk-context";
 import { FloatWindow } from "./float-window";
 import { allCaptures, deleteCapture, keptFor, labFindings, partRows, type Lab, type LabCapture, type LabPart, type LabRef, type LabRow, type LabState } from "@/lib/desk/labs";
@@ -102,7 +102,7 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
   }, [lab]);
   const base = `grc101.guide.lab.${ref.id}`;
   const startGuide = useCallback(() => setGuideAt(0), []);
-  useTourOnce(base, user?.email, !!lab, startGuide, 700);
+  // Not by itself (owner, 12 Nov 2026: only the first task's step 1 does): the brief's "Show me how" starts it.
 
   const current = lab?.parts.find((p) => !partDone(p, state));
   const findings = labFindings(progress, ref.id);

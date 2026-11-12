@@ -16,6 +16,8 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
+from acronyms import expand, explained_in  # scripts/acronyms.py: first-occurrence acronym expansion
+
 MONTHS = {m: i for i, m in enumerate(
     ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 1)}
 DROP = {"ic", "pop"}  # inline SVG icons (we use our own) and a duplicate of `sections`
@@ -317,6 +319,13 @@ def main(src: str) -> None:
     old_q2 = "Password complexity, rotation and storage rules must be defined for systems that cannot use MFA/SSO."
     assert blob.count(old_q2) >= 3, "T4.1: Q2's statement moved"
     blob = blob.replace(old_q2, "Password length, storage and change rules (change on suspected compromise, not on a schedule) must be defined for systems that cannot use MFA/SSO.")
+    # One name for PBC everywhere (owner, 12 Nov 2026): the pack's "Provided-by-client" beside the desk's "Prepared By Client".
+    blob = blob.replace("Provided-by-client", "Prepared-by-client").replace("provided-by-client", "prepared-by-client")
+    # Every acronym spelled out at its first occurrence in each view (owner, 12 Nov 2026). Runs last, on the text the
+    # learner reads. Corrections item 119.
+    w = json.loads(blob)
+    spell_out(w)
+    blob = json.dumps(w, ensure_ascii=False, separators=(",", ":"))
     assert "§" not in blob, "a section sign is left in the sample"
     assert '"best"' not in blob, "answer key leaked into the sample"
     # The keys' reasons are answers too: none may reach the browser (D5's "why" once did, unseen).
@@ -331,6 +340,61 @@ def main(src: str) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(blob, encoding="utf8")
     print(f"{out} — {len(blob) // 1024} KB, {len(w['tasks'])} tasks")
+
+
+STEP_LEAD = re.compile(r"^decide(?: for each row| \((?:for each (?:item|row))\))?:\s*", re.I)
+LI_TAG = re.compile(r"^\[LI-\d+ — [^\]]+\]\s*")
+
+
+def spell_out(w: dict) -> None:
+    """Spell each acronym out at its first occurrence in each view the learner reads (scripts/acronyms.py).
+
+    Views: a week's objective; a task's summary (objective, then key results; what its title already spells out counts); each prose field of its card; one LI
+    extension's objective and each card field; a step's instruction; its title, only where the title is the start of the
+    instruction (how-to.tsx shows the rest after it, so both must expand alike); a help note (with its copy in the notes
+    table). Task titles, toolbar paths, deliverables and reference lists are names and stay as they are. Corrections item 119.
+    """
+    prose = ("What will I do", "Why am I doing this", "What will I learn", "How to do it", "Why is this important")
+
+    def field(v, seen=None):
+        seen = set() if seen is None else seen
+        return [field(x, seen) for x in v] if isinstance(v, list) else expand(v, seen) if isinstance(v, str) else v
+
+    for wk in w["weeks"]:
+        wk["obj"] = field(wk.get("obj", ""))
+    for li in w["li"].values():
+        li["obj"] = field(li.get("obj", ""))
+        if isinstance(li.get("card"), dict):
+            li["card"] = {k: field(v) for k, v in li["card"].items()}
+    for tid, t in w["tasks"].items():
+        seen = explained_in(t["title"])  # the title sits above the summary: what it spells out is not repeated
+        t["obj"] = expand(t["obj"], seen)
+        t["krs"] = [expand(k, seen) for k in t["krs"]]
+        for k in prose:
+            if k in t["card"]:
+                t["card"][k] = field(t["card"][k])
+        for row in w["cards"].get(tid, []):
+            if row[0] in prose:
+                row[1] = t["card"][row[0]]
+        notes = {r[0]: r for r in w["notes"].get(tid, [])}
+        for s in t["steps"]:
+            old_w, old_t = s["w"], s["t"]
+            s["w"] = expand(old_w, set())
+            m = STEP_LEAD.match(old_t)
+            head, short = (old_t[: m.end()], old_t[m.end():]) if m else ("", old_t)
+            body = lambda x: STEP_LEAD.sub("", LI_TAG.sub("", x.split(" Options:")[0]))  # noqa: E731 — how-to.tsx stepCopy
+            if short and not short.endswith("…") and body(old_w).startswith(short):
+                new = expand(short, set())
+                assert body(s["w"]).startswith(new), (tid, s["n"], new)
+                s["t"] = head + new
+            row = notes.get(s["n"])
+            if row and row[1] == old_t:
+                row[1] = s["t"]
+            if s.get("help"):
+                old_h = s["help"]
+                s["help"] = expand(old_h, set())
+                if row and row[2] == old_h:
+                    row[2] = s["help"]
 
 
 def f13(w: dict) -> None:

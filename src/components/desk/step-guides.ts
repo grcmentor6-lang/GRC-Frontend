@@ -1,6 +1,7 @@
 import type { TourStep } from "@/components/app/guided-tour";
 import { docTable } from "@/lib/desk/docs";
 import { localizable, toLearner } from "@/lib/desk/names";
+import { expandGuides } from "@/lib/desk/acronyms";
 
 /**
  * Walk-throughs for steps, shown in the step's modal the first time it opens (and again from
@@ -538,6 +539,13 @@ const MT_WINDOW = 'section[role="dialog"][aria-label^="Risk Register › Mitigat
 /** T12.2: the repository's index and the mentee's hand-ins. */
 const EVLIB_WINDOW = 'section[role="dialog"][aria-label^="Evidence › Evidence Library"]';
 const VH_WINDOW = 'section[role="dialog"][aria-label^="Policies › Version History"]';
+
+/**
+ * The one step whose guide starts by itself: step 1 of the first task, where the learner meets the desk's way of
+ * working (owner, 12 Nov 2026: "only show the guide automatically at only first step of first task"). Every other
+ * step's guide, and a Tech Lab's, runs from "Show me how" alone.
+ */
+export const autoGuideKey = (desk: { order: string[] }) => `${desk.order[0]}-1`;
 
 export const STEP_GUIDES: Record<string, TourStep[]> = {
   "F1.1-1": [
@@ -9206,5 +9214,7 @@ for (const [k, cards] of Object.entries(STEP_GUIDES)) {
   });
 }
 
+// Each acronym spelled out at its first use in a step's guide (lib/desk/acronyms.ts). Corrections item 119.
+expandGuides(STEP_GUIDES);
 // In the learner's organisation names (lib/desk/names.ts).
 localizable(STEP_GUIDES);

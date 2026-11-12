@@ -13,6 +13,7 @@ import { Toned } from "./ui";
 import { tierTone } from "@/lib/desk/cell-tone";
 import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
 import { useDoc, useDocs } from "./doc-text";
+import { WalkCard, WalkStep } from "./walk-card";
 import { RMF, dmyToIso, fileExts, fileNameOk, isDateRow, isoToDmy, receiptHash, rmfAt, rmfExpected, rmfGiven, rmfKey, rmfMiss, same, submitCodes } from "@/lib/desk/forms";
 
 /**
@@ -1478,52 +1479,9 @@ function quickRef(desk: Desk, name: string): string | undefined {
   return undefined;
 }
 
-/**
- * A question walk (a decision tree, a rule's questions in order), drawn the way the owner's guide draws its steps
- * (docs/redesign-guide/guide.html): a round marker on a rail, the question beside it, its answer as a tag. Answered
- * questions stay, greyed; the one in hand is lit; later ones stay hidden until reached; an outcome ends in a green tick.
- */
-const MARK = {
-  done: "text-[#9CA3AF]",
-  now: "text-[#4338CA]",
-  default: "text-[#111827]",
-  stop: "text-[#16A34A]",
-} as const;
 const walkBtn = "h-11 w-[100px] rounded-lg border border-[#C7CBF5] bg-white text-[14px] font-bold text-[#111827] hover:border-[#4338CA] hover:bg-[#F5F6FF] focus-ring";
 const walkRecord = (v: string) => `h-9 rounded-lg border px-3 text-[13px] font-semibold hover:brightness-95 focus-ring ${tierTone(v)}`;
-/** The walk's card (owner, 11 Nov 2026): an indigo "Decision tree · Your work" bar over a light body, so the walk reads as
- *  the learner's own instrument, set apart from the step text around it. */
-function WalkCard({ title, guide, children }: { title: string; guide?: string; children: React.ReactNode }) {
-  return (
-    <section data-guide={guide} className="overflow-hidden rounded-2xl border-2 border-[#4338CA] bg-[#F7F7FF] shadow-[0_10px_24px_-14px_rgba(67,56,202,0.45)]">
-      <header className="flex items-center justify-between gap-2 bg-[#4338CA] px-4 py-2.5 text-white">
-        <span className="flex items-center gap-2 font-sans text-[12.5px] font-bold uppercase tracking-[0.08em]"><Icon name="treeDown" size={15} />{title}</span>
-        <span className="flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 font-sans text-[11px] font-bold uppercase tracking-[0.06em] text-[#3730A3]">
-          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#F97316]" />Your work
-        </span>
-      </header>
-      <div className="px-4 pb-4 pt-3.5">{children}</div>
-    </section>
-  );
-}
 const walkLabel = "text-[13px] font-semibold tracking-[0.07em] text-[#4338CA] [font-variant-caps:all-small-caps]";
-
-function WalkStep({ q, mark, label, text, tag, guide, children }: {
-  q?: number; mark: keyof typeof MARK; label: React.ReactNode; text: React.ReactNode; tag?: "Yes" | "No"; guide?: string; children?: React.ReactNode;
-}) {
-  return (
-    <li data-q={q} data-guide={guide} className="grid grid-cols-[34px_1fr] gap-2 border-t border-[#E6E8F6] py-3 first:border-t-0 first:pt-0 last:pb-0">
-      <span className={`pt-px text-[13.5px] font-semibold tabular-nums ${MARK[mark]}`}>{label}</span>
-      <div className="min-w-0 text-[14.5px] leading-[1.5]">
-        <p className={`flex items-start justify-between gap-3 ${mark === "done" ? "text-[#6B7280]" : "font-medium text-[#111827]"}`}>
-          <span>{text}</span>
-          {tag && <span className={`h-fit shrink-0 rounded-full px-2.5 py-[3px] text-[11px] font-bold uppercase tracking-[0.06em] ${tag === "Yes" ? "bg-[#DCFCE7] text-[#166534]" : "bg-[#ECEDF2] text-[#4B5563]"}`}>{tag}</span>}
-        </p>
-        {children}
-      </div>
-    </li>
-  );
-}
 
 export function LadderWork({ task, s, ladder }: { task: Task; s: Step; ladder: Ladder }) {
   const { desk, progress, update } = useDesk();
@@ -1817,6 +1775,7 @@ export function ChecklistWork({ task, s, chk }: { task: Task; s: Step; chk: Chec
   const note = reg.note?.[s.n]?.(desk, progress);
   const lastAt = progress.answers[`${sk}#last`];
   const last = lastAt ? Number(lastAt) : undefined;
+  const rule = s.w.match(/\brule (R\d+)\b/i)?.[1]; // F2.2/T5.2: R09, T12.1: R33
   return (
     <div data-guide="checklist" className="mt-3 grid gap-2">
       {note && <p data-guide="step-note" className="rounded border-l-2 border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2 text-[13px] leading-snug text-[#111827]">{note}</p>}
@@ -1834,55 +1793,60 @@ export function ChecklistWork({ task, s, chk }: { task: Task; s: Step; chk: Chec
           {rc && <RowCheck task={task} s={s} chk={rc} />}
         </>
       ) : (
-        <section data-guide="checklist-row" className="rounded border border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2.5">
-          <p className="text-[12px] text-[#5B6474]">{cellValue(reg, progress, task.id, ri, chk.col) ? "Checking again" : "Now checking"} · lit in the table</p>
-          <p className="mt-0.5 text-[14px] font-semibold text-[#111827]">{(chk.head ?? [0, 1]).map((c) => cellValue(reg, progress, task.id, ri, c)).filter(Boolean).join(" · ")}</p>
+        <WalkCard title={rule ? `Rule ${rule}` : "Checklist"} guide="checklist-row">
+          <p className={walkLabel}>{cellValue(reg, progress, task.id, ri, chk.col) ? "Checking again" : "Now checking"} · lit in the table</p>
+          <p className="mt-1 text-[16px] font-bold text-[#111827]">{(chk.head ?? [0, 1]).map((c) => cellValue(reg, progress, task.id, ri, c)).filter(Boolean).join(" · ")}</p>
           {/* Above the list, so it stays in reach on a phone, where the ten checks run past the screen. */}
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <p className="min-w-0 flex-1 basis-[180px] text-[12px] leading-snug text-[#5B6474]">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <p className="min-w-0 flex-1 basis-[180px] text-[12.5px] leading-snug text-[#6B7280]">
               {chk.codes === undefined ? "Read the checks in order. If one fails, click Fails on it. If none fails:" : chk.mark ? (marks.length ? `Marked ${mark.toLowerCase()}: ${marks.join(", ")}. When every one is read:` : `Mark each one that is ${mark.toLowerCase()}. If none is:`) : marks.length ? `Marked as failing: ${marks.join(", ")}. When every check is read:` : "Read the checks in order and mark every one that fails. If none fails:"}
             </p>
             {chk.codes !== undefined && marks.length ? (
-              <button type="button" data-guide="record" onClick={() => write(chk.fail)} className="h-8 shrink-0 rounded bg-[#4338CA] px-3 text-[13px] font-semibold text-white hover:brightness-90 focus-ring">
+              <button type="button" data-guide="record" onClick={() => write(chk.fail)} className="h-9 shrink-0 rounded-lg bg-[#4338CA] px-3.5 text-[13.5px] font-semibold text-white hover:bg-[#3730A3] focus-ring">
                 {/* Rule R09: a D9 file is also reported as a data issue, and its content is not copied. */}
                 Record {chk.fail}{marks.includes("D9") ? " and report data issue" : ""}
               </button>
             ) : (
-              <button type="button" data-guide="record" onClick={() => write(chk.pass)} className="h-8 shrink-0 rounded bg-[#4338CA] px-3 text-[13px] font-semibold text-white hover:brightness-90 focus-ring">
+              <button type="button" data-guide="record" onClick={() => write(chk.pass)} className="h-9 shrink-0 rounded-lg bg-[#4338CA] px-3.5 text-[13.5px] font-semibold text-white hover:bg-[#3730A3] focus-ring">
                 Record {chk.pass}
               </button>
             )}
           </div>
-          <ol className="mt-2 grid gap-1">
-            {checks.map(([code, what]) => {
+          <ol className="mt-3.5 border-t border-[#EEF0F3] pt-3.5">
+            {checks.map(([code, what], i) => {
               const at = chk.reads[code];
+              const on = chk.codes !== undefined && marks.includes(code);
               return (
-                <li key={code} data-check={code} className={`grid ${what ? "grid-cols-[34px_minmax(0,1fr)_auto]" : "grid-cols-[minmax(0,1fr)_auto]"} items-start gap-x-2 rounded bg-white px-2 py-1.5 text-[13px] text-[#111827]`}>
-                  {what && <span className="font-mono text-[12px] font-semibold text-[#3730A3]">{code}</span>}
-                  <span className="min-w-0">
-                    <span className={`block leading-snug ${what ? "" : "font-semibold text-[#3730A3]"}`}>{what || code}</span>
-                    {at !== undefined &&
-                      [at].flat().map((c) => (
-                        <span key={c} className="block text-[12px] leading-snug text-[#5B6474]">
-                          {reg.cols[c].h === code ? "" : `${reg.cols[c].h}: `}<span className="text-[#111827]">{cellValue(reg, progress, task.id, ri, c) || <em>empty</em>}</span>
-                        </span>
-                      ))}
-                    {chk.aside?.[code] && <span className="block text-[12px] leading-snug text-[#111827]">{chk.aside[code](reg.rows[ri], desk)}</span>}
-                  </span>
-                  {chk.codes === undefined ? (
-                    <button type="button" onClick={() => write(chk.fail)} className="h-7 rounded border border-[#C9CED8] bg-white px-2.5 text-[12px] font-semibold text-[#111827] hover:border-[#B45309] hover:text-[#92400E] focus-ring">
-                      Fails
-                    </button>
-                  ) : (
-                    <button type="button" aria-pressed={marks.includes(code)} aria-label={`${code} ${mark.toLowerCase()}`} onClick={() => toggle(code)} className={`h-7 rounded border px-2.5 text-[12px] font-semibold focus-ring ${marks.includes(code) ? "border-[#B45309] bg-[#FFFBEB] text-[#92400E]" : "border-[#C9CED8] bg-white text-[#111827] hover:border-[#B45309] hover:text-[#92400E]"}`}>
-                      {marks.includes(code) ? `${mark} ✓` : mark}
-                    </button>
-                  )}
-                </li>
+                <WalkStep
+                  key={code}
+                  check={code}
+                  mark={on ? "now" : "default"}
+                  label={what ? code : i + 1}
+                  text={<span className={`block ${what ? "" : "font-semibold text-[#3730A3]"}`}>{what || code}</span>}
+                  action={
+                    chk.codes === undefined ? (
+                      <button type="button" onClick={() => write(chk.fail)} className="h-8 shrink-0 rounded-lg border border-[#C7CBF5] bg-white px-3 text-[12.5px] font-bold text-[#111827] hover:border-[#B45309] hover:text-[#92400E] focus-ring">
+                        Fails
+                      </button>
+                    ) : (
+                      <button type="button" aria-pressed={on} aria-label={`${code} ${mark.toLowerCase()}`} onClick={() => toggle(code)} className={`h-8 shrink-0 rounded-lg border px-3 text-[12.5px] font-bold focus-ring ${on ? "border-[#B45309] bg-[#FFFBEB] text-[#92400E]" : "border-[#C7CBF5] bg-white text-[#111827] hover:border-[#B45309] hover:text-[#92400E]"}`}>
+                        {on ? `${mark} ✓` : mark}
+                      </button>
+                    )
+                  }
+                >
+                  {at !== undefined &&
+                    [at].flat().map((c) => (
+                      <span key={c} className="mt-0.5 block text-[12px] leading-snug text-[#5B6474]">
+                        {reg.cols[c].h === code ? "" : `${reg.cols[c].h}: `}<span className="text-[#111827]">{cellValue(reg, progress, task.id, ri, c) || <em>empty</em>}</span>
+                      </span>
+                    ))}
+                  {chk.aside?.[code] && <span className="mt-0.5 block text-[12px] leading-snug text-[#111827]">{chk.aside[code](reg.rows[ri], desk)}</span>}
+                </WalkStep>
               );
             })}
           </ol>
-        </section>
+        </WalkCard>
       )}
       {ri !== undefined && done > 0 && (
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[#5B6474]">

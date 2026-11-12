@@ -58,7 +58,7 @@ const STEPS: TourStep[] = [
     body: "Every task runs the same way:",
     steps: [
       { lead: "Open the task from the week's tasks", text: "Its steps appear one after the other." },
-      { lead: "Begin with step 1", text: "The step's own guide runs the first time you open it, and again from **▶ Show me how**." },
+      { lead: "Begin with step 1", text: "Its guide starts by itself. On every other step, **▶ Show me how** runs that step's guide." },
       { lead: "Click Mark step complete", text: "It unlocks once the step's work is done and checked.", mark: "stop" },
     ],
     getEl: () => null,
