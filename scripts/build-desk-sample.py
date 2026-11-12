@@ -618,7 +618,7 @@ def t31(w: dict) -> None:
 
     sub(1, "t", "Open BKB-ADD-16 §2", "Copy your two offices' rows of BKB-ADD-16 §2")
     sub(1, "w", "Open BKB-ADD-16 §2. Copy the rows for Manila, Philippines and Warsaw, Poland.",
-        "Open BKB-ADD-16 §2 (Policies › Policy Library). Add one register row for Manila, Philippines and one for Warsaw, Poland: "
+        "Open BKB-ADD-16 §2 (Policies › Policy Library). The register has one row ready for Manila, Philippines and one for Warsaw, Poland. Fill each: "
         "the office's Breach notification cell is its obligation, its Data-protection law the source instrument.")
     sub(1, "o", VALUES, "2 rows, one per office, copied from §2 with their evidence ref")
     sub(1, "help", OPEN, "Open BKB-ADD-16 from Policies › Policy Library and read §2 before you write anything. Copy each value exactly as it is written there.")

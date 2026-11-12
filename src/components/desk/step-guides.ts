@@ -272,7 +272,8 @@ const evqSelect = () => $('[data-guide="register"] select') as HTMLSelectElement
 
 /** T3.1: a cell of the register in hand by column and row number ("Office(s)", 1). */
 const oblCell = (col: string, row: number) => $(`[data-guide="register"] [aria-label="${col}, row ${row}"]`);
-const oblAdd = () => [...document.querySelectorAll<HTMLElement>('[data-guide="register"] button')].find((b) => /Add a row/.test(b.innerText)) ?? null;
+/** The step's own rows are in place when it opens: the first Obligation cell the learner can type in. */
+const oblFirst = () => $('[data-guide="register"] textarea[aria-label^="Obligation (plain English)"]');
 const oblRows = () => document.querySelectorAll('[data-guide="register"] tbody tr').length;
 const POL000_WINDOW = 'section[role="dialog"][aria-label^="BKB-POL-000"]';
 const ERM_WINDOW = 'section[role="dialog"][aria-label^="BKB-ERM-001"]';
@@ -1905,24 +1906,23 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "Section 2 has one row per office. Manila's **Breach notification** cell reads \"72h to NPC and data subjects\": copied as written, that is Manila's obligation. Its **Data-protection law**, the Data Privacy Act 2012, is the source instrument.",
     },
     {
-      title: "Add Manila's row",
+      title: "Fill Manila's row",
       icon: "edit",
-      body: "Add Manila's row.",
+      body: "Your two rows are in place, one for each office. The first is Manila's.",
       steps: [
-        { lead: "Click **Add a row**" },
-        { lead: "Choose Manila in **Office(s)**" },
+        { lead: "Choose Manila in **Office(s)**", text: "On the first row, OBL-01." },
         { lead: "Copy Manila's **Breach notification** cell into **Obligation**", text: "Word for word. Next unlocks once it matches Section 2." },
       ],
       getEl: () => $('[data-guide="register"]'),
-      pointAt: () => oblAdd() ?? oblCell("Obligation (plain English)", 1),
+      pointAt: () => ((oblCell("Office(s)", 1) as HTMLSelectElement | null)?.value === "Manila" ? oblCell("Obligation (plain English)", 1) : oblCell("Office(s)", 1)),
       alsoShow: () => $(ADD16_WINDOW),
       nextWhen: () => cellIn(oblCell("Obligation (plain English)", 1)) && (oblCell("Office(s)", 1) as HTMLSelectElement | null)?.value === "Manila",
-      doIt: "Add Manila's row and copy its obligation",
+      doIt: "Choose Manila and copy its obligation",
     },
     {
       title: "Now the rest",
       icon: "check",
-      body: "Finish Manila's row, then add Warsaw's the same way.",
+      body: "Finish Manila's row, then fill Warsaw's, the second row, the same way.",
       steps: [
         { lead: "Fill **Source instrument**", text: "The office's Data-protection law." },
         { lead: "Choose the **Type**", text: "**law**: an act of parliament. **reg**: a regulator's own requirement. **standard**: an industry standard. **contract**: a customer's requirement." },
@@ -1985,7 +1985,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Ten more rows",
       icon: "table",
-      body: "The lead regulator's requirements (**Section 2.1**) and the sector overlays (**Section 6**) bind GlobalConnect too. Each line becomes one row; the count is above the work.",
+      body: "The lead regulator's requirements (**Section 2.1**) and the sector overlays (**Section 6**) bind GlobalConnect too. Each line takes one row, and the ten rows are already in place for you to fill.",
       getEl: () => $('[data-guide="step-note"]'),
     },
     ...openAddendum(3),
@@ -1996,14 +1996,15 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "Section 2.1 lists what NPC, the lead regulator, requires. Its first line, \"Registration of Data Processing Systems with NPC\", is one row, with Evidence ref **BKB-ADD-16 Section 2.1**.",
     },
     {
-      title: "Add the first row",
+      title: "Fill the first row",
       icon: "edit",
-      body: "Click **Add a row** and copy Section 2.1's first line into **Obligation**, word for word. Next unlocks once it matches.",
-      getEl: () => $('[data-guide="register"]'),
-      pointAt: () => oblAdd(),
+      body: "Copy Section 2.1's first line into **Obligation** on the first empty row, word for word. Next unlocks once it matches.",
+      // The row in hand, not the whole register: ten rows are tall, and the card would sit on the last of them.
+      getEl: () => oblFirst()?.closest("tr") ?? $('[data-guide="register"]'),
+      pointAt: () => oblFirst(),
       alsoShow: () => $(ADD16_WINDOW),
       nextWhen: () => [...document.querySelectorAll<HTMLTextAreaElement>('[data-guide="register"] textarea[aria-label^="Obligation (plain English)"]')].some((el) => cellIn(el) && /Registration of Data Processing/.test(el.value)),
-      doIt: "Add the row and copy the line",
+      doIt: "Copy the line into the first row",
     },
     {
       title: "Then Section 6",
@@ -2011,14 +2012,14 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ...addSec("6"),
       body: "Section 6 has four overlays.",
       steps: [
-        { lead: "Add one row per Additional mandatory requirement", text: "Evidence ref: **BKB-ADD-16 Section 6**." },
+        { lead: "Copy one Additional mandatory requirement into each of the last four rows", text: "Evidence ref: **BKB-ADD-16 Section 6**." },
         { lead: "Choose the office or offices it binds", text: "The overlay's row says which." },
       ],
     },
     {
       title: "Then check your answers",
       icon: "check",
-      body: "Once all ten rows are in and filled, click **Check my answers**. It shows each row's answer and why.",
+      body: "Once all ten rows are filled, click **Check my answers**. It shows each row's answer and why.",
       tips: [
         { kind: "avoid", text: "checking too early. Your rows lock once checked, so look them over first." },
       ],
@@ -2044,21 +2045,20 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       doIt: "Click Organization_Profiles",
     },
     {
-      title: "Add the first contract row",
+      title: "Fill the first contract row",
       icon: "edit",
-      body: "Add the first contract row.",
+      body: "Your three rows are in place. Start with the first.",
       steps: [
-        { lead: "Click **Add a row**" },
         { lead: "Copy the first Key Requirement of GlobalConnect Customer Solutions", text: "Word for word, into Obligation." },
         { lead: "Choose Type **contract**", text: "Next unlocks once the row matches." },
       ],
       getEl: () => $('[data-guide="register"]'),
-      pointAt: () => oblAdd(),
+      pointAt: () => oblFirst(),
       alsoShow: () => $(OP_WINDOW),
       nextWhen: () => [...document.querySelectorAll<HTMLTextAreaElement>('[data-guide="register"] textarea[aria-label^="Obligation (plain English)"]')].some((el) => cellIn(el)),
-      doIt: "Add the row and copy the requirement",
+      doIt: "Copy the requirement into the first row",
     },
-    finish("Add the next two the same way. **Mark step complete** unlocks once all three are in and filled."),
+    finish("Fill the next two rows the same way. **Mark step complete** unlocks once all three are filled."),
   ],
 
   "T3.1-5": [
