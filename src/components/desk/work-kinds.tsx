@@ -11,7 +11,7 @@ import { api } from "@/lib/api";
 import { gridKey, gridStatus, submitWhy } from "@/lib/desk/work";
 import { Toned } from "./ui";
 import { tierTone } from "@/lib/desk/cell-tone";
-import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
+import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, isSeeded, seedRows, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
 import { useDoc, useDocs } from "./doc-text";
 import { WalkCard, WalkStep } from "./walk-card";
 import { RMF, dmyToIso, fileExts, fileNameOk, isDateRow, isoToDmy, receiptHash, rmfAt, rmfExpected, rmfGiven, rmfKey, rmfMiss, same, submitCodes } from "@/lib/desk/forms";
@@ -456,8 +456,29 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
   const adding = !readOnly && !!s && !!reg.grow && reg.grow.adds[s.n] !== undefined;
   // The trimming step (T3.1 step 6) removes rows; it adds none.
   const trimming = !readOnly && !!s && reg.grow?.trim === s.n;
-  const full = !!reg.grow && rows.length >= (reg.grow.cap ?? reg.grow.target);
+  // The rows this step answers for (T3.1 step 1: two offices, two rows), and how many of them the register holds.
+  const need = adding ? reg.grow!.adds[s!.n] : 0;
+  const stepRows = adding ? rows.filter((_, ri) => addedBy(reg, progress, task.id, ri) === s!.n).length : 0;
+  const full = !!reg.grow && rows.length === reg.grow.target;
   const edit = (fn: (c: Record<string, string>) => Record<string, string>) => update((p) => ({ ...p, grids: { ...p.grids, [gk]: fn(p.grids?.[gk] ?? {}) } }));
+  // The step's rows are put in place when it opens: nobody is asked to add one. Empty rows an older build let
+  // the learner pile up go; a row with anything typed stays (registers.ts seedRows).
+  const held = !!reg.grow?.trim && !!progress.done[`${task.id}-${reg.grow.trim}`];
+  useEffect(() => {
+    if (!adding) return;
+    update((p) => {
+      const cells = p.grids?.[gk] ?? {};
+      const next = seedRows(cells, s!.n, need, held);
+      return next === cells ? p : { ...p, grids: { ...p.grids, [gk]: next } };
+    });
+    // When the step opens, and again if its row count changes under it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adding, s?.n, stepRows]);
+  // A row the trimming step removed can be put back in the step that holds it; a row beyond the step's count
+  // (typed on an older build) can be removed here.
+  const missing = adding && isSeeded(progress.grids?.[gk] ?? {}, s!.n) ? Math.max(0, need - stepRows) : 0;
+  const spare = adding && stepRows > need;
+  const cuts = spare || trimming;
   const set = (cell: string, v: string) => edit((c) => ({ ...c, [cell]: v }));
   // A column that arrives as a draft: in its empty cells, once, when the step opens.
   const draft = s && !readOnly ? reg.draft?.[s.n]?.(desk, progress) : undefined;
@@ -632,7 +653,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
           <tr>
             {/* In a finding step column A is the same organisation on every row: named above instead. */}
             {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${out(ci) ? "!bg-[#F1F2FF] text-[#4338CA]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""}`}>{c.h}</th>)}
-            {(adding || trimming) && <th className={th}><span className="sr-only">Remove</span></th>}
+            {cuts && <th className={th}><span className="sr-only">Remove</span></th>}
           </tr>
         </thead>
         <tbody>
@@ -812,17 +833,17 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                     </td>
                   );
                 })}
-                {(adding || trimming) && (
+                {cuts && (
                   <td className={`${td} p-0`}>
-                    <button type="button" onClick={() => edit((cells) => removeRow(cells, ri))} aria-label={`Remove row ${ri + 1}`} className="grid h-[38px] w-10 place-items-center text-[#8A91A3] hover:bg-[#FEF2F2] hover:text-[#B91C1C] focus-ring">
+                    {(trimming || by === s!.n) && <button type="button" onClick={() => edit((cells) => removeRow(cells, ri))} aria-label={`Remove row ${ri + 1}`} className="grid h-[38px] w-10 place-items-center text-[#8A91A3] hover:bg-[#FEF2F2] hover:text-[#B91C1C] focus-ring">
                       <Icon name="x" size={14} />
-                    </button>
+                    </button>}
                   </td>
                 )}
               </tr>
               {reg.cols.map((c, ci) => (under(ci) && shownAll(ci) ? (
                 <tr key={`u${ci}`} data-under-row={ri}>
-                  <td colSpan={reg.cols.filter((_, cj) => shown(cj)).length + (adding || trimming ? 1 : 0)} className="border-b border-[#E9ECF1] bg-white p-0">
+                  <td colSpan={reg.cols.filter((_, cj) => shown(cj)).length + (cuts ? 1 : 0)} className="border-b border-[#E9ECF1] bg-white p-0">
                     <p className={`sticky left-0 ${phone ? "w-[calc(100vw-26px)]" : "max-w-[760px]"} px-3 py-1.5 text-[12.5px] leading-snug text-[#3F4757]`}>
                       <span className="font-semibold text-[#5B6474]">{c.h}:</span> {(c.prose ? cellValue(reg, progress, task.id, ri, ci) : listed(cellValue(reg, progress, task.id, ri, ci))) || "—"}
                     </p>
@@ -831,7 +852,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
               ) : null))}
               {phone && rowFb?.why && (
                 <tr data-why-row={ri}>
-                  <td colSpan={reg.cols.filter((_, ci) => shown(ci)).length + (adding || trimming ? 1 : 0)} className="border-b border-[#E9ECF1] bg-[#FAFAFB] p-0">
+                  <td colSpan={reg.cols.filter((_, ci) => shown(ci)).length + (cuts ? 1 : 0)} className="border-b border-[#E9ECF1] bg-[#FAFAFB] p-0">
                     <p className="sticky left-0 w-[calc(100vw-26px)] px-3 py-1.5 text-[12px] leading-snug text-[#5B6474]">
                       {/* The verdict too: on a phone the verdict cell can sit off screen beside the row's name. */}
                       <span className={`font-semibold ${rowFb.correct === true ? "text-[#15803D]" : rowFb.correct === false ? "text-[#B45309]" : "text-[#3F4757]"}`}>
@@ -880,17 +901,17 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
           {showEarlier ? "Hide" : "Show"} the {rows.filter((_, ri) => addedBy(reg, progress, task.id, ri) !== s!.n).length} rows from earlier steps
         </button>
       )}
-      {adding && (
+      {missing > 0 && (
         <button
           type="button"
-          disabled={full}
+          data-guide="put-back"
           onClick={() => edit((cells) => addRow(cells, s!.n))}
-          className="flex w-full items-center justify-center gap-1.5 border-t border-dashed border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2.5 text-[13px] font-semibold text-[#3730A3] hover:bg-[#EEF0FF] focus-ring disabled:cursor-not-allowed disabled:bg-[#F7F8FA] disabled:text-[#8A91A3]"
+          className="sticky left-0 flex w-full items-center justify-center gap-1.5 border-t border-dashed border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2.5 text-[13px] font-semibold text-[#3730A3] hover:bg-[#EEF0FF] focus-ring"
         >
-          <Icon name="plus" size={14} /> {full ? `${rows.length} rows: every source row is in` : "Add a row"}
+          <Icon name="plus" size={14} /> Put back a row you removed ({missing} of this step&apos;s {need})
         </button>
       )}
-      {reg.grow && !rows.length && !adding && <p className="px-3 py-6 text-center text-[13px] text-[#8A91A3]">No rows yet. Rows are added by the steps that copy obligations in.</p>}
+      {reg.grow && !rows.length && !adding && <p className="px-3 py-6 text-center text-[13px] text-[#8A91A3]">No rows yet. Each copying step puts its rows here when you open it.</p>}
     </div>
   );
 }
@@ -974,14 +995,17 @@ export function RegisterProgress({ task, s }: { task: Task; s: Step }) {
               {reg.grow.drop && rows0.length === reg.grow.target && (
                 <span data-guide="trim-verdict" className={`block text-[12.5px] ${rows0.some((_, ri) => reg.grow!.drop!.bad(liveRow(reg, progress, task.id, ri), desk)) ? "text-[#92400E]" : "text-[#15803D]"}`}>
                   {rows0.some((_, ri) => reg.grow!.drop!.bad(liveRow(reg, progress, task.id, ri), desk))
-                    ? "Not yet: a row you kept binds neither of your two offices. Read Section 2 again for the laws each office names. To bring back a row you removed, add it again in the step that added it, then remove this one here."
+                    ? "Not yet: a row you kept binds neither of your two offices. Read Section 2 again for the laws each office names. To bring back a row you removed, open the step that holds it and click Put back a row, then remove this one here."
                     : `Right. ${reg.grow.drop.why(desk)}`}
                 </span>
               )}
             </>
           ) : adds !== undefined ? (
             <>
-              {adds > 0 ? <>Add <strong>{adds} row{adds > 1 ? "s" : ""}</strong> with “Add a row”</> : <>Add rows if you need them</>}, one for each source line, and fill {names} on each row you add.
+              {g.rows < adds && isSeeded(progress.grids?.[regKey(task.id, reg.code)] ?? {}, s.n)
+                ? <>This step holds <strong>{g.rows} of its {adds} rows</strong>: you removed the rest when you brought the register to size. Fill {names} on each.</>
+                : <>This step&apos;s <strong>{adds} row{adds === 1 ? " is" : "s are"} in place</strong>, one for each source line. Fill {names} on each.</>}
+              {g.rows > adds && <span className="block text-[12.5px] text-[#92400E]">This step takes {adds} rows and holds {g.rows}: remove {g.rows - adds} with the × at the end of a row.</span>}
             </>
           ) : cols.length === reg.cols.length ? (
             <>Fill <strong>every column</strong> of each row in {reg.code}.</>

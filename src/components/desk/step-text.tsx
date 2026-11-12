@@ -119,7 +119,7 @@ const DOC_WORDS = ["Charter", "Defect Codes"];
 const BUTTONS = [
   "Check my answers", "Check my answer", "Mark step complete", "Mark complete", "Submit task", "Submit attempt", "Submit again", "Next step",
   "▶ Show me how", "Show me how", "Report a problem", "Report data issue", "Check consistency again", "Check consistency", "Check this capture",
-  "Add a row", "Add row", "Record Tier [N\\d]", "Record (?:Pass|Accept|Reject|Fails?)", "Try again", "Answer again", "Start the check", "Close tool",
+  "Put back a row", "Record Tier [N\\d]", "Record (?:Pass|Accept|Reject|Fails?)", "Try again", "Answer again", "Start the check", "Close tool",
   "Type instead", "Draw instead", "Clear filters", "Capture evidence", "Open and sign", "Back to step", "Open Inbox", "Show the \\d+ worked rows?",
   "None of my items shows unmasked data",
 ];

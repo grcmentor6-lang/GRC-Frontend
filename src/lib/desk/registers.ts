@@ -62,15 +62,14 @@ export interface Register {
   /** Given rows; empty for a register the mentee builds row by row (see `grow`). */
   rows: string[][];
   /**
-   * A register built from nothing: the mentee adds rows, up to `target`. `adds` is step → the
-   * fewest rows that step must add (0: it may add some); a step not listed fills its columns on
-   * every row, and a step with no columns is done when the register has exactly `target` rows.
+   * A register built from nothing, up to `target` rows. `adds` is step → the rows that step's source
+   * holds: the platform puts them in place, empty, when the step opens (`seedRows`), and the mentee
+   * fills them in; nobody is asked to add a row. A step not listed fills its columns on every row,
+   * and a step with no columns is done when the register has exactly `target` rows.
    */
   grow?: {
     target: number;
     adds: Record<number, number>;
-    /** Rows the adding steps may reach before the trimming step (T3.1: 17 candidates, then 15). */
-    cap?: number;
     /** The step that brings the register down to `target`, with a remove button on every row. */
     trim?: number;
     /** Rows that must stay among the `target` (T3.1: at least 3 contract rows, KR2). */
@@ -1542,7 +1541,7 @@ export const REGISTERS: Record<string, Register> = {
     // 7 compares the clocks with BKB-ERM-001 Annex A · 8 hands it in.
     steps: { 1: [1, 2, 3, 4, 5, 11], 2: [1], 3: [1, 2, 3, 4, 5, 11], 4: [1, 2, 3, 4, 5, 11], 5: [6, 8, 9, 10], 6: [] },
     grow: {
-      target: 15, adds: { 1: 2, 3: 10, 4: 3 }, cap: 17, trim: 6, keep: { col: 4, value: "contract", min: 3 },
+      target: 15, adds: { 1: 2, 3: 10, 4: 3 }, trim: 6, keep: { col: 4, value: "contract", min: 3 },
       // Section 6's US health and United States overlays bind the Phoenix office (Section 2's Phoenix row), not Manila or Warsaw.
       drop: {
         bad: (r, d) => { const o = obl.rows6(d)?.find((x) => same(x[1], r[1])); return !!o && overlayOffices(d, r[1]) === ""; },
@@ -1644,12 +1643,12 @@ export const REGISTERS: Record<string, Register> = {
     // compliance on any row, an article where the obligation names none, a deadline where it states none.
     handIn: { step: 8, cols: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ident: [0, 1] },
     note: {
-      1: (d) => `${addendum(d)} Section 2 has one row for each office. Add 2 rows, one for ${obl.offices(d).map(city).join(" and one for ")}. Each office's Breach notification cell is its obligation. Article/clause is in ${addendum(d)} Section 2.2.`,
+      1: (d) => `${addendum(d)} Section 2 has one row for each office. Your 2 rows are in place below: one for ${obl.offices(d).map(city).join(" and one for ")}. Each office's Breach notification cell is its obligation. Article/clause is in ${addendum(d)} Section 2.2.`,
       3: (d) => {
         const [a, b] = [obl.lines21(d)?.length, obl.rows6(d)?.length];
-        return `${addendum(d)} Section 2.1 lists ${a ?? "its"} lead-regulator requirements and Section 6 has ${b ?? "its"} overlays. Add one row for each${a && b ? `: ${a + b} rows` : ""}. Article/clause is in Section 2.2. Type: law for an act of parliament, reg for a regulator's own requirement, standard for an industry standard; Learn › Framework Quick Reference says which a named standard or law is.`;
+        return `${addendum(d)} Section 2.1 lists ${a ?? "its"} lead-regulator requirements and Section 6 has ${b ?? "its"} overlays. Each takes one row${a && b ? `: your ${a + b} rows are in place below` : ""}. Article/clause is in Section 2.2. Type: law for an act of parliament, reg for a regulator's own requirement, standard for an industry standard; Learn › Framework Quick Reference says which a named standard or law is.`;
       },
-      4: (d) => toLearner(`Add 3 rows, one for each of the first three Key Requirements of GlobalConnect Customer Solutions. Article/clause is in ${addendum(d)} Section 2.2.`),
+      4: (d) => toLearner(`Your 3 rows are in place below, one for each of the first three Key Requirements of GlobalConnect Customer Solutions. Article/clause is in ${addendum(d)} Section 2.2.`),
       5: (d) => `Frequency / deadline, Process and Evidence of compliance are in ${addendum(d)} Section 2.2, one row per obligation. The policy that implements each row is in the BKB-POL-000 Section 3 index: Check my answers then shows each row's answer.`,
       6: () =>
         "Steps 1 to 4 give 17 rows; the register holds 15. Keep the 3 contract rows, which KR2 needs, and remove the two rows that bind neither of your two offices.",
@@ -5070,6 +5069,8 @@ export function regEmpty(desk: Desk, p: Progress, task: Task, n: number, reg = r
   return rows.flatMap((r, ri) => (reg.mine(r, desk) && (!reg.only?.[n] || reg.only[n](r.map(String), p)) ? reg.handIn!.cols.filter((ci) => !reg.awaiting?.[ci]?.(liveRow(reg, p, task.id, ri), ri, addedBy(reg, p, task.id, ri)) && !cellOk(reg, desk, p, task.id, rows, ri, ci)).map((ci) => `${ri},${ci}`) : []));
 }
 
+/** A grid's own keys ("#rows", "#seeded"), which moving its rows about must not lose. */
+const own = (cells: Record<string, string>) => Object.fromEntries(Object.entries(cells).filter(([k]) => k.startsWith("#")));
 /** Rule R10's joints in an obligation: each " and " or ";" that joins two duties. */
 export const joints = (t: string) => [...t.matchAll(/;| and /g)].map((m) => ({ at: m.index!, len: m[0].length, w: m[0].trim() }));
 /** The rows a split step works on: the ones the step it splits added, and the parts it made. */
@@ -5081,7 +5082,7 @@ export function splitRows(reg: Register, p: Progress, taskId: string, n: number)
  *  row right below (the step's own), every other column copied. */
 export function splitRow(cells: Record<string, string>, ri: number, col: number, text: string, j: { at: number; len: number }, n: number, ncols: number): Record<string, string> {
   const count = Number(cells["#rows"] ?? 0);
-  const out: Record<string, string> = { "#rows": String(count + 1) };
+  const out: Record<string, string> = { ...own(cells), "#rows": String(count + 1) };
   for (const [k, v] of Object.entries(cells)) {
     const m = k.match(/^(\d+),(.+)$/);
     if (!m) continue;
@@ -5128,14 +5129,34 @@ export const compareDone = (reg: Register, desk: Desk, p: Progress, taskId: stri
   return !!c?.length && c.every((o) => o.got === (o.differs ? "differs" : "same") && (!o.differs || !!o.details.find((d) => String(d.ri) === o.row)?.differs));
 };
 
-/** Grid cells with a row added (stamped with the step that added it) or one removed and the rest moved up. */
+/** The steps whose rows the platform has put in place ("#seeded": "1,3"). */
+const seeded = (cells: Record<string, string>) => (cells["#seeded"] ?? "").split(",").filter(Boolean).map(Number);
+export const isSeeded = (cells: Record<string, string>, n: number) => seeded(cells).includes(n);
+/**
+ * Grid cells with the rows step `n` answers for in place, so that nobody is asked to add one (owner, 12 Nov 2026).
+ * Its empty surplus rows go first, last one first: an older build let a step add any number, and the empty ones
+ * could never be filled. A row with anything typed in it is never dropped. Then the step is topped up to `need`,
+ * once: after that a missing row is one the trimming step removed, and it stays removed (`held`: the trimming
+ * step is already done on a copy saved before rows were seeded). Returns `cells` itself when nothing changes.
+ */
+export function seedRows(cells: Record<string, string>, n: number, need: number, held = false): Record<string, string> {
+  let out = cells;
+  const mine = () => Array.from({ length: Number(out["#rows"] ?? 0) }, (_, ri) => ri).filter((ri) => Number(out[`${ri},by`] ?? 0) === n);
+  const blank = (ri: number) => !Object.keys(out).some((k) => { const [r, c] = k.split(","); return Number(r) === ri && /^\d+$/.test(c ?? "") && !!out[k].trim(); });
+  for (let spare = mine().filter(blank); mine().length > need && spare.length; spare = mine().filter(blank)) out = removeRow(out, spare[spare.length - 1]);
+  if (isSeeded(out, n)) return out;
+  if (!held) for (let i = mine().length; i < need; i++) out = addRow(out, n);
+  return { ...out, "#seeded": [...seeded(out), n].join(",") };
+}
+/** Grid cells with a row added (stamped with the step that added it) or one removed and the rest moved up.
+ *  The register's own keys ("#seeded") are kept. */
 export function addRow(cells: Record<string, string>, n: number): Record<string, string> {
   const count = Number(cells["#rows"] ?? 0);
   return { ...cells, "#rows": String(count + 1), [`${count},by`]: String(n) };
 }
 export function removeRow(cells: Record<string, string>, ri: number): Record<string, string> {
   const count = Number(cells["#rows"] ?? 0);
-  const out: Record<string, string> = { "#rows": String(Math.max(0, count - 1)) };
+  const out: Record<string, string> = { ...own(cells), "#rows": String(Math.max(0, count - 1)) };
   for (const [k, v] of Object.entries(cells)) {
     const m = k.match(/^(\d+),(.+)$/);
     if (!m) continue;
