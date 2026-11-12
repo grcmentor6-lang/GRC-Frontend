@@ -326,6 +326,22 @@ def main(src: str) -> None:
          "or more than 1,000 people; otherwise No. This is the Group's screening rule: GDPR Art.34 itself asks, case by case, whether the breach is likely to result in a high risk to the people concerned.", 3),
         ('["S4","Reject — qualified opinion"]',
          '["S4","Reject — qualified opinion on CC6 or CC7 with no tested remediation. Outside CC6 and CC7: a condition, escalated to the CISO (R28)"]', 2),
+        # The four points the review left open, decided 12 Nov 2026 (owner: "take care of the decisions which are left
+        # open yourself"). Each keeps the rule the tasks are keyed on and says what it is, or what the standard says.
+        # R18 always asks for 2 files: kept (one sentence to copy), with its reason.
+        ('fewer than 2 accepted files. For each gap write: \\"Please send 2 more files for <control> covering <period> by <due date>.\\"',
+         'fewer than 2 accepted files. For each gap write: \\"Please send 2 more files for <control> covering <period> by <due date>.\\" The request is always for 2, even when 1 accepted file is on hand: the spare covers a file that is rejected.', 5),  # the rule, Learn › Rule tables, Ref-Rules, and T5.2's step that quotes it (twice)
+        # The regulator's clock is the controller's; both organisations also process their clients' data.
+        ("for example encrypted with a key they do not have.",
+         "for example encrypted with a key they do not have. The clocks are the controller's: where the organisation holds the data as a client's processor, it also tells that client without undue delay (GDPR Art.33(2)), early enough for the client to meet the deadline you marked.", 3),
+        # Surveillance "in years 2 and 3" is right with year 1 as the year of the initial audit: say the months too.
+        ("surveillance in years 2 and 3; recertification before year 3 ends.",
+         "surveillance in years 2 and 3 (about 12 and 24 months after the certificate is issued); recertification before year 3 ends.", 3),
+        ("surveillance audit in year 2 → surveillance audit in year 3 →",
+         "surveillance audit in year 2 (about 12 months after the certificate is issued) → surveillance audit in year 3 (about 24 months) →", 1),
+        # L17 is a working test for grading; the standard's definition is about the management system's capability.
+        ("failed in more than half of the sample. Minor = any other failure.",
+         "failed in more than half of the sample. Minor = any other failure. This is the Group's working test: ISO/IEC 17021-1 calls a nonconformity major when it affects the management system's ability to achieve its intended results.", 3),
     ):
         assert blob.count(old) == n, (old, blob.count(old))
         blob = blob.replace(old, new)
