@@ -34,6 +34,7 @@ export function FloatWindow({
   fit,
   tall,
   accent,
+  bar,
 }: {
   /** A colour for the title bar's top edge: an organisation's, so its window reads as that organisation. */
   accent?: string;
@@ -53,6 +54,8 @@ export function FloatWindow({
   fit?: boolean;
   /** Nearly the whole work area, for a console (Tech Lab). */
   tall?: boolean;
+  /** A strip that stays above the scrolling body (a document's section jumps). */
+  bar?: ReactNode;
 }) {
   const ref = useRef<HTMLElement>(null);
   // Where the window has been dragged to, in the page's own (zoomed) pixels; null until moved.
@@ -107,7 +110,7 @@ export function FloatWindow({
           // --test-dock: the width the knowledge check's dock takes while it is open (knowledge-check.tsx), 0 otherwise.
           width: `min(${width}px, calc(100vw - 24px - var(--test-dock, 0px)))`,
         }}
-        className={`pointer-events-auto absolute flex ${tall ? "h-[max(320px,calc(100dvh/var(--app-zoom)-152px))]" : fit ? "max-h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[160px]" : "h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[220px]"} min-w-[300px] max-w-[calc(100vw/var(--app-zoom)-24px)] resize flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_-20px_rgba(17,24,39,0.45)] ${pos ? "" : "max-md:!left-3"}`}
+        className={`float-win pointer-events-auto absolute flex ${tall ? "h-[max(320px,calc(100dvh/var(--app-zoom)-152px))]" : fit ? "max-h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[160px]" : "h-[min(560px,calc(100dvh/var(--app-zoom)-160px))] min-h-[220px]"} min-w-[300px] max-w-[calc(100vw/var(--app-zoom)-24px)] resize flex-col overflow-hidden rounded-lg border border-[#C9CED8] bg-white shadow-[0_24px_64px_-20px_rgba(17,24,39,0.45)] ${pos ? "" : "max-md:!left-3"}`}
       >
         <header onPointerDown={startDrag} style={accent ? { borderTop: `3px solid ${accent}` } : undefined} className="flex shrink-0 cursor-grab touch-none select-none items-stretch border-b border-[#DDE1E8] active:cursor-grabbing">
           {leading && <span className="grid shrink-0 place-items-center pl-3">{leading}</span>}
@@ -128,6 +131,7 @@ export function FloatWindow({
             <Icon name="x" size={16} />
           </button>
         </header>
+        {bar}
         <div className="min-h-0 flex-1 overflow-auto">{children}</div>
         <PreparedFor />
       </motion.section>

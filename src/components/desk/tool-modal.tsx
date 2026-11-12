@@ -83,11 +83,10 @@ function DocWindow({ id, index, onClose, beside }: { id: string; index: number; 
       width={beside ? place.width : 720}
       left={beside ? place.left : undefined}
       fit={beside}
-    >
-      {DOC_TEXT.has(id) && cites.length > 0 && (
+      bar={DOC_TEXT.has(id) && cites.length > 0 && (
         // The sections this step reads, one click each: a cited section can sit below long tables, and
-        // nothing else tells the learner it is further down. Stays in view while the text scrolls.
-        <nav data-guide="doc-jump" aria-label="Sections this step reads" className="sticky top-0 z-10 flex flex-wrap items-center gap-1.5 border-b border-[#E9ECF1] bg-white/95 px-4 py-2 text-[12.5px] text-[#5B6474] backdrop-blur">
+        // nothing else tells the learner it is further down. Sits above the scrolling text (FloatWindow's bar).
+        <nav data-guide="doc-jump" aria-label="Sections this step reads" className="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-[#E9ECF1] bg-white px-4 py-2 text-[12.5px] text-[#5B6474]">
           <span>This step reads</span>
           {cites.map((c) => (
             <button
@@ -96,8 +95,6 @@ function DocWindow({ id, index, onClose, beside }: { id: string; index: number; 
               onClick={(e) => {
                 const sec = e.currentTarget.closest("section")?.querySelector<HTMLElement>(`[data-sec="${c}"]`);
                 if (!sec) return;
-                // The bar wraps to two lines in a narrow window (three sections): the heading lands below it, not under it.
-                sec.style.scrollMarginTop = `${(e.currentTarget.closest("nav")?.offsetHeight ?? 40) + 8}px`;
                 sec.scrollIntoView({ block: "start", behavior: "smooth" });
               }}
               className="focus-ring rounded border border-[#C7CBF5] bg-[#F7F8FF] px-2 py-0.5 font-mono text-[12px] font-semibold text-[#4338CA] hover:bg-[#EEF0FF] active:scale-[0.97]"
@@ -107,6 +104,7 @@ function DocWindow({ id, index, onClose, beside }: { id: string; index: number; 
           ))}
         </nav>
       )}
+    >
       <div className="px-4 py-3">
         {DOC_TEXT.has(id) ? (
           <DocCitation id={id} cites={cites} spot={task && step ? regOf(task.id, step.n)?.spot?.[step.n] : undefined} />
