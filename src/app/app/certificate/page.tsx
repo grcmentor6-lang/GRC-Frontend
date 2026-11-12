@@ -126,15 +126,13 @@ export default function CertificatePage() {
   const certVerifyLabel = cert?.verifyUrl?.replace(/^https?:\/\//, "") ?? "";
   const locked = CERT_LOCKED.find((l) => l.id === tab);
   const isLocked = !!locked;
-  // Every task submitted issues the certificate, unless the record has steps not marked done (the server says which).
-  const waiting = cert?.status === "preview" && cert.tasksTotal > 0 && cert.tasksDone === cert.tasksTotal;
+  // What is still needed, from the server's own list (tasks, steps, the two exams).
+  const todo = cert?.status === "preview" ? (cert.requirements ?? []).filter((r) => !r.met) : [];
   const statusNote = isLocked
     ? locked!.statusNote
-    : waiting
-      ? "Not issued · some steps are not marked done"
-      : cert?.status === "preview"
-        ? `Not issued · ${cert.completionPct}% of tasks submitted`
-        : cert?.statusNote ?? "";
+    : cert?.status === "preview"
+      ? `Not issued · ${todo.length} of ${cert.requirements?.length ?? 0} requirements to go`
+      : `${cert?.statusNote ?? ""}${cert?.tier === "distinction" ? " · with distinction" : ""}`;
   const chipTone = isLocked
     ? "bg-slate-100 ring-slate-200 text-slate-500"
     : cert?.status === "issued"
@@ -189,16 +187,33 @@ export default function CertificatePage() {
             <CertificateSheet preview={cert.status === "preview"} stats={stats} cert={cert} />
           </CertStage>
           <div className="text-center text-[11px] text-slate-400 pt-5 pb-2 cert-noprint">
-            {waiting ? (
-              <>Every task is submitted, but some steps are not marked done. Mark them complete on the Working Desk and the certificate is issued.</>
-            ) : cert.status === "preview" ? (
-              <>Not issued · {cert.tasksDone} of {cert.tasksTotal} tasks submitted ({cert.completionPct}%). It is issued when every task is submitted.</>
+            {cert.status === "preview" ? (
+              <>Not issued yet. It is issued by itself the moment everything below is met.</>
             ) : cert.expired ? (
               <>This credential lapsed on {cert.expiryDate}. It stays verifiable at {certVerifyLabel} as a record of completed work.</>
             ) : (
               <>Verifiable at {certVerifyLabel} · valid for {cert.validityYears} years, until {cert.expiryDate}</>
             )}
           </div>
+          {cert.status === "preview" && (cert.requirements?.length ?? 0) > 0 && (
+            <section data-cert="requirements" aria-label="What the certificate takes" className="cert-noprint mx-auto mt-2 max-w-[720px] rounded-md border border-[#DDE1E8] bg-white">
+              <h2 className="border-b border-[#E9ECF1] px-4 py-2.5 text-[13.5px] font-bold text-[#111827]">What the certificate takes</h2>
+              <ul>
+                {cert.requirements.map((r) => (
+                  <li key={r.label} className="flex items-start gap-3 border-b border-[#F0F1F4] px-4 py-2.5 last:border-b-0">
+                    <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full ${r.met ? "bg-[#16A34A] text-white" : "border border-[#C9CED8] text-transparent"}`} aria-label={r.met ? "met" : "to do"}>
+                      <Icon name="check" size={11} strokeWidth={3.5} />
+                    </span>
+                    <span className="min-w-0 flex-1 text-[13.5px] font-medium text-[#111827]">{r.label}</span>
+                    <span className={`shrink-0 text-[12.5px] tabular-nums ${r.met ? "text-[#15803D]" : "text-[#5B6474]"}`}>{r.detail}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="border-t border-[#E9ECF1] px-4 py-2.5 text-[12.5px] leading-relaxed text-[#5B6474]">
+                The certificate records verified work, not a score. The weekly knowledge checks are practice and do not count; the two exams are the only pass marks. An exam not passed in two attempts opens again after 7 days. Both exams at 85 % or more at the first attempt earns it with distinction.
+              </p>
+            </section>
+          )}
           {cert.status !== "preview" && (
             <div className="max-w-[720px] mx-auto mt-2 cert-noprint">
               <ExtendAccessCard kind="certificate" />

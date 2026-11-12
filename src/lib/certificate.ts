@@ -26,6 +26,9 @@ export interface Certificate {
   completionPct: number;
   /** Every desk task submitted. Issuing may still be off, so this is not "issued". */
   certificateEligible: boolean;
+  /** What the certificate takes, and where the learner stands on each. */
+  requirements: { label: string; met: boolean; detail: string }[];
+  tier: "distinction" | null;
   /** The credential's figures, the same list the public verify page shows. */
   stats: CertVerifyStat[];
   completedTaskCodes: string[];

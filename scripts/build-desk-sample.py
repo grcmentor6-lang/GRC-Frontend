@@ -313,6 +313,22 @@ def main(src: str) -> None:
     old_l20 = 'Otherwise \\"Not invoked\\".'
     assert blob.count(old_l20) == 3, blob.count(old_l20)  # the rule, Learn › Rule tables, Ref-Rules
     blob = blob.replace(old_l20, 'Otherwise \\"Do not invoke\\".')
+    # Review of record, 12 Nov 2026 (docs/GRC101_Content_Corrections.md item 118), owner: "fix that". No key changes.
+    # R28 said every condition is "due in 90 days" while Ref-Conditions S1 gives 12 months; Ref-Conditions S4 rejected
+    # every qualified opinion while R28 rejects only on CC6/CC7 with no tested remediation. R29 and R30 are the Group's
+    # screening rules, not GDPR's own tests (Art.35(1), Art.34(1)): a holder who repeats them as the law would be wrong.
+    for old, new, n in (
+        ("due in 90 days). Approve if none fails.",
+         "due in 90 days unless the condition states its own time, as S1's 12 months does). Approve if none fails.", 3),
+        ("(KYC/AML). Otherwise No.",
+         "(KYC/AML). Otherwise No. This is the Group's screening rule: GDPR Art.35 asks for a DPIA wherever processing is likely to result in a high risk, so an activity outside this list can still need one.", 3),
+        ("or more than 1,000 people; otherwise No.",
+         "or more than 1,000 people; otherwise No. This is the Group's screening rule: GDPR Art.34 itself asks, case by case, whether the breach is likely to result in a high risk to the people concerned.", 3),
+        ('["S4","Reject — qualified opinion"]',
+         '["S4","Reject — qualified opinion on CC6 or CC7 with no tested remediation. Outside CC6 and CC7: a condition, escalated to the CISO (R28)"]', 2),
+    ):
+        assert blob.count(old) == n, (old, blob.count(old))
+        blob = blob.replace(old, new)
     # T4.1 Q2 asked for password "rotation": current NIST guidance (SP 800-63B) says change on suspected compromise, not
     # on a schedule (professional review, 3 Nov 2026). Every copy (panel, POL-GAP, Gap Finder, Review & Redline); the
     # answer is unchanged, the policy still sets no password rules. registers.ts carries the same sentence.

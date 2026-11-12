@@ -149,7 +149,13 @@ export function KnowledgeCheck({ id }: { id: string }) {
           </div>
         </div>
       ) : (
-        st.open && st.attempts.length > 0 && <p className="mt-6 text-[13px] text-[#5B6474]">Both attempts are used. Your best score, {st.bestScore}%, is on your record.</p>
+        st.open && st.attempts.length > 0 && (
+          <p data-kc="used" className="mt-6 text-[13px] text-[#5B6474]">
+            {st.retakeAt
+              ? `Both attempts are used and the pass mark of ${st.passMark} % is not met yet. A further attempt, on a new form, opens on ${new Date(st.retakeAt).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}. Use the days between to go back over the rules you missed.`
+              : `Your attempts are used. Your best score, ${st.bestScore}%, is on your record.`}
+          </p>
+        )
       )}
     </Shell>
   );

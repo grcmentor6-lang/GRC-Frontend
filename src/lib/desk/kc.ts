@@ -68,6 +68,8 @@ export interface KcState {
   id: string; title: string; kind: "kc" | "gate" | "final"; week: number; weeks: number[];
   size: number; minutes: number; attemptsAllowed: number; passMark: number | null; opensAfter: string[];
   open: boolean; whyClosed: string | null; attempts: KcAttempt[]; bestScore: number | null; passed: boolean | null;
+  /** When a failed exam's further attempt opens (ISO), while one is waiting. */
+  retakeAt: string | null;
   /** The next attempt. Its questions are served only once it is started: the clock is the server's. */
   form: { attempt: number; started: boolean; secondsLeft: number; questions: KcQuestion[]; picks: [string, number][] } | null;
 }
