@@ -3060,7 +3060,7 @@ export const REGISTERS: Record<string, Register> = {
     note: {
       15: () => "Each risk's statement and option are copied from RR-UPD and step 11. Its event's facts, cause first, are in RRU-EVENTS on Risk Register › New Risk. Choose the action that carries out the option at the risk's cause.",
       16: (d) => `Rule L12 (Learn › Rule tables): ${(d.rules.L12?.[1] ?? "").split(". ").slice(-1)[0]} Only the controls on the category's row of Ref-Keywords (Learn › Reference pages) count. The categories: ${RRU_NEW.map((n) => `${n.id}, ${n.cat}`).join("; ")}. Choose the one the action puts in place.`,
-      17: (d) => `Rule R08 (Learn › Rule tables): ${d.rules.R08?.[1] ?? ""} The plan is dated ${RRU.plan}: count calendar days from it. The owner is the risk's owner in RR-UPD.`,
+      17: (d) => `Rule R08 (Learn › Rule tables): ${d.rules.R08?.[1] ?? ""} A risk whose option is Retain is accepted and monitored: it has no due date, so tick none. The plan is dated ${RRU.plan}: count calendar days from it. The owner is the risk's owner in RR-UPD.`,
       18: (d) => `Rule R07 (Learn › Rule tables): ${(d.rules.R07?.[1] ?? "").split(" Rating: ")[0]} Count the action's control as working; a retained risk has no new control.`,
       19: (d) => `Rule R36 (Learn › Rule tables): ${d.rules.R36?.[1] ?? ""} Rate the expected residual with R07's bands: 1–5 Low, 6–11 Medium, 12–19 High, 20–25 Critical.`,
     },

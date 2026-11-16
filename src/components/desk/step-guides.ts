@@ -5689,7 +5689,16 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $('[data-guide="register"]'),
     },
-    firstItem("The first risk yourself", "R-16-HQ-26: read its option and its residual rating. Pick its due date, or tick **none** if it has no due date. Next unlocks once it is right.", "Due (R08)", 1, () => noneIs("Due (R08)", 1), "Set R-16-HQ-26's due date", STEP_NOTE),
+    {
+      ...firstItem("The first risk yourself", "R-16-HQ-26: read its **Option (L12)**, in this row.", "Due (R08)", 1, () => noneIs("Due (R08)", 1), "Set R-16-HQ-26's due date", STEP_NOTE),
+      // The whole row is lit, not the cell alone: the Option the card says to read is three columns to its left.
+      getEl: () => oblCell("Due (R08)", 1)?.closest("tr") ?? null,
+      // Two plain lines, not two boxes side by side: the card has to fit under the row on a laptop screen.
+      steps: [
+        { lead: "Retain", text: "Accepted and monitored, so nothing is due: tick **none**." },
+        { lead: "Modify", text: "Treated: count R08's days for its rating from the plan's date, and pick that date." },
+      ],
+    },
     checkAnswers("Then the other two. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
