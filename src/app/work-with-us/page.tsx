@@ -173,7 +173,7 @@ function Apply() {
 
 export default function WorkWithUsPage() {
   return (
-    <div className="min-h-screen bg-[#FAFAF7]">
+    <div className="site-zoom min-h-screen bg-[#FAFAF7]">
       <Nav active="/work-with-us" />
       <Hero />
       <WhatTheBoardDoes />

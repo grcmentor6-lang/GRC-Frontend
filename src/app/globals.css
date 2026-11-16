@@ -403,3 +403,23 @@ body {
   }
 }
 
+/* The public site (landing, Work with us) reads a size up from the app (owner, 16 Nov 2026: "zoom the landing page at
+   120 or 125%"). The root is scaled down on desktop for the app's dense screens (--app-zoom, above), and the marketing
+   pages inherited it: type that small reads as a thumbnail of a site. This multiplies it back on their own wrapper, by
+   the root's own width bands, to about true size: 0.81 x 1.2, 0.76 x 1.25, 0.73 x 1.35. Below 1024px the root is not
+   scaled, so neither is this: a phone is at 100%. */
+@media screen and (min-width: 64rem) {
+  .site-zoom {
+    zoom: 1.2;
+  }
+}
+@media screen and (min-width: 80rem) {
+  .site-zoom {
+    zoom: 1.25;
+  }
+}
+@media screen and (min-width: 96rem) {
+  .site-zoom {
+    zoom: 1.35;
+  }
+}
