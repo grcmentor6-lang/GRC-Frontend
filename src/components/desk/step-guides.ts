@@ -542,11 +542,15 @@ const EVLIB_WINDOW = 'section[role="dialog"][aria-label^="Evidence › Evidence 
 const VH_WINDOW = 'section[role="dialog"][aria-label^="Policies › Version History"]';
 
 /**
- * The one step whose guide starts by itself: step 1 of the first task, where the learner meets the desk's way of
- * working (owner, 12 Nov 2026: "only show the guide automatically at only first step of first task"). Every other
- * step's guide, and a Tech Lab's, runs from "Show me how" alone.
+ * Whether a step's guide starts by itself the first time the step is opened: an Activity step's does (owner,
+ * 16 Nov 2026: "in the activity type it should open the guide by default for the first time as before"), and the
+ * toolbar's menu waits until that guide has been through. A Decision's guide ("<task>-<n>" of a pick step, or its
+ * question's "<task>-<n>q") and a Tech Lab's run from "Show me how" alone.
  */
-export const autoGuideKey = (desk: { order: string[] }) => `${desk.order[0]}-1`;
+export const autoGuide = (desk: { tasks: Record<string, { steps: { kind: string }[] }> }, key: string) => {
+  const m = key.match(/^(.+)-(\d+)$/);
+  return !!m && desk.tasks[m[1]]?.steps[Number(m[2]) - 1]?.kind === "do";
+};
 
 export const STEP_GUIDES: Record<string, TourStep[]> = {
   "F1.1-1": [

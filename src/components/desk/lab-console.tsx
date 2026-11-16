@@ -102,7 +102,7 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
   }, [lab]);
   const base = `grc101.guide.lab.${ref.id}`;
   const startGuide = useCallback(() => setGuideAt(0), []);
-  // Not by itself (owner, 12 Nov 2026: only the first task's step 1 does): the brief's "Show me how" starts it.
+  // Not by itself (only an Activity step's own guide does, see autoGuide): the brief's "Show me how" starts it.
 
   const current = lab?.parts.find((p) => !partDone(p, state));
   const findings = labFindings(progress, ref.id);

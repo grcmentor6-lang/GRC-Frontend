@@ -12,7 +12,7 @@ import { ATTEST, RMF, attestDone, attestKey, type Attest } from "@/lib/desk/form
 import { briefOf, regOf } from "@/lib/desk/registers";
 import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
 import { useAuth } from "@/components/auth/auth-provider";
-import { STEP_GUIDES, autoGuideKey } from "./step-guides";
+import { STEP_GUIDES, autoGuide } from "./step-guides";
 import { DECISION_CONTEXT } from "@/lib/desk/decision-context";
 import { FloatWindow } from "./float-window";
 import { UndertakingCard } from "./undertaking";
@@ -293,7 +293,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
   // forms of part 2 restate the rules the question tests.
   const checked = s.kind !== "pick" || decisionChecked(progress, task.id, s.n);
   // A step worked here, in its row, carries its own walk-through (a step worked in a tool runs its
-  // guide in the tool's modal). It runs from "Show me how"; by itself only on the first task's step 1 (autoGuideKey).
+  // guide in the tool's modal). It runs from "Show me how"; by itself the first time an Activity step is opened (autoGuide).
   const { user } = useAuth();
   // A decision whose second part is done in a tool may carry a guide for its question, run here in the
   // row: keyed "<task>-<n>q", since "<task>-<n>" is the tool's guide for part 2 (T3.2 step 12).
@@ -305,7 +305,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
     const go = () => (document.querySelector('[aria-label^="Guide:"]') ? setTimeout(go, 800) : setGuideAt(0));
     go();
   }, []);
-  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && !readOnly && !done && guideKey === autoGuideKey(desk), startGuide, 1600);
+  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && !readOnly && !done && autoGuide(desk, guideKey), startGuide, 1600);
   // A decision stays open once marked: completing it reveals why each option is right or wrong,
   // and moving on there and then would fold that away unread. The mentee moves on with Next step.
   const markDone = () => {

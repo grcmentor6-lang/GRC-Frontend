@@ -9,7 +9,7 @@ import { UTILITIES, sectionOpen, stepMenu, toolOpen, unlockHint } from "@/lib/de
 import { stepKey } from "@/lib/desk/progress";
 import { useAuth } from "@/components/auth/auth-provider";
 import { tourDue } from "@/components/app/guided-tour";
-import { STEP_GUIDES, autoGuideKey } from "./step-guides";
+import { STEP_GUIDES, autoGuide } from "./step-guides";
 
 const SEC_ICON: Record<string, IconName> = {
   home: "home", evidence: "paperclip", frameworks: "layers", access: "users", risk: "alertTriangle", vendors: "handshake",
@@ -99,11 +99,11 @@ export function Toolbar({ modal, hold }: { /** The step's tool open as the modal
   // in it stays their click. Not for a finished step, a submitted task or a closed week, and not on a phone,
   // where the menu would cover half the screen and the step under it.
   const t = here ? desk.tasks[here.task] : undefined;
-  // …and not under a guide: on the one step whose guide starts by itself, the menu waits until the guide has been
+  // …and not under a guide: on a step whose guide starts by itself (an Activity, the first time), the menu waits until the guide has been
   // through (owner, 12 Nov 2026: with both up "the focus gets unclear"); nor while any guide is on screen.
   const { user } = useAuth();
   const gk = here ? `${here.task}-${here.n}` : "";
-  const guideFirst = !!STEP_GUIDES[gk] && gk === autoGuideKey(desk) && tourDue(`grc101.guide.${gk}`, user?.email);
+  const guideFirst = !!STEP_GUIDES[gk] && autoGuide(desk, gk) && tourDue(`grc101.guide.${gk}`, user?.email);
   const menu = t && step && !hold && !guideFirst && isOpen(t.week) && !progress.submitted[t.id] && !progress.done[stepKey(t.id, step.n)] ? stepMenu(t, step.n) : null;
   const auto = menu && desk.sections[menu] && sectionOpen(desk, isOpen, menu, progress, here) ? menu : null;
   useEffect(() => {
