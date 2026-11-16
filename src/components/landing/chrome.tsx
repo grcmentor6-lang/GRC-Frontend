@@ -20,14 +20,14 @@ const NAV_LINKS: [string, string][] = [
 export function Nav({ active }: { active?: string }) {
   return (
     <header className="sticky top-0 z-50 bg-[#FAFAF7]/80 backdrop-blur-xl border-b border-slate-200">
-      <div className="max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 h-16 flex items-center justify-between">
-        <Logo />
-        <nav className="hidden md:flex items-center gap-7">
+      <div className="max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 h-[72px] md:h-20 flex items-center justify-between">
+        <Logo large />
+        <nav className="hidden md:flex items-center gap-8 lg:gap-9">
           {NAV_LINKS.map(([href, label]) => (
             <a
               key={href}
               href={href}
-              className={`focus-ring rounded-md px-1 py-0.5 text-[13.5px] tracking-tight no-underline transition-colors ${
+              className={`focus-ring rounded-md px-1 py-1 text-[15.5px] tracking-tight no-underline transition-colors ${
                 active === href
                   ? "font-semibold text-slate-900"
                   : "font-medium text-slate-600 hover:text-slate-900"
@@ -37,15 +37,15 @@ export function Nav({ active }: { active?: string }) {
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3.5">
           {/* No mentor entry point on the public site: mentors go to /mentor directly. */}
           {!WAITLIST_MODE && (
-            <Link href="/signin" className="focus-ring rounded-md px-1 py-0.5 text-[13.5px] font-medium text-slate-600 hover:text-slate-900 tracking-tight no-underline">
+            <Link href="/signin" className="focus-ring rounded-md px-1 py-1 text-[15.5px] font-medium text-slate-600 hover:text-slate-900 tracking-tight no-underline">
               Sign in
             </Link>
           )}
-          <Link href={CTA_HREF} className="focus-ring inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-indigo-600 text-white text-[13px] font-semibold tracking-tight no-underline hover:bg-indigo-700 transition-colors shadow-[0_4px_14px_-4px_rgba(79,70,229,0.6)]">
-            {WAITLIST_MODE ? "Enrol now" : "Get started"} <Icon name="arrowRight" size={14} />
+          <Link href={CTA_HREF} className="focus-ring inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-indigo-600 text-white text-[15px] font-semibold tracking-tight no-underline hover:bg-indigo-700 active:scale-[0.98] transition-[background-color,transform] shadow-[0_6px_18px_-6px_rgba(79,70,229,0.65)]">
+            {WAITLIST_MODE ? "Enrol now" : "Get started"} <Icon name="arrowRight" size={16} />
           </Link>
         </div>
       </div>

@@ -10,16 +10,17 @@ export function BrandMark({ size = 36, className = "" }: { size?: number; classN
 }
 
 /** The grcmentor wordmark. */
-export function Logo({ light = false }: { light?: boolean }) {
+export function Logo({ light = false, large = false }: { light?: boolean; /** The public site's bar: a size up. */ large?: boolean }) {
+  const size = large ? "text-[22px] md:text-[24px]" : "text-[18px]";
   return (
     <Link href="/" className="focus-ring rounded-md flex items-baseline gap-0 no-underline">
       <span
-        className={`text-[18px] font-semibold tracking-[-0.02em] ${light ? "text-white" : "text-slate-900"}`}
+        className={`${size} font-semibold tracking-[-0.02em] ${light ? "text-white" : "text-slate-900"}`}
       >
         grc
       </span>
-      <span className="text-[18px] font-semibold tracking-[-0.02em] text-indigo-500">mentor</span>
-      <span className="ml-1 w-1.5 h-1.5 rounded-full bg-indigo-500 self-center mt-1" />
+      <span className={`${size} font-semibold tracking-[-0.02em] text-indigo-500`}>mentor</span>
+      <span className={`ml-1 rounded-full bg-indigo-500 self-center mt-1 ${large ? "w-2 h-2" : "w-1.5 h-1.5"}`} />
     </Link>
   );
 }

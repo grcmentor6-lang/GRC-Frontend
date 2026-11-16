@@ -32,7 +32,7 @@ const INDUSTRIES: { label: string; icon: IconName; tone: string; image: string; 
 // Every line here is a claim about the product as it ships: the Working Desk, 25 tasks / 255 steps over
 // 12 weeks, scored against the answer key (backend/app/services/desk_record.py). Keep it that way.
 const PROGRAM: { title: string; icon: IconName; tone: string; body: string }[] = [
-  { title: "Real-world task experience", icon: "desk", tone: "indigo", body: "Join a Group GRC Office and work 25 tasks for two client organisations — real files, inboxes, registers and policies, not slides." },
+  { title: "Real-world task experience", icon: "desk", tone: "indigo", body: "Join a Group GRC Office and work real tasks for two client organisations — real files, inboxes, registers and policies, not slides." },
   { title: "A 12-week working rhythm", icon: "calendar", tone: "violet", body: "Pick your start date and your plan sets a due date for every task, week by week, like a real engagement." },
   { title: "Decisions with no clean answer", icon: "target", tone: "emerald", body: "Make 120 practitioner calls on access, privacy, risk and evidence — and see which option a professional would back, and why." },
   { title: "Feedback on every step", icon: "history", tone: "amber", body: "Each check tells you what you got right and what you missed, and every submitted task is scored against a reviewed answer key." },
@@ -40,18 +40,18 @@ const PROGRAM: { title: string; icon: IconName; tone: string; body: string }[] =
 ];
 
 const TRACKS = [
-  { code: "GRC 101", title: "Foundations", years: "GRC Analyst · 0–2 years", price: FOUNDATION_PRICE, body: "Maps control frameworks (e.g. NIST, ISO 27001) to business processes, conducts risk and compliance assessments, and helps prepare audit evidence." },
-  { code: "GRC 301", title: "Advanced", years: "GRC Specialist · 2–4 years", price: null, body: "Leads risk assessments and assurance engagements across frameworks, manages third-party risk, and drives remediation to closure." },
-  { code: "GRC 501", title: "Leadership", years: "GRC Leader · 5+ years", price: null, body: "Sets GRC strategy, designs the operating model, and reports risk posture to the board and executive leadership." },
+  { code: "GRC 101", title: "Foundations", years: "GRC Analyst · 0–2 years", price: FOUNDATION_PRICE, prep: "Prepares you for ISO/IEC 27001 Lead Implementer", body: "Maps control frameworks (e.g. NIST, ISO 27001) to business processes, conducts risk and compliance assessments, and helps prepare audit evidence." },
+  { code: "GRC 301", title: "Advanced", years: "GRC Specialist · 2–4 years", price: null, prep: null, body: "Leads risk assessments and assurance engagements across frameworks, manages third-party risk, and drives remediation to closure." },
+  { code: "GRC 501", title: "Leadership", years: "GRC Leader · 5+ years", price: null, prep: null, body: "Sets GRC strategy, designs the operating model, and reports risk posture to the board and executive leadership." },
 ];
 
 const FAQS: FaqEntry[] = [
   { q: "Who is the GRC mentorship programme for?", a: "Anyone starting or growing a career in governance, risk and compliance — students, career-changers and early-career analysts who want hands-on, job-ready experience." },
   { q: "Do I need prior experience?", a: "No. GRC 101 starts from the foundations and assumes no background; the advanced tracks build on the work you complete." },
   { q: "How does the programme actually work?", a: "You join the Group GRC Office of a simulated company and work for two client organisations. Each task is a short set of steps — check a file, make a decision, fill in a register, answer an inbox message — and every step gives you feedback. Submitted tasks are scored against a reviewed answer key." },
-  { q: "Which standards and frameworks will I learn?", a: "ISO/IEC 27001:2022, SOC 2 and GDPR most of all, with NIS2, PCI DSS and HIPAA where a client's business brings them in — applied across 25 hands-on tasks." },
+  { q: "Which standards and frameworks will I learn?", a: "ISO/IEC 27001:2022, SOC 2 and GDPR most of all, with NIS2, PCI DSS and HIPAA where a client's business brings them in — applied across hands-on tasks." },
   { q: "Will this help me get hired?", a: "Yes. Your completed work compiles into a CV, credential badges and a verifiable certificate, and the Career page shows how much of each typical entry-level GRC role your work already covers, with a live search for openings." },
-  { q: "How long does each track take?", a: "GRC 101 is 25 tasks on a 12-week plan that starts on the date you choose." },
+  { q: "How long does each track take?", a: "GRC 101 runs on a 12-week plan that starts on the date you choose." },
 ];
 
 // ============ SECTIONS ============
@@ -74,7 +74,7 @@ function Hero() {
           Become a job-ready <span className="text-indigo-600">GRC professional</span> through real work.
         </h1>
         <p className="mt-5 text-[16px] md:text-[17px] text-slate-500 leading-relaxed tracking-tight max-w-xl" style={{ textWrap: "pretty" }}>
-          Work 25 tasks over 12 weeks for two simulated client organisations — scored against a reviewed answer key, aligned to the standards employers ask for, and mapped straight to the roles you want.
+          Work real tasks for two simulated client organisations — scored against a reviewed answer key, aligned to the standards employers ask for, and mapped straight to the roles you want.
         </p>
         <div className="mt-7 flex items-center gap-3 flex-wrap">
           <Link href={CTA_HREF} className="focus-ring inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-indigo-600 text-white text-[14px] font-semibold tracking-tight no-underline hover:bg-indigo-700 transition-colors shadow-[0_8px_24px_-8px_rgba(79,70,229,0.7)]">
@@ -84,24 +84,31 @@ function Hero() {
             Explore tracks
           </a>
         </div>
-        <dl className="mt-10 grid grid-cols-4 max-w-md divide-x divide-slate-200">
-          {STATS.map(([n, l]) => (
-            <div key={l} className="px-3 first:pl-0">
-              <dt className="sr-only">{l}</dt>
-              <dd className="text-[24px] md:text-[26px] font-semibold tracking-[-0.03em] text-slate-900 tabular-nums leading-none">{n}</dd>
-              <div className="mt-1.5 text-[11.5px] text-slate-500 tracking-tight">{l}</div>
+        {/* What GRC 101 leads to, where the counts used to sit (owner, 16 Nov 2026). The Lead Implementer topics are the
+            desk's own LI-01 to LI-18 extension steps; the certificate itself is an exam body's, and the card says so. */}
+        <div className="mt-9 max-w-xl rounded-2xl bg-white ring-1 ring-indigo-200 shadow-[0_18px_40px_-24px_rgba(79,70,229,0.55)] overflow-hidden">
+          <div className="flex items-start gap-4 p-4 md:p-5">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-indigo-600 text-white shadow-[0_8px_18px_-8px_rgba(79,70,229,0.8)]">
+              <Icon name="ribbon" size={22} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-[11.5px] font-semibold uppercase tracking-[0.08em] text-indigo-600">GRC 101 prepares you for</div>
+              <div className="mt-0.5 text-[19px] md:text-[21px] font-semibold tracking-[-0.02em] text-slate-900 leading-snug">ISO/IEC 27001 Lead Implementer</div>
+              <p className="mt-1.5 text-[13.5px] text-slate-600 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>
+                Lead Implementer topics are worked inside the tasks: ISMS scope, risk assessment and treatment, the Statement of Applicability, internal audit and certification readiness.
+              </p>
             </div>
-          ))}
-        </dl>
+          </div>
+          <div className="border-t border-indigo-100 bg-indigo-50/60 px-4 md:px-5 py-2 text-[12px] text-slate-500 tracking-tight">
+            Practice for the role and its exam. The certificate itself is awarded by an accredited exam body.
+          </div>
+        </div>
         </div>
         <DeskDemo />
       </div>
     </section>
   );
 }
-
-// GRC 101 at a glance — counts from the desk catalogue (backend/_seed/grc101_desk_catalog.json).
-const STATS: [string, string][] = [["25", "tasks"], ["255", "steps"], ["120", "decisions"], ["12", "weeks"]];
 
 function Frameworks() {
   // The standards GRC 101's tasks actually cite, most-cited first (public/desk/sample.json).
@@ -214,6 +221,11 @@ function Tracks() {
                 </div>
                 <h3 className="mt-3 text-[26px] font-semibold tracking-tight">{t.code}</h3>
                 <div className="text-[11.5px] text-indigo-200/90 tracking-tight mt-0.5">{t.years}</div>
+                {t.prep && (
+                  <div className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 ring-1 ring-white/20 px-2.5 py-1.5 text-[12px] font-semibold tracking-tight text-white">
+                    <Icon name="ribbon" size={13} className="shrink-0 text-indigo-200" /> {t.prep}
+                  </div>
+                )}
                 <p className="mt-3 text-[13px] text-indigo-50/85 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>{t.body}</p>
               </div>
               {t.price && (
