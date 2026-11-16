@@ -11,7 +11,7 @@ import { DECIDE_FROM, LADDER, STUDY, briefOf, deliverableFor, handedIn, regOf, s
 import { gridKey, lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { Inbox, MessageNotice } from "./chat";
 import { ToolScreen } from "./viewer";
-import { Marked, PathChip, StepInstruction } from "./step-text";
+import { Marked, NoteList, PathChip, StepInstruction } from "./step-text";
 import { FloatWindow } from "./float-window";
 import { PreparedFor } from "./prepared-for";
 import { TableView } from "./ui";
@@ -142,7 +142,7 @@ function PageWindow({ id, index, onClose, beside }: { id: string; index: number;
       width={beside ? place.width : 760}
       left={beside ? place.left : undefined}
     >
-      <div className="bg-white">{t && (t as { note?: string }).note && <p data-guide="page-note" className="border-b border-[#E9ECF1] px-3.5 py-2 text-[12.5px] leading-relaxed text-[#5B6474]">{(t as { note?: string }).note}</p>}{t ? <TableView t={t} /> : <p className="p-4 text-[13.5px] text-[#5B6474]">This page is not in this release.</p>}</div>
+      <div className="bg-white">{t && (t as { note?: string }).note && <NoteList text={(t as { note?: string }).note!} guide="page-note" quiet className="border-b border-[#E9ECF1] px-3.5 py-2" />}{t ? <TableView t={t} /> : <p className="p-4 text-[13.5px] text-[#5B6474]">This page is not in this release.</p>}</div>
     </FloatWindow>
   );
 }
@@ -214,10 +214,10 @@ function useBeside(index: number) {
 
 function Guard({ text }: { text: string }) {
   return (
-    <p className="flex items-start gap-2 px-3.5 py-2.5 text-[12px] leading-relaxed text-[#5B6474]">
+    <div className="flex items-start gap-2 px-3.5 py-2.5">
       <Icon name="shield" size={13} className="mt-0.5 shrink-0 text-[#8A91A3]" />
-      {text}
-    </p>
+      <NoteList text={text} quiet className="min-w-0" />
+    </div>
   );
 }
 

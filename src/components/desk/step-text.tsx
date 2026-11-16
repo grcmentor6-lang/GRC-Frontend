@@ -271,6 +271,71 @@ export function Marked({ text }: { text: string }) {
   );
 }
 
+/**
+ * A note's text as lines a learner will read (owner, 16 Nov 2026: "the way it is written nobody is going to read
+ * it"): one sentence a line; a rule named at its start lifted into a heading; "a; b" split in two; "Head: a; b; c"
+ * as a head with its items under it; and the figures a learner acts on (days, dates, limits) set apart.
+ * The words are never changed: only where they break and what stands out.
+ */
+export type NoteLine = { text: string; sub?: string[] };
+export function noteLines(text: string): { rule?: string; lines: NoteLine[] } {
+  const m = text.match(/^Rule ([RL]\d+)(?: \(Learn › Rule tables\))?:\s+/);
+  const body = m ? text.slice(m[0].length) : text;
+  const up = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  const stop = (s: string) => (/[.!?:]["”’)]?$/.test(s) ? s : `${s}.`);
+  // Figures stand out unless the writer already marked the sentence up.
+  const mark = (s: string) =>
+    s.includes("**")
+      ? s
+      : s.replace(/\b\d{4}-\d{2}-\d{2}\b|\b(?:Critical|High|Medium|Low) \d+\b|[≤≥<>=] ?\d+\b|\b\d+ (?:calendar |working |business )?(?:days?|hours?|weeks?|months?|years?)\b/g, "**$&**");
+  const lines: NoteLine[] = [];
+  for (const s of sentences(body)) {
+    const parts = s.split(/;\s+/);
+    const head = parts[0].match(/^(.+?):\s+(.+)$/);
+    if (parts.length >= 3 && head) lines.push({ text: mark(`${head[1]}:`), sub: [head[2], ...parts.slice(1)].map((x) => mark(stop(up(x)))) });
+    else if (parts.length === 2) lines.push({ text: mark(stop(parts[0])) }, { text: mark(up(parts[1])) });
+    else lines.push({ text: mark(s) });
+  }
+  return { rule: m?.[1], lines };
+}
+
+/** A note set as a short list. `quiet`: grey and small, for a screen's footnote; otherwise the step's own note. */
+export function NoteList({ text, guide, quiet = false, className = "" }: { text: string; guide?: string; quiet?: boolean; className?: string }) {
+  const { rule, lines } = useMemo(() => noteLines(text), [text]);
+  const size = quiet ? "text-[12.5px] leading-[1.55] text-[#5B6474]" : "text-[13px] leading-[1.5] text-[#111827]";
+  if (!rule && lines.length === 1 && !lines[0].sub) return <p data-guide={guide} className={`${size} ${className}`}><Marked text={lines[0].text} /></p>;
+  return (
+    <div data-guide={guide} className={className}>
+      {rule && (
+        <p className="mb-1.5 flex flex-wrap items-center gap-x-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#3730A3]">
+          <Icon name="book" size={12} /> Rule {rule}
+          <span className="font-normal normal-case tracking-normal text-[#5B6474]">in Learn › Rule tables</span>
+        </p>
+      )}
+      <ul className="grid gap-1.5">
+        {lines.map((l, i) => (
+          <li key={i} className={`flex gap-2 ${size}`}>
+            <span aria-hidden className={`mt-[7px] h-[5px] w-[5px] shrink-0 rounded-full ${quiet ? "bg-[#B4BAC8]" : "bg-[#4338CA]"}`} />
+            <span className="min-w-0">
+              <Marked text={l.text} />
+              {l.sub && (
+                <ul className="mt-1 grid gap-1">
+                  {l.sub.map((x, j) => (
+                    <li key={j} className="flex gap-2">
+                      <span aria-hidden className="mt-[7px] h-[5px] w-[5px] shrink-0 rounded-full border border-[#8A91A3]" />
+                      <span className="min-w-0"><Marked text={x} /></span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** A step's "where": its toolbar path as a chip, or the plain place when it is not one. `wrap` for a narrow
  *  column, where a one-line chip would cut both names to "Frame… › Framework…". */
 export function Where({ tool, wrap = false }: { tool: string; wrap?: boolean }): ReactNode {

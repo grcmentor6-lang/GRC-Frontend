@@ -49,7 +49,9 @@ export type TourStep = {
    *  disabled until this returns true, and the cursor points at the target meanwhile. */
   nextWhen?: () => boolean;
   /** A second thing the step needs in view and live — the screen a value is copied from. Its
-   *  top-level layer is raised over the dim for the step, rather than cut a second hole. */
+   *  top-level layer is raised over the dim for the step, rather than cut a second hole. Where it sits in the
+   *  target's own layer (a note beside the table, in the same modal) there is no layer to raise: a second
+   *  hole is cut for it instead, so the rule and the cell it fills are lit together. */
   alsoShow?: () => HTMLElement | null;
   /** Where the do-it cursor taps, when that is not the middle of the lit area: a lit block that
    *  explains a field, whose middle would land the cursor on the explanation instead of the field. */
@@ -267,6 +269,12 @@ function tapAt(s: TourStep, box: Box): { left: number; top: number } {
 
 /** Raise an element's top-level layer (its child of <body>, e.g. a portalled window) over the tour's
  *  overlay, and hand back the undo. Only portalled layers: raising the app root would lift it all. */
+/** A box as the corners of a hole in a clip-path polygon, closed. */
+const holePath = (b: { top: number; left: number; width: number; height: number }) => {
+  const [l, t, r, m] = [b.left, b.top, b.left + b.width, b.top + b.height];
+  return `${l}px ${t}px, ${r}px ${t}px, ${r}px ${m}px, ${l}px ${m}px, ${l}px ${t}px`;
+};
+
 function topLayer(el: Element | null | undefined): HTMLElement | null {
   let n = el as HTMLElement | null | undefined;
   while (n?.parentElement && n.parentElement !== document.body) n = n.parentElement;
@@ -501,6 +509,8 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
   onAway?: (away: string | (() => boolean)) => void;
 }) {
   const [box, setBox] = useState<Box>(OFFSCREEN);
+  // `alsoShow` in the target's own layer: its box, lit by a second hole.
+  const [also, setAlso] = useState<Box | null>(null);
   const [pos, setPos] = useState<Pos | null>(null);
   const [shown, setShown] = useState(false);
   // The cursor steps aside while the mentee is typing in the lit field it points at.
@@ -509,7 +519,7 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
   const stepRef = useRef<TourStep | null>(null);
   /** Mirror of what's committed, so a tracking frame that measures no change costs nothing. Null
    *  forces the next measurement through (step change / reopen). */
-  const lastRef = useRef<{ box: Box | null; pos: Pos | null }>({ box: null, pos: null });
+  const lastRef = useRef<{ box: Box | null; pos: Pos | null; also?: string }>({ box: null, pos: null });
 
   // Through a ref: a parent that passes fresh arrows on every render (the desk modal re-renders on
   // each keystroke) must not restart the step, which re-hid and re-showed the card per letter.
@@ -546,7 +556,16 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
     }
     // The step's second window, when it is raised over the dim (it sits clear of the target): the
     // card keeps off it.
-    const ar = s.alsoShow?.()?.getBoundingClientRect();
+    const alsoEl = s.alsoShow?.() ?? null;
+    const sameLayer = !!alsoEl && !!raw && topLayer(alsoEl) === topLayer(s.getEl());
+    const av = sameLayer ? visibleRect(alsoEl) : null;
+    const ab = av ? { top: av.top / z - 4, left: av.left / z - 4, width: av.width / z + 8, height: av.height / z + 8 } : null;
+    const abKey = ab ? `${ab.top},${ab.left},${ab.width},${ab.height}` : "";
+    if (last.also !== abKey) {
+      last.also = abKey;
+      setAlso(ab);
+    }
+    const ar = alsoEl?.getBoundingClientRect();
     const tr = raw;
     const clearOf = !!(ar && tr) && (ar.right <= tr.left || ar.left >= tr.left + tr.width || ar.bottom <= tr.top || ar.top >= tr.top + tr.height);
     const avoid = ar && clearOf ? { top: ar.top / z, left: ar.left / z, width: ar.width / z, height: ar.height / z } : null;
@@ -738,6 +757,7 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
     return () => {
       setShown(false);
       setBox(OFFSCREEN);
+      setAlso(null);
       lastRef.current = { box: null, pos: null };
       prevStep.current = -1;
     };
@@ -807,14 +827,18 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
       ) : (
         /* spotlight cutout — one div: the giant shadow dims the page, while a crisp white separation
            ring + indigo halo + soft glow make the target read as "lit", on-brand and not harsh. */
-        <div
-          className="absolute rounded-xl pointer-events-none"
-          style={{
-            ...box,
-            boxShadow:
-              "0 0 0 9999px rgba(15,23,42,0.62), 0 0 0 3px #818CF8, 0 0 0 7px rgba(129,140,248,0.25)",
-          }}
-        />
+        <>
+          {/* Two things lit: the dim is a sheet with two holes (even-odd), since one box's shadow can cut only one. */}
+          {also && <div className="absolute inset-0 bg-slate-900/[0.62] pointer-events-none" style={{ clipPath: `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ${holePath(box)}, 0 0, ${holePath(also)}, 0 0)` }} />}
+          {also && <div className="absolute rounded-lg pointer-events-none" style={{ ...also, boxShadow: "0 0 0 2px #818CF8, 0 0 0 5px rgba(129,140,248,0.22)" }} />}
+          <div
+            className="absolute rounded-xl pointer-events-none"
+            style={{
+              ...box,
+              boxShadow: `${also ? "" : "0 0 0 9999px rgba(15,23,42,0.62), "}0 0 0 3px #818CF8, 0 0 0 7px rgba(129,140,248,0.25)`,
+            }}
+          />
+        </>
       )}
       {/* Invisible blocker, with a hole in it. Everything outside the spotlight swallows clicks, so
           the page can't be nudged by accident and a stray click never skips the step — but the lit

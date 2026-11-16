@@ -8,6 +8,7 @@ import type { ToolMock } from "@/lib/desk/model";
 import { DOC_TEXT } from "@/lib/desk/docs";
 import { DocCitation } from "./doc-text";
 import { PreparedFor } from "./prepared-for";
+import { NoteList } from "./step-text";
 
 /** "<b>Frame:</b> Please send…" → bold label + text, without dangerouslySetInnerHTML. */
 function Rich({ s }: { s: string }) {
@@ -116,10 +117,10 @@ export function ToolScreen({ mock, flush }: { mock: Pick<ToolMock, "kind" | "pl"
         </div>
       )}
       {typeof pl.note === "string" && (
-        <p className="flex items-start gap-2 text-[12px] leading-relaxed text-[#5B6474]">
+        <div className="flex items-start gap-2">
           <Icon name="shield" size={13} className="mt-0.5 shrink-0 text-[#8A91A3]" />
-          {pl.note}
-        </p>
+          <NoteList text={pl.note} quiet className="min-w-0" />
+        </div>
       )}
       </div>
     </div>

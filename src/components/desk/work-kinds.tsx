@@ -14,6 +14,7 @@ import { tierTone } from "@/lib/desk/cell-tone";
 import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, isSeeded, seedRows, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
 import { useDoc, useDocs } from "./doc-text";
 import { WalkCard, WalkStep } from "./walk-card";
+import { NoteList } from "./step-text";
 import { RMF, dmyToIso, fileExts, fileNameOk, isDateRow, isoToDmy, receiptHash, rmfAt, rmfExpected, rmfGiven, rmfKey, rmfMiss, same, submitCodes } from "@/lib/desk/forms";
 
 /**
@@ -780,6 +781,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                     const base = `block min-h-[38px] w-full min-w-[150px] px-3 py-2 text-[13px] outline-none focus:shadow-[inset_0_0_0_2px_#4338CA] ${v.trim() ? "bg-white text-[#111827]" : "bg-[#EEF0FF]/70"}`;
                     const opts = c.opts === "step" ? s?.opt : typeof c.opts === "function" ? c.opts(desk, liveRow(reg, progress, task.id, ri)) : c.opts;
                     const rule = reg.cells?.[ci];
+                    const dated = typeof c.date === "function" ? c.date(liveRow(reg, progress, task.id, ri)) : c.date;
                     const off = !!rule && !!v.trim() && rule.fix(v, liveRow(reg, progress, task.id, ri), desk, ri, by) === null;
                     return (
                       <td key={ci} className={`${td} p-0 ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] bg-white shadow-[-1px_0_0_#DDE1E8]" : ""}`}>
@@ -801,7 +803,19 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                             {opts.map((o) => <option key={o}>{o}</option>)}
                           </select>
                         ) : null}
-                        {opts ? null : c.w ? (
+                        {opts ? null : dated ? (
+                          // A date is picked, not typed: no format to get wrong. A value typed before this was a picker
+                          // and never tidied to YYYY-MM-DD shows as empty and is flagged below.
+                          <div className={`flex items-center ${v.trim() ? "bg-white" : "bg-[#EEF0FF]/70"}`}>
+                            <input type="date" value={/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ""} disabled={v === "none"} onChange={(e) => set(cell, e.target.value)} aria-label={label} aria-invalid={off} className={`${base} !bg-transparent tabular-nums disabled:text-[#8A91A3]`} />
+                            {dated === "none" && (
+                              <label className="flex shrink-0 cursor-pointer items-center gap-1.5 pl-1 pr-3 text-[12.5px] text-[#3F4757]">
+                                <input type="checkbox" data-none={label} checked={v === "none"} onChange={(e) => set(cell, e.target.checked ? "none" : "")} className="h-4 w-4 accent-[#4338CA]" />
+                                none
+                              </label>
+                            )}
+                          </div>
+                        ) : c.w ? (
                           // A long value (a sentence) wraps and the box grows with it, rather than clip.
                           <textarea rows={1} value={v} onChange={(e) => set(cell, e.target.value)} onKeyDown={(e) => e.key === "Enter" && e.preventDefault()} onBlur={() => tidy(ri, ci)} placeholder="fill in" aria-label={label} aria-invalid={off} className={`${base} block resize-none leading-snug [field-sizing:content] placeholder:italic placeholder:text-[#8A91A3]`} />
                         ) : (
@@ -979,7 +993,7 @@ export function RegisterProgress({ task, s }: { task: Task; s: Step }) {
       {chk && <RowCheck task={task} s={s} chk={chk} />}
       {note && (
         // Where this step's rows come from, and how many: said once, before the work.
-        <p data-guide="step-note" className="rounded border-l-2 border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2 text-[13px] leading-snug text-[#111827]">{note}</p>
+        <NoteList text={note} guide="step-note" className="rounded border-l-[3px] border-[#4338CA] bg-[#F7F8FF] px-3 py-2.5" />
       )}
       <p className="flex items-start gap-2 text-[13.5px] leading-relaxed text-[#111827]">
         <Icon name="edit" size={15} className="mt-0.5 shrink-0 text-[#4338CA]" />
@@ -1802,7 +1816,7 @@ export function ChecklistWork({ task, s, chk }: { task: Task; s: Step; chk: Chec
   const rule = s.w.match(/\brule (R\d+)\b/i)?.[1]; // F2.2/T5.2: R09, T12.1: R33
   return (
     <div data-guide="checklist" className="mt-3 grid gap-2">
-      {note && <p data-guide="step-note" className="rounded border-l-2 border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2 text-[13px] leading-snug text-[#111827]">{note}</p>}
+      {note && <NoteList text={note} guide="step-note" className="rounded border-l-[3px] border-[#4338CA] bg-[#F7F8FF] px-3 py-2.5" />}
       <p className="flex items-center justify-between gap-2 text-[13.5px] text-[#111827]">
         <span>{chk.line ? `${chk.line} The result fills its` : `Check each of your items against ${order[0]} to ${order[order.length - 1]}; the result fills its`} {reg.cols[chk.col].h}{chk.codes !== undefined ? ` and ${reg.cols[chk.codes].h}` : ""}.</span>
         <span className="shrink-0 font-mono text-[12.5px] text-[#3F4757] tabular-nums">{done} / {mineN}</span>

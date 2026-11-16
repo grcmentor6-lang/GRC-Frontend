@@ -420,6 +420,9 @@ const limitAt = (row: number) => { const x = (pol021At(row, 3).split(" — ")[1]
 const PBC_WINDOW = 'section[role="dialog"][aria-label^="Evidence › Audit Requests"]';
 const REQ_WINDOW = 'section[role="dialog"][aria-label^="Evidence › Request Evidence"]';
 const POL016_WINDOW = 'section[role="dialog"][aria-label^="BKB-POL-016"]';
+/** The step's own note beside the register. Where it quotes the rule the step uses, the guide reads the rule there
+ *  and opens no Rule tables window: the window covered the note and said the same thing (owner, 16 Nov 2026). */
+const STEP_NOTE = '[data-guide="step-note"]';
 const RULES_WINDOW = 'section[role="dialog"][aria-label*="› Rule tables"]';
 const GLOSSARY_WINDOW = 'section[role="dialog"][aria-label*="› Glossary"]';
 const CARD_WINDOW = PAGE_WINDOW("Ref-Certification card");
@@ -467,6 +470,8 @@ const UPLOAD_WINDOW = 'section[role="dialog"][aria-label^="Evidence › Upload C
 /** A row of a window's table, by the start of its first cell ("R16", "3-year cycle"). */
 const rowIn = (win: string, first: string) => [...document.querySelectorAll<HTMLElement>(`${win} tr`)].find((tr) => tr.querySelector("td")?.innerText.trim().startsWith(first)) ?? null;
 /** A typed cell of the register in hand holds this value, accepted (not flagged). */
+/** A date cell with a "none" tick: ticked. */
+const noneIs = (col: string, row: number) => !!($(`[data-guide="register"] [data-none="${col}, row ${row}"]`) as HTMLInputElement | null)?.checked;
 const valIs = (col: string, row: number, want: string) => (oblCell(col, row) as HTMLInputElement | null)?.value.trim() === want && oblCell(col, row)?.getAttribute("aria-invalid") !== "true";
 const checkAnswers = (body: string): TourStep => ({ title: "Then check your answers", icon: "check", ...locked(body), getEl: () => $('[data-guide="check-rows"]') });
 /** A T5.1 decision answered in its row, with the card to read first (steps 10 and 11): the question is the step. */
@@ -4183,7 +4188,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
     },
-    firstItem("The first line yourself", "When does your audit period end? The note above the table gives the period. Type its end date. Next unlocks once it is right.", "Date", 1, () => valIs("Date", 1, "2026-09-04"), "Type the period's end"),
+    firstItem("The first line yourself", "When does your audit period end? The note above the table gives the period. Pick its end date. Next unlocks once it is right.", "Date", 1, () => valIs("Date", 1, "2026-09-04"), "Pick the period's end"),
     checkAnswers("Work out the other two lines by R16. Check my answers then shows each date and how R16 gives it. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked and the message has your reply. The next step is a question, so the desk takes you back to the step list."),
   ],
@@ -5271,15 +5276,14 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     ...openScreen("risk", "Risk Register", "Assign Owner", "The office's assets, with their owners, are tagged with this step.", OWNER_WINDOW),
     firstItem("The first owner yourself", "R-16-HQ-26: the note names its asset. Find that asset in Assign Owner and choose its owner. Next unlocks once it is right.", "Risk owner", 26, () => !!(oblCell("Risk owner", 26) as HTMLSelectElement | null)?.value && !(oblCell("Risk owner", 26) as HTMLElement | null)?.getAttribute("aria-invalid")?.startsWith("t"), "Choose R-16-HQ-26's owner", OWNER_WINDOW),
-    ...openLearn("Rule tables", "Rule R36 is in the rule tables, tagged with this step.", RULES_WINDOW),
     {
       title: "Rule R36",
       icon: "book",
-      body: "R36 gives one authority for each residual rating. Your three rows show their residual rating beside the choice.",
-      getEl: () => rowIn(RULES_WINDOW, "R36") ?? $(RULES_WINDOW),
-      onEnter: () => rowIn(RULES_WINDOW, "R36")?.scrollIntoView({ block: "center" }),
+      body: "R36, in the note, gives one authority for each residual rating. Your three rows show their residual rating beside the choice.",
+      getEl: () => $(STEP_NOTE) ?? $('[data-guide="register"]'),
+      onEnter: () => $(STEP_NOTE)?.scrollIntoView({ block: "nearest" }),
     },
-    firstItem("The first risk yourself", "R-16-HQ-26: read its residual rating and choose the authority R36 gives. Next unlocks once it is right.", "Acceptance authority (R36)", 26, () => selIs("Acceptance authority (R36)", 26, "Org CRCO"), "Choose R-16-HQ-26's authority", RULES_WINDOW),
+    firstItem("The first risk yourself", "R-16-HQ-26: read its residual rating and choose the authority R36 gives. Next unlocks once it is right.", "Acceptance authority (R36)", 26, () => selIs("Acceptance authority (R36)", 26, "Org CRCO"), "Choose R-16-HQ-26's authority", STEP_NOTE),
     checkAnswers("Then the other two: owner and authority. A wrong owner is flagged at once. Check my answers then shows each authority's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
@@ -5556,15 +5560,14 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "ISO/IEC 27001 clause 6.1.3 asks for a treatment option for every risk: **modify**, **retain**, **avoid** or **share**. Rule L12, in the note, sets it from the residual score shown beside each risk.",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
-    ...openLearn("Rule tables", "Rule L12 is in the rule tables, tagged with this step.", RULES_WINDOW),
     {
       title: "Rule L12",
       icon: "book",
-      body: "L12 gives one option for a residual score **above 11**, another for **11 or less**.",
-      getEl: () => rowIn(RULES_WINDOW, "L12") ?? $(RULES_WINDOW),
-      onEnter: () => rowIn(RULES_WINDOW, "L12")?.scrollIntoView({ block: "center" }),
+      body: "L12, in the note, gives one option for a residual score **above 11**, another for **11 or less**.",
+      getEl: () => $(STEP_NOTE) ?? $('[data-guide="register"]'),
+      onEnter: () => $(STEP_NOTE)?.scrollIntoView({ block: "nearest" }),
     },
-    firstItem("The first risk yourself", "SIEM & log analytics platform's risk: read its residual score and choose L12's option. Next unlocks once it is right.", "Treatment option (L12)", 1, () => selIs("Treatment option (L12)", 1, "Retain"), "Choose the first option", RULES_WINDOW),
+    firstItem("The first risk yourself", "SIEM & log analytics platform's risk: read its residual score and choose L12's option. Next unlocks once it is right.", "Treatment option (L12)", 1, () => selIs("Treatment option (L12)", 1, "Retain"), "Choose the first option", STEP_NOTE),
     checkAnswers("Then the other two. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
@@ -5657,6 +5660,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
+    ...openPage(16, "Ref-Keywords"),
     firstItem("The first risk yourself", "R-16-HQ-26: read its option and action, and choose the control the action puts in place. Next unlocks once it is right.", "Control (SoA ID)", 1, () => selIs("Control (SoA ID)", 1, "None: the risk is retained"), "Choose R-16-HQ-26's control"),
     checkAnswers("Then the other two. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
@@ -5666,8 +5670,15 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "A due date per action",
       icon: "table",
-      body: "Every action has an owner and a due date it is tracked against; in T12.1 they become rows of the action tracker. Rule **R08**, in the note, gives the days by residual rating; count them from the **plan's date**.",
+      body: "Every action has an owner and a due date it is tracked against; in T12.1 they become rows of the action tracker. Rule **R08** gives the days by residual rating; count them from the **plan's date**, which is in the note.",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
+    },
+    {
+      title: "Rule R08",
+      icon: "book",
+      body: "R08, in the note, gives the days for a risk to **treat**, by its residual rating. A risk within appetite is accepted and monitored: it has **no due date**.",
+      getEl: () => $(STEP_NOTE) ?? $('[data-guide="register"]'),
+      onEnter: () => $(STEP_NOTE)?.scrollIntoView({ block: "nearest" }),
     },
     {
       title: "An example",
@@ -5678,7 +5689,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $('[data-guide="register"]'),
     },
-    firstItem("The first risk yourself", "R-16-HQ-26: read its option and residual, and type its due date, or none. Next unlocks once it is right.", "Due (R08)", 1, () => valIs("Due (R08)", 1, "none"), "Type R-16-HQ-26's due date"),
+    firstItem("The first risk yourself", "R-16-HQ-26: read its option and its residual rating. Pick its due date, or tick **none** if it has no due date. Next unlocks once it is right.", "Due (R08)", 1, () => noneIs("Due (R08)", 1), "Set R-16-HQ-26's due date", STEP_NOTE),
     checkAnswers("Then the other two. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
@@ -5687,8 +5698,15 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "The residual after treatment",
       icon: "table",
-      body: "The plan says what the risk will be once the action is done, so the owner knows what is left to accept. Rule **R07**, in the note, rates it again with the action's control working.",
+      body: "The plan says what the risk will be once the action is done, so the owner knows what is left to accept. Rule **R07** rates it again with the action's control working.",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
+    },
+    {
+      title: "Rule R07",
+      icon: "book",
+      body: "R07, in the note: each control marked **working** takes one off the residual likelihood, down to 1 at the lowest; the impact stays. Score = likelihood × impact.",
+      getEl: () => $(STEP_NOTE) ?? $('[data-guide="register"]'),
+      onEnter: () => $(STEP_NOTE)?.scrollIntoView({ block: "nearest" }),
     },
     {
       title: "An example",
@@ -5696,7 +5714,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "Likelihood 3, impact 5, residual 15; the action's control starts working: likelihood 2, impact 5, expected residual **10**.",
       getEl: () => $('[data-guide="register"]'),
     },
-    firstItem("The first risk yourself", "R-16-HQ-26: read its residual, option and control, and type the score expected after treatment. Next unlocks once it is right.", "Expected residual", 1, () => valIs("Expected residual", 1, "9"), "Type R-16-HQ-26's expected residual"),
+    firstItem("The first risk yourself", "R-16-HQ-26: read its residual, option and control, and type the score expected after treatment. Next unlocks once it is right.", "Expected residual", 1, () => valIs("Expected residual", 1, "9"), "Type R-16-HQ-26's expected residual", STEP_NOTE),
     checkAnswers("Then the other two. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
@@ -5705,10 +5723,17 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Who accepts the residual",
       icon: "table",
-      body: "ISO/IEC 27001 clause 6.1.3 f: the risk owners approve the plan and accept the residual risk it leaves, within the authority the Charter gives them. Rule **R36**, in the note, names it by rating.",
+      body: "ISO/IEC 27001 clause 6.1.3 f: the risk owners approve the plan and accept the residual risk it leaves, within the authority the Charter gives them. Rule **R36** names it by rating.",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
-    firstItem("The first risk yourself", "R-16-HQ-26: rate its expected residual and choose who must accept it. Next unlocks once it is right.", "Residual accepted by (R36)", 1, () => selIs("Residual accepted by (R36)", 1, "Org CRCO"), "Choose who accepts R-16-HQ-26"),
+    {
+      title: "Rule R36",
+      icon: "book",
+      body: "R36, in the note, names who may accept a residual risk, by its **rating**. Rate the expected residual first, with the bands on the note's last line.",
+      getEl: () => $(STEP_NOTE) ?? $('[data-guide="register"]'),
+      onEnter: () => $(STEP_NOTE)?.scrollIntoView({ block: "nearest" }),
+    },
+    firstItem("The first risk yourself", "R-16-HQ-26: rate its expected residual and choose who must accept it. Next unlocks once it is right.", "Residual accepted by (R36)", 1, () => selIs("Residual accepted by (R36)", 1, "Org CRCO"), "Choose who accepts R-16-HQ-26", STEP_NOTE),
     checkAnswers("Then the other two. Check my answers then shows each row's answer and why, and the plan goes to the owners: their approval is recorded. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
@@ -6193,18 +6218,17 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "A vulnerability SLA test starts by putting every finding in the policy **class** that sets its deadline. The class depends on three things the scanner gives: **exposure**, **KEV listing** and **severity**. Each row is one kind of finding; your class goes to every finding of that kind. Rule R24 is in the note.",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
-    ...openLearn("Rule tables", "Rule R24 is in the rule tables, tagged with this step.", RULES_WINDOW),
     {
       title: "Rule R24",
       icon: "book",
-      body: "Read R24's classes **in order** and stop at the first that fits.",
+      body: "Read R24's classes in the note **in order** and stop at the first that fits.",
       tips: [
         { kind: "note", text: "Example: a KEV-listed Medium finding on an internet-facing asset is class 1. KEV on an internet-facing asset comes first, whatever the severity." },
       ],
-      getEl: () => rowIn(RULES_WINDOW, "R24") ?? $(RULES_WINDOW),
-      onEnter: () => rowIn(RULES_WINDOW, "R24")?.scrollIntoView({ block: "center" }),
+      getEl: () => $(STEP_NOTE) ?? $('[data-guide="register"]'),
+      onEnter: () => $(STEP_NOTE)?.scrollIntoView({ block: "nearest" }),
     },
-    firstItem("The first kind yourself", "Row 1: read its exposure, KEV listing and severity, and choose its class by R24. Next unlocks once it is right.", "Class (R24)", 1, () => selIs("Class (R24)", 1, "Class 2 (14 days)"), "Choose row 1's class", RULES_WINDOW),
+    firstItem("The first kind yourself", "Row 1: read its exposure, KEV listing and severity, and choose its class by R24. Next unlocks once it is right.", "Class (R24)", 1, () => selIs("Class (R24)", 1, "Class 2 (14 days)"), "Choose row 1's class", STEP_NOTE),
     checkAnswers("Then the other eight. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
@@ -6259,16 +6283,15 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "An **exception** lets a finding stay open past its deadline only while it is properly approved and controlled. An auditor tests each one against the register: an invalid exception leaves the finding overdue. R24's validity test and the test date are in the note.",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
-    ...openLearn("Rule tables", "Rule R24 is in the rule tables, tagged with this step.", RULES_WINDOW),
     {
       title: "The validity test",
       icon: "book",
-      body: "R24's last sentence gives **three conditions**, and every one must hold.",
+      body: "The note gives R24's **three conditions**, and every one must hold.",
       tips: [
         { kind: "note", text: "Example: approved by the system owner and the CISO, with a compensating control, but expired last week: **invalid**." },
       ],
-      getEl: () => rowIn(RULES_WINDOW, "R24") ?? $(RULES_WINDOW),
-      onEnter: () => rowIn(RULES_WINDOW, "R24")?.scrollIntoView({ block: "center" }),
+      getEl: () => $(STEP_NOTE) ?? $('[data-guide="register"]'),
+      onEnter: () => $(STEP_NOTE)?.scrollIntoView({ block: "nearest" }),
     },
     ...openScreen("policies", "Policies", "Policy Exceptions", "The exception register: each exception's approval, compensating control and expiry.", EXC_WINDOW),
     firstItem("The first exception yourself", "EX-001: read its row in the register, who approved it, its compensating control and its expiry, and decide. Next unlocks once it is right.", "Valid at the test date (R24)", 1, () => selIs("Valid at the test date (R24)", 1, "Invalid"), "Decide EX-001", EXC_WINDOW),

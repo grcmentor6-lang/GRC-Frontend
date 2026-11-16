@@ -43,6 +43,9 @@ export interface Register {
     auto?: string;
     /** A long heading over short values: it wraps rather than widen the table. */
     wrap?: boolean;
+    /** The cell holds a date: a date picker, not a text box (stored as YYYY-MM-DD, as typed dates were). "none": the
+     *  picker with a "none" tick beside it (T7.1: a retained risk has no due date). A function: only on some rows. */
+    date?: true | "none" | ((row: string[]) => boolean);
     /** The column's least width in px, for long values (T3.1: an obligation's text). */
     w?: number;
     /** A list of IDs ("E-015 Accept, E-019 Reject"): each item kept on one line, and on a phone the column becomes a
@@ -2318,12 +2321,12 @@ export const REGISTERS: Record<string, Register> = {
     code: "PBC-LIST Timeline",
     title: "PBC-LIST · Request timeline (rule R16)",
     on: [5, 7],
-    cols: [{ h: "Line", wrap: true }, { h: "Date", wrap: true }],
+    cols: [{ h: "Line", wrap: true }, { h: "Date", wrap: true, date: true }],
     rows: TIMELINE.map((x) => [x, ""]),
     mine: () => true,
     steps: { 5: [1] },
     ident: [0],
-    cells: { 1: { fix: (v) => isoDate(v), hint: () => "Type a date, as 2026-01-31 or 31 January 2026." } },
+    cells: { 1: { fix: (v) => isoDate(v), hint: () => "Choose a date." } },
     checkRows: { 5: { label: 0, col: 1, rule: pbcTimeline } },
     then: { 5: "Work out the request timeline (R16)" },
     handIn: { step: 7, cols: [1], ident: [0] },
@@ -3034,7 +3037,7 @@ export const REGISTERS: Record<string, Register> = {
       { h: "Risk ID" }, { h: "Risk statement", wrap: true, w: 280, prose: true }, { h: "Residual (now)", wrap: true }, { h: "Option (L12)", wrap: true },
       { h: "Action", wrap: true, w: 300, opts: (_d, r) => [...(RRU_ACTIONS[r[0]] ?? [])].sort() },
       { h: "Control (SoA ID)", wrap: true, w: 250, opts: (d, r) => { const n = rruNew(r[0]); return n ? [...annexIn(keywordsOf(d, n.cat)), ...(n.decoy ? [n.decoy] : []), RTP_NONE] : undefined; } },
-      { h: "Owner", wrap: true, w: 160 }, { h: "Due (R08)", wrap: true }, { h: "Expected residual", wrap: true }, { h: "Residual accepted by (R36)", wrap: true, w: 170, opts: R36_OPTS },
+      { h: "Owner", wrap: true, w: 160 }, { h: "Due (R08)", wrap: true, date: "none" }, { h: "Expected residual", wrap: true }, { h: "Residual accepted by (R36)", wrap: true, w: 170, opts: R36_OPTS },
       { h: "Owner approval", wrap: true, w: 220 },
     ],
     rows: RRU_NEW.map((n) => [n.id, "", "", "", "", "", "", "", "", "", ""]),
@@ -3048,7 +3051,7 @@ export const REGISTERS: Record<string, Register> = {
       10: { from: [], quiet: true, value: (v, p) => (p.rowChecks?.["T7.1-19"] ? `Approved by the ${rruOwner(rruNew(v(0))?.asset ?? "") || "risk owner"}, ${RRU.plan} (simulated)` : "") },
     },
     cells: {
-      7: { fix: (v) => (/^\s*none\s*$/i.test(v) ? "none" : isoDate(v)), hint: () => "Type a date, as 2027-01-31 or 31 January 2027, or none." },
+      7: { fix: (v) => (/^\s*none\s*$/i.test(v) ? "none" : isoDate(v)), hint: () => "Choose a date, or tick none." },
       8: { fix: (v) => (/^\s*\d{1,2}\s*$/.test(v) ? String(+v) : null), hint: () => "Type the score as a number, for example 6." },
     },
     ident: [0],
@@ -3097,13 +3100,13 @@ export const REGISTERS: Record<string, Register> = {
     code: "RSK-ACC",
     title: "RSK-ACC · Risk acceptance request (template T-ACC)",
     on: [4],
-    cols: [{ h: "Field", wrap: true }, { h: "Value", wrap: true, w: 200, opts: (_d, r) => (r[0] === "Risk ID (R23)" ? TOP_IDS : r[0] === "Approver (R36)" ? R36_OPTS : undefined) }],
+    cols: [{ h: "Field", wrap: true }, { h: "Value", wrap: true, w: 200, date: (r) => /date|Expiry/.test(r[0]), opts: (_d, r) => (r[0] === "Risk ID (R23)" ? TOP_IDS : r[0] === "Approver (R36)" ? R36_OPTS : undefined) }],
     rows: [["Request date", TOP.request], ["Risk ID (R23)", ""], ["Existing controls", ""], ["Expiry", ""], ["Re-assessment date", ""], ["Approver (R36)", ""]],
     mine: () => true,
     steps: { 4: [1] },
     only: { 4: (r) => r[0] !== "Existing controls" },
     derived: { 1: { from: [], quiet: true, value: (v, p) => (v(0) === "Existing controls" ? (topRow(topBest(p, 4, "Risk ID (R23)"))?.[8] ?? "") : null) } },
-    cells: { 1: { fix: (v, r) => (/date|Expiry/.test(r[0]) ? isoDate(v) : v.trim() || null), hint: () => "Type a date, as 2027-01-31 or 31 January 2027." } },
+    cells: { 1: { fix: (v, r) => (/date|Expiry/.test(r[0]) ? isoDate(v) : v.trim() || null), hint: () => "Choose a date." } },
     ident: [0],
     checkRows: { 4: { label: 0, col: 1 } },
     then: { 4: "Fill RSK-ACC (R23, R36)" },
@@ -3226,12 +3229,12 @@ export const REGISTERS: Record<string, Register> = {
     code: "VUL-TEST Due-date check",
     title: "VUL-TEST · Due-date formula check, one finding of each class",
     on: [2],
-    cols: [{ h: "Finding" }, { h: "Class (R24)", wrap: true }, { h: "First detected", wrap: true }, { h: "Due date", wrap: true }],
+    cols: [{ h: "Finding" }, { h: "Class (R24)", wrap: true }, { h: "First detected", wrap: true }, { h: "Due date", wrap: true, date: true }],
     rows: VUL_DUE.map((id) => [id, "", vulRow(id)![8], ""]),
     mine: () => true,
     steps: { 2: [3] },
     derived: { 1: { from: [], quiet: true, value: (v, p) => VUL_CL[vulClass(p, v(0))] ?? "" } },
-    cells: { 3: { fix: (v) => isoDate(v), hint: () => "Type a date, as 2026-12-31 or 31 December 2026." } },
+    cells: { 3: { fix: (v) => isoDate(v), hint: () => "Choose a date." } },
     ident: [0],
     view: { 2: [1, 2] },
     checkRows: { 2: { label: 0, col: 3 } },

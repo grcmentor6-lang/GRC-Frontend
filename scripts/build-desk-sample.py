@@ -1725,7 +1725,7 @@ def t71(w: dict) -> None:
         help="Each row offers the controls of its risk's category in Ref-Keywords, with their titles. " + CHECK + " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable.",
         refs=refs(rules=["L12"]))
     put(17, "Copy owner and due days", t="Set each action's due date (R08)",
-        w=LI9 + f"Each action's owner is the risk's owner in RR-UPD, copied for you. Rule R08 gives the due days of a risk to treat by its residual rating: count them from the plan's date, {rru['plan']}, and type the due date. A retained risk has none: type none.",
+        w=LI9 + f"Each action's owner is the risk's owner in RR-UPD, copied for you. Rule R08 gives the due days of a risk to treat by its residual rating: count them from the plan's date, {rru['plan']}, and pick the due date. A retained risk has none: tick none.",
         o="Due date checked for the 3 actions",
         help="Rule R08 (Learn › Rule tables) and BKB-ERM-001 Section 7 (Policies › Policy Library) give the days. Count calendar days. " + CHECK + " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable.")
     put(18, "Copy the residual score", t="Estimate each risk's residual score after treatment (R07)",
@@ -1836,7 +1836,7 @@ def t72(w: dict) -> None:
         help="A scripted question: Which \"so what\" line suits a board? Read the three options and choose one. When you click Check my answer you see the best option and why. Then, for each Top-5 risk, read its statement and choose the line that completes rule R23's frame (Learn › Rule tables). " + CHECK,
         refs=refs(rules=["R23"], arts=["RSK-TOP5"]))
     put(4, "Decide: The acceptance starts on 1 November 2026",
-        w=then(4, "Then: Apply rule R23 to select the risk for acceptance. Fill RSK-ACC.", "Then: Fill RSK-ACC: choose the risk for acceptance with rule R23, type its expiry and re-assessment date, and choose its approver with rule R36."),
+        w=then(4, "Then: Apply rule R23 to select the risk for acceptance. Fill RSK-ACC.", "Then: Fill RSK-ACC: choose the risk for acceptance with rule R23, pick its expiry and re-assessment date, and choose its approver with rule R36."),
         o="Decision T7.2-D4 checked; RSK-ACC checked",
         help="A scripted question first: the latest expiry of an acceptance that starts on 1 November 2026. Rule R23 (Learn › Rule tables) sets the limit. When you click Check my answer you see the best option and why. Then fill RSK-ACC from the updated register on Risk Register › Score Risk: R23 picks the risk and dates it, R36 names who approves it. " + CHECK,
         refs=refs(rules=["R23", "R36"], arts=["RSK-ACC"]))
