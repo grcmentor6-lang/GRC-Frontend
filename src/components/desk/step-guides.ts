@@ -17,7 +17,7 @@ const ORG_WINDOW = 'section[role="dialog"][aria-label="Home › My Organisation"
 const TASKS_WINDOW = 'section[role="dialog"][aria-label="Home › My Tasks"]';
 const PLAN_WINDOW = 'section[role="dialog"][aria-label^="Home › My plan"]';
 const QR_WINDOW = 'section[role="dialog"][aria-label*="Framework Quick Reference"]';
-const firstCell = () => $('[data-guide="rmf-table"] input');
+const firstCell = () => $('[data-guide="rmf-table"] :is(input, select)');
 /** The first row's value is in and matches its screen (the row is not flagged). */
 const firstRowRight = () => {
   const el = firstCell() as HTMLInputElement | null;
@@ -132,9 +132,10 @@ const nameAndSubmit = (ext: string, steps: string): TourStep[] => [
     ],
     getEl: () => $('[data-guide="file-name"]'),
     pointAt: () => $('[data-guide="file-name-input"]'),
+    // Every file-name box, not the first alone: a two-file hand-in unlocked with its second name still empty.
     nextWhen: () => {
-      const el = $('[data-guide="file-name-input"]') as HTMLInputElement | null;
-      return !!el?.value.trim() && el.getAttribute("aria-invalid") !== "true";
+      const els = [...(document.querySelectorAll?.('[data-guide="file-name-input"]') ?? [])] as HTMLInputElement[];
+      return els.length > 0 && els.every((el) => !!el.value.trim() && el.getAttribute("aria-invalid") !== "true");
     },
     doIt: "Type the file name",
   },
@@ -273,8 +274,60 @@ const evqSelect = () => $('[data-guide="register"] select') as HTMLSelectElement
 /** T3.1: a cell of the register in hand by column and row number ("Office(s)", 1). */
 const oblCell = (col: string, row: number) => $(`[data-guide="register"] [aria-label="${col}, row ${row}"]`);
 /** The step's own rows are in place when it opens: the first Obligation cell the learner can type in. */
-const oblFirst = () => $('[data-guide="register"] textarea[aria-label^="Obligation (plain English)"]');
+/* A list where the step's lines are chosen (T3.1 steps 3 and 4), a box where they are typed: both are the cell. Naming
+   the box alone left "Fill the first row" locked for good once the cell became a list (owner, 18 Nov 2026). */
+const OBL_CELLS = '[data-guide="register"] :is(textarea, select)[aria-label^="Obligation (plain English)"]';
+const oblCells = () => [...document.querySelectorAll<HTMLSelectElement>(OBL_CELLS)];
+const oblFirst = () => $(OBL_CELLS);
 const oblRows = () => document.querySelectorAll('[data-guide="register"] tbody tr').length;
+/** The cell of another column in the same row as a cell. A step's rows start wherever the earlier steps left off, so a
+ *  worked row is found by a cell it holds, never by its number. A list or a typed box: both are the cell. */
+const sameRow = (el: Element | null | undefined, col: string) => el?.closest("tr")?.querySelector<HTMLElement>(`:is(input, textarea, select)[aria-label^="${col}, row "]`) ?? null;
+/**
+ * One cell of the row a guide works from start to finish (tester, 18 Nov 2026: "Show Me How should show one full row
+ * being completed"): the cell is lit and pointed at, the place its value is read stays live beside it, and Next waits
+ * until the cell holds a value the step accepts. `anchor` is a cell that names the worked row.
+ */
+const rowCell = (title: string, col: string, anchor: () => Element | null | undefined, body: string, more: Partial<TourStep> = {}): TourStep => ({
+  title,
+  icon: "edit",
+  body,
+  getEl: () => sameRow(anchor(), col)?.closest("td") ?? $('[data-guide="register"]'),
+  pointAt: () => sameRow(anchor(), col),
+  nextWhen: () => cellIn(sameRow(anchor(), col)),
+  doIt: `Fill ${col}`,
+  ...more,
+  // On a phone the cell goes to the top of its pane: left mid-screen, a card of three or four lines has no room above
+  // or below it and floats over the cell it is about.
+  onEnter: () => { more.onEnter?.(); sameRow(anchor(), col)?.scrollIntoView({ block: innerWidth <= 700 ? "start" : "nearest", inline: "nearest" }); },
+});
+/** A section of the addendum brought to the top of its window, for a card that lights a cell and reads the section. */
+const showAddSec = (sec: string) => () => $(`${ADD16_WINDOW} [data-sec="${sec}"]`)?.scrollIntoView({ block: "start" });
+/** T3.1 step 1's worked row: the first, Manila's. */
+const t311Row = () => oblCell("Office(s)", 1);
+/** T3.1 step 5's worked row: OBL-01. */
+const t315Row = () => oblCell("Process", 1);
+/** T3.1 step 8's worked row: OBL-16, the first of sheet 2. */
+const t318Row = () => extraCell("Evidence of compliance", 1);
+const M9_POLICY_WINDOW = 'section[role="dialog"][aria-label^="BKB-POL-0"]:not([aria-label^="BKB-POL-000"])';
+/** T3.2 step 7's row: M9, the only one of sheet 2. */
+const t327Row = () => mapXCell("BKB policy");
+/** T5.2 step 6's worked row: E-043, the first late file of sheet 2. */
+const t526Row = () => $('[data-reg="EVP-EXTRA"] [aria-label="Result (R09), row 1"]');
+/** T7.1 step 13's worked row: the first chain, whose control is A.8.15. */
+const t7113Row = () => oblCell("Control type", 1);
+/** T7.1 step 9's worked line: the first of Sheet N4, its statement. */
+const t719Row = () => $('[data-reg="RR-UPD N4"] [aria-label="Your answer, row 1"]');
+/** T11.1 step 5's worked row: the click rate, the first metric. */
+const t1115Row = () => oblCell("Target", 1);
+/** T11.2 step 13's row: the change, the only one. */
+const t11213Row = () => oblCell("New-technology note (Ref-Change types)", 1);
+/** T5.1 step 7's row: the seventh control, the only one of sheet 2. */
+const t517Row = () => $('[data-reg="PBC-EXTRA"] [aria-label="Sample (R15), row 1"]');
+/** T3.1 step 3's worked row: the one holding Section 2.1's first line, else the step's first row. */
+const t313Row = () => oblCells().find((el) => /Registration of Data Processing/.test(el.value)) ?? oblFirst();
+/** T3.1 step 4's worked row: the first contract row with its requirement chosen, else the step's first row. */
+const t314Row = () => oblCells().find((el) => cellIn(el)) ?? oblFirst();
 const POL000_WINDOW = 'section[role="dialog"][aria-label^="BKB-POL-000"]';
 const ERM_WINDOW = 'section[role="dialog"][aria-label^="BKB-ERM-001"]';
 const TRANSLATOR_WINDOW = 'section[role="dialog"][aria-label*="Business Risk Translator"]';
@@ -472,7 +525,8 @@ const rowIn = (win: string, first: string) => [...document.querySelectorAll<HTML
 /** A typed cell of the register in hand holds this value, accepted (not flagged). */
 /** A date cell with a "none" tick: ticked. */
 const noneIs = (col: string, row: number) => !!($(`[data-guide="register"] [data-none="${col}, row ${row}"]`) as HTMLInputElement | null)?.checked;
-const valIs = (col: string, row: number, want: string) => (oblCell(col, row) as HTMLInputElement | null)?.value.trim() === want && oblCell(col, row)?.getAttribute("aria-invalid") !== "true";
+const listOf = (v: string) => v.split(";").map((x) => x.trim().toLowerCase()).filter(Boolean).sort().join(";");
+const valIs = (col: string, row: number, want: string) => { const v = (oblCell(col, row) as HTMLInputElement | null)?.value.trim() ?? ""; return (v === want || (want.includes(";") && listOf(v) === listOf(want))) && oblCell(col, row)?.getAttribute("aria-invalid") !== "true"; };
 const checkAnswers = (body: string): TourStep => ({ title: "Then check your answers", icon: "check", ...locked(body), getEl: () => $('[data-guide="check-rows"]') });
 /** A T5.1 decision answered in its row, with the card to read first (steps 10 and 11): the question is the step. */
 const cardQuestion = (n: number, what: string, read: TourStep, open: TourStep[] = openPage(n, "Ref-Certification card"), after = "LI-CERT records the card's answer by itself."): TourStep[] => [
@@ -579,7 +633,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
         { lead: "Start date", text: "At the top left." },
         { lead: "Task owners", text: "In the task table beside the start date, one per task." },
         { lead: "Organisation names", text: "On the tabs: **Org A**, **Org B**." },
-        { lead: "Home office", text: "On each tab's **Overview**, under **Your office**. Scroll down to it." },
+        { lead: "Your office", text: "On each tab's **Overview**, under **Your office**. Scroll down to it. Not the Legal tab's Head office: that is where the company is registered." },
       ],
       getEl: () => $(ORG_WINDOW),
     },
@@ -661,7 +715,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Now four paths",
       icon: "table",
-      body: "Your answer is in. Part 2 is the **Folders** table of your Onboarding record: the full path of each of your four task folders, copied from **Home › My Tasks**.",
+      body: "Your answer is in. Part 2 is the **Folders** table of your Onboarding record: the full path of each of your four task folders, as **Home › My Tasks** shows them.",
       getEl: () => $('[data-guide="rmf-table"]'),
     },
     ...openFromHome("My Tasks", TASKS_WINDOW, "Step 4"),
@@ -674,19 +728,16 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Fill the first row",
       icon: "edit",
-      body: "Type the **00_Admin** path exactly as written, slashes included. Next unlocks once it matches.",
-      tips: [
-        { kind: "avoid", text: "typing the folder name alone. The cell needs the whole path." },
-      ],
+      body: "Choose the **00_Admin** path from the list: the one My Tasks shows beside that folder. Next unlocks once it matches.",
       getEl: () => firstCell()?.closest("td") ?? null,
       alsoShow: () => $(TASKS_WINDOW),
       nextWhen: firstRowRight,
-      doIt: "Type the 00_Admin path in the first row",
+      doIt: "Choose the 00_Admin path in the first row",
     },
     {
       title: "Finish here",
       icon: "check",
-      body: "Fill the other three paths the same way. **Mark step complete** unlocks once all four match My Tasks.",
+      body: "Choose the other three paths the same way. **Mark step complete** unlocks once all four match My Tasks.",
       getEl: () => $('[data-guide="mark-complete"]'),
     },
   ],
@@ -817,8 +868,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       icon: "edit",
       body: "Answer question 1 for ISO/IEC 27001. If you are not sure, answer anyway: a wrong answer explains itself.",
       getEl: () => $('[data-guide="ladder"] li[data-q="0"]'),
-      // At the question, never at Yes or No: the cursor must not suggest an answer.
-      pointAt: () => $('[data-guide="ladder"] li[data-q="0"] p'),
+      // At the question's number, never at Yes or No: the cursor must not suggest an answer. Not the middle of its
+      // text either: the cursor's body then lay over the No button and hid the words being read.
+      pointAt: () => $('[data-guide="ladder"] li[data-q="0"] > span'),
       nextWhen: () => !!$('[data-guide="ladder"] li[data-q="1"]'),
       doIt: "Answer question 1",
     },
@@ -827,8 +879,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       icon: "edit",
       body: "Answer question 2 the same way. Once you answer Yes, you stop: that is how R01 works.",
       getEl: () => $('[data-guide="ladder"] li[data-q="1"]'),
-      // At the question, never at Yes or No: the cursor must not suggest an answer.
-      pointAt: () => $('[data-guide="ladder"] li[data-q="1"] p'),
+      // At the question's number, never at Yes or No: the cursor must not suggest an answer. Not the middle of its
+      // text either: the cursor's body then lay over the No button and hid the words being read.
+      pointAt: () => $('[data-guide="ladder"] li[data-q="1"] > span'),
       nextWhen: () => !!$('[data-guide="ladder-done"]'),
       doIt: "Answer question 2",
     },
@@ -960,7 +1013,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       steps: [
         { lead: "Find the standard in an office's row", text: "The Manila row names the Data Privacy Act 2012: that is your DPA 2012." },
         { lead: "Check the other offices' rows", text: "No other row names it, so DPA 2012 applies to Manila only." },
-        { lead: "Write the office in column E", text: "DPA 2012's column E reads **Manila**." },
+        { lead: "Choose the office in column E", text: "DPA 2012's column E reads **Manila**." },
       ],
       getEl: () => $(`${ADD16_WINDOW} [data-sec="2"]`),
       onEnter: () => $(`${ADD16_WINDOW} [data-sec="2"]`)?.scrollIntoView({ block: "start" }),
@@ -968,12 +1021,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Fill the DPA 2012 row",
       icon: "edit",
-      body: "Type **Manila** in column E of the DPA 2012 row. City names only; Next unlocks once it is one.",
+      body: "Choose **Manila** in column E of the DPA 2012 row. Next unlocks once it is chosen.",
       getEl: () => famCell("E Offices (R02)", 2)?.closest("td") ?? null,
       alsoShow: () => $(ADD16_WINDOW),
       onEnter: () => famCell("E Offices (R02)", 2)?.scrollIntoView({ block: "nearest", inline: "nearest" }),
       nextWhen: () => cellIn(famCell("E Offices (R02)", 2)) && (famCell("E Offices (R02)", 2) as HTMLInputElement).value.trim().toLowerCase() === "manila",
-      doIt: "Type Manila for DPA 2012",
+      doIt: "Choose Manila for DPA 2012",
     },
     {
       title: "Where Section 2 names no office",
@@ -1089,6 +1142,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
         { kind: "avoid", text: "submitting while the count is above zero." },
       ],
       getEl: () => $('[data-guide="empty-check"]'),
+    },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
     },
     ...nameAndSubmit("xlsx", "1 to 5"),
   ],
@@ -1297,31 +1363,34 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Fill the first party",
       icon: "edit",
-      body: "Type the first party of Section 4 in **Party**, row 1, exactly as written. Next unlocks once it matches.",
+      body: "Choose the first party of Section 4's table in **Party**, row 1. Next unlocks once it matches.",
       getEl: () => ipCell("Party", 1)?.closest("td") ?? null,
       alsoShow: () => $(ADD16_WINDOW),
       onEnter: () => ipCell("Party", 1)?.scrollIntoView({ block: "nearest", inline: "nearest" }),
       nextWhen: () => cellIn(ipCell("Party", 1)),
-      doIt: "Type the first party",
+      doIt: "Choose the first party",
     },
+    rowCell("Internal or external", "Internal/External", () => ipCell("Party", 1), "Stay on that party's row of Section 4. Read its Internal / External column and choose the same in **Internal/External**. Next unlocks once it matches.", {
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
     {
       title: "Its requirements",
       icon: "edit",
-      body: "Copy that party's requirements from the same row of Section 4 into **Requirement**, word for word, separated by \"; \". **Rule** records R04 by itself.",
+      body: "Copy that party's requirements from the same row of Section 4 into **Requirement**, word for word, all of them, separated by \"; \". **Rule** records R04 by itself.",
       getEl: () => ipCell("Requirement", 1)?.closest("td") ?? null,
       alsoShow: () => $(ADD16_WINDOW),
       onEnter: () => ipCell("Requirement", 1)?.scrollIntoView({ block: "nearest", inline: "nearest" }),
       nextWhen: () => cellIn(ipCell("Requirement", 1)),
       doIt: "Copy the first party's requirements",
     },
+    rowCell("Its standard or law", "Standard/law", () => ipCell("Party", 1), "Still the same row of Section 4. Read its Standard / law column, the last one, and choose the same entry in **Standard/law**. Next unlocks once it matches.", {
+      tips: [{ kind: "note", text: "That is one full row." }],
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
     {
       title: "Now the others",
       icon: "check",
-      body: "Complete the table from Section 4.",
-      steps: [
-        { lead: "Fill **Internal/External** and **Standard/law**", text: "From the same row of Section 4." },
-        { lead: "Fill rows 2 to 5 the same way", text: "One party per row, in Section 4's order." },
-      ],
+      body: "Fill rows 2 to 5 the same way: one party per row, in Section 4's order, each with the four values of its own row.",
       tips: [
         { kind: "note", text: "**Rule** and **Evidence ref** fill themselves: every row comes from Section 4." },
       ],
@@ -1408,16 +1477,6 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "The pack's own example: a press release published on the website has been approved for release, so question 1 is **Yes**. Its path is **Q1 Yes → Tier 1**, and nothing more is asked.",
       getEl: () => $('[data-guide="tree"] li[data-q="0"]'),
     },
-    {
-      title: "Walk A-03",
-      icon: "edit",
-      body: "**A-03** is lit: Regional contracts repository, local contracts and legal documents. Answer the questions for it. Next unlocks once its path and tier are recorded.",
-      getEl: () => $('[data-guide="tree-row"]'),
-      // At the question, never at Yes or No: the cursor must not suggest an answer.
-      pointAt: () => $('[data-guide="tree-row"] li[data-q="0"] p'),
-      nextWhen: () => !!$('[data-guide="register"] [aria-label="Walk the tree for A-03"][data-walked]'),
-      doIt: "Answer the questions for A-03",
-    },
     ...openGroupDoc(2, "BKB-STD-001", "The classification standard", STD_WINDOW),
     {
       title: "What question 4 asks",
@@ -1433,11 +1492,22 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ...stdSec("3.1"),
     },
     {
+      title: "Walk A-03",
+      icon: "edit",
+      body: "**A-03** is lit: Regional contracts repository, local contracts and legal documents. Answer the questions for it, with Section 3.1 beside you for question 4. Next unlocks once its path and tier are recorded.",
+      getEl: () => $('[data-guide="tree-row"]'),
+      // At the question's number, never at Yes or No: the cursor must not suggest an answer. Not the middle of its
+      // text either: the cursor's body then lay over the No button and hid the words being read.
+      pointAt: () => $('[data-guide="tree-row"] li[data-q="0"] > span'),
+      nextWhen: () => !!$('[data-guide="register"] [aria-label="Walk the tree for A-03"][data-walked]'),
+      doIt: "Answer the questions for A-03",
+    },
+    {
       title: "Now the other five",
       icon: "check",
       body: "Walk A-04 to A-08 the same way; the walk moves to the next row by itself.",
       tips: [
-        { kind: "note", text: "A-07 and A-08 say \"See description\": their facts are in their names." },
+        { kind: "note", text: "A-07 and A-08 say \"See description\": their facts are in the Description column." },
         { kind: "unsure", text: "To walk a row again, click its path in the table." },
       ],
       getEl: () => $('[data-guide="register"]'),
@@ -1546,6 +1616,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
         { kind: "avoid", text: "checking too early. Your rows lock once checked, so look them over first." },
       ],
       getEl: () => $('[data-guide="check-rows"]'),
+    },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
     },
     {
       title: "Finish here",
@@ -1761,18 +1844,14 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       nextWhen: () => !!evqSelect()?.value && evqSelect()!.getAttribute("aria-invalid") !== "true",
       doIt: "Choose the defect code",
     },
-    {
-      title: "Then its fix",
-      icon: "edit",
-      body: "Defect Codes gives each code's **Fix**: what the owner must send instead.",
+    rowCell("Then its fix", "Fix", evqSelect, "Defect Codes gives each code's **Fix**: what the owner must send instead.", {
       steps: [
-        { lead: "Choose the **Fix** of the code you recorded", text: "In the row's Fix cell." },
-        { lead: "Repeat for every other rejected item" },
+        { lead: "Find the code you recorded in Defect Codes", text: "Its Fix is on the same line." },
+        { lead: "Choose that Fix in **Fix**, on the same row", text: "Next unlocks once it is that code's own fix." },
       ],
-      getEl: () => $('[data-guide="register"] [aria-label^="Fix, row "]')?.closest("td") ?? $('[data-guide="register"]'),
-      onEnter: () => $('[data-guide="register"] [aria-label^="Fix, row "]')?.scrollIntoView({ block: "nearest", inline: "nearest" }),
+      tips: [{ kind: "note", text: "That is one full row. Do the same for every other rejected item." }],
       alsoShow: () => $(DC_WINDOW),
-    },
+    }),
     {
       title: "Then check your answers",
       icon: "check",
@@ -1846,6 +1925,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $('[data-guide="empty-check"]'),
     },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     ...nameAndSubmit("xlsx", "1 to 4"),
   ],
 
@@ -1897,6 +1989,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $('[data-guide="submit"]'),
     },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     nameAndSubmit("docx", "1 to 5")[2],
   ],
   // T3.1: the obligations register (steps 1–8), then the Lead Implementer files LI-FAM (9–14) and LI-SCOPE (15–19).
@@ -1917,10 +2022,10 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Fill Manila's row",
       icon: "edit",
-      body: "Your two rows are in place, one for each office. The first is Manila's.",
+      body: "Your two rows are in place, one for each office. The first is Manila's. You now fill it cell by cell.",
       steps: [
         { lead: "Choose Manila in **Office(s)**", text: "On the first row, OBL-01." },
-        { lead: "Copy Manila's **Breach notification** cell into **Obligation**", text: "Word for word. Next unlocks once it matches Section 2." },
+        { lead: "Copy Manila's **Breach notification** cell into **Obligation (plain English)**", text: "Word for word. Next unlocks once it matches Section 2." },
       ],
       getEl: () => $('[data-guide="register"]'),
       pointAt: () => ((oblCell("Office(s)", 1) as HTMLSelectElement | null)?.value === "Manila" ? oblCell("Obligation (plain English)", 1) : oblCell("Office(s)", 1)),
@@ -1928,15 +2033,29 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       nextWhen: () => cellIn(oblCell("Obligation (plain English)", 1)) && (oblCell("Office(s)", 1) as HTMLSelectElement | null)?.value === "Manila",
       doIt: "Choose Manila and copy its obligation",
     },
-    {
-      title: "Now the rest",
-      icon: "check",
-      body: "Finish Manila's row, then fill Warsaw's, the second row, the same way.",
+    // The rest of Manila's row, one cell a card, each waiting on its cell.
+    rowCell("Source instrument", "Source instrument", t311Row, "Stay on Manila's row of **Section 2**. Copy its **Data-protection law** cell into **Source instrument**, word for word. Next unlocks once it matches.", {
+      onEnter: showAddSec("2"),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    rowCell("Article/clause", "Article/clause", t311Row, "**Section 2.2**, now at the top of the addendum, lists each office's duties with their clauses.", {
       steps: [
-        { lead: "Fill **Source instrument**", text: "The office's Data-protection law." },
-        { lead: "Choose the **Type**", text: "**law**: an act of parliament. **reg**: a regulator's own requirement. **standard**: an industry standard. **contract**: a customer's requirement." },
-        { lead: "Fill **Article/clause** and **Evidence ref**", text: "Article/clause is in Section 2.2 of the addendum, on the obligation's row." },
+        { lead: "Find the rows whose From cell reads Section 2 Manila", text: "There are two, because the cell you copied holds two duties." },
+        { lead: "Choose the Article / clause of the first in **Article/clause**", text: "Step 2 splits the row and gives the second duty its own. Next unlocks once it is chosen." },
       ],
+      onEnter: showAddSec("2.2"),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    rowCell("Type", "Type", t311Row, "The row's source instrument is the office's Data-protection law. The note beside the table says what law, reg, standard and contract mean. Choose the one that fits in **Type**. Next unlocks once one is chosen.", {
+      tips: [{ kind: "note", text: "Check my answers scores Type on both rows." }],
+    }),
+    rowCell("Evidence ref", "Evidence ref", t311Row, "Type where the row was copied from: the document, then the section. For this row that is **BKB-ADD-16 Section 2**. Next unlocks once it matches.", {
+      tips: [{ kind: "note", text: "That is one full row." }],
+    }),
+    {
+      title: "Now Warsaw's row",
+      icon: "check",
+      body: "Fill the second row the same way, from Warsaw's row of Section 2 and Warsaw's rows of Section 2.2.",
       getEl: () => $('[data-guide="register"]'),
     },
     {
@@ -2007,22 +2126,57 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Fill the first row",
       icon: "edit",
-      body: "Copy Section 2.1's first line into **Obligation** on the first empty row, word for word. Next unlocks once it matches.",
+      body: "You now fill this one row from left to right. Choose Section 2.1's first line in **Obligation (plain English)** on the first empty row. Next unlocks once it is chosen.",
       // The row in hand, not the whole register: ten rows are tall, and the card would sit on the last of them.
       getEl: () => oblFirst()?.closest("tr") ?? $('[data-guide="register"]'),
       pointAt: () => oblFirst(),
       alsoShow: () => $(ADD16_WINDOW),
-      nextWhen: () => [...document.querySelectorAll<HTMLTextAreaElement>('[data-guide="register"] textarea[aria-label^="Obligation (plain English)"]')].some((el) => cellIn(el) && /Registration of Data Processing/.test(el.value)),
-      doIt: "Copy the line into the first row",
+      nextWhen: () => oblCells().some((el) => cellIn(el) && /Registration of Data Processing/.test(el.value)),
+      doIt: "Choose the line in the first row",
+    },
+    // The same row, cell by cell: where each value is read, then the cell, Next waiting on it.
+    rowCell("Source instrument", "Source instrument", t313Row, "The line names no law or rule itself, so read it in **Section 2.2**, now at the top of the addendum.", {
+      steps: [
+        { lead: "Find the row with the same Obligation", text: "Its From cell reads Section 2.1." },
+        { lead: "Read its Article / clause", text: "It names the regulator's rule the duty rests on." },
+        { lead: "Type that rule's name in **Source instrument**", text: "Next unlocks once the cell is filled." },
+      ],
+      onEnter: showAddSec("2.2"),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    rowCell("Article/clause", "Article/clause", t313Row, "Stay on the same row of **Section 2.2**. Choose its Article / clause in **Article/clause**. Another row's value is flagged. Next unlocks once the right one is chosen.", {
+      onEnter: showAddSec("2.2"),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    rowCell("Type", "Type", t313Row, "Section 2.1's heading says whose requirements these are. The note beside the table says what law, reg and standard mean. Choose the one that fits in **Type**. Next unlocks once one is chosen.", {
+      tips: [{ kind: "note", text: "Check my answers scores Type on every row, so decide it from the note, row by row." }],
+      onEnter: showAddSec("2.1"),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    rowCell("Office(s)", "Office(s)", t313Row, "A lead regulator's requirement binds the office it regulates. **Section 1** of the addendum names the head office beside its Lead regulator(s). Choose that office in **Office(s)**. Next unlocks once it is right.", {
+      onEnter: showAddSec("1"),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    rowCell("Evidence ref", "Evidence ref", t313Row, "Type where the line was copied from: the document, then the section. For this row that is **BKB-ADD-16 Section 2.1**. Next unlocks once it matches.", {
+      tips: [{ kind: "note", text: "That is one full row. Every other row is filled the same way." }],
+    }),
+    {
+      title: "The other Section 2.1 lines",
+      icon: "table",
+      ...addSec("2.1"),
+      body: "Fill one row for each of the other five lines of Section 2.1, cell by cell as you just did. Each line has its own row in Section 2.2.",
     },
     {
       title: "Then Section 6",
       icon: "book",
       ...addSec("6"),
-      body: "Section 6 has four overlays.",
+      body: "Section 6 has four overlays. Each fills one of the last four rows.",
       steps: [
-        { lead: "Copy one Additional mandatory requirement into each of the last four rows", text: "Evidence ref: **BKB-ADD-16 Section 6**." },
-        { lead: "Choose the office or offices it binds", text: "The overlay's row says which." },
+        { lead: "Choose its Additional mandatory requirement in **Obligation (plain English)**", text: "The whole requirement stays in one row." },
+        { lead: "Type its **Source instrument**", text: "The law or standard the requirement names." },
+        { lead: "Choose its **Article/clause** and **Type**", text: "Article / clause is on the requirement's row in Section 2.2. Learn › Framework Quick Reference says whether a named law or standard is a law or a standard." },
+        { lead: "Choose the office or offices it binds", text: "Section 6's **Applies to** column names the offices. All offices means both of yours. An overlay that names neither of your two takes **Neither of the two**." },
+        { lead: "Type its **Evidence ref**", text: "**BKB-ADD-16 Section 6**." },
       ],
     },
     {
@@ -2056,28 +2210,58 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Fill the first contract row",
       icon: "edit",
-      body: "Your three rows are in place. Start with the first.",
-      steps: [
-        { lead: "Copy the first Key Requirement of GlobalConnect Customer Solutions", text: "Word for word, into Obligation." },
-        { lead: "Choose Type **contract**", text: "Next unlocks once the row matches." },
-      ],
-      getEl: () => $('[data-guide="register"]'),
+      body: "Your three rows are in place. You now fill the first one from left to right. In **Obligation (plain English)**, choose the first Key Requirement under Stakeholder Requirements. Next unlocks once it is chosen.",
+      getEl: () => oblFirst()?.closest("tr") ?? $('[data-guide="register"]'),
       pointAt: () => oblFirst(),
       alsoShow: () => $(OP_WINDOW),
-      nextWhen: () => [...document.querySelectorAll<HTMLTextAreaElement>('[data-guide="register"] textarea[aria-label^="Obligation (plain English)"]')].some((el) => cellIn(el)),
-      doIt: "Copy the requirement into the first row",
+      nextWhen: () => oblCells().some((el) => cellIn(el)),
+      doIt: "Choose the requirement in the first row",
     },
-    finish("Fill the next two rows the same way. **Mark step complete** unlocks once all three are filled."),
+    rowCell("Source instrument", "Source instrument", t314Row, "A customer's requirement rests on its contract with GlobalConnect. Type **Client contract** in **Source instrument**. Next unlocks once the cell is filled."),
+    // Article/clause is read in the addendum, which this step has not opened yet.
+    ...openLib(4, "BKB-ADD-16", "Your organisation's addendum, read here for Section 2.2,", ADD16_WINDOW),
+    rowCell("Article/clause", "Article/clause", t314Row, "The last three rows of **Section 2.2** read Key Requirements in their From cell. Find the row with your requirement and choose its Article / clause in **Article/clause**. Another row's value is flagged. Next unlocks once the right one is chosen.", {
+      // The section's end, where the Key Requirements rows are, at the bottom of the addendum's window.
+      onEnter: () => $(`${ADD16_WINDOW} [data-sec="2.2"]`)?.scrollIntoView({ block: "end" }),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    rowCell("Type", "Type", t314Row, "What a customer requires of GlobalConnect is a contract obligation. Choose **contract** in **Type**. Next unlocks once it is chosen."),
+    rowCell("Office(s)", "Office(s)", t314Row, "The Key Requirements are the whole organisation's: the table names no office. Choose the entry that names both of your offices in **Office(s)**. Next unlocks once one is chosen.", {
+      alsoShow: () => $(OP_WINDOW),
+    }),
+    rowCell("Evidence ref", "Evidence ref", t314Row, "Type where the requirement was copied from: the workbook, then its sheet. The workbook is Organization_Profiles and the sheet is Key Requirements, so type **Organization_Profiles Key Requirements**. Next unlocks once it matches.", {
+      tips: [{ kind: "note", text: "That is one full row." }],
+      alsoShow: () => $(OP_WINDOW),
+    }),
+    finish("Fill the next two rows the same way, one for each of the next two requirements under Stakeholder Requirements. **Mark step complete** unlocks once all three are filled."),
   ],
 
   "T3.1-5": [
     {
       title: "Link every row",
       icon: "table",
-      body: "Your answer is in. Part 2: for each row, the BKB policy that implements it. The **owner role** then fills itself from the BKB-POL-000 index, as rule R10 says.",
+      body: "Your answer is in. Part 2 fills four cells on every row: its Process, Evidence of compliance and Frequency / deadline from the addendum, then the BKB policy that implements it. The **owner role** then fills itself from the BKB-POL-000 index, as rule R10 says. You do OBL-01 first, cell by cell.",
       getEl: () => $('[data-guide="register"]'),
     },
-    ...openGroupDoc(5, "BKB-POL-000", "The Policy Framework and Library Index", POL000_WINDOW),
+    ...openLib(5, "BKB-ADD-16", "Your organisation's addendum, read here for Section 2.2,", ADD16_WINDOW),
+    rowCell("Process", "Process", t315Row, "**Section 2.2** has one row per obligation. OBL-01 came from an office's Section 2 cell, so its row there names that office in From and holds the same duty.", {
+      steps: [
+        { lead: "Find OBL-01's row in Section 2.2", text: "Match the office in From and the words in Obligation." },
+        { lead: "Choose that row's Process in **Process**", text: "Another row's value is flagged. Next unlocks once the right one is chosen." },
+      ],
+      tips: [{ kind: "note", text: "Process and the columns after it are on the right of the Section 2.2 table. Scroll the addendum sideways to read them, or drag its corner to make the window wider." }],
+      onEnter: showAddSec("2.2"),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    rowCell("Evidence of compliance", "Evidence of compliance", t315Row, "Stay on the same row of Section 2.2. Choose its Evidence of compliance in **Evidence of compliance**. Next unlocks once the right one is chosen.", {
+      onEnter: showAddSec("2.2"),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    rowCell("Frequency / deadline", "Frequency / deadline", t315Row, "Still the same row of Section 2.2. Type its Frequency / deadline in **Frequency / deadline**, as it is written there. Next unlocks once it matches.", {
+      onEnter: showAddSec("2.2"),
+      alsoShow: () => $(ADD16_WINDOW),
+    }),
+    ...openLib(5, "BKB-POL-000", "The Policy Framework and Library Index", POL000_WINDOW),
     {
       title: "An example",
       icon: "book",
@@ -2088,7 +2272,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Link OBL-01",
       icon: "edit",
-      body: "Choose the policy that implements OBL-01 in **Linked BKB policy**. Next unlocks once one is chosen.",
+      body: "Read the Process you chose for OBL-01. In Section 3, find the policy whose title covers that process, and choose it in **Linked BKB policy**. Owner role then fills itself. Next unlocks once one is chosen.",
+      tips: [{ kind: "note", text: "That is one full row. Check my answers scores the policy on every row." }],
+      alsoShow: () => $(POL000_WINDOW),
       getEl: () => oblCell("Linked BKB policy", 1)?.closest("td") ?? null,
       onEnter: () => oblCell("Linked BKB policy", 1)?.scrollIntoView({ block: "nearest", inline: "nearest" }),
       pointAt: () => oblCell("Linked BKB policy", 1),
@@ -2096,13 +2282,13 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       doIt: "Choose OBL-01's policy",
     },
     {
-      title: "Then Section 2.2",
-      icon: "book",
-      body: "BKB-ADD-16 **Section 2.2** has one row per obligation. From the obligation's row there, copy:",
+      title: "Now the other rows",
+      icon: "table",
+      body: "Fill every other row the same way.",
       steps: [
-        { lead: "Frequency / deadline" },
-        { lead: "Process" },
-        { lead: "Evidence of compliance" },
+        { lead: "Find the row's own row in Section 2.2", text: "A row from Section 2 by its office and duty. A row from Section 2.1, Section 6 or the Key Requirements by its Obligation." },
+        { lead: "Choose its Process and Evidence of compliance, and type its Frequency / deadline" },
+        { lead: "Choose the policy whose title covers the Process", text: "In BKB-POL-000 Section 3." },
       ],
       getEl: () => $('[data-guide="register"]'),
     },
@@ -2139,6 +2325,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('[data-guide="register"]'),
       nextWhen: () => oblRows() === 15,
       doIt: "Remove two rows",
+    },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
     },
     finish("This button unlocks at 15 rows, with the 3 contract rows among them and the two right rows removed, once the Compliance Manager's message has your reply."),
   ],
@@ -2205,27 +2404,29 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('[data-reg="OBL-EXTRA"]'),
     },
     ...openLib(8, "Organization_Profiles", "OBL-EXTRA, its Section 3,", 'section[role="dialog"][aria-label^="Organization_Profiles"]'),
-    {
-      title: "Fill the first row",
-      icon: "edit",
-      body: "Fill the first row.",
+    // OBL-16, the sheet's first row, cell by cell: Section 3 has one row for it, found by its Obligation.
+    rowCell("Evidence of compliance", "Evidence of compliance", t318Row, "**Section 3** of Organization_Profiles has one row for each row of this sheet. You fill OBL-16 first.", {
       steps: [
-        { lead: "Copy **Evidence of compliance** and **Frequency / deadline**", text: "From Section 3." },
-        { lead: "Choose the policy", text: "The one whose title names the row's Process, from BKB-POL-000's index. The owner role fills itself." },
+        { lead: "Find the Section 3 row with OBL-16's Obligation", text: "It starts \"Notify the client\"." },
+        { lead: "Type its Evidence of compliance in **Evidence of compliance**", text: "As it is written there. Next unlocks once it matches." },
       ],
-      tips: [
-        { kind: "note", text: "Next unlocks once all three are right." },
-      ],
-      getEl: () => $('[data-reg="OBL-EXTRA"] tbody tr'),
-      pointAt: () => extraCell("Evidence of compliance", 1),
-      alsoShow: () => (innerWidth > 700 ? $('section[role="dialog"][aria-label^="Organization_Profiles"]') : null),
-      nextWhen: () => cellIn(extraCell("Evidence of compliance", 1)) && cellIn(extraCell("Frequency / deadline", 1)) && !!(extraCell("Linked BKB policy", 1) as HTMLSelectElement | null)?.value && extraCell("Linked BKB policy", 1)!.getAttribute("aria-invalid") !== "true",
-      doIt: "Fill OBL-16",
-    },
+      tips: [{ kind: "note", text: "Evidence of compliance is the last column of Section 3. Scroll the window sideways to read it, or drag its corner to make it wider." }],
+      alsoShow: () => (innerWidth > 700 ? $(OP_WINDOW) : null),
+    }),
+    rowCell("Frequency / deadline", "Frequency / deadline", t318Row, "Stay on the same row of Section 3. Type its Frequency / deadline in **Frequency / deadline**, as it is written there. Next unlocks once it matches.", {
+      alsoShow: () => (innerWidth > 700 ? $(OP_WINDOW) : null),
+    }),
+    // The policy is read in the index, which this step has not opened yet.
+    ...openLib(8, "BKB-POL-000", "The Policy Framework and Library Index", POL000_WINDOW),
+    rowCell("Linked BKB policy", "Linked BKB policy", t318Row, "Read OBL-16's **Process** on the sheet, two columns to the left of this cell. Scroll the sheet sideways if it is cut off. In **Section 3** of BKB-POL-000, find the policy whose title names that process, and choose it in **Linked BKB policy**. Owner role then fills itself. Next unlocks once it is right.", {
+      tips: [{ kind: "note", text: "That is one full row." }],
+      onEnter: () => $(`${POL000_WINDOW} [data-sec="3"]`)?.scrollIntoView({ block: "start" }),
+      alsoShow: () => (innerWidth > 700 ? $(POL000_WINDOW) : null),
+    }),
     {
       title: "The other two",
       icon: "edit",
-      body: "Fill OBL-17 and OBL-18 the same way. A value that differs from its source is flagged with where to read it.",
+      body: "Fill OBL-17 and OBL-18 the same way, each from the Section 3 row with its own Obligation. A value that differs from its source is flagged with where to read it.",
       getEl: () => $('[data-reg="OBL-EXTRA"]'),
     },
     {
@@ -2248,20 +2449,18 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('[data-guide="register"]'),
     },
     ...openPage(9, "Ref-27000 family"),
-    {
-      title: "Fill the first row",
-      icon: "edit",
-      body: "Fill the first row from **Ref-27000 family**.",
+    // The first row, one cell a card.
+    rowCell("Certifiable?", "Certifiable?", () => oblCell("Certifiable?", 1), "You fill the first row, ISO/IEC 27000, from **Ref-27000 family**.", {
       steps: [
-        { lead: "Find ISO/IEC 27000 on the page" },
-        { lead: "Choose its **Certifiable?** and **Who uses it**", text: "Next unlocks once both match the page." },
+        { lead: "Find ISO/IEC 27000's row on the page", text: "It is the first." },
+        { lead: "Read its Certifiable? column and choose the same in **Certifiable?**", text: "Next unlocks once it matches the page." },
       ],
-      getEl: () => oblCell("Certifiable?", 1)?.closest("tr") ?? null,
-      pointAt: () => oblCell("Certifiable?", 1),
       alsoShow: () => (innerWidth > 700 ? $(PAGE_WINDOW("Ref-27000 family")) : null),
-      nextWhen: () => selIn("Certifiable?", 1) && selIn("Who uses it", 1),
-      doIt: "Fill ISO/IEC 27000's row",
-    },
+    }),
+    rowCell("Who uses it", "Who uses it", () => oblCell("Certifiable?", 1), "Stay on the same row of the page. Read its Who uses it column and choose the same entry in **Who uses it**. Next unlocks once it matches the page.", {
+      tips: [{ kind: "note", text: "Who uses it is the page's last column. Scroll the page sideways to read it, or drag its corner to make it wider." }],
+      alsoShow: () => (innerWidth > 700 ? $(PAGE_WINDOW("Ref-27000 family")) : null),
+    }),
     finish("Fill the other nine the same way. **Mark step complete** unlocks once all ten match the page."),
   ],
 
@@ -2460,7 +2659,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "L03 takes the interfaces from the TSA Integrations sheet; **BKB-ADD-16 Section 9.1** is its extract.",
       steps: [
         { lead: "Find the External rows of Section 9.1" },
-        { lead: "Copy the **Integration** of the first three, in order", text: "Separated by \"; \"." },
+        { lead: "Copy the **Integration** of the first three, in order", text: "Separated by \"; \". Type the two-way arrow as **<->**." },
       ],
       getEl: () => briefIn("Interfaces"),
       pointAt: () => briefIn("Interfaces"),
@@ -2481,12 +2680,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Copy the row",
       icon: "edit",
-      body: "The climate-change row is the last row of **Ref-ISMS processes**. Copy its second cell word for word. Next unlocks once it matches.",
+      body: "The climate-change row is the last row of **Ref-ISMS processes**. Its second cell starts with **Yes** or **No**: write that word. The reason after it is the Group's and stays on the page. Next unlocks once it matches.",
       getEl: () => briefIn("Relevant?"),
       pointAt: () => briefIn("Relevant?"),
       alsoShow: () => (innerWidth > 700 ? $(PAGE_WINDOW("Ref-ISMS processes")) : null),
       nextWhen: () => cellIn(briefIn("Relevant?")),
-      doIt: "Copy the climate-change row",
+      doIt: "Write the row's Yes or No",
     },
     finish("Name the page in the Source line. **Mark step complete** unlocks once both are in."),
   ],
@@ -2734,6 +2933,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       nextWhen: () => !firstInput("Gap sentence (R12)") || cellIn(firstInput("Gap sentence (R12)")),
       doIt: "Write the first gap sentence",
     },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("Write the rest the same way. **Mark step complete** unlocks once every Partial or None row has its sentence."),
   ],
 
@@ -2777,36 +2989,61 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       onEnter: () => $('[data-reg="MAP-EXTRA"]')?.scrollIntoView({ block: "nearest" }),
       getEl: () => $('[data-reg="MAP-EXTRA"]'),
     },
+    // M9's row from start to finish, each cell with the screen it is read from opened first (tester, 18 Nov 2026).
+    ...openScreen("policies", "Policies", "Map to Framework", "The look-up: key words, and the BKB policy that covers them.", MTF_WINDOW),
+    ...openLib(7, "BKB-POL-000", "The Policy Framework and Index", POL000_WINDOW),
     {
       title: "Its policy first",
       icon: "edit",
-      body: "Find M9's policy first.",
+      body: "Find M9's policy first, in **BKB policy**.",
       steps: [
-        { lead: "Find its key word in **Policies › Map to Framework**" },
-        { lead: "Check the policy's title in BKB-POL-000 Section 3", text: "Next unlocks once the policy is right." },
+        { lead: "Read M9's requirement and find its key word in Map to Framework", text: "The key word's row names a policy." },
+        { lead: "Check that policy's title in BKB-POL-000 Section 3", text: "The title must be about what M9 asks." },
+        { lead: "Choose the policy in **BKB policy**", text: "Next unlocks once the policy is right." },
       ],
       onEnter: () => mapXCell("BKB policy")?.scrollIntoView({ block: "nearest", inline: "nearest" }),
       getEl: () => mapXCell("BKB policy")?.closest("td") ?? null,
       pointAt: () => mapXCell("BKB policy"),
+      alsoShow: () => (innerWidth > 700 ? $(MTF_WINDOW) : null),
       nextWhen: () => !!(mapXCell("BKB policy") as HTMLSelectElement | null)?.value && mapXCell("BKB policy")!.getAttribute("aria-invalid") !== "true",
       doIt: "Choose M9's policy",
     },
-    {
-      title: "The rest of M9",
-      icon: "edit",
-      body: "Fill the rest of M9's row in order:",
+    ...openCrosswalk("Crosswalk View lists each policy with its Annex A controls."),
+    rowCell("Its control", "ISO/IEC 27001 control", t327Row, "Crosswalk View has one row per policy.", {
       steps: [
-        { lead: "Control", text: "From **Frameworks › Crosswalk View**." },
-        { lead: "Procedure", text: "From the headings of the policy's Section 6." },
-        { lead: "Coverage", text: "By rule R11." },
-        { lead: "Gap sentence", text: "Only if R11 leaves a gap." },
-        { lead: "Evidence ref" },
+        { lead: "Find the row of the policy you chose", text: "It lists that policy's Annex A controls." },
+        { lead: "Choose the one that is about what M9 asks, in **ISO/IEC 27001 control**", text: "Next unlocks once it is right." },
       ],
-      tips: [
-        { kind: "unsure", text: "A value that does not fit is flagged with where to read it." },
+      alsoShow: () => (innerWidth > 700 ? $(XW_WINDOW) : null),
+    }),
+    ...openScreen("policies", "Policies", "Policy Library", "Every BKB policy is in it.", LIBRARY_WINDOW),
+    {
+      title: "Open M9's policy",
+      icon: "book",
+      body: "Click the policy you chose for M9. Its Section 6 holds its procedures.",
+      getEl: () => $(LIBRARY_WINDOW),
+      // The index is open already and is a BKB-POL window too: only another policy's window counts.
+      waitFor: () => !!$(M9_POLICY_WINDOW),
+      doIt: "Click M9's policy",
+    },
+    rowCell("Its procedure", "Procedure section", t327Row, "The headings \"Procedure: …\" under **Section 6** of the policy are its procedures, each named after what it does.", {
+      steps: [
+        { lead: "Find the procedure that carries out M9's requirement", text: "Read the headings." },
+        { lead: "Type its number, such as 6.1, in **Procedure section**", text: "Type **none** if no procedure does. Next unlocks once it is right." },
       ],
+      onEnter: () => $(`${M9_POLICY_WINDOW} [data-sec="6"]`)?.scrollIntoView({ block: "start" }),
+      alsoShow: () => (innerWidth > 700 ? $(M9_POLICY_WINDOW) : null),
+    }),
+    rowCell("Its coverage", "Coverage (R11)", t327Row, "Rule **R11** counts three things on the row: a control, a policy and a procedure. All three is Full, one or two is Partial, none is None. Count what M9's row now holds and choose in **Coverage (R11)**. Next unlocks once it follows the rule."),
+    {
+      title: "A gap sentence, or none",
+      icon: "info",
+      body: "Only a row rated Partial or None takes a sentence in **Gap sentence (R12)**, written in rule R12's frame as in step 5. A row rated Full has no gap and no sentence.",
       getEl: () => $('[data-reg="MAP-EXTRA"]'),
     },
+    rowCell("Its evidence ref", "Evidence ref", t327Row, "Type where a reader can check the row: M9's policy, then the section you read in it, as **BKB-POL-… Section …**. Next unlocks once it names the row's policy and one of its sections.", {
+      tips: [{ kind: "note", text: "That is M9's full row." }],
+    }),
     {
       title: "No empty cells",
       icon: "check",
@@ -3746,13 +3983,15 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       nextWhen: () => selIs("Output", 1, (pol021At(1, 3) ?? "").split(" — ")[0]),
       doIt: "Choose step 1's output",
     },
-    {
-      title: "The escalation contact",
-      icon: "book",
-      body: "**Section 8** names the escalation contact of the policy's procedures. Type it in the exception step's row, as Section 8 writes it.",
-      getEl: () => $(`${POL021_WINDOW} [data-sec="8"]`) ?? $(POL021_WINDOW),
+    // One row takes a second cell: the exception step's contact. Its card waits on that cell, as the output's did.
+    rowCell("The escalation contact", "Escalation contact", () => $('[data-guide="register"] :is(input, textarea, select)[aria-label^="Escalation contact, row "]'), "Only the exception step's row takes an **Escalation contact**. **Section 8** of the policy, now at the top of its window, names the escalation contact of its procedures.", {
+      steps: [
+        { lead: "Find the sentence that starts \"The escalation contact\"", text: "It names one role." },
+        { lead: "Type that role in **Escalation contact**", text: "As Section 8 writes it. Next unlocks once it matches." },
+      ],
       onEnter: () => $(`${POL021_WINDOW} [data-sec="8"]`)?.scrollIntoView({ block: "start" }),
-    },
+      alsoShow: () => (innerWidth > 700 ? $(POL021_WINDOW) : null),
+    }),
     {
       title: "Then check your answers",
       icon: "check",
@@ -4224,18 +4463,32 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     {
       title: "Sheet 2: the seventh control",
-      icon: "edit",
-      body: "**PBC-EXTRA** is below your timeline. Fill it as you did at steps 3 and 4:",
-      steps: [
-        { lead: "Sample", text: "From Ref-Sampling, by its frequency." },
-        { lead: "Owner", text: "From the Charter's RACI, by its process." },
-      ],
-      tips: [
-        { kind: "unsure", text: "A wrong value is flagged at once, with where to read it." },
-      ],
+      icon: "table",
+      body: "**PBC-EXTRA** is below your timeline: one row, the seventh control. It takes a **Sample (R15)** and an **Owner**, read as at steps 3 and 4. You fill them one at a time.",
       getEl: () => $('[data-reg="PBC-EXTRA"]'),
       onEnter: () => $('[data-reg="PBC-EXTRA"]')?.scrollIntoView({ block: "center" }),
     },
+    // The row's two cells, each with the place it is read from opened first.
+    ...openPage(7, "Ref-Sampling"),
+    rowCell("Its sample", "Sample (R15)", t517Row, "Ref-Sampling gives the minimum sample for each frequency.", {
+      steps: [
+        { lead: "Read the row's **Frequency** on the sheet" },
+        { lead: "Find that frequency in Ref-Sampling and read its minimum sample" },
+        { lead: "Choose it in **Sample (R15)**", text: "Next unlocks once it is right." },
+      ],
+      alsoShow: () => (innerWidth > 700 ? $(PAGE_WINDOW("Ref-Sampling")) : null),
+    }),
+    ...openLib(7, "Charter", "The BKB Group GRC Charter", CHARTER_WINDOW),
+    rowCell("Its owner", "Owner", t517Row, "**Section 16** of the Charter is the RACI: one row per process, one column per role.", {
+      steps: [
+        { lead: "Find the process this control belongs to", text: "The row's System and Evidence requested cells on the sheet say what the control is about." },
+        { lead: "Find the role marked R in that row", text: "The legend gives the role's full name." },
+        { lead: "Choose that role in **Owner**", text: "Next unlocks once it is right." },
+      ],
+      tips: [{ kind: "note", text: "That is the full row." }],
+      onEnter: () => $(`${CHARTER_WINDOW} [data-sec="16"]`)?.scrollIntoView({ block: "start" }),
+      alsoShow: () => (innerWidth > 700 ? $(CHARTER_WINDOW) : null),
+    }),
     ...nameAndSubmit("xlsx", "1 to 6"),
   ],
 
@@ -4543,24 +4796,47 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $(`${UPLOAD_WINDOW} table`) ?? $(UPLOAD_WINDOW),
     },
+    ...openScreen("evidence", "Evidence", "Audit Requests (PBC)", "Dataset PBC-6: each control with the system and the record its request names, and its request in PBC-LIST.", PBC_WINDOW),
     {
       title: "Sheet 2: the late files",
-      icon: "edit",
-      body: "**EVP-EXTRA** is below your gap memo. For each file record:",
-      steps: [
-        { lead: "Accept, or the check that fails" },
-        { lead: "Its request, if accepted" },
-        { lead: "Whether its control has a gap now" },
-      ],
+      icon: "table",
+      body: "**EVP-EXTRA** is below your gap memo: one row for each late file, three cells in each row. You fill the first row, E-043, one cell at a time.",
       tips: [
         { kind: "unsure", text: "A wrong value is flagged at once, with where to read it." },
       ],
       getEl: () => $('[data-reg="EVP-EXTRA"]'),
       onEnter: () => {
-        if (innerWidth <= 700) for (const w of [UPLOAD_WINDOW, IMPORT_WINDOW]) $(`${w} button[aria-label^="Close"]`)?.click();
+        if (innerWidth <= 700) for (const w of [PBC_WINDOW, UPLOAD_WINDOW, IMPORT_WINDOW]) $(`${w} button[aria-label^="Close"]`)?.click();
         $('[data-reg="EVP-EXTRA"]')?.scrollIntoView({ block: "center" });
       },
     },
+    // The first late file's row, cell by cell (tester, 18 Nov 2026): the guide listed the three cells and waited on none.
+    rowCell("Its result", "Result (R09)", t526Row, "Check E-043 as you checked a file at step 2: rule R09, checks D1 to D10.", {
+      steps: [
+        { lead: "Find E-043's row in **Import Log / Report**", text: "Scroll it sideways: Source system, Date range, Query / parameters and Generated by are to the right." },
+        { lead: "Hold its Source system against the **System** of its control in **Audit Requests (PBC)**" },
+        { lead: "Compare its SHA-256 at export with its SHA-256 on upload in **Upload Config File**" },
+        { lead: "Choose **Accept** if no check fails, else the code of the check that fails", text: "Next unlocks once it is right." },
+      ],
+      alsoShow: () => (innerWidth > 700 ? $(IMPORT_WINDOW) : null),
+    }),
+    rowCell("Its request", "PBC req.", t526Row, "An accepted file is indexed to the request it answers, as at step 3.", {
+      steps: [
+        { lead: "Read the row's **Control**" },
+        { lead: "Find that control in Audit Requests (PBC) and read its **PBC-LIST request**" },
+        { lead: "Choose it in **PBC req.**", text: "Next unlocks once it is right." },
+      ],
+      tips: [{ kind: "note", text: "A rejected file takes no request: the sheet writes a dash in its PBC req. cell." }],
+      alsoShow: () => (innerWidth > 700 ? $(PBC_WINDOW) : null),
+    }),
+    rowCell("Its control's gap", "Gap now (R18)", t526Row, "Rule R18 again, now with the late files counted: a control with fewer than 2 accepted files has a gap.", {
+      steps: [
+        { lead: "Read the row's **Accepted at step 2**" },
+        { lead: "Add the late files of the same control that this sheet accepts", text: "E-044 is for the same control, so work out its Result first." },
+        { lead: "Choose **Gap** or **No gap**", text: "Next unlocks once it is right." },
+      ],
+      tips: [{ kind: "note", text: "That is the full row. Do the other four the same way." }],
+    }),
     ...nameAndSubmit("xlsx", "1 to 5").map((c) => (c.title === "Name the file" ? { ...c, title: "Name the files", body: "Type the four parts listed under each box, in order, joined by underscores, as the manifest's naming rule says: EVP-IDX ends .xlsx (a spreadsheet), EVP-GAP .docx (a memo)." } : c)),
   ],
 
@@ -4613,7 +4889,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "The review",
       icon: "book",
-      body: "The form gives the system, how often it is reviewed, and how many accounts the review covered.",
+      body: "The form gives the system, how often it is reviewed, and how many accounts the review covered. The sample is taken from the accounts, so the number of accounts is the fact this step uses, not the frequency.",
       getEl: () => $(START_WINDOW),
     },
     firstItem("The first line yourself", "Type the number of accounts the review covered, as the form gives it. Next unlocks once it is right.", "Value", 1, () => valIs("Value", 1, "216"), "Type the population", START_WINDOW),
@@ -4977,6 +5253,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("The first log yourself", "SSO / IdP: type the Employee IDs its log has no line for, separated by ;, or none if every leaver has one. Next unlocks once it is right.", "Leavers with no disable line", 1, () => valIs("Leavers with no disable line", 1, "none"), "Type SSO / IdP's missing leavers", TUC_WINDOW),
     checkAnswers("Do the other four logs. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -5058,6 +5347,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('[data-guide="register"]'),
     },
     checkAnswers("Once all 29 are recorded, Check my answers shows each leaver's answer and why. Your rows lock then, so look them over first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked. The next step is a question, so the desk takes you back to the step list."),
   ],
 
@@ -5183,7 +5485,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "An example",
       icon: "info",
-      body: "A made-up event: \"Laptops are lost about once a year.\" Its likelihood is read from that fact: BKB-ERM-001 Section 6.2 calls \"about once a year\" **Likely**. Each question here asks where a part like that sits in RRU-EVENTS.",
+      body: "A made-up event: \"A laptop is lost once in 5–20 years.\" Its likelihood is read from that fact: BKB-ERM-001 Section 6.2 calls \"once in 5–20 years\" **Unlikely**. Each question here asks where a part like that sits in RRU-EVENTS.",
       getEl: () => $('[data-guide="register"]'),
     },
     {
@@ -5531,6 +5833,13 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('[data-reg="RR-UPD N4"]'),
       onEnter: () => $('[data-reg="RR-UPD N4"]')?.scrollIntoView({ block: "center" }),
     },
+    rowCell("The first line yourself", "Your answer", t719Row, "**Best statement (R06)** is the first line. Its Read cell holds N4's facts and three drafts.", {
+      steps: [
+        { lead: "Read the facts, then each draft" },
+        { lead: "Choose the draft that follows rule R06", text: "Each part of the frame in its place, and the asset as the register names it. Next unlocks once it is right." },
+      ],
+      tips: [{ kind: "note", text: "Every other line works the same way: its Read cell says what to read, and the card before this one names its rule." }],
+    }),
     ...nameAndSubmit("xlsx", "1 to 8").map((c) => (c.title === "Name the file" ? { ...c, body: "Type the four parts listed under the box, in order, joined by underscores, then .xlsx. RR-NOTE is a platform form, handed in with it." } : c)),
   ],
 
@@ -5602,11 +5911,34 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
     ...openPage(13, "Ref-27002 attributes"),
-    firstItem("The first control yourself", "A.8.15 Logging: find its row and choose its control type. Next unlocks once it is right.", "Control type", 1, () => selIs("Control type", 1, "Detective"), "Choose A.8.15's control type", PAGE_WINDOW("Ref-27002 attributes")),
+    // The first chain's control through its three attributes (tester, 18 Nov 2026): the guide waited on Control type alone.
+    rowCell("Its control type", "Control type", t7113Row, "The first row's control is **A.8.15 Logging**, in its Annex A control cell.", {
+      steps: [
+        { lead: "Find A.8.15's row in Ref-27002 attributes" },
+        { lead: "Read its **Control type** column" },
+        { lead: "Choose that in **Control type**", text: "Next unlocks once it is the page's." },
+      ],
+      alsoShow: () => (innerWidth > 700 ? $(PAGE_WINDOW("Ref-27002 attributes")) : null),
+    }),
+    rowCell("Its security property", "Security property", t7113Row, "Stay on A.8.15's row of the page.", {
+      steps: [
+        { lead: "Read its **Security properties** column", text: "C, I and A stand for confidentiality, integrity and availability." },
+        { lead: "Choose that in **Security property**", text: "Next unlocks once it is the page's." },
+      ],
+      alsoShow: () => (innerWidth > 700 ? $(PAGE_WINDOW("Ref-27002 attributes")) : null),
+    }),
+    rowCell("Its cybersecurity concept", "Cybersecurity concept", t7113Row, "The last cell of the row.", {
+      steps: [
+        { lead: "Read A.8.15's **Cybersecurity concepts** column" },
+        { lead: "Choose that in **Cybersecurity concept**", text: "Next unlocks once it is the page's." },
+      ],
+      tips: [{ kind: "note", text: "That is the full row." }],
+      alsoShow: () => (innerWidth > 700 ? $(PAGE_WINDOW("Ref-27002 attributes")) : null),
+    }),
     {
-      title: "Then the rest",
+      title: "Then the other two",
       icon: "check",
-      body: "Choose the other attributes of each control.",
+      body: "Tag the other two controls the same way: three cells each, read on the control's own row of the page.",
       tips: [
         { kind: "unsure", text: "A value that is not the page's is flagged at once, with where to read it." },
       ],
@@ -5656,7 +5988,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       icon: "table",
       body: "A plan names the Annex A control each action puts in place, so the Statement of Applicability and the control tests can find it.",
       tips: [
-        { kind: "avoid", text: "picking a control from a word in the action. Rule L12 takes it from the row of the risk's category in Ref-Keywords." },
+        { kind: "avoid", text: "picking a control from outside the row of the risk's category in Ref-Keywords: rule L12 takes it from that row. Where the row lists several controls, the action's own words decide among them." },
       ],
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
@@ -5860,6 +6192,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("Rank 1 yourself", "Rank 1: find its Risk ID in the change log and compare its residual score then and now. Next unlocks once it is right.", "Trend (R23)", 1, () => selIs("Trend (R23)", 1, "↑"), "Choose rank 1's trend", HEAT_WINDOW),
     checkAnswers("Then the other four. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked. The next step is a question, so the desk takes you back to the step list."),
   ],
 
@@ -5971,6 +6316,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
         { kind: "avoid", text: "submitting while any count is above zero." },
       ],
       getEl: () => $('[data-guide="empty-check"]'),
+    },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
     },
     ...nameAndSubmit("docx", "1 to 4").slice(1).map((c) => (c.title === "Submit it" ? { ...c, body: "Both are platform forms, so there is no file to name. Submit hands them in; the receipt shows a hash (a fingerprint of the files) and a UTC time." } : c)),
   ],
@@ -6325,6 +6683,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("The first finding yourself", "V-0001: compare its closed date with its last scan, and read what that scan found. Next unlocks once it is right.", "Re-scan verified", 1, () => selIs("Re-scan verified", 1, "Verified by re-scan"), "Decide V-0001", POL010_WINDOW),
     checkAnswers("Then the other closed findings. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -6423,6 +6794,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("Recommendation 1 yourself", "Recommendation 1: the type R25 puts first. Next unlocks once it is right.", "What the memo says", 6, () => selIs("What the memo says", 6, "V1: Patch or isolate the asset; record an approved exception if not possible"), "Choose recommendation 1", PAGE_WINDOW("Ref-Actions")),
     checkAnswers("Then recommendations 2 and 3. Check my answers then shows each one's answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -6513,7 +6897,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('#act-10 [data-guide="decision"]'),
     },
     {
-      title: "Replay any time",
+      title: "Finish here",
       icon: "play",
       body: "Then click **Mark step complete**, in this row.",
       tips: [
@@ -6681,6 +7065,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('[data-guide="register"]'),
     },
     checkAnswers("Once all 28 are recorded, Check my answers shows each record's answer and why. Your rows lock then, so look them over first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "A message for this step is in your **Inbox** on the toolbar. It carries data the step uses and asks for no reply: open it and read it.",
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -6755,6 +7145,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("The recommendation yourself", "Rule R25, in the note, takes the Ref-Actions action for each deviation type: choose the one your test found. Next unlocks once it is right.", "What the memo says", 7, () => selIs("What the memo says", 7, "CT: Correct the instance and add the missing step to the procedure"), "Choose the recommendation", PAGE_WINDOW("Ref-Actions")),
     checkAnswers("Check my answers then shows each answer and why, and the memo's other parts are written. Your rows lock then."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -6988,6 +7391,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     firstItem("Lumen's questions yourself", "Lumen's row: count the rows for its tier, and choose. Next unlocks once it is right.", "Your answer", 1, () => selIs("Your answer", 1, "17"), "Choose Lumen's count", BANK_WINDOW),
     ...openScreen("vendors", "Vendors", "Reassessment Reminder", "One line per tier: how often a vendor of that tier is reassessed.", 'section[role="dialog"][aria-label^="Vendors › Reassessment Reminder"]'),
     checkAnswers("Now the other two counts and the three cycles. Check my answers then shows each answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked. The next step starts with a question, so the desk takes you back to the step list."),
   ],
 
@@ -7011,6 +7427,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("The first clause yourself", "Security obligations and standards: does Lumen's line say everything Section 6.3's row asks? Choose. Next unlocks once it is right.", "Result", 1, () => selIs("Result", 1, "Covered"), "Choose for the first clause", POL013_WINDOW),
     checkAnswers("Then the other seven. Check my answers then shows each clause's answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -7204,6 +7633,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("The first CUEC yourself", "Read what the CUEC asks LearnTech to do, find its kind among Flag Risk's CUEC owner rows, and choose its owner. Next unlocks once it is right.", "Internal owner", 1, () => selIs("Internal owner", 1, "IAM team"), "Choose the CUEC's owner", FLAG_WINDOW),
     checkAnswers("Then the second CUEC the same way. Check my answers then shows each answer and why. Your rows lock then."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -7257,6 +7699,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("X1 yourself", "X1 is beside S5. Compare what arrived with Flag Risk's S5 row, and choose what it does. Next unlocks once it is right.", "What it does", 1, () => selIs("What it does", 1, "Clears the check"), "Choose what X1 does", FLAG_WINDOW),
     checkAnswers("Then X2 to X4 and the decision, which rule R28 in the note settles. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "A message for this step is in your **Inbox** on the toolbar. It carries data the step uses and asks for no reply: open it and read it.",
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked and both files are submitted. The file boxes appear under your checked answers, each with the four parts of the file's name: .xlsx for SOC-REV, .docx for SOC-DEC. Any empty cell is marked amber, and the line above each sheet counts them."),
   ],
 
@@ -7371,6 +7819,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     firstItem("F1's shape yourself", "Read flow F1 and choose its shape. Next unlocks once it is right.", "Shape", 1, () => selIs("Shape", 1, "Collect"), "Choose F1's shape"),
     firstItem("F1's system yourself", "Choose the asset F1 happens in: the one whose description fits it. Next unlocks once it is right.", "System (asset register)", 1, () => selIs("System (asset register)", 1, "Learning platform & content"), "Choose F1's system", ASSET_WINDOW),
     checkAnswers("Then F2 to F8. Check my answers then shows each flow's shape and system, and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -7454,6 +7915,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $('[data-guide="empty-check"]'),
     },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     ...nameAndSubmit("xlsx", "1 to 5").map((c) => (c.title === "Name the file" ? { ...c, title: "Name the files", body: "Type the four parts listed under each box, in order, joined by underscores, then the extension the box names: .xlsx for ROPA, .png or .pdf for DFM." } : c)),
   ],
 
@@ -7490,7 +7964,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $(POL014_WINDOW),
       onEnter: () => $(`${POL014_WINDOW} [data-sec="6.3"]`)?.scrollIntoView({ block: "start" }),
     },
-    firstItem("The discovery time yourself", "Find the record's line that Section 6.3 means, convert it, and type it into the Value cell as date, time, UTC. Next unlocks once it is in that form.", "Value (incident record)", 1, () => / UTC$/.test((oblCell("Value (incident record)", 1) as HTMLInputElement | null)?.value ?? ""), "Type the discovery time in UTC", POL014_WINDOW),
+    firstItem("The discovery time yourself", "Find the record's line that Section 6.3 means, convert it to UTC, and pick that date and time in the Value cell. Next unlocks once it is in.", "Value (incident record)", 1, () => cellIn(oblCell("Value (incident record)", 1)), "Pick the discovery time in UTC", POL014_WINDOW),
     checkAnswers("Check my answers shows whether it is right, and why. Your row locks then, so check it first."),
     finish("**Mark step complete** unlocks once your answer is checked."),
   ],
@@ -7565,7 +8039,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $(POL014_WINDOW),
       onEnter: () => $(`${POL014_WINDOW} [data-sec="6.3"]`)?.scrollIntoView({ block: "start" }),
     },
-    firstItem("KVKK yourself", "The discovery time is in the note above the table. Add KVKK's clock, and type the deadline as date, time, UTC. Next unlocks once it is right.", "Deadline (UTC)", 1, () => valIs("Deadline (UTC)", 1, "2026-12-11 13:20 UTC"), "Type KVKK's deadline", POL014_WINDOW),
+    firstItem("KVKK yourself", "The discovery time is in the note above the table. Add KVKK's clock, and pick the deadline's date and time (UTC). Next unlocks once it is right.", "Deadline (UTC)", 1, () => valIs("Deadline (UTC)", 1, "2026-12-11T13:20"), "Pick KVKK's deadline", POL014_WINDOW),
     checkAnswers("Then the other regimes, and last the earliest firm deadline. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
@@ -7593,6 +8067,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("The first condition yourself", "Children's data: read the record and choose. Next unlocks once it is right.", "Your answer", 1, () => selIs("Your answer", 1, "Yes"), "Choose for children's data", BRC_WINDOW),
     checkAnswers("Then the other conditions, R30's exception, and last whether the data subjects must be told. Check my answers then shows each row's answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -7646,6 +8133,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       icon: "check",
       body: "With the feedback read, click **Mark step complete**.",
       getEl: () => $('#act-6 [data-guide="step-complete"]'),
+    },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
     },
     {
       title: "Replay any time",
@@ -7965,6 +8465,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('#act-4 [data-guide="decision"]'),
     },
     { title: "Finish here", icon: "check", body: "With the feedback read, mark the step complete. The next step is a question too, so the desk takes you back to the step list.", getEl: () => $('#act-4 [data-guide="step-complete"]') },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     { title: "Replay any time", icon: "play", body: "Click **▶ Show me how** to run this guide again.", getEl: () => $('#act-4 [data-guide="show-me-how"]') },
   ],
 
@@ -7983,16 +8496,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $(HEAT_WINDOW),
     },
     firstItem("Click rate yourself", "Find the phishing risk's KRI and type its target as it is written: “≤”, the number and “%” (you may type <=). Next unlocks once it is right.", "Target", 1, () => valIs("Target", 1, "≤ 5 %"), "Type the click-rate target", HEAT_WINDOW),
-    ...openLib(5, "BKB-POL-020", "The awareness policy", POL020_WINDOW).map((c) => (c.title === "Follow the orange dot" ? { ...c, onEnter: () => $(`${HEAT_WINDOW} button[aria-label^="Close"]`)?.click() } : c)),
-    {
-      title: "Section 7.1",
-      icon: "book",
-      body: "**Section 7.1**'s table gives the target of each measure. The bar at the top of the window jumps to Section 7.1.",
-      getEl: () => $(POL020_WINDOW),
-      onEnter: () => $(`${POL020_WINDOW} [data-sec="7.1"]`)?.scrollIntoView({ block: "start" }),
-    },
-    firstItem("The report rate's target", "Find the report rate's target in Section 7.1's table and type it as it is written. Next unlocks once it is right.", "Target", 2, () => valIs("Target", 2, "≥ 60 %"), "Type the report-rate target", POL020_WINDOW),
-    ...openScreen("awareness", "Awareness", "Campaign Results", "Last campaign's counts, tagged with this step.", RESULTS_WINDOW).map((c) => (c.title === "Follow the orange dot" ? { ...c, onEnter: () => $(`${POL020_WINDOW} button[aria-label^="Close"]`)?.click() } : c)),
+    // Click rate is worked from start to finish, target then rate (tester, 18 Nov 2026), before the report rate's target: the guide
+    // waited on the two targets, one of each row, and on neither rate.
+    ...openScreen("awareness", "Awareness", "Campaign Results", "Last campaign's counts, tagged with this step.", RESULTS_WINDOW).map((c) => (c.title === "Follow the orange dot" ? { ...c, onEnter: () => $(`${HEAT_WINDOW} button[aria-label^="Close"]`)?.click() } : c)),
     {
       title: "Last campaign's counts",
       icon: "book",
@@ -8003,7 +8509,25 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $(RESULTS_WINDOW),
     },
-    checkAnswers("Work out both rates and type them in the table. Check my answers then shows each metric's answer and why. Your rows lock then, so check them first."),
+    rowCell("Click rate: last campaign's rate", "Last campaign's rate", t1115Row, "The row's **How it is measured** cell gives the click rate's formula.", {
+      steps: [
+        { lead: "Read which two counts the formula uses" },
+        { lead: "Find them in Campaign Results and work the rate out" },
+        { lead: "Type it in **Last campaign's rate**", text: "A number and %. Next unlocks once the cell holds a rate; Check my answers says whether it is the right one." },
+      ],
+      tips: [{ kind: "note", text: "That is the click rate's full row." }],
+      alsoShow: () => (innerWidth > 700 ? $(RESULTS_WINDOW) : null),
+    }),
+    ...openLib(5, "BKB-POL-020", "The awareness policy", POL020_WINDOW),
+    {
+      title: "Section 7.1",
+      icon: "book",
+      body: "**Section 7.1**'s table gives the target of each measure. The bar at the top of the window jumps to Section 7.1.",
+      getEl: () => $(POL020_WINDOW),
+      onEnter: () => $(`${POL020_WINDOW} [data-sec="7.1"]`)?.scrollIntoView({ block: "start" }),
+    },
+    firstItem("The report rate's target", "Find the report rate's target in Section 7.1's table and type it as it is written. Next unlocks once it is right.", "Target", 2, () => valIs("Target", 2, "≥ 60 %"), "Type the report-rate target", POL020_WINDOW),
+    checkAnswers("Then the report rate's own rate, from the counts in Campaign Results and the formula in its row. Check my answers then shows each metric's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -8022,6 +8546,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
         { kind: "avoid", text: "submitting while any count is above zero." },
       ],
       getEl: () => $('[data-guide="empty-check"]'),
+    },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
     },
     ...nameAndSubmit("xlsx", "1 to 5").map((c) => (c.title === "Name the file" ? { ...c, title: "Name the files", body: "Type the four parts listed under each box, in order, joined by underscores, then an extension the box names: .xlsx or .docx for AWR-PLAN, .docx or .pptx for AWR-LESSON." } : c)),
   ],
@@ -8071,7 +8608,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "An example",
       icon: "info",
-      body: "A control owner whose record shows the briefing but no accepted evidence pack is **not yet shown competent**: one item of Evidence retained is missing.",
+      body: "A control owner whose record shows the briefing but no accepted evidence pack is **Action needed**, not Competent: one item of Evidence retained is missing.",
       getEl: () => $('[data-guide="register"]'),
     },
     firstItem("The risk owner yourself", "Compare the risk owner's Record on file with its Evidence retained, and choose. Next unlocks once it is right.", "Competence shown? (clause 7.2)", 1, () => selIs("Competence shown? (clause 7.2)", 1, "Action needed"), "Choose for the risk owner"),
@@ -8246,6 +8783,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("Istanbul yourself", "Apply the three tests to Istanbul's line, and choose. Next unlocks once it is right.", "Do the guidelines apply?", 1, () => selIs("Do the guidelines apply?", 1, "Does not apply"), "Choose for Istanbul", POL016_WINDOW),
     checkAnswers("Then the other three. Check my answers then shows each office's answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "A message for this step is in your **Inbox** on the toolbar. It carries data the step uses and asks for no reply: open it and read it.",
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -8265,6 +8808,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     firstItem("Point 4 yourself", "Find the key word point 4 uses, and choose its policy. Next unlocks once it is right.", "BKB policy (Ref-Keywords)", 4, () => selIs("BKB policy (Ref-Keywords)", 4, "BKB-POL-002"), "Choose point 4's policy", PAGE_WINDOW("Ref-Keywords")),
     checkAnswers("Then the other seven. Check my answers then shows each duty's answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked. The next step is a question, so the desk takes you back to the step list."),
   ],
 
@@ -8492,15 +9048,21 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Section 3",
       icon: "book",
-      body: "Choose **Raised on**:",
-      steps: [
-        { lead: "Read Section 3's **What it holds** column", text: "What sits on each layer." },
-        { lead: "Check your layers from step 12", text: "In the note above the table." },
-        { lead: "Pick the affected system on the layer that holds what the note is about" },
-      ],
+      body: "**Section 3** lists the layers of the architecture. Its **What it holds** column says what sits on each layer.",
       getEl: () => $(TECH_WINDOW),
       onEnter: () => $(`${TECH_WINDOW} [data-sec="3"]`)?.scrollIntoView({ block: "start" }),
     },
+    // The row's second cell (tester, 18 Nov 2026): it was a reading card with no cell lit and nothing to wait on.
+    rowCell("Raised on", "Raised on", t11213Row, "The same row's second cell: the system the note is raised on.", {
+      steps: [
+        { lead: "Find the layer whose **What it holds** names what the note is about" },
+        { lead: "Read your layers from step 12", text: "In the note beside the table: each affected system with its layer." },
+        { lead: "Choose the affected system on that layer in **Raised on**", text: "Next unlocks once the cell is filled; Check my answers says whether it is the right one." },
+      ],
+      tips: [{ kind: "note", text: "That is the full row." }],
+      onEnter: () => $(`${TECH_WINDOW} [data-sec="3"]`)?.scrollIntoView({ block: "start" }),
+      alsoShow: () => (innerWidth > 700 ? $(TECH_WINDOW) : null),
+    }),
     checkAnswers("Check my answers then shows the answer and why. The row locks then."),
     finish("**Mark step complete** unlocks once your answer is checked."),
   ],
@@ -8572,16 +9134,16 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "An owner's \"Closed\" is a **claim**: before the management review, the Compliance Manager's team tests the evidence of every closure. Each row is an action its owner reports Closed.",
       getEl: () => $('[data-guide="step-note"]') ?? $('[data-guide="register"]'),
     },
-    ...openLearn("Rule tables", "Rule R33 is in the rule tables, tagged with this step.", RULES_WINDOW),
     {
       title: "Rule R33",
       icon: "book",
-      body: "**R33**: four tests, in order, coded **K1 to K4**. An action is verified only if all four pass.",
+      body: "**R33**, in the note: four tests, in order, coded **K1 to K4**. An action is verified only if all four pass.",
       tips: [
         { kind: "note", text: "Drag the window aside if it covers the checklist." },
       ],
-      getEl: () => rowIn(RULES_WINDOW, "R33") ?? $(RULES_WINDOW),
-      onEnter: () => rowIn(RULES_WINDOW, "R33")?.scrollIntoView({ block: "center" }),
+      // The note beside the table names the four tests: no Rule tables window over it (as T7.1 and T8.1, 16 Nov 2026).
+      getEl: () => $(STEP_NOTE) ?? $('[data-guide="register"]'),
+      onEnter: () => $(STEP_NOTE)?.scrollIntoView({ block: "nearest" }),
     },
     {
       title: "The tests, beside the table",
@@ -8761,7 +9323,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('#act-8 [data-guide="decision"]'),
     },
     {
-      title: "Replay any time",
+      title: "Finish here",
       icon: "play",
       body: "Then click **Mark step complete**, in this row.",
       tips: [
@@ -8812,6 +9374,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $('[data-guide="empty-check"]'),
     },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     ...nameAndSubmit("xlsx", "1 to 9").map((c) => (c.title === "Name the file" ? { ...c, title: "Name the files", body: "Type the four parts listed under each box, in order, joined by underscores, then the extension the box names." } : c)),
   ],
 
@@ -8859,7 +9434,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $('#act-11 [data-guide="decision"]'),
     },
     {
-      title: "Replay any time",
+      title: "Finish here",
       icon: "play",
       body: "Then click **Mark step complete**, in this row.",
       tips: [
@@ -9147,6 +9722,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $(PAGE_WINDOW("Ref-Actions")),
     },
     checkAnswers("Choose the corrective action. Check my answers then shows each answer and why. Your rows lock then, so check them first."),
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
+    },
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
 
@@ -9172,6 +9760,19 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
         { kind: "avoid", text: "submitting while any count is above zero." },
       ],
       getEl: () => $('[data-guide="empty-check"]'),
+    },
+    {
+      title: "A message has arrived",
+      icon: "inbox",
+      body: "At work, colleagues interrupt you mid-task. A message for this step is in your **Inbox** on the toolbar.",
+      steps: [
+        { lead: "Open the Inbox and read the message" },
+        { lead: "Choose your reply", text: "You then see whether it was the best reply, and why." },
+      ],
+      tips: [
+        { kind: "note", text: "**Mark step complete** stays locked until you have replied." },
+      ],
+      getEl: () => $('[data-guide="message-notice"]') ?? $('[data-guide-section="inbox"]'),
     },
     ...nameAndSubmit("xlsx", "1 to 7").map((c) => (c.title === "Name the file" ? { ...c, title: "Name the files", body: "Type the four parts listed under each box, in order, joined by underscores, then the extension the box names." } : c)),
   ],

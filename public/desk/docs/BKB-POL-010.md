@@ -31,7 +31,7 @@ This policy applies to every BKB organisation. Organisation addenda (BKB-ADD-01 
 
 • Every asset in scope is scanned for vulnerabilities with authenticated scans at least monthly, and internet-facing assets at least weekly.
 
-• Findings are prioritised by exploitation status and exposure as well as by severity: a vulnerability listed in the CISA Known Exploited Vulnerabilities (KEV) catalogue, or a Critical one on an internet-facing asset, is fixed first.
+• Findings are prioritised by exploitation status and exposure as well as by severity: on an internet-facing asset, a vulnerability listed in the CISA Known Exploited Vulnerabilities (KEV) catalogue, or a Critical one, is fixed first; a Critical or KEV-listed one on an internal asset comes next (Section 4).
 
 • A vulnerability that cannot be fixed within its timescale is covered by an exception (Section 7.1) with a compensating control and an expiry date, or the asset is isolated.
 

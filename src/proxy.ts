@@ -5,7 +5,8 @@ import { WAITLIST_MODE } from "@/lib/flags";
 // Next 16 renamed the `middleware` convention to `proxy`.
 // Pre-launch, the only things the public may reach are the landing page, the waitlist form and
 // the Assessment Board recruitment page.
-// Everything else — the app, signin, signup, tracks, cv, verify — redirects to /waitlist.
+// Everything else — the app, signin, signup, tracks, cv — redirects to /waitlist.
+// /verify/<id> stays open: an issued certificate's link and QR must work whatever the launch state.
 const PUBLIC_PATHS = new Set(["/", "/waitlist", "/work-with-us"]);
 
 // The mentor console is staff tooling, not part of the public launch. Mentors review and
@@ -19,6 +20,7 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
   if (pathname === STAFF_PREFIX || pathname.startsWith(`${STAFF_PREFIX}/`)) return NextResponse.next();
+  if (pathname.startsWith("/verify/")) return NextResponse.next();
 
   return NextResponse.redirect(new URL("/waitlist", request.url));
 }

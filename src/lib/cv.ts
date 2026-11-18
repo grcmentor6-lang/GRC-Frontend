@@ -33,6 +33,11 @@ export interface CvExperienceTask {
   code: string;
   title: string;
   standards: string;
+  /** What the task built and the competency it exercised, in the pack's words. */
+  skill?: string;
+  competency?: string;
+  /** What the learner did in the task, as one CV line. */
+  did?: string;
   items: CvExperienceItem[];
 }
 
@@ -81,6 +86,8 @@ export interface Cv {
   completedTaskCodes: string[];
   experience: CvExperienceOrg[];
   skills: CvSkill[];
+  /** Knowledge areas the submitted tasks covered, in programme order. */
+  knowledge?: string[];
   judgment?: CvJudgment | null;
   verbs: CvVerbs;
   standards: CvStandard[];

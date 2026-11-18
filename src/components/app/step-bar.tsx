@@ -33,7 +33,7 @@ function scrollParent(el: HTMLElement | null): HTMLElement | null {
  * rather than under it — the reference strip and the gate step nav (`top-[60px]`), the floating
  * acceptance checklist (`--hdr-h` + 64px), and step-screen's "at the deliverable" band (-116px).
  */
-export function StepBar({ code, eyebrow, title, watch, done, score, onScore, action, label = "Step" }: {
+export function StepBar({ code, eyebrow, title, watch, done, score, onScore, action, onShow, label = "Step" }: {
   code?: string;
   /** What the code is a code of: "Step" on a step, "Task" on the GRC 101 task file. */
   label?: string;
@@ -49,6 +49,8 @@ export function StepBar({ code, eyebrow, title, watch, done, score, onScore, act
   onScore?: () => void;
   /** A page's own control, set before "back to top" (the desk's Key results on a narrow sheet). */
   action?: React.ReactNode;
+  /** Told when the bar comes and goes, for a page control that lives with it (the desk's key results box). */
+  onShow?: (on: boolean) => void;
 }) {
   const [on, setOn] = useState(false);
   const bar = useRef<HTMLDivElement>(null);
@@ -60,12 +62,16 @@ export function StepBar({ code, eyebrow, title, watch, done, score, onScore, act
     // Watched against the column it scrolls in, so "gone" means gone under the column's top edge.
     // Only upwards counts: a heading below the fold of a short window is not a reason to repeat it.
     const io = new IntersectionObserver(
-      ([entry]) => setOn(!entry.isIntersecting && entry.boundingClientRect.top < (entry.rootBounds?.top ?? 0)),
+      ([entry]) => {
+        const v = !entry.isIntersecting && entry.boundingClientRect.top < (entry.rootBounds?.top ?? 0);
+        setOn(v);
+        onShow?.(v);
+      },
       { root: scrollParent(el) },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [watch, title]);
+  }, [watch, title, onShow]);
 
   // Reading progress, written straight to the line's style: a scroll handler that set state would
   // re-render the bar sixty times a second for one number.

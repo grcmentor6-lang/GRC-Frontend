@@ -701,8 +701,13 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
     const ro = new ResizeObserver(() => { reposition(); fit(); });
     if (el) ro.observe(el);
 
+    // A resize that reflows the page (a window narrowed past the stacked layout, a browser side panel opening) can
+    // leave the target under the fold of a frozen scroller: nothing lit, no card, nothing to scroll. Brought back.
+    const onResize = () => { const n = s.getEl(); if (n && hidden(n)) { scrollTo(n); track(650); } };
+    window.addEventListener("resize", onResize);
+
     // Hidden as the step ends (the previous step's cleanup hides the card before the next one is placed).
-    return () => { setShown(false); ro.disconnect(); thaw(); drop(); lower(); cancelAnimationFrame(sinkId); clearTimeout(resinkId); clearTimeout(fitId); unsink(); cancelAnimationFrame(raf); clearInterval(poll); clearTimeout(showId); };
+    return () => { window.removeEventListener("resize", onResize); setShown(false); ro.disconnect(); thaw(); drop(); lower(); cancelAnimationFrame(sinkId); clearTimeout(resinkId); clearTimeout(fitId); unsink(); cancelAnimationFrame(raf); clearInterval(poll); clearTimeout(showId); };
   }, [step, active, reposition, steps.length]);
 
   // A "do it" step: watch for the action and move on when it has happened.

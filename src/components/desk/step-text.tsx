@@ -40,7 +40,7 @@ export const ACTION = new RegExp(`^(?:(?:${VERBS})\\b|(?:for each|for every|in|w
 export function sentences(text: string): string[] {
   const out: string[] = [];
   for (const part of text.split(/(?<=[.!?]["”’]?)\s+(?=[A-Z0-9"“(<*▶])/)) {
-    if (out.length && /\b(e\.g|i\.e)\.$/i.test(out[out.length - 1])) out[out.length - 1] += ` ${part}`;
+    if (out.length && /\b(e\.g|i\.e|Req|Sec)\.$/i.test(out[out.length - 1])) out[out.length - 1] += ` ${part}`;
     else out.push(part);
   }
   return out.map((s) => s.trim()).filter(Boolean);

@@ -946,7 +946,7 @@ function PolicyLibrary() {
   ];
   return (
     <div ref={box} data-guide="policy-library" className="grid gap-4 bg-white p-4">
-      {groups.map(([h, list]) => (
+      {groups.filter(([, list]) => list.length > 0).map(([h, list]) => (
         <section key={h}>
           <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">{h}</h3>
           <ul className="divide-y divide-[#E9ECF1] rounded border border-[#DDE1E8]">
@@ -959,7 +959,7 @@ function PolicyLibrary() {
                   onClick={() => openTool(`doc|${code}`)}
                   className={`flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] hover:bg-[#F7F8FA] focus-ring ${cited.has(code) ? "bg-[#FFFBF2] shadow-[inset_3px_0_0_#D97706]" : ""}`}
                 >
-                  <span className="w-[104px] shrink-0 font-mono text-[12px] font-semibold text-[#111827]">{code}</span>
+                  <span className="shrink-0 font-mono text-[12px] font-semibold text-[#111827]" style={{ width: `${Math.max(13, ...list.map(([c]) => c.length))}ch` }}>{code}</span>
                   <span className="min-w-0 flex-1 text-[#3F4757]">{title}</span>
                   {cited.has(code) && <span className="shrink-0 rounded-[3px] bg-[#FDE7B8] px-1.5 py-0.5 text-[11px] font-semibold text-[#78350F]">Step {here?.n}</span>}
                 </button>

@@ -203,7 +203,7 @@ export function RmfForm({ task, t, readOnly }: { task: Task; t: number; readOnly
         {given && !readOnly ? (
           <>Filled in for you by the programme office. Check each value against <strong className="font-semibold text-[#111827]">{table.from}</strong> and correct any that differ.</>
         ) : (
-          <>Copy from <strong className="font-semibold text-[#111827]">{table.from}</strong>, exactly as written there.</>
+          <>{t === 1 ? "Choose each folder's path, as shown in " : "Copy from "}<strong className="font-semibold text-[#111827]">{table.from}</strong>{t === 1 ? "." : ", exactly as written there."}</>
         )}
       </p>
       <table className="w-full border-collapse border border-[#E3E5EA] text-[13.5px]">
@@ -231,6 +231,21 @@ export function RmfForm({ task, t, readOnly }: { task: Task; t: number; readOnly
                       />
                       {v && <span className="block px-3 pb-1.5 font-mono text-[11.5px] text-[#5B6474]">Recorded as {v}</span>}
                     </span>
+                  ) : t === 1 ? (
+                    // The Folders table: each path is chosen from the four My Tasks shows, not typed character by
+                    // character, where one slash wrong was a flag (owner, 17 Nov 2026). The paths are on screen already;
+                    // the act is matching each folder to its path.
+                    <select
+                      value={want.find((w) => same(w, v)) ?? ""}
+                      disabled={readOnly}
+                      onChange={(e) => set(cell, e.target.value)}
+                      aria-label={`${table.title}: ${r}`}
+                      aria-invalid={off}
+                      className={`block min-h-[38px] w-full px-3 py-2 font-mono text-[12.5px] outline-none focus:shadow-[inset_0_0_0_2px_#4338CA] ${v.trim() ? "bg-white text-[#111827]" : "bg-[#EEF0FF]/70 text-[#5B6474]"}`}
+                    >
+                      <option value="">Choose the path</option>
+                      {[...want].sort().reverse().map((w) => <option key={w} value={w}>{w}</option>)}
+                    </select>
                   ) : (
                     <input
                       value={v}
@@ -480,6 +495,12 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
   const missing = adding && isSeeded(progress.grids?.[gk] ?? {}, s!.n) ? Math.max(0, need - stepRows) : 0;
   const spare = adding && stepRows > need;
   const cuts = spare || trimming;
+  // The trimming step can take its removals back (tester, 18 Nov 2026: one wrong click lost a row built over several
+  // steps, and the register could be emptied). The × goes once the register is down to size, and Undo restores the
+  // table as it was before the last removal. ponytail: held for this visit only; after a reload the row is put back
+  // in the step that holds it, as before.
+  const [undo, setUndo] = useState<Record<string, string>[]>([]);
+  const canCut = !trimming || rows.length > reg.grow!.target;
   const set = (cell: string, v: string) => edit((c) => ({ ...c, [cell]: v }));
   // A column that arrives as a draft: in its empty cells, once, when the step opens.
   const draft = s && !readOnly ? reg.draft?.[s.n]?.(desk, progress) : undefined;
@@ -653,7 +674,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
         <thead className="bg-[#F8F9FB] font-sans text-[10.5px] uppercase tracking-[0.08em] text-[#6B7280]">
           <tr>
             {/* In a finding step column A is the same organisation on every row: named above instead. */}
-            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${out(ci) ? "!bg-[#F1F2FF] text-[#4338CA]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""}`}>{c.h}</th>)}
+            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${out(ci) ? "!bg-[#F1F2FF] text-[#4338CA]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""} ${c.what ? "align-top" : ""}`}>{c.h}{c.what && <span className="mt-1 block max-w-[30ch] font-sans text-[11.5px] font-normal normal-case leading-snug tracking-normal text-[#6B7280]">{c.what}</span>}</th>)}
             {cuts && <th className={th}><span className="sr-only">Remove</span></th>}
           </tr>
         </thead>
@@ -779,7 +800,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                     return <td key={ci} className={`${td} ${c.wrap ? "" : "whitespace-nowrap"} bg-[#FBFBFF] px-3.5 py-3`} title="Recorded by itself"><Toned v={v} h={c.h} /></td>;
                   if (mine && !r[ci] && !c.auto && open.has(ci) && (!adding || by === s!.n)) {
                     const base = `block min-h-[38px] w-full min-w-[150px] px-3 py-2 text-[13px] outline-none focus:shadow-[inset_0_0_0_2px_#4338CA] ${v.trim() ? "bg-white text-[#111827]" : "bg-[#EEF0FF]/70"}`;
-                    const opts = c.opts === "step" ? s?.opt : typeof c.opts === "function" ? c.opts(desk, liveRow(reg, progress, task.id, ri)) : c.opts;
+                    const opts = c.opts === "step" ? s?.opt : typeof c.opts === "function" ? c.opts(desk, liveRow(reg, progress, task.id, ri), by) : c.opts;
                     const rule = reg.cells?.[ci];
                     const dated = typeof c.date === "function" ? c.date(liveRow(reg, progress, task.id, ri)) : c.date;
                     const off = !!rule && !!v.trim() && rule.fix(v, liveRow(reg, progress, task.id, ri), desk, ri, by) === null;
@@ -806,6 +827,13 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                         {opts ? null : dated ? (
                           // A date is picked, not typed: no format to get wrong. A value typed before this was a picker
                           // and never tidied to YYYY-MM-DD shows as empty and is flagged below.
+                          dated === "time" ? (
+                            // A date and time, picked: stored as the pack writes a time, "2026-01-31 09:00 UTC".
+                            <div className={`flex items-center ${v.trim() ? "bg-white" : "bg-[#EEF0FF]/70"}`}>
+                              <input type="datetime-local" value={v.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/)?.slice(1, 3).join("T") ?? ""} onChange={(e) => set(cell, e.target.value ? `${e.target.value.slice(0, 16).replace("T", " ")} UTC` : "")} aria-label={label} aria-invalid={off} className={`${base} !bg-transparent tabular-nums`} />
+                              <span className="shrink-0 pl-1 pr-3 text-[12px] font-semibold text-[#5B6474]">UTC</span>
+                            </div>
+                          ) :
                           <div className={`flex items-center ${v.trim() ? "bg-white" : "bg-[#EEF0FF]/70"}`}>
                             <input type="date" value={/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ""} disabled={v === "none"} onChange={(e) => set(cell, e.target.value)} aria-label={label} aria-invalid={off} className={`${base} !bg-transparent tabular-nums disabled:text-[#8A91A3]`} />
                             {dated === "none" && (
@@ -849,7 +877,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                 })}
                 {cuts && (
                   <td className={`${td} p-0`}>
-                    {(trimming || by === s!.n) && <button type="button" onClick={() => edit((cells) => removeRow(cells, ri))} aria-label={`Remove row ${ri + 1}`} className="grid h-[38px] w-10 place-items-center text-[#8A91A3] hover:bg-[#FEF2F2] hover:text-[#B91C1C] focus-ring">
+                    {(trimming ? canCut : by === s!.n) && <button type="button" onClick={() => { if (trimming) setUndo((u) => [...u, progress.grids?.[gk] ?? {}]); edit((cells) => removeRow(cells, ri)); }} aria-label={`Remove row ${ri + 1}`} className="grid h-[38px] w-10 place-items-center text-[#8A91A3] hover:bg-[#FEF2F2] hover:text-[#B91C1C] focus-ring">
                       <Icon name="x" size={14} />
                     </button>}
                   </td>
@@ -913,6 +941,16 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
         <button type="button" data-guide="earlier-rows" onClick={() => setShowEarlier(!showEarlier)} className="sticky left-0 flex w-full items-center gap-1.5 border-t border-[#E9ECF1] bg-[#F7F8FA] px-3 py-2 text-left text-[12.5px] text-[#3F4757] hover:bg-[#F3F4F7] focus-ring">
           <Icon name={showEarlier ? "chevronDown" : "chevronRight"} size={13} />
           {showEarlier ? "Hide" : "Show"} the {rows.filter((_, ri) => addedBy(reg, progress, task.id, ri) !== s!.n).length} rows from earlier steps
+        </button>
+      )}
+      {trimming && undo.length > 0 && (
+        <button
+          type="button"
+          data-guide="undo-remove"
+          onClick={() => { const last = undo[undo.length - 1]; edit(() => last); setUndo(undo.slice(0, -1)); }}
+          className="sticky left-0 flex w-full items-center justify-center gap-1.5 border-t border-dashed border-[#C7CBF5] bg-[#F7F8FF] px-3 py-2.5 text-[13px] font-semibold text-[#3730A3] hover:bg-[#EEF0FF] focus-ring"
+        >
+          <Icon name="history" size={14} /> Undo: put back the row you just removed
         </button>
       )}
       {missing > 0 && (
@@ -1003,7 +1041,7 @@ export function RegisterProgress({ task, s }: { task: Task; s: Step }) {
           ) : reg.grow && !cols.length ? (
             <>
               The register must hold exactly <strong>{reg.grow.target} rows</strong>
-              {keep ? <>, at least {keep.min} of them of Type “{keep.value}”</> : null}. Remove a row with the × at its end.
+              {keep ? <>, at least {keep.min} of them of Type “{keep.value}”</> : null}. Remove a row with the × at its end. The × goes once the register is at {reg.grow.target} rows, and Undo, under the table, puts back the last row you removed.
               {keep && <span className={`block text-[12.5px] ${kept >= keep.min ? "text-[#15803D]" : "text-[#92400E]"}`}>{kept} of your rows are of Type “{keep.value}”.</span>}
               {/* Which rows had to go is checked once the register is down to size: right or not, and why. */}
               {reg.grow.drop && rows0.length === reg.grow.target && (

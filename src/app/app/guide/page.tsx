@@ -313,7 +313,7 @@ export default function GuidePage() {
           <Sec id="example" title="Your first task, step by step" icon="play" lead="Week 1 opens with F1.1, “Onboarding to the Group GRC Office”. Here is what it asks, so you know what the work feels like before you start.">
             <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               <Step n={1} title="Check the Assignment table of Onboarding record">
-                <p>The programme office has filled in six values: each organisation&apos;s name and home office, the owner of task F1.2, and your start date. Check each against Home › My Organisation, correct any that differ, then press Check my answers.</p>
+                <p>The programme office has filled in six values: each organisation&apos;s name and your office in it, the owner of task F1.2, and your start date. Check each against Home › My Organisation, correct any that differ, then press Check my answers.</p>
               </Step>
               <Step n={2} title="Two decisions about conduct">
                 <p>A colleague asks for your login; you do not understand a rule. Pick what you would do and press Check my answer. The feedback tells you the best option and why for every option.</p>

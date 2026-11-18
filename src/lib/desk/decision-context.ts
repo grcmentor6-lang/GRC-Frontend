@@ -27,7 +27,7 @@ export const DECISION_CONTEXT: Record<string, string> = {
   "F2.1-D2":
     "Facilities keeps an office seating plan: a floor map with the name of each member of staff at their desk. It is for use inside the office and has not been approved for public release. Facilities wants to give it the lowest tier the Group's rules allow, and asks you which that is.",
   "F2.1-D3":
-    "A partner organisation working with GlobalConnect needs a file classified Tier 3, Confidential. The file has to leave GlobalConnect to reach them, and you are the one sending it. How information may travel depends on its tier.",
+    "A partner organisation working with GlobalConnect needs a file classified Tier 3, Confidential. The file has to leave GlobalConnect to reach them, and you are the one sending it. How information may travel depends on its tier: BKB-STD-001 Section 6 (Policies › Policy Library) has a row for each way of sending. The office's Group-issued USB sticks are logged, and not encrypted.",
   "F2.2-D2":
     "You are checking evidence items for the Information Security Auditor, who will rely on your results file in the audit. Halfway through one item you see that it shows a password in plain text. The auditor still needs a decision on the item, and your results file is open beside it.",
   "T3.1-D1":
@@ -39,7 +39,7 @@ export const DECISION_CONTEXT: Record<string, string> = {
   "T3.2-D3":
     "Your crosswalk has rated each requirement Full, Partial or None. A row rated Partial or None gets a gap sentence in its own column. MAP-XW goes on to T4.1, where the gaps are tested, and checkpoint HC2 scores it; whoever reads it next has to act on each gap without coming back to you. You have three drafts for one of the Partial rows.",
   "T3.2-D7":
-    "In the Statement of Applicability every Annex A control is marked Applicable or Not applicable, with a justification. LearnTech's risk treatment plan names, for each risk, the Annex A controls that treat it. Running a consistency check on a draft SoA, you see A.8.28 Secure coding marked Not applicable, while a treatment in the risk register uses A.8.28.",
+    "In the Statement of Applicability every Annex A control is marked Applicable or Not applicable, with a justification. LearnTech's risk treatment plan names, for each risk, the Annex A controls that treat it. Running a consistency check on a colleague's draft SoA for another office, you see A.8.28 Secure coding marked Not applicable, while a treatment in that office's risk register uses A.8.28.",
   "T4.1-D5":
     "LI-POL's last sheet is a RACI of GlobalConnect's ten ISMS processes, with exactly one Accountable (A) role on each row. One row is the Statement of Applicability: every Annex A control, whether it applies and why, which the certification auditor tests against the risk treatments. The BKB Group GRC Charter (Policies › Policy Library) sets out the three lines in Section 5.2 and who may approve what in Section 17.",
   "T3.1-D4":
@@ -84,9 +84,9 @@ export const DECISION_CONTEXT: Record<string, string> = {
   "T8.2-D6":
     "LI-NCR records two kinds of action, as ISO/IEC 27001 clause 10.2 asks: a correction and a corrective action (its fields in step 8). Before you fill your own, the Information Security Auditor gives you an example from a change-management test: a change was implemented without approval.",
   "T9.1-D2":
-    "You have tiered Lumen Learner Analytics with rule R35 in step 2. VEN-Q, the security questionnaire LearnTech will send Lumen, is drawn from the 17 questions of the bank in Vendors › Send Questionnaire, each marked with the tier it is included from, Low to Critical. Lumen has to answer every question you send, and you have to review every answer.",
+    "You have tiered Lumen Learner Analytics with rule R35 in step 2. VEN-Q, the security questionnaire LearnTech will send Lumen, is drawn from the 17 questions of the bank in Vendors › Send Questionnaire, each marked with the tier it is included from, Low to Critical. Lumen has to answer every question you send, and you have to review every answer. Rule R27 (Learn › Rule tables) says which questions a tier is sent.",
   "T9.1-D3":
-    "Lumen Learner Analytics would receive data on learners served by LearnTech's Amsterdam office, where GDPR applies (BKB-ADD-36 Section 2). Its intake form (Vendors › Vendor Intake) gives the hosting location as the United States. VEN-CL, the checklist LearnTech's contract with Lumen is drafted from, starts from the clauses Ref-Clauses lists by tier.",
+    "Lumen Learner Analytics would receive data on learners served by LearnTech's Amsterdam office, where GDPR applies (BKB-ADD-36 Section 2). Its intake form (Vendors › Vendor Intake) gives the hosting location as the United States. VEN-CL, the checklist LearnTech's contract with Lumen is drafted from, starts from the clauses Ref-Clauses lists by tier. Rule R27 (Learn › Rule tables) says what is added to them.",
   "T10.1-D1":
     "You are starting LearnTech's RoPA entry for its corporate LMS, which companies buy to train their own employees. Under each client's LMS service agreement and its data processing agreement, LearnTech enrols the employees the client names, runs the courses the client assigns and erases the records when the contract ends, on the client's written instructions. LearnTech itself chooses its hosting provider and how its software works. BKB-POL-017 Section 3.2 (Policies › Policy Library) says what each data-protection role means.",
   "T10.2-D4":
@@ -102,7 +102,7 @@ export const DECISION_CONTEXT: Record<string, string> = {
   "T11.1-D5":
     "LearnTech's information security policy has been re-issued, and every member of staff must read it and attest. LI-COMM's communication plan names, for each ISMS communication, who sends it. The CISO's team has drafted the announcement and asks who should put their name to it. Ref-Communications (Learn › Reference pages) is the Group's list.",
   "T11.2-D1":
-    "The Compliance Manager has asked you for a regulatory change brief on the EU Digital Services Act guidelines on the protection of minors online (2025). This month's monitoring has turned up several items on the topic. The brief records where each of its facts comes from, and LearnTech's policies and obligations register will be changed on the strength of it.",
+    "The Compliance Manager has asked you for a regulatory change brief on the EU Digital Services Act guidelines on the protection of minors online (2025). This month's monitoring has turned up several items on the topic. The brief records where each of its facts comes from, and LearnTech's policies and obligations register will be changed on the strength of it. An official source is the body that issued the rule or its guidance, or the official journal that publishes it.",
   "T11.2-D2":
     "The Commission's full guidelines are a long document: why they were written and whom they cover, the risks children face online, the measures for platforms, and what the Commission will do next. The brief has two pages, and its “What we must do” section holds at most eight lines, each of which becomes an obligation in LearnTech's register.",
   "T11.2-D5":
@@ -118,7 +118,7 @@ export const DECISION_CONTEXT: Record<string, string> = {
   "T12.2-D3":
     "Request R-3 asks for awareness training completion records over the audit period, and no file in the repository qualifies. You tell the control's owner. Within minutes they reply that the training did run, and that they can “create the record now”, a completion sheet typed up from who they remember attending, and send it before the auditor's afternoon session.",
   "T12.2-D5":
-    "NC-1 is in the auditor's findings: “Control A.8.32 did not operate during the period.” The Information Security Auditor asks you to draft LI-NCR-R, the clause-based finding response GlobalConnect files against NC-1. The certification body keeps the response with the finding, and reads the two together.",
+    "NC-1 is in the auditor's findings: “Control A.8.32 did not operate during the period.” The Information Security Auditor asks you to draft LI-NCR-R, the clause-based finding response GlobalConnect files against NC-1. The certification body keeps the response with the finding, and reads the two together. What an audit finding and its response rest on is in Learn › Framework Quick Reference, under ISO 19011.",
   "T12.2-D6":
     "Not NC-1, which you have answered: suppose GlobalConnect challenges a finding with its evidence row, and at the closing meeting the auditor keeps the finding in the report as written. The Compliance Manager still holds that the evidence answers it, and asks what GlobalConnect does next.",
 };

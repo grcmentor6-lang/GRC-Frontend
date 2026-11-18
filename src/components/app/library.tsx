@@ -19,7 +19,9 @@ import { nameOf, summaryOf, type LibGroup, type LibItem, type LibStandard } from
  *
  * They are SVG so one render serves the page and the PNG: the download serialises the same node
  * onto a canvas. Web fonts do not survive that trip (an <img> of an SVG loads nothing external),
- * so the posters name system fonts.
+ * so the posters name system fonts. The one exception is the wordmark, which has to be the site's
+ * own (its typeface, its two colours, its dot): on the page it is SVG text in the page's font, and
+ * the download leaves it out of the image and draws it on the canvas, where the page's fonts work.
  */
 
 const FONT = "'Segoe UI', Helvetica, Arial, sans-serif";
@@ -56,10 +58,29 @@ function Lines({ x, y, lines, size, lh, anchor, fill, weight }: {
   );
 }
 
+/** The wordmark as the app's sidebar draws it (app-shell.tsx): slate "grc", indigo "mentor", indigo dot. */
+const MARK = { x: 60, y: 84, size: 36, weight: 600, spacing: -0.72, grc: "#0f172a", mentor: "#4f46e5", dot: "#6366f1", gap: 8.5, r: 6.3, rise: 8 };
+
+function Wordmark() {
+  const text = useRef<SVGTextElement>(null);
+  const dot = useRef<SVGCircleElement>(null);
+  useEffect(() => {
+    const place = () => { if (text.current && dot.current) dot.current.setAttribute("cx", String(MARK.x + text.current.getComputedTextLength() + MARK.gap + MARK.r)); };
+    place();
+    document.fonts.ready.then(place); // the width is the web font's, once it has loaded
+  }, []);
+  return (
+    <g data-wordmark>
+      <text ref={text} x={MARK.x} y={MARK.y} fontSize={MARK.size} fontWeight={MARK.weight} letterSpacing={MARK.spacing} fill={MARK.grc} style={{ fontFamily: "var(--font-sans), ui-sans-serif, system-ui, sans-serif" }}>grc<tspan fill={MARK.mentor}>mentor</tspan></text>
+      <circle ref={dot} cx={MARK.x + 190} cy={MARK.y - MARK.rise} r={MARK.r} fill={MARK.dot} />
+    </g>
+  );
+}
+
 function Masthead({ w, standard }: { w: number; standard: LibStandard }) {
   return (
     <>
-      <text x={60} y={84} fontSize={36} fontWeight={800} fill={NAVY}>grc<tspan fill={STEEL}>mentor</tspan></text>
+      <Wordmark />
       <text x={w - 60} y={84} fontSize={22} fill={INK3} textAnchor="end">{nameOf(standard)}</text>
       <line x1={60} x2={w - 60} y1={112} y2={112} stroke={RULE} strokeWidth={2} />
     </>
@@ -72,7 +93,7 @@ function Colophon({ w, h, standard }: { w: number; h: number; standard: LibStand
       <line x1={60} x2={w - 60} y1={h - 110} y2={h - 110} stroke={RULE} strokeWidth={2} />
       <text x={60} y={h - 68} fontSize={19} fill={INK3}>{standard.source}</text>
       <text x={60} y={h - 38} fontSize={19} fill={INK3}>Summarised in our own words, not quoted. Read the standard before citing it.</text>
-      <text x={w - 60} y={h - 52} fontSize={24} fontWeight={700} fill={NAVY} textAnchor="end">grcmentor.app</text>
+      <text x={w - 60} y={h - 52} fontSize={24} fontWeight={700} fill={NAVY} textAnchor="end">grcmentor.ai</text>
     </>
   );
 }
@@ -86,12 +107,29 @@ function SaveImage({ target, name }: { target: React.RefObject<SVGSVGElement | n
     try {
       const { width, height } = svg.viewBox.baseVal;
       const img = new Image();
-      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
+      const bare = svg.cloneNode(true) as SVGSVGElement;
+      bare.querySelector("[data-wordmark]")?.remove();
+      img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(bare))}`;
       await img.decode();
       const canvas = document.createElement("canvas");
       canvas.width = width;
       canvas.height = height;
-      canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+      if (svg.querySelector("[data-wordmark]")) {
+        ctx.font = `${MARK.weight} ${MARK.size}px ${getComputedStyle(document.body).fontFamily}`;
+        await document.fonts.load(ctx.font, "grcmentor");
+        ctx.letterSpacing = `${MARK.spacing}px`;
+        ctx.fillStyle = MARK.grc;
+        ctx.fillText("grc", MARK.x, MARK.y);
+        const x = MARK.x + ctx.measureText("grc").width;
+        ctx.fillStyle = MARK.mentor;
+        ctx.fillText("mentor", x, MARK.y);
+        ctx.fillStyle = MARK.dot;
+        ctx.beginPath();
+        ctx.arc(x + ctx.measureText("mentor").width + MARK.gap + MARK.r, MARK.y - MARK.rise, MARK.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
       const a = document.createElement("a");
       a.href = canvas.toDataURL("image/png");
       a.download = `grcmentor-${name}.png`;

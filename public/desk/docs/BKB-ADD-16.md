@@ -169,12 +169,14 @@ The following values are selected from the criticality-band tables of the Group 
 
 6\. Sector and jurisdiction overlays
 
-| Overlay | Additional mandatory requirement |
-| :-: | :-: |
-| Payment card data | PCI DSS v4.0.1 scope must be documented and validated annually (Req. 12.5); card-data environment segmented; quarterly ASV scans. |
-| US health information | HIPAA Security Rule safeguards and BAAs; breach notification to covered entity/HHS per 45 CFR 164.410 (≤ 60 days). |
-| GDPR | RoPA, DPIAs, Art.28 contracts, 72h breach notification to lead supervisory authority, SCCs/adequacy for transfers out of the EEA. |
-| United States | State breach-notification laws for affected residents; SEC 8-K Item 1.05 within 4 business days if SEC registrant; sector rules (NYDFS 500 for NY financial services). |
+| Overlay | Additional mandatory requirement | Applies to |
+| :-: | :-: | :-: |
+| Payment card data | PCI DSS v4.0.1 scope must be documented and validated annually (Req. 12.5); card-data environment segmented; quarterly ASV scans. | All offices |
+| US health information | HIPAA Security Rule safeguards and BAAs; breach notification to covered entity/HHS per 45 CFR 164.410 (≤ 60 days). | Phoenix |
+| GDPR | RoPA, DPIAs, Art.28 contracts, 72h breach notification to lead supervisory authority, SCCs/adequacy for transfers out of the EEA. | Warsaw |
+| United States | State breach-notification laws for affected residents; SEC 8-K Item 1.05 within 4 business days if SEC registrant; sector rules (NYDFS 500 for NY financial services). | Phoenix |
+
+Note. Applies to names the offices each overlay binds: the offices whose Section 2 row names its law, or, for a standard, the offices Section 3's Applies to column gives it.
 
 7\. Information classification labels
 

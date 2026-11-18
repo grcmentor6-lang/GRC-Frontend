@@ -107,6 +107,14 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
         <section>
           <Head icon="user">Professional summary</Head>
           <p className="text-[13.5px] leading-relaxed text-slate-600 tracking-tight" style={{ textWrap: "pretty" }}>{p.summary}</p>
+          {!!cv.knowledge?.length && (
+            <div className="mt-3.5">
+              <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400">Knowledge areas</div>
+              <div className="flex flex-wrap gap-1.5">
+                {cv.knowledge.map((k) => <span key={k} className="rounded-md bg-slate-50 px-2 py-1 text-[11.5px] tracking-tight text-slate-700 ring-1 ring-slate-200">{k}</span>)}
+              </div>
+            </div>
+          )}
         </section>
         <div className="h-px bg-slate-100" />
 
@@ -167,6 +175,15 @@ export function CvSheet({ cv, methodBadges }: { cv: Cv; /** The mentee's own met
                               <div className="text-[10.5px] text-slate-400 tracking-tight">{t.standards}</div>
                             </div>
                           </div>
+                          {/* What the task built, before the files that evidence it: a recruiter reads this line. */}
+                          {t.did && <p className="mb-2.5 text-[13px] leading-snug tracking-tight text-slate-800" style={{ textWrap: "pretty" }}>{t.did}.</p>}
+                          {(t.skill || t.competency) && (
+                            <dl className="mb-3 grid gap-1 text-[12.5px] leading-snug tracking-tight">
+                              {t.skill && <div className="flex gap-2"><dt className="w-[86px] shrink-0 text-slate-400">Skill area</dt><dd className="text-slate-800">{t.skill}</dd></div>}
+                              {t.competency && <div className="flex gap-2"><dt className="w-[86px] shrink-0 text-slate-400">Competency</dt><dd className="text-slate-800">{t.competency}</dd></div>}
+                            </dl>
+                          )}
+                          <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-slate-400">Deliverables handed in</div>
                           <div className="space-y-3">
                             {t.items.map((it, i) => (
                               <div key={i} className="flex gap-3">

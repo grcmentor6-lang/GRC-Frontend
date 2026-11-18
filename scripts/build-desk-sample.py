@@ -356,6 +356,8 @@ def main(src: str) -> None:
     # Every acronym spelled out at its first occurrence in each view (owner, 12 Nov 2026). Runs last, on the text the
     # learner reads. Corrections item 119.
     w = json.loads(blob)
+    gaps_pass(w)
+    rows_pass(w)
     spell_out(w)
     blob = json.dumps(w, ensure_ascii=False, separators=(",", ":"))
     assert "§" not in blob, "a section sign is left in the sample"
@@ -697,7 +699,7 @@ def t31(w: dict) -> None:
     # Organization_Profiles is "the organisation profile workbook of the library" (step 4's own reference):
     # the step opens it from Policies › Policy Library, which did not list it.
     if not any(d[0] == "Organization_Profiles" for d in w["library"]["docs"]):
-        w["library"]["docs"].append(["Organization_Profiles", "Organisation profiles — Key Requirements (workbook)", [["1", "GlobalConnect Customer Solutions"], ["2", "LearnTech Educational Solutions"]]])
+        w["library"]["docs"].append(["Organization_Profiles", "Key Requirements workbook", [["1", "GlobalConnect Customer Solutions"], ["2", "LearnTech Educational Solutions"]]])
     # "The reference pages are under Learn › Reference" (pack help notes; the task card: "Learn › Reference
     # pages"): the toolbar's Learn menu had no such screen, so Ref-27000 family and Ref-ISMS processes
     # could not be opened.
@@ -6384,6 +6386,235 @@ def titles_pass(w: dict) -> None:
         for s in t["steps"]:
             assert not re.search(r"\w…$", s["t"]) or s["t"][-2].isalnum(), s["t"]
             assert s["t"].count("(") == s["t"].count(")"), s["t"]
+
+
+def gaps_pass(w: dict) -> None:
+    """The mentee-eye review of 16 Nov 2026 (docs/desk-gaps/, owner 17 Nov: "take care of these"). Runs last, on the
+    text the learner reads. Each change says what was wrong on screen; none changes an answer unless it says so.
+    Corrections item 122.
+    """
+    def everywhere(old: str, new: str, least: int = 1) -> None:
+        """Every string in the sample (a rule is printed in the rule list, Learn › Rule tables, Ref-Rules and the steps that quote it)."""
+        n = 0
+
+        def walk(x):
+            nonlocal n
+            for k, v in (x.items() if isinstance(x, dict) else enumerate(x)):
+                if isinstance(v, str):
+                    if old in v:
+                        n += v.count(old)
+                        x[k] = v.replace(old, new)
+                elif isinstance(v, (dict, list)):
+                    walk(v)
+        walk(w)
+        assert n >= least, (old, n)
+
+    def step(tid: str, n: int, field: str, old: str, new: str) -> None:
+        """A step's text; its help is also the owner's note in the help window, and its title the note's heading."""
+        s = w["tasks"][tid]["steps"][n - 1]
+        assert old in s[field], (tid, n, field, s[field])
+        s[field] = s[field].replace(old, new)
+        note = next((r for r in w["notes"][tid] if r[0] == n), None)
+        i = {"help": 2, "t": 1}.get(field)
+        if note and i and old in note[i]:
+            note[i] = note[i].replace(old, new)
+
+    # --- Buttons and pages that do not exist -------------------------------------------------------------------------
+    # The last step of a task said: Click "Done". The button is Mark step complete.
+    everywhere('Submit CLS-RES. Click "Done".', "Hand in CLS-RES", 2)
+    everywhere('Submit EVQ-RES. Click "Done".', "Hand in EVQ-RES", 2)
+    for tid, n, code in (("F2.1", 6, "CLS-RES"), ("F2.2", 5, "EVQ-RES")):
+        s = w["tasks"][tid]["steps"][n - 1]
+        assert s["w"] == f"Hand in {code}", s["w"]
+        s["w"] = f"Check that {code} has no empty cell, name the file and submit it."
+    everywhere('Click "Submit", then "Done".', 'Click "Submit", then Mark step complete.', 2)
+    everywhere('Then click "Done".', "Then click Mark step complete.")
+    everywhere('submit and click "Done".', "submit and click Mark step complete.")
+    everywhere('click "Report a problem". Click "Done".', 'click "Report a problem". Then click Mark step complete.')
+    assert not any('"Done"' in (s.get(f) or "") for t in w["tasks"].values() for s in t["steps"] for f in ("t", "w", "help")), "a step still says to click Done"
+    # R09 named a list by its page name and a button only one step has; R14 a task page that does not exist.
+    everywhere("Check D1 to D10 in order (Ref-Defect codes).", "Check D1 to D10 in order (Evidence › Defect Codes).", 3)
+    everywhere('If D9 fails, also click "Report data issue" and do not copy the content.',
+               "If D9 fails, do not copy the content. Where a step gives you Report data issue, report it there.", 3)
+    everywhere("or the policy clause shown on your task page", "or the policy clause the step names", 3)
+
+    # --- F1.1 -----------------------------------------------------------------------------------------------------
+    # Step 1: the file's rows said "home office", words My Organisation never uses; its Legal tab's "Head office" is
+    # another city for Org B. The rows now say "your office" (lib/desk/forms.ts), as the Overview does.
+    step("F1.1", 1, "w", "the name of Org A, its home office, the name of Org B, its home office,",
+         "the name of Org A, your office in it, the name of Org B, your office in it,")
+    step("F1.1", 1, "w", "Check each value against My Organisation,",
+         "Your office is on each organisation's Overview, under Your office (not the Legal tab's Head office). Check each value against My Organisation,")
+    # Step 4: there is no F1.1 task page; the paths are in My Tasks. They are chosen now, not typed.
+    step("F1.1", 4, "w", "Open Home › My Tasks › F1.1. In the Folders table copy the full path of your four folders exactly as shown on the task page: 00_Admin, 01_Inputs, 02_Working and 03_Submission (each path starts with your mentee ID, e.g. /M2610-00417/00_Admin).",
+         "Open Home › My Tasks and find F1.1 · your folders, at the bottom. In the Folders table choose the full path of each of your four folders: 00_Admin, 01_Inputs, 02_Working and 03_Submission. Each path starts with your mentee ID.")
+    step("F1.1", 4, "help", "Then copy the four paths from the F1.1 task page into the Folders table",
+         "Then choose the four paths in the Folders table, as Home › My Tasks shows them under F1.1 · your folders")
+    # Step 6: nothing is saved (a name is typed and submitted), and the example used somebody else's mentee ID.
+    step("F1.1", 6, "w", "Save the file in 02_Working as <mentee ID>_F1.1_ONB-RMF_v1.docx (e.g. M2610-00417_F1.1_ONB-RMF_v1.docx).",
+         "Name the file <mentee ID>_F1.1_ONB-RMF_v1.docx, with your own mentee ID.")
+    step("F1.1", 6, "help", "save the file in 02_Working with the naming convention", "name the file with the naming convention")
+
+    # --- F1.2 -----------------------------------------------------------------------------------------------------
+    # Step 3: PCI DSS is an attestation framework by R01 only if question 2 (a certificate?) is No, which no screen said;
+    # "binds through contracts" pointed at question 4. Both facts are now in the reference line.
+    everywhere("not a law. It binds merchants and service providers through their contracts with banks and card brands, and compliance is shown by a qualified assessor's Report on Compliance on their controls.",
+               "not a law, and not contract wording itself: contracts with banks and card brands require merchants and service providers to meet it. No certificate is issued to the organisation: compliance is shown by a qualified assessor's Report on Compliance on their controls.")
+    # Step 4: column E is a choice of the offices now (it was typed, city without country), and no row takes two.
+    step("F1.2", 4, "w", 'type in column E the offices rule R02 gives, as city names separated by "; ", or "All offices".',
+         'choose in column E the office rule R02 gives, or "All offices".')
+    step("F1.2", 4, "help", 'Column E gets city names separated by "; " (for example "Berlin; Singapore") or "All offices".',
+         'Column E takes one office, or "All offices".')
+
+    # --- F1.3 -----------------------------------------------------------------------------------------------------
+    # Step 5: Section 4 is headed "Stakeholder requirements"; the part headed "Interested parties" is 4.1, another list.
+    step("F1.3", 5, "w", "Copy the first five parties of BKB-ADD-16 Section 4, in the same order, each with the values given for it.",
+         'Copy the first five parties of the table under BKB-ADD-16 Section 4, Stakeholder requirements (not the lists of Section 4.1), in the same order, each with the values given for it. A party\'s requirements go in one cell, separated by "; ".')
+    step("F1.3", 5, "help", "copy the first five parties of the addendum Section 4, in the same order,",
+         "copy the first five parties of the table under the addendum's Section 4 (not the lists of Section 4.1), in the same order,")
+    everywhere("Copy the first five parties listed in addendum Section 4,", "Copy the first five parties listed in the table of addendum Section 4 (Stakeholder requirements),", 3)
+
+    # --- F2.1 -----------------------------------------------------------------------------------------------------
+    # Message J1: its guidance named R05 alone, and ruling out Tier 4 needs the standard's harm table.
+    j = w["inj"]["F2.1-J1"]
+    assert j["ref"] == "Rule R05", j["ref"]
+    j["ref"] = "Rule R05; BKB-STD-001 Section 3.1"
+
+    # --- F2.2 -----------------------------------------------------------------------------------------------------
+    # Step 2's help listed nine things for ten checks, out of order.
+    step("F2.2", 2, "help", "(date, who produced it, period, scope, query, integrity, approval, masked content, legible)",
+         "(D1 date and time, D2 who produced it, D3 the whole period, D4 dated in the period, D5 query, D6 integrity, D7 scope, D8 approval, D9 masked content, D10 legible)")
+
+    # --- Weeks 1 and 2, second pass (owner, 17 Nov 2026: "go ahead and take care of that") ------------------------------
+    # F1.1 step 3: the undertaking does not restate the four data rules (one line in four is the same).
+    step("F1.1", 3, "w", "read it: it restates the rules you have just saved.", "read it.")
+    # F1.1 step 5: the dates are picked from a calendar and the file writes the format itself.
+    step("F1.1", 5, "w", " (format DD-MMM-YYYY)", "")
+    step("F1.1", 5, "help", "Dates are written DD-MMM-YYYY, for example 05-OCT-2026.", "The file records each date as DD-MMM-YYYY by itself.")
+    # F1.2 step 1: three cells are found, so something is produced; two worked rows carry a type R01 cannot give.
+    step("F1.2", 1, "o", "Nothing to produce — you read the worked rows", "Three things found in the worked rows")
+    step("F1.2", 1, "w", "columns D–G are filled in for you.",
+         "columns D–G are filled in for you. Two of them (ISO/IEC 29151 and ISO/IEC 27701) carry a finer type than rule R01's five; your own rows take one of R01's five.")
+    # F1.2 step 2: "row 1" of the file is the mentee's own, empty, ISO/IEC 27001 row; the worked one is LearnTech's.
+    for f in ("t", "w"):
+        step("F1.2", 2, f, "the worked example in row 1 (ISO/IEC 27001:2022)", "the worked example, LearnTech Educational Solutions' ISO/IEC 27001:2022 row")
+    step("F1.2", 6, "w", "Save as <mentee ID>_F1.2_FAM-MAP_v1.xlsx in 02_Working.", "Name the file <mentee ID>_F1.2_FAM-MAP_v1.xlsx.")
+    # F1.3: the services are in Section 1.1; Section 1 is the profile table.
+    step("F1.3", 1, "help", "copied from the addendum Section 1. Put it next to Section 1 and check", "copied from the addendum Section 1.1. Put it next to Section 1.1 and check")
+    everywhere("Sections 1–3 match BKB-ADD-16 Section 1, Section 9", "Sections 1–3 match BKB-ADD-16 Section 1.1, Section 9")
+    # F2.1 step 3: the screen asks Yes or No on every row; the text spoke of checking a rule.
+    step("F2.1", 3, "w", "Then: Check rule R05 for every row that holds personal data or credentials: never below Tier 3.",
+         "Then: for each of your rows, record Yes or No in “Personal data or credentials? (R05)”. A row with a Yes is never below Tier 3.")
+    # F2.2 step 4: "deal with" named no act; step 5's help promised a result the mentee has already seen.
+    step("F2.2", 4, "w", "deal with any that fails D9.", "click Report data issue on the row of any that fails D9. If none does, record that there is none.")
+    step("F2.2", 5, "help", "The platform compares every Accept/Reject and every code with the key and shows you the result within 24 hours.",
+         "Your Accept/Reject decisions and codes were checked in steps 2 and 3; submitting seals the file with them.")
+
+    # --- Weeks 3 to 7, second pass ---------------------------------------------------------------------------------------
+    # Rows are scored by Check my answers, in the step, not "after you submit".
+    everywhere("The platform scores each row against the key after you submit.", "The platform scores each row against the key when you click Check my answers.", 3)
+    step("T3.1", 4, "w", "and take the first three Key Requirements of GlobalConnect Customer Solutions as your answer says.",
+         "and add the first three Key Requirements of GlobalConnect Customer Solutions to the register, one row each, of Type contract.")
+    step("T3.1", 6, "w", "and remove two others.", "and remove the two rows that bind neither of your two offices.")
+    step("T3.2", 9, "w", "For each Annex A control, decide Applicable or Not applicable. Options:",
+         "For each Annex A control, decide Applicable or Not applicable, then choose its justification. Options:")
+    # The hand-in asks for one file name; LVR-KPI is a platform form handed in with it.
+    step("T6.2", 6, "w", "name LVR-REC and LVR-KPI and submit them.", "name LVR-REC and submit: LVR-KPI is a form on the platform and goes in with it.")
+    step("T6.2", 6, "help", "Then name the two files and submit them.", "Then name LVR-REC and submit; LVR-KPI goes in with it.")
+    # "the AI risk owner" is nobody on the desk; the cell says each owner's approval is recorded (simulated).
+    step("T7.1", 19, "w", "the plan goes to each risk owner and the AI risk owner's approval is recorded.",
+         "the plan goes to each risk owner and each owner's approval is recorded (simulated).")
+    # The screen named Heat Map with KRIs opens a table of changes for this task.
+    step("T7.2", 2, "w", "What moved since then is on Risk Register › Heat Map with KRIs.",
+         "What moved since then is on Risk Register › Heat Map with KRIs: for this task it lists each change since the last report, as a table.")
+    # LI-10's clauses are rated in step 6.
+    everywhere("3 ISMS risks; LI-PLAN submitted · Activities 12–16", "3 ISMS risks; LI-PLAN submitted · Activities 6 and 12–16")
+    # Nine drill messages cite BKB-POL-024 Section 3.1, a document with no text on file: the rule they test is the
+    # one the mentee signed in F1.1 step 3.
+    n = 0
+    for j in w["inj"].values():
+        if "BKB-POL-024 Section 3.1" in (j.get("ref") or ""):
+            j["ref"] = j["ref"].replace("BKB-POL-024 Section 3.1", "Your data rules (ADM-RULES, signed in F1.1 step 3)")
+            n += 1
+    assert n == 9, n
+
+    # --- Weeks 10 to 12, second pass -------------------------------------------------------------------------------------
+    # T10.1 step 3: nothing is drawn; each flow gets a shape and a system from two lists.
+    step("T10.1", 3, "t", "Draw the data flow with the template shapes", "Give each data flow its template shape and its system")
+    # T11.2 step 7: the count told the mentee how many of step 5's paragraphs are duties before step 5 is checked.
+    step("T11.2", 7, "w", "map each of the eight duties of steps 4 and 5", "map each of the duties of steps 4 and 5")
+
+    # --- Rules that read against their own keys (no answer changes; the rule now says what the key does) ------------------
+    # R05: "the highest tier of its parts" gave Tier 2 for 6,400 Tier 2 lines that together show full addresses (F2.1-J1).
+    everywhere("aggregated data takes the highest tier of its parts;",
+               "aggregated data takes the highest tier of its parts, and at least the tier of what the parts show when read together;", 3)
+    # R13: T4.1 Q3 is Partly because its clause only says "prefer", which the rule did not cover.
+    everywhere("Partly = the action is there but the time limit or owner is missing.",
+               "Partly = the action is there but the time limit or owner is missing, or the clause only recommends the action (“should”, “prefer”).", 3)
+    # R15: no seed is shown and no "Select sample" button exists; a review's accounts are sampled as records (T6.1 step 2).
+    everywhere('Select the sample with the random seed shown on your task page (the platform does the selection when you click "Select sample").',
+               "Where what you sample is a population of records (the accounts of one review), use its population-of-records row. The platform draws the sample at random once your sample size is checked.", 3)
+    page = w["pages"]["Ref-Sampling"]
+    old_note = "Use the row for what the control's frequency says."
+    assert page["note"].endswith(old_note), page["note"]
+    page["note"] = page["note"][: -len(old_note)] + ("Use a frequency row when you test how often the control ran, and a records row when you test the "
+                                                     "items it acted on, such as the accounts of one access review.")
+    # R16: 30 days from a Friday lands on a Sunday (T5.1 step 5), and the key keeps it.
+    everywhere("Fieldwork starts 30 days after the end of the audit period.",
+               "Fieldwork starts 30 calendar days after the end of the audit period, whatever day of the week that is.", 3)
+    # R24: "KEV-listed or Critical on an internet-facing asset" read two ways; the key, and BKB-POL-010 Section 4, take the asset first.
+    everywhere("Class 1: KEV-listed or Critical on an internet-facing asset → 7 days. Class 2: Critical, or KEV on an internal asset → 14 days.",
+               "Class 1: on an internet-facing asset, KEV-listed or Critical → 7 days. Class 2: on an internal asset, Critical or KEV-listed → 14 days.", 3)
+    everywhere("LOW: KEV/internet-facing critical 7 d; critical internal 14 d;", "LOW: internet-facing KEV-listed or critical 7 d; internal critical or KEV-listed 14 d;")
+    everywhere("KEV-listed or Critical on an internet-facing asset → 7 d", "On an internet-facing asset, KEV-listed or Critical → 7 d")
+    everywhere("Critical or KEV-listed internal → 14 d", "On an internal asset, Critical or KEV-listed → 14 d")
+
+
+def rows_pass(w: dict) -> None:
+    """Row-filling steps say which source fills which row and what goes in each column (tester, 18 Nov 2026, on T3.1
+    step 3: "for each row, state the source section and what to enter in each column"). Most of that is the note beside
+    the table (lib/desk/registers.ts); a step whose view shows no note carries it in its text, here. No answer changes.
+    Corrections item 124; the per-step log is docs/desk-gaps/row-instructions.md.
+    """
+    def step(tid: str, n: int, field: str, old: str, new: str) -> None:
+        s = w["tasks"][tid]["steps"][n - 1]
+        assert old in s[field], (tid, n, field, s[field])
+        s[field] = s[field].replace(old, new)
+
+    # T3.1 step 8: the hand-in view shows no note, and the step never said what the three OBL-EXTRA rows take or from where.
+    step("T3.1", 8, "w", "fill the OBL-EXTRA rows on its second sheet, name the file and submit it.",
+         "fill the OBL-EXTRA rows on its second sheet, name the file and submit it. On each OBL-EXTRA row, copy Evidence of "
+         "compliance and Frequency / deadline from the row with the same Obligation in Organization_Profiles Section 3, and "
+         "choose the policy in BKB-POL-000 Section 3 whose title names the row's Process.")
+    # T3.1 step 4: "the first three Key Requirements" read two ways, the first three of the table or the first of each of
+    # three groups (tester, 18 Nov 2026). The three are named by their group.
+    for f in ("w", "help"):
+        s4 = w["tasks"]["T3.1"]["steps"][3]
+        assert "the first three Key Requirements of" in s4[f], (f, s4[f])
+        s4[f] = s4[f].replace("the first three Key Requirements of", "the three Key Requirements listed under Stakeholder Requirements (the first three in the table) of")
+    # T3.2 step 7: "map requirement M9" named no column and no source; the hand-in view shows no note.
+    step("T3.2", 7, "w", "map requirement M9 on its second sheet, name the file and submit it.",
+         "map requirement M9 on its second sheet, name the file and submit it. Fill M9's row as you filled the others in "
+         "steps 1 to 6: its BKB policy (Policies › Map to Framework, then the title in BKB-POL-000 Section 3), its control "
+         "(the policy's row in Frameworks › Crosswalk View), its procedure (the policy's Section 6), its coverage (rule R11), "
+         "a gap sentence only if the coverage is Partial or None, and its Evidence ref (the policy, then the section you read).")
+    # T5.1 step 7: the sheet-2 row's two cells had their sources only in a guide card.
+    step("T5.1", 7, "w", "Choose the sample and owner of the seventh control on PBC-LIST's second sheet.",
+         "Choose the sample and owner of the seventh control on PBC-LIST's second sheet: its sample from Ref-Sampling "
+         "(Learn › Reference pages) by the row's frequency, and its owner from the RACI in Section 16 of the GRC Charter "
+         "(Policies › Policy Library), the role marked R for the control's process.")
+    # T4.2 step 6: the Records sheet is filled at the hand-in, whose view shows no note; where a keeper is read was only in the guide.
+    step("T4.2", 6, "w", "Decide who keeps each record on SOP-DOC's Records sheet.",
+         "Decide who keeps each record on SOP-DOC's Records sheet: find the line of BKB-POL-021 Section 6.1 that produces "
+         "the record, then read the note under that table, which says who keeps a record and when another role keeps it "
+         "instead. For the exception request, read BKB-POL-021 Section 8, then BKB-POL-000 Section 6.")
+    # T5.2 step 6: "check the five late files" named no column and no source; the hand-in view shows no note.
+    step("T5.2", 6, "w", "Check the five late files on EVP-IDX's second sheet, EVP-EXTRA.",
+         "Check the five late files on EVP-IDX's second sheet, EVP-EXTRA. For each file: in Result (R09), choose Accept, or "
+         "the code of the check that fails, read from the file's row in Evidence › Import Log / Report, its control's "
+         "request in Evidence › Audit Requests (PBC) and its SHA-256 in Evidence › Upload Config File. In PBC req., choose "
+         "the request of an accepted file's control. In Gap now (R18), apply rule R18 to the row's Accepted at step 2 plus "
+         "the late files of that control this sheet accepts.")
 
 
 if __name__ == "__main__":

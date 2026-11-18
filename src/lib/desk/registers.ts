@@ -3,6 +3,7 @@ import { bullets, docLines, docNow, docTable } from "./docs";
 import type { Progress } from "./progress";
 import { labFeed } from "./labs";
 import { CANONICAL_START, calIso, calMonths, deskIdentityNow, localizable, onIdentityChange, toLearner, week12 } from "./names";
+import { plain, same } from "./plain";
 import UAR from "./uar-t61.json";
 import LVR from "./lvr-t62.json";
 import RRU from "./rru-t71.json";
@@ -36,16 +37,20 @@ export interface Register {
   on: number[];
   cols: {
     h: string;
+    /** What the column expects, in a few words, printed under its heading (tester review, 18 Nov 2026: "Source
+     *  instrument" is a new term to a learner, and no column said what it wanted). */
+    what?: string;
     /** A drop-down: "step" takes the options of the step that fills it, a list is the template's own, a
      *  function reads them from a document (T3.1: the policies of the BKB-POL-000 index). */
-    opts?: "step" | string[] | ((desk: Desk, row: string[]) => string[] | undefined);
+    opts?: "step" | string[] | ((desk: Desk, row: string[], by: number) => string[] | undefined);
     /** Numbered by the platform, never typed: "OBL" → OBL-01, OBL-02 … */
     auto?: string;
     /** A long heading over short values: it wraps rather than widen the table. */
     wrap?: boolean;
     /** The cell holds a date: a date picker, not a text box (stored as YYYY-MM-DD, as typed dates were). "none": the
-     *  picker with a "none" tick beside it (T7.1: a retained risk has no due date). A function: only on some rows. */
-    date?: true | "none" | ((row: string[]) => boolean);
+     *  picker with a "none" tick beside it (T7.1: a retained risk has no due date). "time": a date and time picker,
+     *  stored as "YYYY-MM-DD HH:MM UTC" (T10.2: the discovery time and each deadline). A function: only on some rows. */
+    date?: true | "none" | "time" | ((row: string[]) => boolean | "time");
     /** The column's least width in px, for long values (T3.1: an obligation's text). */
     w?: number;
     /** A list of IDs ("E-015 Accept, E-019 Reject"): each item kept on one line, and on a phone the column becomes a
@@ -175,22 +180,24 @@ export interface Register {
 const A = (row: string[], desk: Desk) => row[0] === desk.orgs.A.name;
 // Never empty: notes say "… is in <addendum> Section 2.2", which must always name a place.
 const addendum = (desk: Desk) => (desk.orgs.A as { addendum?: string }).addendum || "Org A's addendum";
-/** Copy checks: spacing and case aside, the same words. */
-const same = (a: string, b: string) => a.trim().replace(/\s+/g, " ").toLowerCase() === b.trim().replace(/\s+/g, " ").toLowerCase();
-/** A document reference typed with or without the word "section", a pasted section sign, dashes and spaces. */
-const norm = (x: string) => x.toLowerCase().replace(/^source:\s*/, "").replace(/sections?/g, "").replace(/[\s\u00a7—–-]/g, "");
+/** A document reference typed with or without the word "section", a pasted section sign, dashes and spaces. Commas, colons and quotes
+ *  are let through too: the format is not what is being checked (tester review, 18 Nov 2026). */
+// Both spellings of the workbook's name are taken, with or without its underscore: its file code is Organization_Profiles
+// and the platform's own prose writes organisation (tester, 18 Nov 2026).
+const norm = (x: string) => x.toLowerCase().replace(/^source:\s*/, "").replace(/sections?/g, "").replace(/[\s\u00a7—–,;:"'“”‘’_-]/g, "").replace(/organis/g, "organiz");
 const ordinal = (i: number) => ["the first", "the second", "the third", "the fourth", "the fifth"][i] ?? `number ${i + 1}`;
 /** BKB-ADD-16 Section 4: each interested party with its requirements (null until the addendum is loaded). */
 const parties = (desk: Desk) => docTable(addendum(desk), "4")?.map((r) => [r[0], bullets(r[1]), r[2] ?? "", r[3] ?? ""] as [string, string[], string, string]) ?? null;
 /** Same parts in any order and case ("DPA 2012; GDPR" = "gdpr; DPA 2012"). */
 const sameParts = (a: string, b: string) => {
-  const parts = (x: string) => x.split(";").map((y) => y.trim().replace(/\s+/g, " ").toLowerCase()).filter(Boolean).sort().join(";");
+  const parts = (x: string) => x.split(";").map(plain).filter(Boolean).sort().join(";");
   return parts(a) === parts(b);
 };
 
 /** "Manila, Philippines" → "Manila". */
 const city = (o: string) => o.split(",")[0].trim();
 /** T3.1's sources, as the documents on screen have them (empty until loaded). */
+const NEITHER = "Neither of the two";
 const obl = {
   /** The task's two offices: the home office and the second office its objective names. */
   offices: (d: Desk) => d.orgs.A.offices.filter((o) => d.tasks["T3.1"]?.obj.includes(o)),
@@ -200,8 +207,17 @@ const obl = {
   rows6: (d: Desk) => docTable(addendum(d), "6"),
   listed3: (d: Desk) => [...(obl.lines21(d) ?? []), ...(obl.rows6(d)?.map((r) => r[1]) ?? [])],
   keyReqs: () => docTable("Organization_Profiles", "1")?.flatMap((r) => bullets(r[1])) ?? [],
+  /** Step 4's rows: the Key Requirements Section 2.2 has a row for (the first three, the customers'). The workbook lists
+   *  every group's, and one from another group has no Article / clause to choose, so the row could never be finished
+   *  (tester, 18 Nov 2026). All of them until the addendum is loaded. */
+  contractReqs: (d: Desk) => {
+    const mine = obl.keyReqs().filter((x) => obl.details(d).some((r) => r[0] === "Key Requirements" && same(r[1], x)));
+    return mine.length ? mine : obl.keyReqs();
+  },
   /** BKB-ADD-16 Section 2.2: [from, obligation, article, deadline, process, evidence] for each obligation. */
   details: (d: Desk) => docTable(addendum(d), "2.2") ?? [],
+  /** One Section 2.2 column's distinct values, as a list to choose from (undefined until the addendum is loaded). */
+  pick: (d: Desk, col: number) => { const v = [...new Set(obl.details(d).map((x) => x[col]).filter(Boolean))]; return v.length ? v : undefined; },
   /** The Section 2.2 rows a register row can take its details from: a Section 2 row (or a duty split from it) any of
    *  its office's; any other row the one with its own obligation. */
   detailRows: (d: Desk, r: string[], by: number) =>
@@ -1012,8 +1028,11 @@ const BRC_DISC = "Discovered (UTC)";
 const BRC_MON = "Monitor";
 /** BRC-PLAN's row that carries the Tech Lab's findings (Systems › LogLens, opens at step 7). */
 const BRC_LAB = "Log evidence check (Tech Lab, LogLens)";
-/** The discovery time as the learner's step 1 recorded it. */
-const brcDisc = (p: Progress) => p.grids?.["T10.2|BRC-ASSESS Facts"]?.["0,1"] ?? "";
+/** A fact of steps 1 and 2 as it stands: the key's value once the step's check has given it, else what the learner recorded.
+ *  Step 3's offices and step 4's deadlines must not be worked from a value the check has already shown wrong (owner, 17 Nov 2026). */
+const brcFact = (p: Progress, step: number, row: number) => brcBest(p, step, (BRC.facts as string[][])[row][0]) || (p.grids?.["T10.2|BRC-ASSESS Facts"]?.[`${row},1`] ?? "");
+/** The discovery time, as step 1 leaves it. */
+const brcDisc = (p: Progress) => brcFact(p, 1, 0);
 /** Steps 1 and 2 arrive with the first call's draft: the head office for the systems' office, the hosting country for the smallest one. */
 const BRC_DRAFT = ["", "Istanbul, Turkey", "India; Netherlands; Turkey"];
 /** A time as typed ("2026-01-31 09:00", with or without "UTC", a "T" or a "Z") → "2026-01-31 09:00 UTC"; otherwise null. A
@@ -1240,7 +1259,9 @@ export const REGISTERS: Record<string, Register> = {
       { h: "B Standard" },
       { h: "C Mandatory/Optional" },
       { h: "D Instrument type (R01)", opts: "step" },
-      { h: "E Offices (R02)" },
+      // One office or "All offices": every right answer is one of these, so it is chosen, not typed city-without-country
+      // (owner, 17 Nov 2026). No row takes two offices.
+      { h: "E Offices (R02)", opts: (desk, row) => (row[2] === "Optional" ? undefined : [...desk.orgs.A.offices.map(city), "All offices"]) },
       { h: "F Rule" },
       { h: "G Evidence ref" },
     ],
@@ -1303,7 +1324,7 @@ export const REGISTERS: Record<string, Register> = {
           const got = t.split(";").map((x) => cities.find((c) => c.toLowerCase() === x.trim().toLowerCase()));
           return t && got.every(Boolean) && new Set(got).size === got.length ? got.join("; ") : null;
         },
-        hint: (r) => (r[2] === "Optional" ? "Optional rows take “Optional — not mapped”." : "Type office cities only (e.g. Berlin; Singapore), separated by “; ”."),
+        hint: (r) => (r[2] === "Optional" ? "Optional rows take “Optional — not mapped”." : "Choose one office, or All offices."),
       },
     },
     // ISO/IEC 27001 and PCI DSS are named in no office row of Section 2; BKB-ADD-16 Section 3's "Applies to"
@@ -1323,7 +1344,16 @@ export const REGISTERS: Record<string, Register> = {
     code: "CTX-IP",
     title: "CTX-IP · Interested parties",
     on: [5],
-    cols: [{ h: "Party" }, { h: "Internal/External", opts: ["Internal", "External"] }, { h: "Requirement", w: 260 }, { h: "Standard/law", w: 220 }, { h: "Rule" }, { h: "Evidence ref" }],
+    // Party and Standard/law are chosen from the table's own values, not retyped word for word (owner, 17 Nov 2026): the
+    // work is taking the right five, in order, and each one's law. The requirements are still written out.
+    cols: [
+      { h: "Party", opts: (desk) => parties(desk)?.map((x) => x[0]) },
+      { h: "Internal/External", opts: ["Internal", "External"] },
+      { h: "Requirement", w: 260 },
+      { h: "Standard/law", w: 220, opts: (desk) => { const x = parties(desk); return x ? [...new Set(x.map((y) => y[3]).filter(Boolean))] : undefined; } },
+      { h: "Rule" },
+      { h: "Evidence ref" },
+    ],
     // Five rows: the first five parties of the addendum Section 4 (rule R04).
     rows: Array.from({ length: 5 }, () => ["", "", "", "", "", ""]),
     mine: () => true,
@@ -1340,7 +1370,7 @@ export const REGISTERS: Record<string, Register> = {
           const want = parties(desk)?.[ri]?.[0];
           return want && same(v, want) ? want : null;
         },
-        hint: (_r, desk, ri) => `Row ${ri + 1} takes the party ${ordinal(ri)} in ${addendum(desk)} Section 4, as written there.`,
+        hint: (_r, desk, ri) => `Row ${ri + 1} takes the party ${ordinal(ri)} in the table under ${addendum(desk)} Section 4 (not the lists of Section 4.1).`,
       },
       2: {
         fix: (v, _r, desk, ri) => {
@@ -1361,7 +1391,7 @@ export const REGISTERS: Record<string, Register> = {
           const want = parties(desk)?.[ri]?.[3];
           return want && sameParts(v, want) ? want : null;
         },
-        hint: (_r, desk, ri) => `Copy the Standard / law cell of ${ordinal(ri)} party in ${addendum(desk)} Section 4, every part of it, separated by “; ”.`,
+        hint: (_r, desk, ri) => `Choose the Standard / law cell of ${ordinal(ri)} party in ${addendum(desk)} Section 4.`,
       },
     },
     handIn: { step: 6, cols: [0, 1, 2, 3, 5] },
@@ -1383,19 +1413,20 @@ export const REGISTERS: Record<string, Register> = {
     ],
     // Dataset CLS-6 (Datasets_M2610-00001_W02.xlsx): the facts step 2's help names (what the asset is,
     // personal or regulated data, criticality); Department, Office and Location answer no question of
-    // the tree and are left out. A-01 and A-02 are the worked rows, path and tier as the pack gives them.
+    // the tree and are left out. A-01 and A-02 are the worked rows: the pack's tiers, with paths written the way the walk writes them (Section 5's own
+    // question numbers; the pack's paths used another numbering and a "Low" answer the tree lacks, owner 17 Nov 2026).
     // Each description of A-03…A-08 ends with what disclosure would do, in Section 3.1's words (platform-written,
     // Content Corrections item 55): question 4 asks for harm "per Section 3.1" and whether it is severe, which
     // the pack's facts did not say (item 30). Written from the register's own tier for each asset.
     rows: [
-      ["A-01", "Sales analytics & forecasts", "Pipeline analytics and revenue forecasts.", "No", "Standard / Operational", "Q1 No → Q2 harm if disclosed? Low → Tier 2", "Tier 2 — Internal", "", ""],
-      ["A-02", "Regional performance dashboard", "Regional P&L, KPIs and management reporting.", "No", "Business Critical", "Q1 No → Q2 harm? Yes → Q3 personal data or restricted by law/contract? Yes → Tier 3", "Tier 3 — Confidential", "", ""],
+      ["A-01", "Sales analytics & forecasts", "Pipeline analytics and revenue forecasts: aggregate figures, with no client names or prices. If disclosed, the effect would be internal only.", "No", "Standard / Operational", "Q1 No → Q2 No → Q3 No → Q4 No → Q5 No → Otherwise → Tier 2", "Tier 2 — Internal", "", ""],
+      ["A-02", "Regional performance dashboard", "Regional P&L, KPIs and management reporting: commercially sensitive figures. If disclosed, the effect would be internal only.", "No", "Business Critical", "Q1 No → Q2 No → Q3 No → Q4 No → Q5 Yes → Tier 3", "Tier 3 — Confidential", "", ""],
       ["A-03", "Regional contracts repository", "Local contracts and legal documents. Disclosure would breach client contracts.", "No", "Standard / Operational", "", "", "", ""],
       ["A-04", "Sales contracts & order records", "Signed orders and commercial terms. Disclosure would mean the loss of major clients.", "No", "Business Critical", "", "", "", ""],
-      ["A-05", "Learning management system", "Staff training records (each employee's courses, completion dates and assessment scores) and L&D content. Disclosure would stay internal only.", "Yes", "Standard / Operational", "", "", "", ""],
+      ["A-05", "Learning management system", "Staff training records (each employee's courses, completion dates and assessment scores) and L&D content. If disclosed, the effect would be internal only.", "Yes", "Standard / Operational", "", "", "", ""],
       ["A-06", "Local regulatory compliance records", "Regional regulator filings and attestations. Disclosure would bring regulator fines.", "No", "Business Critical", "", "", "", ""],
-      ["A-07", "Draft product brochure (not yet approved)", "Draft product brochure (not yet approved). Disclosure would stay internal only.", "See description", "Standard / Operational", "", "", "", ""],
-      ["A-08", "Unlabelled internal wiki page on meeting-room booking", "Unlabelled internal wiki page on meeting-room booking. Disclosure would stay internal only.", "See description", "Standard / Operational", "", "", "", ""],
+      ["A-07", "Draft product brochure (not yet approved)", "Draft product brochure (not yet approved), with no prices and no unannounced features. If disclosed, the effect would be internal only.", "See description", "Standard / Operational", "", "", "", ""],
+      ["A-08", "Unlabelled internal wiki page on meeting-room booking", "Unlabelled internal wiki page on meeting-room booking. If disclosed, the effect would be internal only.", "See description", "Standard / Operational", "", "", "", ""],
     ],
     mine: (r) => !r[5],
     // 2: path and tier, by walking the tree · 3: the R05 floor check. 4 and 5 fill the sheet's two
@@ -1487,6 +1518,8 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 2: [11], 3: [12, 13] },
     checklist: { 2: { page: "Ref-Defect codes", col: 11, reads: { D1: 3, D2: 4, D3: 5, D4: 3, D5: 6, D6: 7, D7: 2, D8: 8, D9: 9, D10: 10 }, pass: "Accept", fail: "Reject" } },
     report: { step: 4, col: 9, clean: "Masked content" },
+    // Checks D3 and D4 compare with "the audit period", which only a guide card named (owner, 17 Nov 2026).
+    note: { 2: () => `The audit period is ${REGISTERS["F2.2"].rows[0][5]}, the Period covered of the worked item E-001. Checks D3 and D4 compare each item with it. An item with a password or unmasked data (D9) is reported in step 4, not here.` },
     derived: {
       // R09 decided the row once it has a decision; typing "R09" on every row is no decision.
       14: { from: [11], value: (v) => (v(11) ? "R09" : "") },
@@ -1524,18 +1557,23 @@ export const REGISTERS: Record<string, Register> = {
     on: [1, 2, 3, 4, 5, 6, 7, 8],
     // The 12 columns of T-OBL (GRC101_Engine/p_tasks.py T3.1; MenteePack Ref-Templates: "12 columns").
     cols: [
-      { h: "Obl. ID", auto: "OBL" },
-      { h: "Obligation (plain English)", wrap: true, w: 260 },
-      { h: "Source instrument", wrap: true },
-      { h: "Article/clause", wrap: true, w: 200 },
-      { h: "Type", opts: ["law", "reg", "standard", "contract"] },
-      { h: "Office(s)", opts: (d) => [...obl.offices(d).map(city), obl.offices(d).map(city).join("; ")] },
-      { h: "Process", w: 200 },
-      { h: "Owner role", wrap: true, w: 150 },
-      { h: "Evidence of compliance", wrap: true, w: 240 },
-      { h: "Frequency / deadline", wrap: true },
-      { h: "Linked BKB policy", wrap: true, w: 240, opts: () => obl.policies().map(([id, t]) => `${id} ${t}`) },
-      { h: "Evidence ref" },
+      { h: "Obl. ID", auto: "OBL", what: "Numbered for you" },
+      // Steps 3 and 4 choose each obligation from the lines of its source (Section 2.1 and Section 6; the Key Requirements),
+      // where ten sentences were retyped word for word (owner, 17 Nov 2026). Step 1's two stay typed: step 2 splits them.
+      { h: "Obligation (plain English)", what: "The requirement, in plain English", wrap: true, w: 260, opts: (d, _r, by) => { const o = by === 3 ? obl.listed3(d) : by === 4 ? obl.contractReqs(d) : []; return o.length ? o : undefined; } },
+      { h: "Source instrument", what: "The law, regulation, standard or contract it comes from", wrap: true, w: 170 },
+      // Section 2.2's values are chosen from that section's own, not retyped (owner, 17 Nov 2026: 51 cells typed word for
+      // word in step 5 alone). The work is finding the obligation's row in Section 2.2 and taking its value.
+      { h: "Article/clause", what: "The exact article or clause", wrap: true, w: 200, opts: (d) => obl.pick(d, 2) },
+      { h: "Type", what: "The kind of source instrument", wrap: true, w: 130, opts: ["law", "reg", "standard", "contract"] },
+      // "Neither of the two": two Section 6 overlays bind neither office (step 6 removes them), and the list had no way to say so.
+      { h: "Office(s)", what: "The office or offices it binds", wrap: true, w: 130, opts: (d) => [...obl.offices(d).map(city), obl.offices(d).map(city).join("; "), NEITHER] },
+      { h: "Process", what: "The process that meets it", w: 200, opts: (d) => obl.pick(d, 4) },
+      { h: "Owner role", what: "Who owns the linked policy", wrap: true, w: 150 },
+      { h: "Evidence of compliance", what: "What shows it is met", wrap: true, w: 240, opts: (d) => obl.pick(d, 5) },
+      { h: "Frequency / deadline", what: "How often, or by when", wrap: true },
+      { h: "Linked BKB policy", what: "The group policy that covers it", wrap: true, w: 240, opts: () => obl.policies().map(([id, t]) => `${id} ${t}`) },
+      { h: "Evidence ref", what: "The document and section it was copied from", wrap: true, w: 150 },
     ],
     rows: [],
     mine: () => true,
@@ -1577,7 +1615,7 @@ export const REGISTERS: Record<string, Register> = {
             return v.trim().length > 3 && joints(want).length && want.toLowerCase().includes(v.trim().toLowerCase()) ? v.trim() : null;
           }
           if (by === 3) return obl.listed3(d).find((x) => same(x, v)) ?? null;
-          if (by === 4) return obl.keyReqs().find((x) => same(x, v)) ?? null;
+          if (by === 4) return obl.contractReqs(d).find((x) => same(x, v)) ?? null;
           return v.trim() || null;
         },
         hint: (r, d, _ri, by) =>
@@ -1586,16 +1624,26 @@ export const REGISTERS: Record<string, Register> = {
               ? `Copy the Breach notification cell of the ${r[5]} row of ${addendum(d)} Section 2, word for word.`
               : "Choose the row's office first: one row for each office."
             : by === 3
-              ? `Copy one line of ${addendum(d)} Section 2.1, or one requirement of Section 6, word for word.`
-              : toLearner("Copy one Key Requirement of GlobalConnect Customer Solutions, word for word."),
+              ? `Choose one line of ${addendum(d)} Section 2.1, or one requirement of Section 6.`
+              : toLearner("Choose one of the three Key Requirements listed under Stakeholder Requirements in Organization_Profiles Section 1, one per row. The other groups' requirements are not customers' and take no row here."),
       },
       2: {
         fix: (v, r, d, _ri, by) => {
+          if (by === 3) return sourceOk(v, r, d) ? v.trim() : null;
+          // Step 4: a customer's requirement rests on its contract (the step's note: "Client contract").
+          if (by === 4) return /contract/i.test(v) ? v.trim() : null;
           if (by !== 1) return v.trim() || null;
           const want = obl.row(d, r[5])?.[1];
           return want && same(v, want) ? want : null;
         },
-        hint: (r, d) => `Copy the Data-protection law cell of the ${r[5] || "office's"} row of ${addendum(d)} Section 2.`,
+        hint: (r, d, _ri, by) =>
+          by === 4
+            ? "A customer's requirement rests on its contract with the organisation: type Client contract."
+            : by !== 3
+            ? `Copy the Data-protection law cell of the ${r[5] || "office's"} row of ${addendum(d)} Section 2.`
+            : obl.rows6(d)?.some((x) => same(x[1], r[1]))
+              ? `Type the law or standard this row's own requirement names, as ${addendum(d)} Section 6 writes it. Each overlay names a different one.`
+              : `Find this row's Obligation in ${addendum(d)} Section 2.2 and type the rule its Article / clause names, without the section number. Each row has its own.`,
       },
       // As BKB-ADD-16 Section 2.2 gives it for the row's obligation.
       3: {
@@ -1611,6 +1659,9 @@ export const REGISTERS: Record<string, Register> = {
           // A Section 6 overlay binds the offices whose law it is: Section 2 (GDPR) or Section 3's Applies to (PCI DSS).
           const want = by === 3 ? overlayOffices(d, r[1]) : null;
           if (want && v !== want) return null;
+          // An overlay that binds neither office: "Neither of the two" is the right entry, and an office recorded before
+          // the list offered it still stands (step 6 removes the row either way).
+          if (v === NEITHER && want !== "") return null;
           return v;
         },
         hint: (r, d, _ri, by) =>
@@ -1618,7 +1669,7 @@ export const REGISTERS: Record<string, Register> = {
             ? "Each office has its own Section 2 row: one office per row."
             : obl.lines21(d)?.some((x) => same(x, r[1]))
               ? `Section 2.1 lists the lead regulator's requirements: ${addendum(d)} Section 1, Lead regulator(s), says whose regulator that is.`
-              : `Which of your two offices does this overlay bind? ${addendum(d)} Section 2 names each office's laws, and Section 3's Applies to column says where a standard applies.`,
+              : `Read this overlay's Applies to cell in ${addendum(d)} Section 6. Choose those of your two offices it names: All offices means both, and an office that is not one of yours means Neither of the two.`,
       },
       6: {
         fix: (v, r, d, _ri, by) => obl.detailRows(d, r, by).find((x) => same(x[4], v))?.[4] ?? null,
@@ -1639,25 +1690,35 @@ export const REGISTERS: Record<string, Register> = {
           return want && norm(v) === norm(want) ? want : null;
         },
         hint: (r, d, _ri, by) =>
-          obl.ref(d, r[1], by) ? `Name where the obligation was copied from: ${by === 4 ? "the workbook, then its sheet" : "the document, then the section"}.` : "Copy the obligation first.",
+          obl.ref(d, r[1], by)
+            ? by === 4
+              ? evidenceHint4(r[11] ?? "")
+              : // Short: the cell is narrow, and the step 1 note explains the field in full.
+                norm(r[11] ?? "").startsWith(norm(addendum(d)))
+                ? `The document is right. Add the section this row was copied from, like "${addendum(d)} Section 1": the number is what is missing or wrong.`
+                : `Type the document code and the section number this row was copied from, like "${addendum(d)} Section 1". The number is needed.`
+            : "Copy the obligation first.",
       },
     },
     // Nothing on the platform gives these (Content Corrections item 41): Process and Evidence of
     // compliance on any row, an article where the obligation names none, a deadline where it states none.
     handIn: { step: 8, cols: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], ident: [0, 1] },
     note: {
-      1: (d) => `${addendum(d)} Section 2 has one row for each office. Your 2 rows are in place below: one for ${obl.offices(d).map(city).join(" and one for ")}. Each office's Breach notification cell is its obligation. Article/clause is in ${addendum(d)} Section 2.2.`,
+      1: (d) => `${addendum(d)} Section 2 has one row for each office. Your 2 rows are in place below: one for ${obl.offices(d).map(city).join(" and one for ")}. Fill each row from its office's row of Section 2. **Office(s)**: choose the office first, one office per row. **Obligation (plain English)**: copy the office's Breach notification cell, word for word. **Source instrument**: copy the office's Data-protection law cell. **Article/clause**: find the office's rows in ${addendum(d)} Section 2.2, where From reads Section 2 and the office, and choose the Article / clause. Where Section 2.2 has two rows for an office's cell, take the first; step 2 splits the row. **Type**: law for an act of parliament, reg for a regulator's own requirement, standard for an industry standard, contract for what a customer requires. **Evidence ref** says where a reader can check the row, so every row of the register has one. Type the document code, then the section the row was copied from: for these two rows that is ${addendum(d)} Section 2. A code with no section number is not complete. Rows added in later steps come from other sections, so their Evidence ref is different.`,
       3: (d) => {
         const [a, b] = [obl.lines21(d)?.length, obl.rows6(d)?.length];
-        return `${addendum(d)} Section 2.1 lists ${a ?? "its"} lead-regulator requirements and Section 6 has ${b ?? "its"} overlays. Each takes one row${a && b ? `: your ${a + b} rows are in place below` : ""}. Article/clause is in Section 2.2. Type: law for an act of parliament, reg for a regulator's own requirement, standard for an industry standard; Learn › Framework Quick Reference says which a named standard or law is.`;
+        // Which section fills which rows, then one line per column: what goes in it and where it is read (tester, 18 Nov
+        // 2026: "for each row, state the source section and what to enter in each column"). Sections 1, 2 and 3 fill no
+        // row: they are read for Office(s), and the note says so.
+        return `${addendum(d)} Section 2.1 lists ${a ?? "its"} lead-regulator requirements and Section 6 has ${b ?? "its"} overlays. Each takes one row${a && b ? `: your ${a + b} rows are in place below. ${a} rows take one line of Section 2.1 each and ${b} rows take one Additional mandatory requirement of Section 6 each, in any order` : ""}. Sections 1, 2 and 3 fill no row: you read them for Office(s). Fill each row from left to right. **Obligation (plain English)**: choose the line or the requirement. **Source instrument**: type the law, regulator's rule or standard the line names; where the line names none, type the one its Article / clause in Section 2.2 names, without the section number. **Article/clause**: find the row with the same Obligation in Section 2.2 and choose its Article / clause. **Type**: law for an act of parliament, reg for a regulator's own requirement, standard for an industry standard; Learn › Framework Quick Reference says which a named standard or law is. A rule a regulator issues under an act (an IRR) is reg. **Office(s)**, for a Section 2.1 line: the office whose regulator it is, and Section 1 names the head office beside its Lead regulator(s). **Office(s)**, for a Section 6 overlay: read the overlay's Applies to cell in Section 6 and choose the entry that names those of your two offices it lists. All offices means both of yours. An overlay whose Applies to names neither of your two offices takes Neither of the two. **Evidence ref**: type the document, then the section the line was copied from, ${addendum(d)} Section 2.1 or ${addendum(d)} Section 6. Each Section 6 overlay stays whole in one row: rule R10's split was for the Section 2 rows. Section 6's table has two columns. **Overlay** names the sector or jurisdiction and fills no cell: it tells you which law or standard the row is about. **Additional mandatory requirement** is what you choose in Obligation (plain English), whole.${overlayExample(d)}`;
       },
-      4: (d) => toLearner(`Your 3 rows are in place below, one for each of the first three Key Requirements of GlobalConnect Customer Solutions. Article/clause is in ${addendum(d)} Section 2.2.`),
-      5: (d) => `Frequency / deadline, Process and Evidence of compliance are in ${addendum(d)} Section 2.2, one row per obligation. The policy that implements each row is in the BKB-POL-000 Section 3 index: Check my answers then shows each row's answer.`,
+      4: (d) => toLearner(`Your 3 rows are in place below, one for each of the first three Key Requirements of GlobalConnect Customer Solutions: the three under Stakeholder Requirements in Organization_Profiles Section 1. Fill each row from left to right. **Obligation (plain English)**: choose the requirement. **Source instrument**: type Client contract, the instrument a customer's requirement rests on. **Article/clause**: find the requirement's row in ${addendum(d)} Section 2.2, where its From cell reads Key Requirements, and choose its Article / clause. **Type**: choose contract. **Office(s)**: the Key Requirements are the whole organisation's and name no office, so choose the entry that names both of your offices. **Evidence ref**: type the workbook, then its sheet: Organization_Profiles, then Key Requirements.`),
+      5: (d) => `Fill four cells on every row. **Process**, **Evidence of compliance** and **Frequency / deadline** are in ${addendum(d)} Section 2.2, one row per obligation. Find the row there with the same Obligation: for a row copied from Section 2, the one that names its office in From and holds the same duty. Choose that row's Process and its Evidence of compliance, and type its Frequency / deadline as written. **Linked BKB policy**: open BKB-POL-000 Section 3, the index of every Group policy, and choose the policy whose title names the row's Process. Match the words of the Process to the words of a title, and take the most specific title that fits, not the general one. For example, a row whose Process read Supplier management would link to BKB-POL-013 Supplier and Third-Party Risk Management Policy, the one title that names suppliers; no row here has that Process. **Owner role** fills itself from that index once the policy is chosen. Check my answers then shows each row's answer.`,
       6: () =>
-        "Steps 1 to 4 give 17 rows; the register holds 15. Keep the 3 contract rows, which KR2 needs, and remove the two rows that bind neither of your two offices.",
+        "Steps 1 to 4 give 17 rows; the register holds 15. Keep the 3 contract rows, which KR2 needs, and remove the two rows that bind neither of your two offices: the ones whose Office(s) is, or should be, Neither of the two.",
     },
     // 6: BKB-POL-016 Section 3.1, the Guidance line of the message placed there.
-    reads: { 3: ["learn|Framework Quick Reference"], 4: ["policies|Policy Library"], 6: ["policies|Policy Library"] },
+    reads: { 3: ["learn|Framework Quick Reference"], 4: ["policies|Policy Library"], 5: ["policies|Policy Library"], 6: ["policies|Policy Library"] },
     extra: {
       // Section 1 names the head office and its lead regulator, Section 2 each office's laws (with Section 2.1 and Section 2.2), Section 3 where a standard applies.
       3: [["BKB-ADD-16", ["1", "2", "3", "6"]]],
@@ -1748,7 +1809,7 @@ export const REGISTERS: Record<string, Register> = {
     },
     handIn: { step: 14, cols: [1, 2, 3, 4], ident: [0] },
     note: {
-      9: () => "Learn › Reference pages › Ref-27000 family describes all 10 documents. For each one, record whether an organisation can be certified against it, and who uses it.",
+      9: () => "Learn › Reference pages › Ref-27000 family describes all 10 documents, one row each. For each row here, find the same document on the page. **Certifiable?**: choose Yes or No, as the page's Certifiable? column says. **Who uses it**: choose the entry of the page's Who uses it column.",
       10: () => "A colleague drafted this column from memory and nobody has checked it. Compare each sentence with Ref-27000 family and correct any that is not the document's own.",
       11: () => "Rule L02 (Learn › Rule tables) names the requirement documents. Choose for each document.",
     },
@@ -1872,7 +1933,7 @@ export const REGISTERS: Record<string, Register> = {
       1: () => "Start with BKB-POL-000 Section 8, then read the requirement: a key word in Policies › Map to Framework points to a narrower policy only where that policy's title (Section 3) is about what the requirement asks.",
       2: () => "Each requirement offers three candidate controls. Frameworks › Crosswalk View gives the controls of the policy you chose in step 1; read the requirement to choose among them.",
       3: () => "Each policy's Section 6 lists its procedures by name. Open the row's policy in Policies › Policy Library. A number that is not one of its procedures is flagged; which procedure fits is your call, and an assessor reviews it at checkpoint HC2.",
-      5: () => "The Gap frame is in Learn › Sentence frames. Each owner is checked against BKB-POL-000 Section 3 as you type. What you name as missing is reviewed by an assessor at checkpoint HC2.",
+      5: () => "The Gap frame is in Learn › Sentence frames. Each owner is checked against BKB-POL-000 Section 3 as you type: write the role word for word as Section 3 names it (Group Data Protection Officer, not DPO). What you name as missing is reviewed by an assessor at checkpoint HC2.",
       4: (d) => `Rule R11: ${d.rules.R11?.[1] ?? ""}`,
       6: () => "Evidence ref says where a reader can check the row: its BKB policy and the section you read. A policy other than the row's, or a section it does not have, is flagged; the section you cite is reviewed at checkpoint HC2.",
     },
@@ -1957,7 +2018,7 @@ export const REGISTERS: Record<string, Register> = {
       9: () =>
         "Rule L06 starts from Ref-SoA exclusions (Learn › Reference pages): decide each control against it, row by row, and a control it lists takes the justification shown there. " +
         "Justification: the first source in L06's order. RA-36 Risk register (HQ Istanbul), in Learn › Reference pages, lists the controls each risk's treatment uses (the regional sheets repeat these risks). " +
-        "A law in BKB-ADD-36 Section 2 or a contract in Organization_Profiles would come next, but neither names an Annex A control; otherwise “Group baseline (BKB-POL-001)”.",
+        "A law in BKB-ADD-36 Section 2 or a contract in Organization_Profiles would come next, but neither names an Annex A control; otherwise “Group baseline (BKB-POL-001)”. Where two risks of the register use the same control, take the first one, top down.",
       10: (d) => `A colleague drafted this column. Check every row. Rule L07: ${d.rules.L07?.[1] ?? ""} Both sheets are in Learn › Reference pages: TSA-36 Control_Mapping and TSA-36 Roadmap.`,
       11: () => `A colleague drafted this column from memory. Check every row against Ref-27002 attributes (Learn › Reference pages), which rule L05 copies from. Your 12 deep-dive controls: ${DEEP_DIVE.join(", ")}.`,
     },
@@ -2050,7 +2111,10 @@ export const REGISTERS: Record<string, Register> = {
           if (/^exception needed\.?$/i.test(t)) return "Exception needed";
           const m = t.match(/^(.+?) shall (.+) within (.+?)\.?$/i);
           if (!m || m[2].trim().length < 4 || !/\d|immediately|hour|day|week|month|year/i.test(m[3])) return null;
-          return POL006_ROLES.some((x) => same(x, m[1])) ? `${t.replace(/\.?$/, "")}.` : null;
+          // A role as the policy itself writes it: "The IAM team", "Department / asset owners", "Line manager, then asset
+          // owner" (owner, 17 Nov 2026: these were refused). Each part must be one of the policy's roles.
+          const parts = m[1].replace(/^the /i, "").split(/\s*(?:\/|,|and|then)\s*/i).filter(Boolean);
+          return parts.length && parts.every((x) => POL006_ROLES.some((r) => same(r, x))) ? `${t.replace(/\.?$/, "")}.` : null;
         },
         hint: () => "Write it in R13's frame: “<Role> shall <action> within <time limit>.”, with a role as BKB-POL-006 Section 5 or Section 6 names it (such as IAM team), and a time limit. Or “Exception needed”.",
       },
@@ -2062,7 +2126,7 @@ export const REGISTERS: Record<string, Register> = {
       2: () => "Search BKB-POL-006 and BKB-ADD-16 for each requirement's action words, and choose the clause that holds them, or none. A bullet of Section 3.1 is counted from the top: the first is bullet 1. Q7 is the Compliance Manager's, from the Inbox.",
       3: () => "Rule R13, in Learn › Rule tables, sets the three ratings. Your clause from step 2 is beside each row.",
       4: () => "Rule R13, in Learn › Rule tables, says where a fix belongs; BKB-POL-000 Section 5 says what an addendum may do. A covered row has no gap: it shows —.",
-      5: () => "Write a redline for each row you rated Partly or Not covered: “<Role> shall <action> within <time limit>.” Learn › Sentence frames holds the frame. The role is one BKB-POL-006 Section 5 or Section 6 names. A redline that would make a Group value weaker is “Exception needed” (BKB-POL-000 Section 6). The frame and the role are checked as you type; what each redline says is reviewed at checkpoint HC2.",
+      5: () => "Write a redline for each row you rated Partly or Not covered: “<Role> shall <action> within <time limit>.” Learn › Sentence frames holds the frame. The role is one BKB-POL-006 Section 5 or Section 6 names, written as the policy writes it. Where no document sets the time limit, propose one: it is your proposal, and it is reviewed, not marked. A redline that would make a Group value weaker is “Exception needed” (BKB-POL-000 Section 6). The frame and the role are checked as you type; what each redline says is reviewed at checkpoint HC2.",
     },
     reads: { 3: ["learn|Rule tables"], 4: ["learn|Rule tables"], 5: ["learn|Rule tables", "learn|Sentence frames"] },
     extra: {
@@ -2172,7 +2236,7 @@ export const REGISTERS: Record<string, Register> = {
     then: { 2: "Record each SOP step's time limit", 5: "Record what each SOP step produces" },
     handIn: { step: 6, cols: [1, 2, 3, 4, 5], ident: [0] },
     note: {
-      1: () => "Rule R14 fixes the six steps every SOP has, in this order. BKB-POL-021 Section 6.1 is the procedure this SOP carries out: for each step, choose the Section 6.1 action that does what the step's name says. Section 6.1 has seven lines and the SOP six steps, so one line has no step of its own.",
+      1: () => "Rule R14 fixes the six steps every SOP has, in this order. BKB-POL-021 Section 6.1 is the procedure this SOP carries out: for each step, choose the Section 6.1 action that does what the step's name says. Section 6.1 has seven lines and the SOP six steps, so one line has no step of its own: this SOP ends when the request is decided and recorded, so the line that is carried out only after approval has no step.",
       2: () => toLearner("Each SOP step takes the time limit of its Section 6.1 line (in Output / SLA, after the dash). BKB-ADD-36 Section 5 sets LearnTech's own value for two Section 6.1 outputs: where it sets one, it is the one that applies (decision T4.2-D1)."),
       3: () => "The Responsible role is the one BKB-POL-021 Section 6.1 names for the line each step carries out. Each step shows the action you chose in step 1.",
       5: () => "A step's output is the record it leaves: the first part of its Section 6.1 line's Output / SLA, before the dash. The exception step also names the escalation contact, as BKB-POL-021 Section 8 writes it.",
@@ -2216,7 +2280,7 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 7: { label: 0, col: 1, rule: metaValue } },
     then: { 7: "Fill the SOP's document-control block" },
     handIn: { step: 10, cols: [1], ident: [0] },
-    note: { 7: () => "BKB-POL-000 Section 7.1 sets each field of the block. Where it points to Section 2 or Section 3, read the role there. Policies › Version History shows whether this SOP has an approved version yet. The classification records your answer to the question above." },
+    note: { 7: () => "BKB-POL-000 Section 7.1 sets each field of the block. Where it points to Section 2 or Section 3, read the role there. Policies › Version History shows whether this SOP has an approved version yet. Write the block as the document will stand at its first approval. The classification records your answer to the question above." },
     reads: { 7: ["policies|Version History"] },
   },
   "T4.2 LI-DOC-L": {
@@ -2330,7 +2394,7 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 5: { label: 0, col: 1, rule: pbcTimeline } },
     then: { 5: "Work out the request timeline (R16)" },
     handIn: { step: 7, cols: [1], ident: [0] },
-    note: { 5: () => `Rule R16 is in Evidence › Request Evidence. The audit period of your list is ${PBC_PERIOD}. Working days are Monday to Friday. The due date goes on every request of the list.` },
+    note: { 5: () => `Rule R16 is in Evidence › Request Evidence. The audit period of your list is ${PBC_PERIOD}. Fieldwork starts 30 calendar days after the period ends, whatever day of the week that is; it is not moved to a working day. Working days (Monday to Friday) are counted only for the due date. The due date goes on every request of the list.` },
     reads: { 5: ["evidence|Request Evidence"] },
   },
   // T5.1's Lead Implementer extension LI-08, template T-LI-CERT: "Stage 1 vs Stage 2 table | 3-year cycle | certification-body
@@ -2447,10 +2511,10 @@ export const REGISTERS: Record<string, Register> = {
     // Step 2 is checked on the codes: "none" is Accept, any code is Reject, so the codes carry the decision too.
     checkRows: { 2: { label: 0, col: 13 }, 3: { label: 0, col: 14, rule: evpRequest } },
     note: {
-      2: () => `The audit period of your PBC list is ${PBC_PERIOD}: checks D3 and D4 compare each file with it. Rule R09: walk D1 to D10 for each file and mark every check that fails. Scope can fail two ways: System says where the file came from, and BKB-POL-016 Section 7.1 also asks that it is the record its request asks for. Check D7 shows both.`,
+      2: () => `The audit period of your PBC list is ${PBC_PERIOD}: checks D3 and D4 compare each file with it. Rule R09: walk D1 to D10 for each file and mark every check that fails. Scope can fail two ways: System says where the file came from, and BKB-POL-016 Section 7.1 also asks that it is the record its request asks for. Check D7 shows both. A file with no timestamp fails D1 only: D4 is for a date that is shown and lies outside the period. A file that fails D9 is not copied; nothing more is clicked for it in this task.`,
       3: () => "A colleague filled in PBC req. from memory. PBC-LIST has one request per control, PBC-01 to PBC-06: read each file's Control against Evidence › Audit Requests (PBC) and choose the right request where it differs. Only the files accepted in step 2 are indexed, so only they are listed here.",
     },
-    reads: { 2: ["evidence|Defect Codes"], 3: ["evidence|Audit Requests (PBC)"], 6: ["evidence|Import Log / Report", "evidence|Upload Config File"] },
+    reads: { 2: ["evidence|Defect Codes"], 3: ["evidence|Audit Requests (PBC)"], 6: ["evidence|Import Log / Report", "evidence|Upload Config File", "evidence|Audit Requests (PBC)"] },
     handIn: { step: 6, cols: [12, 13, 14], ident: [0, 1, 2] },
   },
   // EVP-GAP, the coverage gap memo ("Controls with gaps, follow-up requests, owner, due date"): one row per PBC-LIST request.
@@ -2526,7 +2590,7 @@ export const REGISTERS: Record<string, Register> = {
     cells: { 1: { fix: (v, r) => (r[0] !== SAMP_LINES[0] ? v : /^\s*\d+\s*$/.test(v) ? String(+v) : null), hint: () => "Type the number of accounts, as a number (for example 120)." } },
     ident: [0],
     checkRows: { 2: { label: 0, col: 1, rule: uarSampling } },
-    note: { 2: (d) => `Rule R15 (Learn › Rule tables): ${(d.rules.R15?.[1] ?? "").split(". ")[0]}. A user access review is tested on its decisions, one per account, so what you sample is accounts. The review's facts are on Access Reviews › Start Review; Ref-Sampling is in Learn › Reference pages.` },
+    note: { 2: (d) => `Rule R15 (Learn › Rule tables): ${(d.rules.R15?.[1] ?? "").split(". ")[0]}. A user access review is tested on its decisions, one per account, so what you sample is accounts: a population of records. Use the population-of-records row for that number of accounts, not the row for how often the review runs. The review's facts are on Access Reviews › Start Review; Ref-Sampling is in Learn › Reference pages.` },
     reads: { 2: ["access|Start Review", "learn|Reference pages"], 8: ["learn|Reference pages", "testing|Record Result", "systems|AppAdmin (business SaaS)", "evidence|Capture Screenshot"] },
     handIn: { step: 8, cols: [1], ident: [0] },
   },
@@ -2577,10 +2641,10 @@ export const REGISTERS: Record<string, Register> = {
     view: { 4: [1, 2], 5: [1, 2] },
     checkRows: { 4: { label: 0, col: 13 }, 5: { label: 0, col: 14 } },
     note: {
-      4: () => `The platform ran the analytics on all ${UAR_X.length} accounts of the review of ${UAR_REVIEW} and listed these ${UAR_LISTED.length}. A listed account is a lead, not yet an exception: it is an exception only if it fails an attribute of the test plan (Learn › Reference pages › Ref-UAR test plan). Listed by names the Access Reviews screen that holds it. Each screen checks every one of the ${UAR_X.length}, so an account another screen does not list has passed what that screen checks.`,
-      5: () => "Ref-UAR codes (Learn › Reference pages) names each exception type. Choose the type of each exception; its severity is copied from the same page. Access Reviews › Start Review says which break-glass accounts are registered for this system.",
+      4: () => `The platform ran the analytics on all ${UAR_X.length} accounts of the review of ${UAR_REVIEW} and listed these ${UAR_LISTED.length}. A listed account is a lead, not yet an exception: it is an exception only if it fails an attribute of the test plan (Learn › Reference pages › Ref-UAR test plan). Listed by names the Access Reviews screen that holds it. Each screen checks every one of the ${UAR_X.length}, so an account another screen does not list has passed what that screen checks. A generic account passes A2 only if it is a registered break-glass account: Access Reviews › Start Review names those.`,
+      5: () => "Ref-UAR codes (Learn › Reference pages) names each exception type. Choose the type of each exception; its severity is copied from the same page. Access Reviews › Start Review says which break-glass accounts are registered for this system. A generic or shared account that is not registered takes the generic-account type even where HR has no record of it; the no-HR-match type is for a named person's account.",
     },
-    reads: { 4: ["access|Terminated User Check", "access|Privilege Check", "access|Reviewer Sign-off", "learn|Reference pages"], 5: ["learn|Reference pages", "access|Start Review"] },
+    reads: { 4: ["access|Terminated User Check", "access|Privilege Check", "access|Reviewer Sign-off", "learn|Reference pages", "access|Start Review"], 5: ["learn|Reference pages", "access|Start Review"] },
     handIn: { step: 8, cols: [13, 14, 15, 16, 17, 18], ident: [0, 1] },
   },
   "T6.1 CONC": {
@@ -2600,7 +2664,7 @@ export const REGISTERS: Record<string, Register> = {
     note: {
       7: (_d, p) => {
         const ex = UAR_LISTED.filter(([id]) => uarExc(p, id) === "Exception").map(([id]) => `${id} ${uarType(p, id)}`);
-        return `Rule R19 is on Control Testing › Record Result, each type's severity on Ref-UAR codes (Learn › Reference pages), and the memo's sentence on Learn › Sentence frames. Sheet 3's exceptions, as steps 4 and 5 checked them: ${ex.join("; ") || "none yet"}. The population is the ${UAR_X.length} accounts of the review. Sheet 2 walked ${UAR_SAMPLE.length} of them through all six attributes; the analytics ran on all ${UAR_X.length}, and Sheet 3 comes from them.`;
+        return `Rule R19 is on Control Testing › Record Result, each type's severity on Ref-UAR codes (Learn › Reference pages), and the memo's sentence on Learn › Sentence frames. Sheet 3's exceptions, as steps 4 and 5 checked them: ${ex.join("; ") || "none yet"}. The population is the ${UAR_X.length} accounts of the review. Sheet 2 walked ${UAR_SAMPLE.length} of them through all six attributes; the analytics ran on all ${UAR_X.length}, and Sheet 3 comes from them. The memo's Items tested counts every account the test read, by hand or by the analytics.`;
       },
     },
     reads: { 7: ["testing|Record Result", "learn|Sentence frames", "learn|Reference pages"] },
@@ -2993,9 +3057,9 @@ export const REGISTERS: Record<string, Register> = {
       { h: "Asset type (Ref-Chain)", wrap: true, w: 210, opts: (d) => ((d.pages["Ref-Chain"]?.r ?? []) as string[][]).map((r) => String(r[0])) },
       { h: "Information or supporting", wrap: true }, { h: "Threat", wrap: true, w: 180 }, { h: "Vulnerability", wrap: true, w: 180 }, { h: "Impact (C/I/A)", wrap: true, w: 160 },
       { h: "Residual score (RR-UPD)", wrap: true }, { h: "Treatment option (L12)", wrap: true, opts: "step" }, { h: "Annex A control", wrap: true, w: 180 },
-      { h: "Control type", wrap: true, w: 150, opts: (d) => uniq(attrs27002(d).map((r) => r[3])) },
-      { h: "Security property", wrap: true, w: 120, opts: (d) => uniq(attrs27002(d).map((r) => r[4])) },
-      { h: "Cybersecurity concept", wrap: true, w: 170, opts: (d) => uniq(attrs27002(d).map((r) => r[5])) },
+      { h: "Control type", what: "Prevents, detects or corrects", wrap: true, w: 150, opts: (d) => uniq(attrs27002(d).map((r) => r[3])) },
+      { h: "Security property", what: "Which of C, I and A it protects", wrap: true, w: 120, opts: (d) => uniq(attrs27002(d).map((r) => r[4])) },
+      { h: "Cybersecurity concept", what: "Identify, Protect, Detect, Respond or Recover", wrap: true, w: 170, opts: (d) => uniq(attrs27002(d).map((r) => r[5])) },
     ],
     rows: RRU_CHAIN.map((c) => [c.asset, c.line, c.risk, "", "", "", "", "", "", "", "", "", "", ""]),
     mine: () => true,
@@ -3024,7 +3088,7 @@ export const REGISTERS: Record<string, Register> = {
       10: () => "Ref-Chain (Learn › Reference pages) lists asset types, each information or a supporting asset, with its typical threat, vulnerability, impact and Annex A control. Each asset's line here is from the asset register. Choose each asset's type; once checked, the platform copies the type's typical threat, vulnerability and impact: the baseline for that kind of asset, which the risk's own event, in RR-UPD, sits beside.",
       11: (d) => `Rule L12 (Learn › Rule tables): ${(d.rules.L12?.[1] ?? "").split(" Controls = ")[0]} Each risk's residual score is from RR-UPD.`,
       12: () => "A colleague filled this column from memory and nobody has checked it. Compare each row with its asset type's row in Ref-Chain (Learn › Reference pages), where the Annex A control sits beside the threat, and type the ID there wherever the row differs; its title is added for you.",
-      13: (d) => `Rule L05 (Learn › Rule tables): ${d.rules.L05?.[1] ?? ""}`,
+      13: (d) => `Rule L05 (Learn › Rule tables): ${d.rules.L05?.[1] ?? ""} Each row's control is in its Annex A control cell: find that control's row in Ref-27002 attributes (Learn › Reference pages). Control type: choose what the page's Control type column gives. Security property: choose what its Security properties column gives. Cybersecurity concept: choose what its Cybersecurity concepts column gives.`,
     },
     reads: { 10: ["learn|Reference pages"], 11: ["learn|Rule tables"], 12: ["learn|Reference pages"], 13: ["learn|Reference pages"] },
     handIn: { step: 14, cols: [3, 4, 5, 6, 7, 9, 10, 11, 12, 13], ident: [0, 2] },
@@ -3061,7 +3125,7 @@ export const REGISTERS: Record<string, Register> = {
       15: () => "Each risk's statement and option are copied from RR-UPD and step 11. Its event's facts, cause first, are in RRU-EVENTS on Risk Register › New Risk. Choose the action that carries out the option at the risk's cause.",
       16: (d) => `Rule L12 (Learn › Rule tables): ${(d.rules.L12?.[1] ?? "").split(". ").slice(-1)[0]} Only the controls on the category's row of Ref-Keywords (Learn › Reference pages) count. The categories: ${RRU_NEW.map((n) => `${n.id}, ${n.cat}`).join("; ")}. Choose the one the action puts in place.`,
       17: (d) => `Rule R08 (Learn › Rule tables): ${d.rules.R08?.[1] ?? ""} A risk whose option is Retain is accepted and monitored: it has no due date, so tick none. The plan is dated ${RRU.plan}: count calendar days from it. The owner is the risk's owner in RR-UPD.`,
-      18: (d) => `Rule R07 (Learn › Rule tables): ${(d.rules.R07?.[1] ?? "").split(" Rating: ")[0]} Count the action's control as working; a retained risk has no new control.`,
+      18: (d) => `Rule R07 (Learn › Rule tables): ${(d.rules.R07?.[1] ?? "").split(" Rating: ")[0]} Count the action's control as working; a retained risk has no new control. Count only the new control named in the Control column: where the action also repairs an existing control the event marks not working, that control is not counted until it has been tested as working.`,
       19: (d) => `Rule R36 (Learn › Rule tables): ${d.rules.R36?.[1] ?? ""} Rate the expected residual with R07's bands: 1–5 Low, 6–11 Medium, 12–19 High, 20–25 Critical.`,
     },
     reads: { 15: ["risk|New Risk"], 16: ["learn|Rule tables", "learn|Reference pages"], 17: ["learn|Rule tables"], 18: ["learn|Rule tables"], 19: ["learn|Rule tables"] },
@@ -3203,7 +3267,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 15: [1, 2] },
     checkRows: { 15: { label: 0, col: 3 } },
-    note: { 15: () => "Copied from Ref-Milestones (Learn › Reference pages). Clause 6.1.1 asks for every action that addresses an ISMS risk or opportunity to be part of the plan: choose the milestone whose work it belongs to." },
+    note: { 15: () => "Copied from Ref-Milestones (Learn › Reference pages). Clause 6.1.1 asks for every action that addresses an ISMS risk or opportunity to be part of the plan: choose the milestone whose work it belongs to: the one that produces, or holds, the thing the risk threatens. A risk that a review is skipped belongs to the milestone that holds that review, not to one that only comes after it." },
     reads: { 15: ["learn|Reference pages"] },
     handIn: { step: 16, cols: [3], ident: [0] },
   },
@@ -3267,7 +3331,7 @@ export const REGISTERS: Record<string, Register> = {
     view: { 3: [4, 7, 8], 5: [8, 12, 13] },
     checkRows: { 3: { label: 0, col: 9 }, 5: { label: 0, col: 14 } },
     note: {
-      3: () => `The test date is ${VUL_TEST}. Each finding's due date is the workbook's formula from your steps 1 and 2: first detected + its class's SLA. A finding with no closed date is still open. Use the dates only: whether an exception holds is step 4, whether a fix was verified is step 5.`,
+      3: () => `The test date is ${VUL_TEST}. Each finding's due date is the workbook's formula from your steps 1 and 2: first detected + its class's SLA. A finding with no closed date is still open. A finding closed on its due date was closed in time. Use the dates only: whether an exception holds is step 4, whether a fix was verified is step 5.`,
       5: () => "The closed findings only. Each row gives the date the finding was marked closed, and the scanner's latest scan of its asset with whether that scan still found the vulnerability. BKB-POL-010 Section 6.1 step 4 (Policies › Policy Library) says when a fix counts as verified.",
     },
     handIn: { step: 8, cols: [9, 14], ident: [0, 4, 7] },
@@ -3369,7 +3433,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 11: [1] },
     checkRows: { 11: { label: 0, col: 2 } },
-    note: { 11: () => `The card's target and thresholds (Ref-Measure card): ${KPI_FIELDS[8][1]}. Each result is the card's formula applied to VUL-TEST: your step 6.` },
+    note: { 11: () => `The card's target and thresholds (Ref-Measure card): ${KPI_FIELDS[8][1]}. Each result is the card's formula applied to VUL-TEST: your step 6. A red threshold applies only to the classes the card sets one for: a class with a target only is Below the target when under it, however far.` },
     handIn: { step: 12, cols: [2], ident: [0, 1] },
   },
   // T8.2 (desk-step-builder, 29 Oct 2026). CT-SCRIPT, template T-CT: "Script pre-filled (objective, attributes, pass
@@ -3644,7 +3708,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 6: [1] },
     ident: [0],
     checkRows: { 6: { label: 0, col: 1 } },
-    note: { 6: (d) => `Rule L19 (Learn › Rule tables): ${d.rules.L19?.[1] ?? ""} Lumen's intake form, with its Delivery line, is in Vendors › Vendor Intake; Ref-Cloud is in Learn › Reference pages.` },
+    note: { 6: (d) => `Rule L19 (Learn › Rule tables): ${d.rules.L19?.[1] ?? ""} The intake form has no line called service model: its Delivery line says how the service is delivered, and Ref-Cloud names the model that matches. Lumen's intake form is in Vendors › Vendor Intake; Ref-Cloud is in Learn › Reference pages.` },
     reads: { 6: ["vendors|Vendor Intake", "learn|Reference pages"] },
     handIn: { step: 8, cols: [1], ident: [0] },
   },
@@ -3839,7 +3903,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0, 1],
     checkRows: { 3: { label: 0, col: 2, with: 3 }, 4: { label: 0, col: 4 } },
     note: {
-      3: () => toLearner("T-ROPA's four shapes: Collect, personal data comes into LearnTech from outside (a client or a person); System, it is kept or used in a LearnTech system; Transfer, it leaves the country of the office that holds it (BKB-POL-017 Section 3.1 says what counts); Delete, it is erased. Choose each flow's system from Risk Register › Asset Register, which lists LearnTech's Amsterdam and Mumbai assets: the asset whose description fits what happens in the flow."),
+      3: () => toLearner("T-ROPA's four shapes: Collect, personal data comes into LearnTech from outside (a client or a person); System, it is kept or used in a LearnTech system; Transfer, it leaves the country of the office that holds it (BKB-POL-017 Section 3.1 says what counts); Delete, it is erased. Choose each flow's system from Risk Register › Asset Register, which lists LearnTech's Amsterdam and Mumbai assets: the asset whose description fits what happens in the flow. Where a flow names two systems, take the one where the flow ends, where its result is kept."),
       4: (_d, p) => `BKB-POL-017 Section 3.1: start from the Cross-border transfer cell of BKB-ADD-36 Section 2, in the row of the office the data leaves. A chapter of a law is not a safeguard: where the cell names one, Section 6.1 of the addendum says how the safeguard is found. The rows are the flows step 3 found to be transfers${dfmShape(p, "F1") ? "" : " (once step 3 is checked)"}. Both are in Policies › Policy Library.`,
     },
     reads: { 3: ["risk|Asset Register"] },
@@ -3853,7 +3917,7 @@ export const REGISTERS: Record<string, Register> = {
     code: "BRC-ASSESS Facts",
     title: "BRC-ASSESS · Notification assessment (template T-BRC) · Facts of INC-2610-3001",
     on: [1, 2, 7],
-    cols: [{ h: "Fact", wrap: true, w: 170 }, { h: "Value (incident record)", wrap: true, w: 300 }, { h: "Evidence ref", wrap: true, w: 170 }],
+    cols: [{ h: "Fact", wrap: true, w: 170 }, { h: "Value (incident record)", wrap: true, w: 300, date: (row) => (row[0] === BRC_DISC ? "time" : false) }, { h: "Evidence ref", wrap: true, w: 170 }],
     rows: (BRC.facts as string[][]).map(([f]) => [f, "", ""]),
     mine: () => true,
     steps: { 1: [1], 2: [1] },
@@ -3861,7 +3925,7 @@ export const REGISTERS: Record<string, Register> = {
     // Where each value was read: the same record on every row, so written by the platform.
     derived: { 2: { from: [1], quiet: true, value: (v) => (v(1) ? "BRC-FACTS (incident record)" : "") } },
     // A format check on the time only: which time, and which offices and countries, Check my answers says (keys T10.2-1, T10.2-2).
-    cells: { 1: { fix: (v, r) => (r[0] === BRC_DISC ? utcTime(v) : v), hint: () => "Write the time as date, time, UTC (2026-01-31 09:00 UTC)." } },
+    cells: { 1: { fix: (v, r) => (r[0] === BRC_DISC ? utcTime(v) : v), hint: () => "Pick the date and the time, in UTC." } },
     ident: [0],
     checkRows: { 1: { label: 0, col: 1 }, 2: { label: 0, col: 1 } },
     draft: { 2: () => ({ col: 1, v: BRC_DRAFT }) },
@@ -3882,7 +3946,7 @@ export const REGISTERS: Record<string, Register> = {
       { h: "Office (Section 2 row)", wrap: true, w: 130 },
       { h: "BKB-ADD-36 Section 2 says", wrap: true, w: 250, prose: true },
       { h: "Applies?", wrap: true, w: 170, opts: BRC.applies },
-      { h: "Deadline (UTC)", wrap: true, w: 190 },
+      { h: "Deadline (UTC)", wrap: true, w: 190, date: "time" },
     ],
     rows: [...(BRC.regimes as string[][]).map((r) => [...r, "", ""]), [BRC.early, "Every engaged office", "BKB-POL-014 Section 3.1: the shortest applicable statutory clock governs", "", ""]],
     mine: () => true,
@@ -3894,12 +3958,12 @@ export const REGISTERS: Record<string, Register> = {
       3: { from: [], value: (v) => (v(0) === BRC.early ? "—" : null) },
       4: { from: [], value: (v, p) => (brcBest(p, 3, v(0)) === BRC_NOT ? "None: does not apply" : brcBest(p, 3, v(0)) === BRC_MON ? "None: no clock yet" : brcBest(p, 3, v(0)) === BRC_COND ? "No date: starts when its condition is met" : null) },
     },
-    cells: { 4: { fix: (v) => utcTime(v), hint: () => "Write a deadline as the discovery time is written: date, time, UTC (2026-01-31 09:00 UTC)." } },
+    cells: { 4: { fix: (v) => utcTime(v), hint: () => "Pick the deadline's date and time, in UTC." } },
     ident: [0, 1, 2],
     checkRows: { 3: { label: 0, col: 3 }, 4: { label: 0, col: 4 } },
     reads: { 3: ["regwatch|Regulation Tracker"] },
     note: {
-      3: (_d, p) => `Each row is a regime of BKB-ADD-36 Section 2: the office whose row it is in, and the column and words of its cell. BKB-POL-014 Section 6.3 (Policies › Policy Library) says which offices the incident engages and which of their regimes apply. Regulatory Watch › Regulation Tracker gives each law's status. From your step 2: offices whose systems are affected: ${p.grids?.["T10.2|BRC-ASSESS Facts"]?.["1,1"] ?? ""}. Data-subject countries: ${p.grids?.["T10.2|BRC-ASSESS Facts"]?.["2,1"] ?? ""}.`,
+      3: (_d, p) => `Each row is a regime of BKB-ADD-36 Section 2: the office whose row it is in, and the column and words of its cell. BKB-POL-014 Section 6.3 (Policies › Policy Library) says which offices the incident engages and which of their regimes apply. Regulatory Watch › Regulation Tracker gives each law's status. From your step 2: offices whose systems are affected: ${brcFact(p, 2, 1)}. Data-subject countries: ${brcFact(p, 2, 2)}.`,
       4: (_d, p) => {
         const cond = (BRC.regimes as string[][]).filter((r) => brcBest(p, 3, r[0]) === BRC_COND).map((r) => r[0]);
         return `Discovered: ${brcDisc(p)}. Each deadline is the discovery time plus the clock in the row's Section 2 words; BKB-POL-014 Section 6.3, step 6 (Policies › Policy Library) says how to count. The rows are the regimes step 3 found to apply${cond.length ? `; ${cond.join(", ")} is listed with its condition and no date: its clock starts when the condition is met (Section 6.3, step 4)` : " (once step 3 is checked)"}. The last row is the earliest firm deadline.`;
@@ -4043,7 +4107,7 @@ export const REGISTERS: Record<string, Register> = {
       2: { fix: (v) => { const m = v.trim().match(/^(\d+(?:[.,]\d+)?)\s*%?$/); return m ? `${m[1].replace(",", ".")} %` : null; }, hint: () => "Write the rate as a number and “%”." },
     },
     checkRows: { 5: { label: 0, col: 1, with: 2 } },
-    note: { 5: () => "Target. Click rate: the KRI of the Amsterdam register's phishing risk (Risk Register › Heat Map with KRIs). Report rate: BKB-POL-020 Section 7.1 (Policies › Policy Library). Write each as its source writes it: “≤” or “≥”, the number and “%”. Last campaign's rate: work it out from the counts on Awareness › Campaign Results, with the formula in the row." },
+    note: { 5: () => "Target. Click rate: the KRI of the Amsterdam register's phishing risk (Risk Register › Heat Map with KRIs). Report rate: BKB-POL-020 Section 7.1 (Policies › Policy Library). Write each as its source writes it: “≤” or “≥”, the number and “%”. On a keyboard, type <= or >=. Last campaign's rate: work it out from the counts on Awareness › Campaign Results, with the formula in the row." },
     reads: { 5: ["risk|Heat Map with KRIs"] },
     handIn: { step: 6, cols: [1, 2, 3], ident: [0] },
   },
@@ -4191,7 +4255,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0, 1],
     checkRows: { 4: { label: 0, col: 2 } },
     then: { 4: "Sort source 1's key points" },
-    note: { 4: () => "Source 1's ten key points, from Section 2 of its saved copy (Policies › Policy Library). A duty says what the platform must do; background says who, when, why, or what happens next." },
+    note: { 4: () => "Source 1's ten key points, from Section 2 of its saved copy (Policies › Policy Library). A duty says what the platform must do; background says who, when, why, or what happens next. A summary writes its duties as instructions (“Review …”, “Set …”), without the words “shall” or “must”." },
     handIn: { step: 9, cols: [2], ident: [0] },
   },
   "T11.2 OB2": {
@@ -4217,7 +4281,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 6: [3] },
     ident: [0, 1, 2],
     checkRows: { 6: { label: 0, col: 3 } },
-    note: { 6: () => `${REGD.headcount} Each office's line is from REG-EXTRA (Inbox, from the Policy & Governance Analyst). Apply the three tests of BKB-POL-016 Section 7.2 to each office: reach, activity and threshold. Source 1's key point 2 says whom the guidelines cover.` },
+    note: { 6: () => `${REGD.headcount} Each office's line is from REG-EXTRA (Inbox, from the Policy & Governance Analyst). Apply the three tests of BKB-POL-016 Section 7.2 to each office: reach, activity and threshold. Source 1's key point 2 says whom the guidelines cover. The threshold: Recommendation 2003/361/EC, which Article 19 cites, calls an enterprise small when it has fewer than 50 staff and a turnover or balance sheet of no more than EUR 10 million.` },
     readHow: { 6: "BKB-POL-016 Section 7.2: the three tests, in order. Source 1's Section 2, key point 2: whom the guidelines cover." },
     handIn: { step: 9, cols: [3], ident: [0] },
   },
@@ -4239,7 +4303,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0, 1],
     checkRows: { 7: { label: 0, col: 2 } },
     derived: { 3: { from: [2], value: (v) => (v(2) ? (v(2) === GAP ? "—" : ((REGD.control as Record<string, string>)[v(2)] ?? "")) : "") } },
-    note: { 7: () => "The eight duties of steps 4 and 5. For each, find a key word of Ref-Keywords (Learn › Reference pages) that the duty uses, the word or its plural, and choose that row's policy; its Annex A controls are written for you. A duty that uses none of the key words: No BKB policy (gap)." },
+    note: { 7: () => "The duties of steps 4 and 5. For each, find a key word of Ref-Keywords (Learn › Reference pages) that the duty uses, the word or its plural, and choose that row's policy; its Annex A controls are written for you. A duty that uses none of the key words: No BKB policy (gap)." },
     handIn: { step: 9, cols: [2, 3], ident: [0] },
   },
   "T11.2 ACT": {
@@ -4270,7 +4334,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 10: [1] },
     ident: [0],
     checkRows: { 10: { label: 0, col: 1 } },
-    note: { 10: () => "Ref-Change types (Learn › Reference pages) gives five topic types. A change takes the type of the law it comes from: Section 1 of source 2's saved copy (Policies › Policy Library) gives that law's full title." },
+    note: { 10: () => "Ref-Change types (Learn › Reference pages) gives five topic types. A change takes the type of the law it comes from: Section 1 of source 2's saved copy (Policies › Policy Library) gives that law's full title. A law that regulates a kind of service or a market is a sector or market rule, even where some of its duties protect personal data." },
     handIn: { step: 14, cols: [1], ident: [0] },
   },
   "T11.2 ELEM": {
@@ -4490,7 +4554,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 12: [2] },
     ident: [0, 1],
     checkRows: { 12: { label: 0, col: 2 } },
-    note: { 12: () => "Rule L24: one row per input of clause 9.3.2. Ref-Review inputs (Learn › Reference pages) names the deliverables that feed each; Home › Waiting On holds their review records. Available: every one is accepted, or is this task's own (ACT-UPD, ACT-MRI, LI-MR). Missing: none is. Partly available: anything between, a deliverable accepted with review comments or not in the records yet included." },
+    note: { 12: () => "Rule L24: one row per input of clause 9.3.2. Ref-Review inputs (Learn › Reference pages) names the deliverables that feed each; Home › Waiting On holds their review records. Available: every one is accepted, or is this task's own (ACT-UPD, ACT-MRI, LI-MR). Missing: none is. Partly available: anything in between. A deliverable accepted with review comments, or not in the records yet, does not count as accepted." },
     reads: { 12: ["learn|Reference pages", "home|Waiting On"] },
     handIn: { step: 15, cols: [2], ident: [0] },
   },
@@ -4616,7 +4680,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 5: [1, 2] },
     checkRows: { 5: { label: 0, col: 3 } },
-    note: { 5: () => `Follow-up requests from the first day of fieldwork. Each asks for a record of GlobalConnect's ISMS from this year: one of your own hand-ins, from F1.1 to T12.1, or a record the Group GRC Office keeps in the repository. Policies › Version History lists your hand-ins by code and name, each sealed when you submitted it; Evidence › Evidence Library lists the repository's records. Choose the record asked for, or No evidence available.` },
+    note: { 5: () => `Follow-up requests from the first day of fieldwork. Each asks for a record of GlobalConnect's ISMS from this year: one of your own hand-ins, from F1.1 to T12.1, or a record the Group GRC Office keeps in the repository. Policies › Version History lists your hand-ins by code and name, each sealed when you submitted it; Evidence › Evidence Library lists the repository's records. Choose the record asked for, or No evidence available. A hand-in you made for LearnTech is not a record of GlobalConnect's ISMS, whatever its name.` },
     reads: { 5: ["policies|Version History", "evidence|Evidence Library"] },
   },
   "T12.2 ACT": {
@@ -4668,7 +4732,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     derived: { 1: { from: [], value: (v, p) => (v(0) !== "Owner and due (Ref-Actions)" ? null : !p.rowChecks?.["T12.2-7"] ? "" : audBest(p, 7, "Corrective action (Ref-Actions)") === AUD.ct[2] ? `${AUD.ct[3]} · ${AUD.ct[4]}` : "—") } },
     checkRows: { 7: { label: 0, col: 1 } },
-    note: { 7: () => `NC-1, the auditor's finding (AUD-FINDING), a nonconformity (Learn › Glossary) raised against ${AUD.finding[1]}: “${AUD.finding[2]}” Evidence file to check: ${AUD.finding[3]}. Find that file in Evidence › Evidence Library. Rule R34 (Learn › Rule tables) says how that file decides the response. If you accept, the corrective action is the one Ref-Actions (Learn › Reference pages) gives for the kind of deviation; if you challenge, there is none.` },
+    note: { 7: () => `NC-1, the auditor's finding (AUD-FINDING), a nonconformity (Learn › Glossary) raised against ${AUD.finding[1]}: “${AUD.finding[2]}” Evidence file to check: ${AUD.finding[3]}. Find that file in Evidence › Evidence Library. Rule R34 (Learn › Rule tables) says how that file decides the response. If you accept, the corrective action is the one Ref-Actions (Learn › Reference pages) gives for the kind of deviation; if you challenge, there is none. Whether the file's result shows the problem the finding states is rule R19's test (Learn › Rule tables).` },
     reads: { 7: ["evidence|Evidence Library", "learn|Rule tables", "learn|Reference pages", "learn|Glossary"] },
     handIn: { step: 8, cols: [1], ident: [0] },
   },
@@ -4841,7 +4905,7 @@ const pol006Field = (f: string) => docTable("BKB-POL-006", "11")?.find((r) => r[
  *  guideline, and the addendum's two sections step 2 searches; or none. */
 const CLAUSES = [...Array.from({ length: 7 }, (_, i) => `BKB-POL-006 Section 3.1 bullet ${i + 1}`), "BKB-POL-006 Section 4", "BKB-POL-006 Section 6.1", "BKB-POL-006 Section 6.2", "BKB-POL-006 Section 6.3", "BKB-POL-006 Section 7.1", "BKB-ADD-16 Section 5", "BKB-ADD-16 Section 6", "none"];
 /** The roles BKB-POL-006 names in Section 5 (Roles and responsibilities) and Section 6 (each procedure's Responsible column). */
-const POL006_ROLES = ["Group CISO", "Org CEO", "Org CISO", "CRCO", "DPO", "Regional Managing Director", "Compliance Officer", "Department owners", "Asset owner", "Asset owners", "Internal Audit", "All workforce", "Requester", "Line manager", "IAM team", "HR"];
+const POL006_ROLES = ["Group CISO", "Org CEO", "Org CISO", "CRCO", "DPO", "Regional Managing Director", "Compliance Officer", "Department owners", "Asset owner", "Asset owners", "Internal Audit", "All workforce", "Requester", "Line manager", "IAM team", "HR", "Policy owner", "Department owner", "Department"];
 /** Rule R13's "where to fix": a requirement that names a country or office goes to the addendum, any other to the
  *  Group policy. The countries and offices are the two organisations'. */
 function fixWhere(r: string[], d: Desk): { best: string; why: string } {
@@ -4909,6 +4973,45 @@ function overlayOffices(d: Desk, ob: string): string | null {
   if (/gdpr/i.test(o)) return named(/GDPR/).join("; ");
   if (/health/i.test(o)) return named(/HIPAA/).join("; ");
   return named(/United States|CCPA|HIPAA/).join("; ");
+}
+
+/** T3.1 step 4: what is wrong with a contract row's Evidence ref (tester, 18 Nov 2026: "nothing we tried was accepted",
+ *  and the rejection never said whether the workbook, the sheet or the spelling was at fault). The names are given: the
+ *  step's note gives them too, and the field is a reference, not a test. */
+function evidenceHint4(v: string): string {
+  const [book, sheet] = [/organi[sz]ation.?profiles/i.test(v), /key.?requirements/i.test(v)];
+  if (book && sheet) return 'Both names are right. Type them in this order with nothing else: "Organization_Profiles - Key Requirements".';
+  if (book) return "The workbook is right. Add its sheet after it: Key Requirements.";
+  if (sheet) return "The sheet is right. Put the workbook before it: Organization_Profiles.";
+  return 'These rows are copied from a workbook, not from the addendum, so the reference is the workbook, then its sheet: "Organization_Profiles - Key Requirements".';
+}
+
+/** T3.1 step 3: is the typed Source instrument this row's own? (Tester, 18 Nov 2026: one value was accepted on all ten
+ *  rows.) A Section 2.1 line: the start of its Article / clause in Section 2.2 ("NPC Circular 16-03", "DPA 2012"), with or
+ *  without the section number. A Section 6 overlay: words of its own requirement or its name ("PCI DSS v4.0.1", "GDPR").
+ *  Nothing to check against until the Obligation is chosen.
+ *  ponytail: a words-of-the-requirement match, so "scope must be" passes on the card row; a list to choose from if that matters. */
+function sourceOk(v: string, r: string[], d: Desk): boolean {
+  const sq = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const t = sq(v);
+  if (!t) return false;
+  const o = obl.rows6(d)?.find((x) => same(x[1], r[1]));
+  if (o) return t.length >= 4 && (sq(o[1]).includes(t) || sq(o[0]).includes(t));
+  const art = r[1].trim() ? obl.detailRows(d, r, 3)[0]?.[2] : undefined;
+  return !art || (/\d/.test(v) && t.length >= 6 && sq(art).startsWith(t));
+}
+
+/** T3.1 step 3: one Section 6 row filled in, cell by cell (tester, 18 Nov 2026: "state which element of Section 6 goes
+ *  into each column, and give one completed Section 6 row"). The payment-card overlay, read from the addendum; "" where
+ *  the addendum has none or names no standard at its start. One "Head: a; b; c" sentence, so the note sets it as a list. */
+function overlayExample(d: Desk): string {
+  const e = obl.rows6(d)?.find((x) => /payment card/i.test(x[0]));
+  const src = e?.[1].match(/^PCI DSS v[\d.]*\d/)?.[0];
+  const art = e && obl.detailRows(d, ["", e[1]], 3)[0]?.[2];
+  const off = e && overlayOffices(d, e[1]);
+  if (!e || !src || !art || off == null) return "";
+  const where = off.includes(";") ? "the entry that names both of your offices, since its Applies to cell in Section 6 reads All offices" : off || NEITHER;
+  return ` One finished Section 6 row, the ${e[0]} overlay: **Obligation (plain English)** is its whole Additional mandatory requirement; **Source instrument** is ${src}, the standard the requirement names; **Article/clause** is ${art}, read on the requirement's row in Section 2.2; **Type** is standard, as Learn › Framework Quick Reference says of PCI DSS; **Office(s)** is ${where}; **Evidence ref** is ${addendum(d)} Section 6. The other three overlays are filled the same way, each with its own law, Article / clause, Type and offices.`;
 }
 
 /** T3.2: the row's BKB policy ID ("BKB-POL-017"), its sections, and its "Procedure:" sections, as the
@@ -5000,8 +5103,18 @@ export function cellValue(reg: Register, p: Progress, taskId: string, ri: number
 /** The platform's value for a derived cell, or null where the cell is given or the mentee's to fill. */
 export function derivedAt(reg: Register, p: Progress, taskId: string, ri: number, ci: number): string | null {
   const d = reg.derived?.[ci];
-  return d && !reg.rows[ri]?.[ci] ? d.value((c) => cellValue(reg, p, taskId, ri, c), p) : null;
+  return d && !reg.rows[ri]?.[ci] ? d.value((c) => standing(reg, p, taskId, ri, c), p) : null;
 }
+
+/**
+ * What a cell stands at for everything that reads it afterwards: the key's value once a check found the learner's
+ * wrong, else the cell. A later step, a derived column or a list of choices must not be built on a value the
+ * platform has already told the learner is wrong (owner, 17 Nov 2026: F2.2 step 3 offered no right code for an
+ * item step 2 had wrongly rejected, and marked it wrong a second time). The cell itself keeps the pick: it is what
+ * was scored, and its own step shows it beside the answer.
+ */
+export const standing = (reg: Register, p: Progress, taskId: string, ri: number, ci: number): string =>
+  checkedAnswer(reg, p, taskId, ri, ci) ?? cellValue(reg, p, taskId, ri, ci);
 
 /**
  * The key's value for a cell an earlier step checked and found wrong, where it differs from what the cell holds; else
@@ -5054,7 +5167,7 @@ export function regStatus(desk: Desk, p: Progress, task: Task, n: number) {
 }
 
 /** A row as filled so far: given cells, the platform's and the mentee's. */
-export const liveRow = (reg: Register, p: Progress, taskId: string, ri: number) => reg.cols.map((_, ci) => cellValue(reg, p, taskId, ri, ci));
+export const liveRow = (reg: Register, p: Progress, taskId: string, ri: number) => reg.cols.map((_, ci) => standing(reg, p, taskId, ri, ci));
 
 /** A cell is in: filled, and, where the column reads its value (`cells`), in a form the step allows. */
 export function cellOk(reg: Register, desk: Desk, p: Progress, taskId: string, _rows: string[][], ri: number, ci: number): boolean {
@@ -5221,6 +5334,8 @@ export interface BriefSection {
   want?: (desk: Desk) => string[] | null;
   /** A list whose order the source does not fix (the rows of a table, filtered). */
   anyOrder?: boolean;
+  /** A one-line section whose answer is its first word (Yes or No): the rest of the source line is not retyped. */
+  lead?: boolean;
   /** The section arrives as a colleague's first draft to check against its source (F1.3 steps 2 and 3): the
    *  drafted values, and per value why it is wrong (null when right). Nothing is flagged until Check my answers. */
   draft?: (desk: Desk) => { v: string[]; why: (string | null)[] } | null;
@@ -5364,8 +5479,8 @@ export const BRIEFS: Record<string, Brief> = {
       {
         h: "2 Boundaries (L03)",
         lines: [
-          { l: "Out of scope", col: "the exclusions it lists", at: "only what the addendum lists as excluded" },
-          { l: "Interfaces", col: "the first 3 External rows of Section 9.1", at: "Section 9.1 System integrations: the first 3 External rows, separated by “; ”" },
+          { l: "Out of scope", col: "the exclusions it lists", at: "only what the addendum lists as excluded; where it lists none, write None" },
+          { l: "Interfaces", col: "the first 3 External rows of Section 9.1", at: "Section 9.1 System integrations: the first 3 External rows, separated by “; ”. Type its two-way arrow as <->" },
         ],
         src: (d) => addendum(d),
         // BKB-ADD-16 lists no exclusions, so rule L03 leaves nothing out of scope. Interfaces: the first 3
@@ -5377,7 +5492,9 @@ export const BRIEFS: Record<string, Brief> = {
       },
       {
         h: "3 Climate change (4.1, 4.2)",
-        lines: [{ l: "Relevant?", col: "the climate-change row", at: "Ref-ISMS processes, last row" }],
+        // The decision is the row's Yes or No; its reason is the Group's and is not retyped (owner, 17 Nov 2026).
+        lines: [{ l: "Relevant?", col: "the climate-change row", at: "Ref-ISMS processes, last row: write its Yes or No" }],
+        lead: true,
         src: () => "Ref-ISMS processes",
         want: (d) => { const r = isms(d).find((x) => /^Climate/.test(x[0])); return r ? [r[1]] : null; },
       },
@@ -5415,8 +5532,10 @@ export const givenLines = (sec: BriefSection) => (sec.given ? docLines(sec.given
 export function briefFlags(desk: Desk, sec: BriefSection, typed: string[]): (string | null)[] | null {
   const want = sec.want?.(desk);
   if (!want) return null;
-  const parts = (x: string) => x.split(";").map((y) => y.trim().replace(/\s+/g, " ").toLowerCase()).sort().join(";");
-  const eq = (a: string, b: string) => same(a, b) || (b.includes(";") && parts(a) === parts(b));
+  // "None" is what a line takes when its source lists nothing; a learner may say so in other words. Where a section
+  // is `lead`, the answer's first word (Yes or No) is the decision and the rest is the source's reason, not retyped.
+  const none = (a: string) => /^(none|nothing|no exclusions?|not applicable|n\/a)( (is |are )?(listed|excluded))?\.?$/.test(plain(a));
+  const eq = (a: string, b: string) => same(a, b) || (b.includes(";") && sameParts(a, b)) || (plain(b) === "none" && none(a)) || (!!sec.lead && plain(a).replace(/[.,;:]$/, "") === plain(b).split(/[ ,.;:]/)[0]);
   const where = sec.src?.(desk) ?? "the source";
   if (sec.lines) return typed.map((v, i) => (!v.trim() || eq(v, want[i] ?? "") ? null : `Not what ${where} gives for ${sec.lines![i].col}.`));
   const seen = new Set<string>();
@@ -5887,7 +6006,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
         id: "shows",
         ask: "Rule L25 first asks whether the evidence row shows the problem the finding states. Click the cell, in the row of the file NC-1 names, that shows it.",
         why: "The Result of EV-7148: 3 of 25 samples fail. The row shows the problem NC-1 states, so the response is the one rule L25 gives for that case.",
-        hint: "Find the file the note names in the File column, then read its row from left to right.",
+        hint: "Find the file the step's instruction names in the File column, then read its row from left to right.",
         col: 6,
         row: (r) => r[0] === "EV-7148",
       },
@@ -5895,7 +6014,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
         id: "period",
         ask: "A finding stands on evidence from the audit period. Click the cell, in the same row, that shows the file falls inside it.",
         why: "EV-7148's Date, 2026-11-11, is inside the audit period, 2025-12-21 to 2026-12-21: the evidence is from the period the audit covers.",
-        hint: "Compare each cell of the row with the audit period in the note.",
+        hint: "Compare each cell of the row with the audit period in the step's instruction.",
         col: 3,
         row: (r) => r[0] === "EV-7148",
       },

@@ -1,5 +1,6 @@
 import { dmy, dueDate, RMF_TABLES, testDue, type Desk, type Step, type Task } from "./model";
 import { stepKey, type Progress } from "./progress";
+import { same } from "./plain";
 
 /**
  * Onboarding record (ONB-RMF): the file F1.1 issues with three empty tables, filled by three steps from
@@ -9,9 +10,11 @@ export const RMF = {
   file: "Onboarding record",
   tables: [
     // Row labels name the value to write, in the words of the screen it is copied from: My
-    // Organisation calls the organisations Org A and Org B (the engine's "Organisation 1 / 2").
-    { title: RMF_TABLES[0], from: "Home › My Organisation", rows: ["Org A name", "Org A home office", "Org B name", "Org B home office", "Task owner of F1.2", "Start date"] },
-    { title: RMF_TABLES[1], from: "Home › My Tasks › F1.1", rows: ["00_Admin path", "01_Inputs path", "02_Working path", "03_Submission path"] },
+    // Organisation calls the organisations Org A and Org B (the engine's "Organisation 1 / 2"), and the office the
+    // mentee works for "Your office". The file said "home office", which the screen never does, and the nearest
+    // label there, the Legal tab's "Head office", is another city for Org B (owner, 17 Nov 2026).
+    { title: RMF_TABLES[0], from: "Home › My Organisation", rows: ["Org A name", "Org A, your office", "Org B name", "Org B, your office", "Task owner of F1.2", "Start date"] },
+    { title: RMF_TABLES[1], from: "Home › My Tasks, under F1.1 · your folders", rows: ["00_Admin path", "01_Inputs path", "02_Working path", "03_Submission path"] },
     { title: RMF_TABLES[2], from: "Home › My plan", rows: ["F1.2 due date", "F1.3 due date", "KC-01 due date"] },
   ],
 };
@@ -56,7 +59,7 @@ export function rmfGiven(desk: Desk, start: Date, t: number): { v: string[]; why
   const f11 = desk.tasks["F1.1"];
   if (t === 0) {
     const other = A.offices.find((o) => !same(o, A.office));
-    plant(1, other, `${other} is one of ${A.short}'s offices, but not its home office. The Overview of the Org A tab names the home office; the Offices tab marks it too.`);
+    plant(1, other, `${other} is one of ${A.short}'s offices, but not the one you work for. The Overview of the Org A tab names it under Your office; the Offices tab marks it too.`);
     plant(4, f11?.owner, `${f11?.owner} owns F1.1, the task above F1.2 in the task table. Each task has its own owner.`);
     return { v, why };
   }
@@ -130,7 +133,7 @@ export function dmyToIso(v: string): string {
   return m && mon >= 0 ? `${m[3]}-${String(mon + 1).padStart(2, "0")}-${m[1].padStart(2, "0")}` : "";
 }
 
-export const same = (a: string, b: string) => a.trim().replace(/\s+/g, " ").toLowerCase() === b.trim().replace(/\s+/g, " ").toLowerCase();
+export { same };
 
 /** Every row of table `t` filled; with `want` (what each screen shows), every row an exact copy of it. */
 export function rmfFilled(p: Progress, taskId: string, t: number, want?: string[]): boolean {

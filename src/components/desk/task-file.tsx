@@ -33,10 +33,12 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
   const badgeState = badge ? badgeStanding(badge, progress).state : "not-started";
   // Watched by StepBar: while the task's own heading is on screen the condensed bar stays away.
   const headingRef = useRef<HTMLDivElement>(null);
-  const stepsRef = useRef<HTMLElement>(null);
-  // The key results box: opened from the step bar only. Opening by itself on a wide sheet, it sat over the step being
-  // read (T6.1 step 6's situation, 29 Oct 2026).
-  const [krOpen, setKrOpen] = useState(false);
+  // The key results box: open by default on a desktop-width sheet once the page has scrolled to the steps (owner,
+  // 16 Nov 2026); the bar's button or the box's own × closes it and it then stays closed. null = not yet chosen,
+  // which reads as open from `lg` up and closed below, where the box would cover most of a phone.
+  const [krOpen, setKrOpen] = useState<boolean | null>(null);
+  const [barOn, setBarOn] = useState(false);
+  const wide = () => window.matchMedia("(min-width: 64rem)").matches;
 
   useEffect(() => {
     document.getElementById(`act-${focus}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -54,23 +56,24 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
         title={task.obj}
         watch={headingRef}
         done={st === "submitted"}
+        onShow={setBarOn}
         // The key results open from the bar, at every width: a box or handle floating over the steps covered the very
         // step being read (a handle on a narrow sheet; the box itself on a wide one, over T6.1 step 6's situation).
         action={
           <button
             type="button"
             data-kr-toggle
-            onClick={() => setKrOpen(!krOpen)}
+            onClick={() => setKrOpen(!(krOpen ?? wide()))}
             aria-label="Key results"
-            aria-expanded={krOpen}
+            aria-expanded={krOpen ?? undefined}
             title="Key results"
-            className={`grid h-8 w-8 shrink-0 place-items-center rounded-[9px] transition-colors focus-ring ${krOpen ? "bg-[#E0F2FE] text-sky-800" : "text-sky-700 hover:bg-[#E0F2FE]"}`}
+            className={`grid h-8 w-8 shrink-0 place-items-center rounded-[9px] transition-colors focus-ring ${krOpen ? "bg-[#E0F2FE] text-sky-800" : krOpen === null ? "text-sky-700 hover:bg-[#E0F2FE] lg:bg-[#E0F2FE] lg:text-sky-800" : "text-sky-700 hover:bg-[#E0F2FE]"}`}
           >
             <Icon name="checkSquare" size={16} />
           </button>
         }
       />
-      <FloatingChecklist task={task} focus={focus} onFocus={onFocus} watch={stepsRef} open={krOpen} setOpen={setKrOpen} />
+      <FloatingChecklist task={task} focus={focus} onFocus={onFocus} open={krOpen} shown={barOn} setOpen={setKrOpen} />
 
       {/* One task sheet, as the redesign draws it: the heading, a strip of facts, the objective row,
           then the steps as a table, all cells of one object divided by 1px rules. */}
@@ -101,13 +104,17 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
         {/* The facts strip: five cells, the due date first and tinted when it presses. */}
         <dl className="grid grid-cols-2 border-b border-[#DDE1E8] md:grid-cols-5">
           <Fact label="Due" tone={st === "submitted" ? "done" : locked ? "plain" : due.level === "later" ? "plain" : "due"}>
-            {st === "submitted" ? "Submitted" : locked ? `Opens ${fmtDay(dueDate(start, (task.week - 1) * 7))}` : `${due.text.replace(/^Due /, "").replace(/^./, (c) => c.toUpperCase())} · ${fmtDay(dueDate(start, task.dueDay))}`}
+            {st === "submitted" ? "Submitted" : locked ? `Opens ${fmtDay(dueDate(start, (task.week - 1) * 7))}` : due.level === "later" ? fmtDay(dueDate(start, task.dueDay)) : `${due.text.replace(/^Due /, "").replace(/^./, (c) => c.toUpperCase())} · ${fmtDay(dueDate(start, task.dueDay))}`}
           </Fact>
           <Fact label="Organisation">
-            <OrgName org={task.org} orgs={desk.orgs} />
-            {/* "Org A · Manila": which client slot, and the office, the name above does not say. */}
-            <span className="block text-[12px] text-[#5B6474]">
-              {[task.orglbl.split("·")[0].trim(), task.orglbl.split(",").slice(1).join(",").trim()].filter(Boolean).join(" · ")}
+            {/* "Org A · Manila": which client slot, and the office, the name does not say. On the name's line, so the
+                strip is two rows tall like its other cells (owner, 16 Nov 2026); it drops under the name only where the
+                cell is too narrow for both. */}
+            <span className="flex flex-wrap items-center gap-x-2">
+              <OrgName org={task.org} orgs={desk.orgs} />
+              <span className="whitespace-nowrap text-[12px] text-[#5B6474]">
+                {[task.orglbl.split("·")[0].trim(), task.orglbl.split(",").slice(1).join(",").trim()].filter(Boolean).join(" · ")}
+              </span>
             </span>
           </Fact>
           <Fact label="Assigned by">{task.owner}</Fact>
@@ -122,19 +129,22 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
           </Fact>
         </dl>
 
-        <section aria-labelledby="objective-h" className="flex items-stretch border-b border-[#DDE1E8] max-sm:flex-col">
+        {/* The objective is the one line the whole task answers to, so it is the loudest thing on the sheet after the title
+            (owner, 16 Nov 2026): the row is tinted end to end, ruled in indigo on its left, and set a size up in semibold.
+            A tint and a rule, not a solid band: the band is the sealed decision's. */}
+        <section aria-labelledby="objective-h" className="flex items-stretch border-b border-[#C7CBF5] bg-[#F3F4FF] shadow-[inset_3px_0_0_#4338CA] max-sm:flex-col">
           <h2
             id="objective-h"
-            className="flex w-[120px] shrink-0 items-center gap-2 border-r border-[#DDE1E8] bg-[#F3F4FF] px-4 py-3 text-[13px] font-semibold text-[#4338CA] max-sm:w-auto max-sm:border-b max-sm:border-r-0 max-sm:py-2"
+            className="flex w-[120px] shrink-0 items-center gap-2 border-r border-[#C7CBF5] px-4 py-3.5 text-[12px] font-semibold uppercase tracking-[0.06em] text-[#4338CA] max-sm:w-auto max-sm:border-r-0 max-sm:pb-0 max-sm:pt-2.5"
           >
             <Icon name="bullseye" size={15} /> Objective
           </h2>
-          <p className="m-0 px-4 py-3 text-[14px] leading-[1.5] text-[#111827] text-pretty">
+          <p className="m-0 px-4 py-3.5 text-[16px] font-semibold leading-[1.45] tracking-[-0.005em] text-[#1E1B4B] text-pretty max-sm:pt-1.5 max-sm:text-[15px]">
             <Objective text={task.obj} />
           </p>
         </section>
 
-        <section ref={stepsRef} aria-label="Steps" className="@container">
+        <section aria-label="Steps" className="@container">
           <HowTo task={task} focus={focus} onFocus={onFocus} locked={locked} />
         </section>
 
@@ -160,7 +170,7 @@ function Objective({ text }: { text: string }) {
   // The space before "(R30)" stays in the text part, so the chip never glues to the word before it.
   return text.split(/\((R\d+)\)/).map((part, i) =>
     i % 2 ? (
-      <span key={i} className="inline-block translate-y-[-1px] rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-px align-middle font-mono text-[11px] font-semibold text-[#3730A3]">
+      <span key={i} className="inline-block translate-y-[-1px] rounded-[3px] border border-[#C7CBF5] bg-white px-1.5 py-px align-middle font-mono text-[11px] font-semibold text-[#3730A3]">
         {part}
       </span>
     ) : (
@@ -273,52 +283,30 @@ function KrChecklist({ task, focus, onFocus, onClose }: { task: Task; focus: num
 /**
  * The checklist floats over the work and takes no space: a zero-height sticky row at the top of the
  * task column, so it rides the column's right edge (not the window's) and follows a folded tree.
- * It shows only once the learner opens it from the step bar, and closes with ×, Escape or a click
- * elsewhere: content the learner must read never sits under it unasked.
+ * It shows with the step bar, once the task's heading has scrolled away, and closes with ×, Escape or the bar's
+ * button. A click elsewhere does not close it: it is open by default, and a box that left on the first click would
+ * never be read.
  */
-function FloatingChecklist({ task, focus, onFocus, watch, open, setOpen }: {
+function FloatingChecklist({ task, focus, onFocus, open, shown, setOpen }: {
   task: Task;
   focus: number;
   onFocus: (n: number) => void;
-  watch: React.RefObject<HTMLElement | null>;
-  open: boolean;
+  open: boolean | null;
+  shown: boolean;
   setOpen: (v: boolean) => void;
 }) {
-  const [atSteps, setAtSteps] = useState(false);
-
   useEffect(() => {
-    const el = watch.current;
-    const main = el?.closest("main");
-    if (!el || !main || typeof IntersectionObserver === "undefined") return;
-    // The steps are "at work" once their top passes just under the step bar (52px) and while the
-    // list still overlaps that band.
-    const band = Math.round(main.getBoundingClientRect().top) + 52;
-    const io = new IntersectionObserver(([e]) => setAtSteps(e.isIntersecting), { rootMargin: `-${band}px 0px -85% 0px` });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [watch, task.id]);
-
-  // A popover: a click outside it (but not on the bar's own button) or Escape closes it.
-  const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const away = (e: PointerEvent) => {
-      const t = e.target as Element | null;
-      if (t && !box.current?.contains(t) && !t.closest("[data-kr-toggle]")) setOpen(false);
-    };
+    if (open === false || !shown) return;
     const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("pointerdown", away);
     document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("pointerdown", away); document.removeEventListener("keydown", esc); };
-  }, [open, setOpen]);
+    return () => document.removeEventListener("keydown", esc);
+  }, [open, shown, setOpen]);
 
-  // Hidden means gone: invisible and click-through. (A child marked pointer-events-auto would still
-  // take clicks under an invisible parent, which is how this box once swallowed step 1's chevron.)
-  const fade = (on: boolean) => (on ? "visible pointer-events-auto translate-y-0 opacity-100" : "invisible pointer-events-none -translate-y-1 opacity-0");
-  const boxOn = open ? "block" : "hidden";
   return (
     <div className="pointer-events-none sticky top-[64px] z-20 flex h-0 justify-end pr-[52px]">
-      <div ref={box} className={`w-[300px] max-w-full transition-all duration-200 ease-out motion-reduce:transition-none ${boxOn} ${fade(atSteps)}`} aria-hidden={!atSteps}>
+      {/* It used to wait for the steps to reach the bar as well, so for the first stretch of scroll the bar's button
+          showed and did nothing. */}
+      <div className={`pointer-events-auto w-[300px] max-w-full ${!shown || open === false ? "hidden" : open ? "block" : "hidden lg:block"}`}>
         <div>
           <KrChecklist task={task} focus={focus} onFocus={onFocus} onClose={() => setOpen(false)} />
         </div>

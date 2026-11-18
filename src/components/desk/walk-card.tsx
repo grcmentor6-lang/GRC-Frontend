@@ -42,7 +42,7 @@ export function WalkStep({ q, mark, label, text, tag, guide, check, action, chil
 }) {
   return (
     <li data-q={q} data-guide={guide} data-check={check} className={`grid ${action ? "grid-cols-[34px_minmax(0,1fr)_auto]" : "grid-cols-[34px_1fr]"} gap-2 border-t border-[#E6E8F6] py-3 first:border-t-0 first:pt-0 last:pb-0`}>
-      <span className={`pt-px text-[13.5px] font-semibold tabular-nums ${MARK[mark]}`}>{label}</span>
+      <span className={`self-start justify-self-start pt-px text-[13.5px] font-semibold tabular-nums ${MARK[mark]}`}>{label}</span>
       <div className="min-w-0 text-[14.5px] leading-[1.5]">
         <p className={`flex items-start justify-between gap-3 ${mark === "done" ? "text-[#6B7280]" : "font-medium text-[#111827]"}`}>
           <span>{text}</span>
