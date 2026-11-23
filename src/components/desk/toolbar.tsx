@@ -93,6 +93,12 @@ export function Toolbar({ modal, hold }: { /** The step's tool open as the modal
     setPop(k);
   };
   const toggle = (k: string, el: HTMLButtonElement) => (pop === k ? setPop(null) : show(k, el));
+  // "Show me how" clicked with the step's menu still open: the menu goes, so the guide's first card is not under it.
+  useEffect(() => {
+    const shut = () => setPop(null);
+    window.addEventListener("desk:guide-start", shut);
+    return () => window.removeEventListener("desk:guide-start", shut);
+  }, []);
 
   // The step's tool opening as the modal opens the menu its learner goes to first (owner, 3 Nov), and so does
   // the next step taken in the same modal; opening a task or a step row opens none. Only the menu: the tool

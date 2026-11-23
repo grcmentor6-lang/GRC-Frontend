@@ -450,6 +450,31 @@ const handInSpan = (reg: Register) => {
 const listed = (v: string) =>
   v ? v.split(", ").map((x, i, a) => <Fragment key={i}><span className="whitespace-nowrap">{x}</span>{i < a.length - 1 ? ", " : ""}</Fragment>) : "";
 
+/** Deliverable codes, each on its own line with the name the programme gives it and the task that produces it. */
+function Named({ v, desk }: { v: string; desk: Desk }) {
+  const tasks = Object.values(desk.tasks);
+  return (
+    <span className="grid gap-1">
+      {v.split(", ").map((code) => {
+        const from = tasks.filter((t) => t.subs.some((x) => x.code === code));
+        const name = from[0]?.subs.find((x) => x.code === code)?.name;
+        return (
+          <span key={code}>
+            <span className="whitespace-nowrap font-semibold">{code}</span>
+            {name && <span className="text-[#5B6474]"> · {name} ({from.length > 1 ? "every task" : from[0].id})</span>}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+/** "step 6" / "steps 6 and 7": the steps that fill the given columns, for the hand-in's line about empty cells. */
+const fillSteps = (cols: number[], reg: Register) => {
+  const ns = Object.entries(reg.steps).filter(([, cs]) => cs.some((c) => cols.includes(c))).map(([n]) => Number(n)).sort((a, b) => a - b);
+  return ns.length ? `step${ns.length > 1 ? "s" : ""} ${ns.length > 1 ? `${ns.slice(0, -1).join(", ")} and ${ns[ns.length - 1]}` : ns[0]}` : "the step that fills the column";
+};
+
 /** A reason with every hyphenated ID ("E-035", "temp-user-99") kept on one line: a line never breaks inside one. */
 const keepIds = (t: string) => t.split(/(\b[A-Za-z][A-Za-z0-9]*-[A-Za-z0-9-]*[A-Za-z0-9]\b)/).map((x, i) => (i % 2 ? <span key={i} className="whitespace-nowrap">{x}</span> : x));
 
@@ -495,6 +520,11 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
   const missing = adding && isSeeded(progress.grids?.[gk] ?? {}, s!.n) ? Math.max(0, need - stepRows) : 0;
   const spare = adding && stepRows > need;
   const cuts = spare || trimming;
+  // The copying steps whose rows are not all here: [step, rows held, rows it adds]. Once the trimming step is done the
+  // register is meant to be smaller, so nothing is short then.
+  const short: [number, number, number][] = !reg.grow || held ? [] : Object.entries(reg.grow.adds)
+    .map(([n, want]) => [Number(n), rows.filter((_, ri) => addedBy(reg, progress, task.id, ri) === Number(n)).length, want] as [number, number, number])
+    .filter(([n, have, want]) => have < want && !(trimming && rows.length >= reg.grow!.target) && (!s || n < s.n));
   // The trimming step can take its removals back (tester, 18 Nov 2026: one wrong click lost a row built over several
   // steps, and the register could be emptied). The × goes once the register is down to size, and Undo restores the
   // table as it was before the last removal. ponytail: held for this visit only; after a reload the row is put back
@@ -504,6 +534,8 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
   const set = (cell: string, v: string) => edit((c) => ({ ...c, [cell]: v }));
   // A column that arrives as a draft: in its empty cells, once, when the step opens.
   const draft = s && !readOnly ? reg.draft?.[s.n]?.(desk, progress) : undefined;
+  // Until its rows are checked, a drafted column says whose it is: a filled cell otherwise reads as a finished answer.
+  const drafted = draft && s && !progress.rowChecks?.[`${task.id}-${s.n}`] ? draft.col : -1;
   useEffect(() => {
     if (draft) edit((c) => ({ ...Object.fromEntries(draft.v.flatMap((x, ri) => (x ? [[`${ri},${draft.col}`, x]] : []))), ...c }));
     // Once per step.
@@ -660,7 +692,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
         <p data-guide="empty-check" className={`sticky left-0 flex items-center gap-2 border-b px-3 py-2 text-[12.5px] ${empty.size ? "border-[#FDE68A] bg-[#FFFBEB] text-[#78350F]" : "border-[#BBF7D0] bg-[#F0FDF4] text-[#14532D]"}`}>
           <Icon name={empty.size ? "info" : "checkCircle"} size={14} className="shrink-0" />
           {empty.size
-            ? `${empty.size} empty cell${empty.size > 1 ? "s" : ""} in columns ${handInSpan(reg)} of your rows, marked amber. Fill ${empty.size > 1 ? "them" : "it"} in the step that fills the column.`
+            ? `${empty.size} empty cell${empty.size > 1 ? "s" : ""} in columns ${handInSpan(reg)} of your rows. An empty cell fails the automated review, so ${empty.size > 1 ? "each is" : "it is"} marked amber. Fill ${empty.size > 1 ? "them" : "it"} in ${fillSteps([...empty].map((c) => Number(c.split(",")[1])), reg)}.`
             : `No empty cell in columns ${handInSpan(reg)} of your ${mineCount} rows.`}
         </p>
       )}
@@ -670,11 +702,20 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
           {studyAll && Object.values(reg.steps).some((c) => c.length) ? `${reg.code} lists ${rows.length} rows. Your decisions fill them from step ${firstFill}.` : studyAll || mineCount === 0 ? `${reg.code} is given and fixed: ${rows.length} rows, read-only.` : <>Showing the {rows.length - mineCount} worked rows {sameFirst ? `of ${rows[worked[0]]?.[0]}` : `(${worked.map((ri) => rows[ri][0]).join(", ")})`}. Your {mineCount} rows are filled from step {firstFill}, the same way.</>}
         </p>
       )}
+      {drafted >= 0 && (
+        // Tester, 23 Nov 2026: the filled cells looked like finished answers and were checked as they stood.
+        <p data-guide="draft-banner" className="sticky left-0 flex items-start gap-2 border-b border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-[12.5px] leading-snug text-[#78350F]">
+          <Icon name="info" size={14} className="mt-px shrink-0" />
+          <span>
+            <strong className="font-semibold">A colleague&rsquo;s draft, not your answers.</strong> {reg.draftBy?.[s!.n] ?? "A colleague filled"} <strong className="font-semibold">{reg.cols[drafted].h}</strong> before you opened this step. It is not taken from your earlier tasks, and some of it may be wrong. Read each cell against the source and correct what differs. Check my answers locks the rows, and you get one check.
+          </span>
+        </p>
+      )}
       <table className="w-full border-collapse text-[13.5px] leading-[1.5] text-[#4B5563]">
         <thead className="bg-[#F8F9FB] font-sans text-[10.5px] uppercase tracking-[0.08em] text-[#6B7280]">
           <tr>
             {/* In a finding step column A is the same organisation on every row: named above instead. */}
-            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${out(ci) ? "!bg-[#F1F2FF] text-[#4338CA]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""} ${c.what ? "align-top" : ""}`}>{c.h}{c.what && <span className="mt-1 block max-w-[30ch] font-sans text-[11.5px] font-normal normal-case leading-snug tracking-normal text-[#6B7280]">{c.what}</span>}</th>)}
+            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${out(ci) ? "!bg-[#F1F2FF] text-[#4338CA]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""} ${c.what ? "align-top" : ""}`}>{c.h}{ci === drafted && <span data-guide="draft-tag" className="mt-1 block w-fit rounded border border-dashed border-[#B45309] bg-[#FFFBEB] px-1.5 py-px font-sans text-[10.5px] font-semibold normal-case tracking-normal text-[#92400E]">Colleague&rsquo;s draft · review and correct</span>}{c.what && <span className="mt-1 block max-w-[30ch] font-sans text-[11.5px] font-normal normal-case leading-snug tracking-normal text-[#6B7280]">{c.what}</span>}</th>)}
             {cuts && <th className={th}><span className="sr-only">Remove</span></th>}
           </tr>
         </thead>
@@ -864,7 +905,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                   return (
                     <td key={ci} className={`${td} px-3.5 py-3 ${mine && out(ci) && !empty.has(cell) ? "bg-[#FBFBFF]" : ""} ${(working || checking) && ci === stick ? "sticky left-0 z-[1] bg-white shadow-[1px_0_0_#DDE1E8] max-[600px]:max-w-[132px] max-[600px]:text-[12px]" : ""} ${mine && v.length <= 24 && !c.wrap ? "whitespace-nowrap" : ""} ${empty.has(cell) ? "bg-[#FEF3C7] shadow-[inset_0_0_0_2px_#F59E0B]" : ""} ${c.auto ? "sticky left-0 z-[1] whitespace-nowrap bg-white text-[12.5px] font-semibold tabular-nums text-[#6B7280] shadow-[1px_0_0_#E3E5EA]" : ci === 1 && mine ? "text-[14px] font-semibold leading-[1.4] text-[#111827]" : ci === 0 && mine && /^[A-Z][A-Z0-9]*-[A-Z0-9.-]+$/.test(v) ? "whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-[#6B7280]" : ""}`}>
                       {ci === firstShown && live === ri && <LiveDot />}
-                      {c.list && v ? listed(v) : v ? <Toned v={v} h={c.h} /> : mine ? <span className="text-[#C4C8D0]">—</span> : ""}
+                      {c.named && v ? <Named v={v} desk={desk} /> : c.list && v ? listed(v) : v ? <Toned v={v} h={c.h} /> : mine ? <span className="text-[#C4C8D0]">—</span> : ""}
                       {ci === firstShown && rowFilled(ri) && <span role="img" aria-label="Row filled" title="Every cell of this row is filled" className="ml-1.5 inline-block align-middle text-[#9CA3AF]"><Icon name="check" size={12} /></span>}
                       {c.auto && by > 0 && <span className="block text-[10.5px] font-normal text-[#8A91A3]">step {by}</span>}
                       {mine && (() => {
@@ -887,7 +928,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                 <tr key={`u${ci}`} data-under-row={ri}>
                   <td colSpan={reg.cols.filter((_, cj) => shown(cj)).length + (cuts ? 1 : 0)} className="border-b border-[#E9ECF1] bg-white p-0">
                     <p className={`sticky left-0 ${phone ? "w-[calc(100vw-26px)]" : "max-w-[760px]"} px-3 py-1.5 text-[12.5px] leading-snug text-[#3F4757]`}>
-                      <span className="font-semibold text-[#5B6474]">{c.h}:</span> {(c.prose ? cellValue(reg, progress, task.id, ri, ci) : listed(cellValue(reg, progress, task.id, ri, ci))) || "—"}
+                      <span className="font-semibold text-[#5B6474]">{c.h}:</span> {c.named && cellValue(reg, progress, task.id, ri, ci) ? <Named v={cellValue(reg, progress, task.id, ri, ci)} desk={desk} /> : (c.prose ? cellValue(reg, progress, task.id, ri, ci) : listed(cellValue(reg, progress, task.id, ri, ci))) || "—"}
                     </p>
                   </td>
                 </tr>
@@ -963,7 +1004,15 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
           <Icon name="plus" size={14} /> Put back a row you removed ({missing} of this step&apos;s {need})
         </button>
       )}
-      {reg.grow && !rows.length && !adding && <p className="px-3 py-6 text-center text-[13px] text-[#8A91A3]">No rows yet. Each copying step puts its rows here when you open it.</p>}
+      {/* An empty or short table names the steps that build it (tester, 18 Nov 2026: later tables were empty and nothing
+          said whether the work was lost, unsaved or not loaded). */}
+      {reg.grow && !adding && short.length > 0 && (
+        <p data-guide="rows-missing" className={`sticky left-0 px-3 text-center text-[13px] ${rows.length ? "border-t border-[#E9ECF1] py-2.5 text-[#92400E]" : "py-6 text-[#5B6474]"}`}>
+          {rows.length ? "Some rows are missing." : "No rows here yet."} This table is built in earlier steps:{" "}
+          {short.map(([n, have, want], i) => <span key={n}>{i ? ", " : ""}<strong className="font-semibold">step {n}</strong> has {have} of its {want} rows</span>)}.
+          {" "}Open {short.length > 1 ? "those steps" : "that step"}: each puts its rows in place, and a row that was removed can be put back there.
+        </p>
+      )}
     </div>
   );
 }
@@ -1029,6 +1078,19 @@ export function RegisterProgress({ task, s }: { task: Task; s: Step }) {
   return (
     <div className="mt-3 grid gap-2">
       {chk && <RowCheck task={task} s={s} chk={chk} />}
+      {cols.length > 0 && g.cells > 0 && !progress.rowChecks?.[`${task.id}-${s.n}`] && (
+        // Testing team, 23 Nov 2026 (week 12): no table said what it is, how many answers it takes, or what a wrong one does.
+        <ul data-guide="table-rules" className="grid gap-1 rounded border border-[#E3E5EA] bg-[#F7F8FA] px-3 py-2.5 text-[12.5px] leading-snug text-[#3F4757]">
+          <li><strong className="font-semibold text-[#111827]">This table:</strong> {reg.title.split(" · ").slice(1).join(" · ") || reg.title}.</li>
+          <li><strong className="font-semibold text-[#111827]">Answers needed:</strong> {g.cells}: every cell of {names} on your rows. {g.filled} filled so far.</li>
+          <li>
+            <strong className="font-semibold text-[#111827]">If an answer is wrong:</strong>{" "}
+            {chk
+              ? "you can change any cell until you click Check my answers. The check then shows, row by row, whether you were right, the answer and why. After it the rows lock and cannot be changed, so read them through first."
+              : "you can change any cell until the step is marked complete. A value the cell cannot take is flagged when you leave the cell, with a hint."}
+          </li>
+        </ul>
+      )}
       {note && (
         // Where this step's rows come from, and how many: said once, before the work.
         <NoteList text={note} guide="step-note" className="rounded border-l-[3px] border-[#4338CA] bg-[#F7F8FF] px-3 py-2.5" />
@@ -1288,6 +1350,7 @@ function BriefCheck({ task, b, i }: { task: Task; b: Brief; i: number }) {
   const draft = sec.draft?.(desk);
   const want = sec.want?.(desk);
   const flags = briefFlags(desk, sec, typed);
+  const [asked, setAsked] = useState(false);
   const [justChecked, setJustChecked] = useState(false);
   useEffect(() => {
     if (justChecked) document.querySelector('[data-guide="brief-result"]')?.scrollIntoView({ block: "nearest" });
@@ -1298,20 +1361,41 @@ function BriefCheck({ task, b, i }: { task: Task; b: Brief; i: number }) {
   const label = (li: number) => sec.lines?.[li].l ?? `Line ${li + 1}`;
   const where = sec.src!(desk);
   const at = v[`${i},at`];
-  if (!at)
+  if (!at) {
+    // As a drafted table column (RowCheck): the section says whose it is, and a draft nobody changed is asked about once.
+    const untouched = draft.v.every((x, li) => (typed[li] ?? "").trim() === x.trim());
+    const run = () => {
+      update((p) => ({ ...p, grids: { ...p.grids, [gk]: { ...(p.grids?.[gk] ?? {}), [`${i},at`]: new Date().toISOString(), [`${i},miss`]: bad.join(",") } } }));
+      setJustChecked(true);
+    };
     return (
-      <button
-        type="button"
-        data-guide="brief-check"
-        onClick={() => {
-          update((p) => ({ ...p, grids: { ...p.grids, [gk]: { ...(p.grids?.[gk] ?? {}), [`${i},at`]: new Date().toISOString(), [`${i},miss`]: bad.join(",") } } }));
-          setJustChecked(true);
-        }}
-        className="mt-1 inline-flex h-9 w-fit items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90"
-      >
-        <Icon name="check" size={14} strokeWidth={2.5} /> Check my answers
-      </button>
+      <div className="mt-1 grid gap-2">
+        <p data-guide="draft-banner" className="flex items-start gap-2 rounded border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-[12.5px] leading-snug text-[#78350F]">
+          <Icon name="info" size={14} className="mt-px shrink-0" />
+          <span><strong className="font-semibold">A colleague&rsquo;s draft, not your answers.</strong> A colleague wrote this section before you opened the step. It is not taken from your earlier tasks, and some lines may be wrong. Read each line against {where} and correct what differs. Check my answers can be used once.</span>
+        </p>
+        {asked && untouched ? (
+          <div data-guide="check-unchanged" role="alert" className="rounded border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2.5 text-[13px] text-[#78350F]">
+            <p className="font-semibold">You have not changed anything in the colleague&rsquo;s draft.</p>
+            <p className="mt-0.5 text-[12.5px]">Checking it as it stands cannot be undone. If you have read every line against {where} and none differs, check it. Otherwise go back and review.</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button type="button" onClick={() => setAsked(false)} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 focus-ring">Go back and review</button>
+              <button type="button" onClick={run} className="h-9 rounded border border-[#D1D5DB] bg-white px-4 text-[13px] font-semibold text-[#111827] hover:bg-[#F7F8FA] focus-ring">Check as it stands</button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            data-guide="brief-check"
+            onClick={untouched ? () => setAsked(true) : run}
+            className="inline-flex h-9 w-fit items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90"
+          >
+            <Icon name="check" size={14} strokeWidth={2.5} /> Check my answers
+          </button>
+        )}
+      </div>
     );
+  }
   const slips = draft.why.flatMap((w, li) => (w ? [li] : []));
   const missed = (v[`${i},miss`] ?? "").split(",").filter(Boolean).map(Number);
   const found = slips.filter((li) => !missed.includes(li)).length;
@@ -2107,7 +2191,12 @@ function RowCheck({ task, s, chk }: { task: Task; s: Step; chk: RowCheckSpec }) 
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const ready = regStatus(desk, progress, task, s.n).ok;
+  // A drafted column nobody has changed: asked once before the rows lock (tester, 23 Nov 2026).
+  const draft = reg.draft?.[s.n]?.(desk, progress);
+  const untouched = !!draft && draft.v.every((x, ri) => !x || cellValue(reg, progress, task.id, ri, draft.col) === x);
+  const [asked, setAsked] = useState(false);
   const check = async () => {
+    setAsked(false);
     setBusy(true);
     setFailed(false);
     // Sent and returned as lists: the API client case-converts object keys, which would mangle labels.
@@ -2163,13 +2252,24 @@ function RowCheck({ task, s, chk }: { task: Task; s: Step; chk: RowCheckSpec }) 
       </div>
     );
   }
+  if (asked && untouched)
+    return (
+      <div data-guide="check-unchanged" role="alert" className="rounded border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2.5 text-[13px] text-[#78350F]">
+        <p className="font-semibold">You have not changed anything in the colleague&rsquo;s draft.</p>
+        <p className="mt-0.5 text-[12.5px]">Checking locks the rows as they stand, and you cannot try again. If you have read every cell against the source and none differs, check them. Otherwise go back and review.</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button type="button" onClick={() => setAsked(false)} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 focus-ring">Go back and review</button>
+          <button type="button" onClick={check} className="h-9 rounded border border-[#D1D5DB] bg-white px-4 text-[13px] font-semibold text-[#111827] hover:bg-[#F7F8FA] focus-ring">Check as it stands</button>
+        </div>
+      </div>
+    );
   return (
     <div className="flex flex-wrap items-center gap-3">
       <button
         type="button"
         data-guide="check-rows"
         disabled={!ready || busy}
-        onClick={check}
+        onClick={untouched && !asked ? () => setAsked(true) : check}
         className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]"
       >
         {busy ? "Checking…" : "Check my answers"}

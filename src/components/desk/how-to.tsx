@@ -12,7 +12,7 @@ import { ATTEST, RMF, attestDone, attestKey, type Attest } from "@/lib/desk/form
 import { briefOf, regOf } from "@/lib/desk/registers";
 import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
 import { useAuth } from "@/components/auth/auth-provider";
-import { STEP_GUIDES, autoGuide } from "./step-guides";
+import { autoGuide, guideFor } from "./step-guides";
 import { DECISION_CONTEXT } from "@/lib/desk/decision-context";
 import { FloatWindow } from "./float-window";
 import { UndertakingCard } from "./undertaking";
@@ -298,11 +298,12 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
   // A decision whose second part is done in a tool may carry a guide for its question, run here in the
   // row: keyed "<task>-<n>q", since "<task>-<n>" is the tool's guide for part 2 (T3.2 step 12).
   const guideKey = inTool ? `${task.id}-${s.n}q` : `${task.id}-${s.n}`;
-  const guide = inTool && s.kind !== "pick" ? undefined : STEP_GUIDES[guideKey];
+  const guide = inTool && s.kind !== "pick" ? undefined : guideFor(guideKey, s);
   const [guideAt, setGuideAt] = useState(-1);
   // Never over another walk-through (the desk's own tour on a first visit): wait for it to close.
   const startGuide = useCallback(() => {
-    const go = () => (document.querySelector('[aria-label^="Guide:"]') ? setTimeout(go, 800) : setGuideAt(0));
+    // Not from card 1 again where it is already running ("Show me how" clicked before the delay ran out).
+    const go = () => (document.querySelector('[aria-label^="Guide:"]') ? setTimeout(go, 800) : setGuideAt((a) => (a < 0 ? 0 : a)));
     go();
   }, []);
   useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && !readOnly && !done && autoGuide(desk, guideKey), startGuide, 1600);

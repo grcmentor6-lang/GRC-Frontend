@@ -25,7 +25,7 @@ import { decisionChecked, stepKey, type Progress } from "@/lib/desk/progress";
 import { appZoom } from "@/lib/zoom";
 import { useAuth } from "@/components/auth/auth-provider";
 import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
-import { STEP_GUIDES, autoGuide } from "./step-guides";
+import { autoGuide, guideFor } from "./step-guides";
 import { LabWindow } from "./lab-console";
 import { allCaptures, labOf } from "@/lib/desk/labs";
 
@@ -184,6 +184,21 @@ function ScreenWindow({ toolKey, index, onClose, beside, plain }: {
       left={beside ? place.left : undefined}
     >
       <div className="flex min-h-full flex-col bg-[#F7F8FA]">
+        {(() => {
+          // The step's own tool, opened beside its own work (tester, 23 Nov 2026: "we do not know why it opened"): where
+          // the step is worked in a table and does not read this screen, the window says so and names what it does read.
+          const reg = plain && here && step?.key === toolKey ? regOf(here.task, here.n) : undefined;
+          if (!reg || !here || reg.screen?.[here.n] || reg.reads?.[here.n]?.includes(toolKey)) return null;
+          const reads = (reg.reads?.[here.n] ?? []).map((k) => `${desk.sections[k.split("|")[0]]?.t ?? k.split("|")[0]} › ${k.split("|")[1]}`);
+          return (
+            <p data-guide="not-read" className="flex items-start gap-2 border-b border-[#E9ECF1] bg-white px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[#3F4757]">
+              <Icon name="info" size={14} className="mt-[3px] shrink-0 text-[#5B6474]" />
+              <span>
+                <strong className="font-semibold">Step {here.n} does not read this screen.</strong> You opened the tool the step is named after. The step is worked in the table in the main window{reads.length ? <>, and it reads <strong className="font-semibold">{reads.join(" and ")}</strong></> : null}. You can close this window.
+              </span>
+            </p>
+          );
+        })()}
         {toolKey === "home|My Organisation" ? <BothOrgs /> : plain ? <Screen toolKey={toolKey} /> : deliverable === "register" ? <RegisterWork task={desk.tasks[here!.task]} readOnly /> : deliverable === "brief" ? <BriefWork task={desk.tasks[here!.task]} readOnly /> : mine ? <GridWork taskId={mine} toolKey={toolKey} readOnly /> : <Screen toolKey={toolKey} />}
         {desk.guard[sec] && <Guard text={desk.guard[sec]} />}
       </div>
@@ -260,10 +275,12 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
   // step where it is an Activity (autoGuide); a Decision's runs from "Show me how".
   const { user } = useAuth();
   const guideKey = task && s ? `${task.id}-${s.n}` : "";
-  const guide = STEP_GUIDES[guideKey];
+  const guide = guideFor(guideKey, s ?? undefined);
   const [guideAt, setGuideAt] = useState(-1);
-  const startGuide = () => setGuideAt(0);
-  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && present && !viewOnly && autoGuide(desk, guideKey), startGuide, 700);
+  // The toolbar closes its menu when a guide is started by hand: left open, it covered the note the first card lights.
+  const startGuide = () => { window.dispatchEvent(new Event("desk:guide-start")); setGuideAt(0); };
+  // By itself only when it is not already running: "Show me how" clicked before the delay ran out was sent back to card 1.
+  useTourOnce(`grc101.guide.${guideKey}`, user?.email, !!guide && present && !viewOnly && autoGuide(desk, guideKey), () => setGuideAt((a) => (a < 0 ? 0 : a)), 700);
   // A guide card that sent the learner to another window (the Inbox, a Tech Lab) ends the walk there; when that
   // window closes, the walk starts again and its cards for jobs already done pass by (T6.1 step 8).
   const [away, setAway] = useState<{ until: string | (() => boolean) } | null>(null);

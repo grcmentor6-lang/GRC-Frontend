@@ -157,6 +157,26 @@ export function KnowledgeCheck({ id }: { id: string }) {
           </p>
         )
       )}
+      {(() => {
+        // The week's close (testing team, 23 Nov 2026: "no button to go directly to the next week ... no clear sign
+        // that the week is complete"): once an attempt is in, say whether the week is done and where to go next.
+        if (!week || !st.attempts.length || liveTest === id) return null;
+        const open = desk.order.filter((x) => desk.tasks[x].week === week.n && !progress.submitted[x]);
+        const next = desk.order.find((x) => desk.tasks[x].week === week.n + 1);
+        if (open.length)
+          return (
+            <div data-kc="week-open" className="mt-6 flex flex-wrap items-center gap-3 rounded-[10px] border border-[#E3E5EA] bg-[#F7F8FA] px-4 py-3.5">
+              <p className="min-w-0 flex-1 text-[13.5px] text-[#3F4757]"><strong className="font-semibold text-[#111827]">Week {week.n} is not finished yet.</strong> Still to submit: {open.join(", ")}.</p>
+              <button type="button" onClick={() => openTask(open[0])} className={`h-9 rounded-lg bg-[#111827] px-4 text-[13px] font-semibold text-white hover:brightness-110 ${press}`}>Go to {open[0]}</button>
+            </div>
+          );
+        return (
+          <div data-kc="week-done" className="mt-6 flex flex-wrap items-center gap-3 rounded-[10px] border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-3.5">
+            <p className="min-w-0 flex-1 text-[13.5px] text-[#14532D]"><strong className="font-semibold">Week {week.n} is complete.</strong> Every task is submitted and the knowledge check is done.</p>
+            {next && <button type="button" data-kc="next-week" onClick={() => openTask(next)} className={`h-9 rounded-lg bg-[#166534] px-4 text-[13px] font-semibold text-white hover:brightness-110 ${press}`}>Go to Week {week.n + 1}</button>}
+          </div>
+        );
+      })()}
     </Shell>
   );
 }
@@ -327,7 +347,7 @@ export function TestDock({ id, folded, onFold }: { id: string; folded: boolean; 
       aria-label={`${id} in progress`}
       // Its own pane: a divider, a gutter of the desk's ground, then the test as a raised card. Nothing of the desk
       // runs under it and nothing of it touches the desk (owner, 12 Nov 2026: "there is no separation").
-      className="flex flex-col max-lg:fixed max-lg:inset-0 max-lg:z-[80] lg:h-desk lg:w-[clamp(400px,36%,920px)] lg:shrink-0 lg:border-l lg:border-[#C5CAD6] lg:bg-[#DFE3EC] lg:p-2.5"
+      className="flex flex-col max-lg:fixed max-lg:inset-0 max-lg:z-[80] lg:h-desk lg:w-[clamp(440px,50%,960px)] lg:shrink-0 lg:border-l lg:border-[#C5CAD6] lg:bg-[#DFE3EC] lg:p-2.5"
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#ECEEFB] lg:rounded-xl lg:shadow-[0_10px_28px_-10px_rgba(30,27,75,0.5)] lg:ring-1 lg:ring-[#1E1B4B]/30">
       <header className="shrink-0 bg-[#1E1B4B] text-white">

@@ -92,68 +92,86 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
  *  treat it as a skip. The hole in the blocker is the one place clicks still land. */
 const swallow = (e: React.MouseEvent) => e.stopPropagation();
 
-/** driver.js-style placement: prefer the side with room (bottom→top→right→left); for oversized
- *  targets, float the card clear of the target (no arrow), and with no target at all, dead-centre.
- *  Returns the arrow's cross-axis offset. */
-function place(r: Box | null, th: number, zoom: number, avoid: Box | null = null, focus: Box | null = null): Pos {
+/** What the card has to keep off, beside the lit target itself. */
+type Keep = {
+  /** A window raised over the dim for the step: it sits above the card's layer, so a card on it loses its Next button. */
+  raised: Box | null;
+  /** The step's second thing (`alsoShow`), wherever it sits: the screen a value is read from. */
+  also: Box | null;
+  /** The part of the target the step points at (`pointAt`): the cell being filled. */
+  focus: Box | null;
+};
+
+/** The area two boxes share. */
+const overlap = (a: Box, b: Box | null) =>
+  b ? Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top)) : 0;
+
+/**
+ * Where the card goes: the first place, nearest the target first, that covers none of what the step is about (the lit
+ * target, the screen kept live beside it, the cell pointed at). Tried in order: the four sides of the target (below,
+ * above, right, left; beside first for a tall one), then of the cell pointed at, each also below and above at either
+ * end, then the half of the screen away from the target, then the four corners.
+ *
+ * Where every place covers something (a tall card over a wide table row on a short screen: owner, 23 Nov 2026, T4.1
+ * step 5, the card sat on the Redline cell it said to type in), the cell pointed at and a raised window are never
+ * covered; a place beside the cell (off it, its arrow on it) is taken first, so the card stays by what it explains,
+ * and failing that the place that covers least.
+ *
+ * With no target at all, dead-centre. Returns the arrow's cross-axis offset.
+ */
+function place(r: Box | null, th: number, zoom: number, keep: Keep = { raised: null, also: null, focus: null }): Pos {
   // `r` and `th` are already in the page's own (zoomed) pixels; the viewport is not, so divide.
   const vw = window.innerWidth / zoom;
   const vh = window.innerHeight / zoom;
   const cx = (vw - TIP_W) / 2;
-  // No target (the welcome card) — nothing to keep in view, so centre it. An oversized target still
-  // floats at the bottom, where it covers least of what the step is pointing at.
-  if (!r) return { side: "float", top: clamp((vh - th) / 2, MARGIN, vh - th - MARGIN), left: cx, arrow: 0 };
-  // Floating, take the half of the screen the target is not in: a card parked over the very thing
-  // a "do it" step says to click leaves nothing to click.
-  // A window raised over the dim for the step (`alsoShow`) sits above the card's layer, so the card
-  // must never land on it: its Next button would be under the window.
-  const hits = (top: number, left: number) =>
-    !!avoid && left < avoid.left + avoid.width && left + TIP_W > avoid.left && top < avoid.top + avoid.height && top + th > avoid.top;
-  // The half away from what the step points at, where it points at a part of a tall target (T6.1 step 8: the first
-  // account's Type at the top of Sheet 4, read with its facts under it on a phone).
-  const mid = focus ? focus.top + focus.height / 2 : r.top + r.height / 2;
-  const floatTop = mid > vh / 2 ? MARGIN : vh - th - 24;
-  // Floating beside the raised window when the middle would land on it: the wider free side.
-  const floatLeft = !hits(floatTop, cx) || !avoid ? cx
-    : avoid.left >= vw - (avoid.left + avoid.width) ? clamp(avoid.left - TIP_W - GAP, MARGIN, vw - TIP_W - MARGIN) : clamp(avoid.left + avoid.width + GAP, MARGIN, vw - TIP_W - MARGIN);
-  const float: Pos = { side: "float", top: floatTop, left: floatLeft, arrow: 0 };
-  // Only height forces a float: a full-width target (a menu row on a phone) still has room above or
-  // below it, and top/bottom placement centres the card on the screen anyway.
-  const space = { top: r.top, bottom: vh - (r.top + r.height), left: r.left, right: vw - (r.left + r.width) };
-  // A tall target (a whole file) has no room above or below, but often has beside it: the card
-  // goes there, level with the target's middle, before it would float over the target itself.
-  if (r.height > vh * 0.7) {
-    const top = clamp(r.top + r.height / 2 - th / 2, MARGIN, vh - th - MARGIN);
-    const leftOf = (b: "right" | "left") => (b === "right" ? r.left + r.width + GAP : r.left - GAP - TIP_W);
-    // Not beside it where the raised window is (T6.1 step 8: the test plan open at the right edge covered Next).
-    const beside = (["right", "left"] as const).find((b) => space[b] >= TIP_W + GAP + MARGIN && !hits(top, leftOf(b))) ?? null;
-    if (!beside) return float;
-    const left = leftOf(beside);
-    return { side: beside, top, left, arrow: clamp(r.top + r.height / 2 - top, 18, th - 18) };
-  }
-  const fits: Record<Exclude<Side, "float">, boolean> = {
-    bottom: space.bottom >= th + GAP + MARGIN,
-    top: space.top >= th + GAP + MARGIN,
-    right: space.right >= TIP_W + GAP + MARGIN,
-    left: space.left >= TIP_W + GAP + MARGIN,
+  const fitX = (left: number) => clamp(left, MARGIN, vw - TIP_W - MARGIN);
+  const fitY = (top: number) => clamp(top, MARGIN, vh - th - MARGIN);
+  // No target (the welcome card): nothing to keep in view, so centre it.
+  if (!r) return { side: "float", top: fitY((vh - th) / 2), left: cx, arrow: 0 };
+  const card = (p: { top: number; left: number }): Box => ({ top: p.top, left: p.left, width: TIP_W, height: th });
+  // The target with its breathing room: a card squeezed against it by the screen's edge counts as on it, so a side
+  // with the full gap is taken first.
+  const g = GAP - 1;
+  const lit: Box = { top: r.top - g, left: r.left - g, width: r.width + 2 * g, height: r.height + 2 * g };
+  // What a place must never cover, and what it covers of the rest. A card's own area is far under HARD.
+  const HARD = 1e7;
+  const hard = (p: Pos) => overlap(card(p), keep.focus) + overlap(card(p), keep.raised);
+  const cost = (p: Pos) => HARD * hard(p) + overlap(card(p), keep.also) + overlap(card(p), lit);
+  // Beside a box, kept on screen: centred on it, or level with its start (-1) or end (1) when above or below.
+  // Pushed back onto the box by the screen's edge, it has no side to put an arrow on.
+  const at = (a: Box, s: Exclude<Side, "float">, align: -1 | 0 | 1 = 0): Pos => {
+    const along = s === "top" || s === "bottom";
+    const top = fitY(s === "bottom" ? a.top + a.height + GAP : s === "top" ? a.top - GAP - th : a.top + a.height / 2 - th / 2);
+    const left = fitX(s === "right" ? a.left + a.width + GAP : s === "left" ? a.left - GAP - TIP_W : align < 0 ? a.left : align > 0 ? a.left + a.width - TIP_W : a.left + a.width / 2 - TIP_W / 2);
+    const arrow = along ? clamp(a.left + a.width / 2 - left, 18, TIP_W - 18) : clamp(a.top + a.height / 2 - top, 18, th - 18);
+    return { side: overlap(card({ top, left }), a) ? "float" : s, top, left, arrow };
   };
-  const order: Exclude<Side, "float">[] = ["bottom", "top", "right", "left"];
-  // Where each side would put the card, so a side that lands on the raised window is passed over.
-  const at = (s: Exclude<Side, "float">) =>
-    s === "bottom" || s === "top"
-      ? { top: s === "bottom" ? r.top + r.height + GAP : r.top - GAP - th, left: clamp(r.left + r.width / 2 - TIP_W / 2, MARGIN, vw - TIP_W - MARGIN) }
-      : { top: clamp(r.top + r.height / 2 - th / 2, MARGIN, vh - th - MARGIN), left: s === "right" ? r.left + r.width + GAP : r.left - GAP - TIP_W };
-  const side = order.find((s) => fits[s] && !hits(at(s).top, at(s).left));
-  if (!side) return float;
-
-  if (side === "bottom" || side === "top") {
-    const left = clamp(r.left + r.width / 2 - TIP_W / 2, MARGIN, vw - TIP_W - MARGIN);
-    const top = side === "bottom" ? r.top + r.height + GAP : r.top - GAP - th;
-    return { side, top, left, arrow: clamp(r.left + r.width / 2 - left, 18, TIP_W - 18) };
-  }
-  const top = clamp(r.top + r.height / 2 - th / 2, MARGIN, vh - th - MARGIN);
-  const left = side === "right" ? r.left + r.width + GAP : r.left - GAP - TIP_W;
-  return { side, top, left, arrow: clamp(r.top + r.height / 2 - top, 18, th - 18) };
+  // Floating, the half of the screen away from what the step points at (T6.1 step 8: the first account's Type at the
+  // top of Sheet 4, read with its facts under it on a phone).
+  const mid = keep.focus ? keep.focus.top + keep.focus.height / 2 : r.top + r.height / 2;
+  const float: Pos = { side: "float", top: mid > vh / 2 ? MARGIN : fitY(vh - th - 24), left: cx, arrow: 0 };
+  // A tall target (a whole file) has no room above or below, but often has beside it.
+  const sides: Exclude<Side, "float">[] = r.height > vh * 0.7 ? ["right", "left", "bottom", "top"] : ["bottom", "top", "right", "left"];
+  const all: Exclude<Side, "float">[] = ["bottom", "top", "right", "left"];
+  const ends = (a: Box) => (["bottom", "top"] as const).flatMap((s) => [at(a, s, -1), at(a, s, 1)]);
+  const mx = r.left + r.width / 2, my = r.top + r.height / 2;
+  const corners = [MARGIN, fitY(vh)].flatMap((top) => [MARGIN, fitX(vw)].map((left): Pos => ({ side: "float", top, left, arrow: 0 })))
+    .sort((a, b) => Math.hypot(a.left + TIP_W / 2 - mx, a.top + th / 2 - my) - Math.hypot(b.left + TIP_W / 2 - mx, b.top + th / 2 - my));
+  const tries: Pos[] = [
+    ...sides.map((s) => at(r, s)),
+    ...ends(r),
+    ...(keep.focus ? [...all.map((s) => at(keep.focus!, s)), ...ends(keep.focus)] : []),
+    float,
+    ...corners,
+  ];
+  const costs = tries.map(cost);
+  const least = Math.min(...costs);
+  if (least === 0) return tries[costs.indexOf(0)];
+  // Nowhere is clear. A place with a side (its arrow on the cell or the target) that is off the cell and the raised
+  // window is taken before a corner that covers less: the card stays by what it explains.
+  const sided = costs.map((c, i) => (tries[i].side !== "float" && !hard(tries[i]) ? c : Infinity));
+  const best = Math.min(...sided);
+  return best < Infinity ? tries[sided.indexOf(best)] : tries[costs.indexOf(least)];
 }
 
 /**
@@ -568,10 +586,11 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
     const ar = alsoEl?.getBoundingClientRect();
     const tr = raw;
     const clearOf = !!(ar && tr) && (ar.right <= tr.left || ar.left >= tr.left + tr.width || ar.bottom <= tr.top || ar.top >= tr.top + tr.height);
-    const avoid = ar && clearOf ? { top: ar.top / z, left: ar.left / z, width: ar.width / z, height: ar.height / z } : null;
-    const fr = s.pointAt?.()?.getBoundingClientRect();
-    const focus = fr ? { top: fr.top / z, left: fr.left / z, width: fr.width / z, height: fr.height / z } : null;
-    const p = place(r, tipRef.current?.offsetHeight ?? 170, z, avoid, focus);
+    const inPage = (b: { top: number; left: number; width: number; height: number } | null | undefined): Box | null =>
+      b ? { top: b.top / z, left: b.left / z, width: b.width / z, height: b.height / z } : null;
+    const raised = clearOf ? inPage(ar) : null;
+    // The part of each that shows: a cell scrolled half under its pane's edge keeps the card off what is on screen.
+    const p = place(r, tipRef.current?.offsetHeight ?? 170, z, { raised, also: inPage(alsoEl && shownPart(alsoEl)), focus: inPage(s.pointAt?.()?.getBoundingClientRect()) });
     if (!last.pos || last.pos.side !== p.side || last.pos.top !== p.top || last.pos.left !== p.left || last.pos.arrow !== p.arrow) {
       last.pos = p;
       setPos(p);

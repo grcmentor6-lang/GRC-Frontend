@@ -32,5 +32,5 @@ export const KC_ALL_OPEN = false;
  * before it, and every knowledge check whatever was submitted. Everyone else works in order (lib/desk/locks.ts).
  * backend/app/core/config.py `desk_open_for` must list the same addresses: the server enforces the checks' rule.
  */
-export const OPEN_DESK_FOR = ["anshulchutani37@gmail.com"];
+export const OPEN_DESK_FOR = ["anshulchutani37@gmail.com", "letsdoanyway@gmail.com"];
 export const deskOpenFor = (email: string | null | undefined) => !!email && OPEN_DESK_FOR.includes(email.trim().toLowerCase());

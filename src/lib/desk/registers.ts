@@ -1,4 +1,5 @@
 import type { Desk, Task } from "./model";
+import { COL_WHAT } from "./col-what";
 import { bullets, docLines, docNow, docTable } from "./docs";
 import type { Progress } from "./progress";
 import { labFeed } from "./labs";
@@ -62,6 +63,9 @@ export interface Register {
     /** The column a step decides on a wide sheet: kept in view at the table's right edge while its row is read
      *  (T6.1 UAR-EXTRA's Type, after twelve columns of facts). */
     pin?: boolean;
+    /** A list of deliverable codes ("CTX-BRIEF, CTX-IP"): each shown on its own line with its name and the task that
+     *  produces it (tester, 23 Nov 2026: "the codes are not explained"). The stored value stays the codes. */
+    named?: boolean;
   }[];
   /** A register worked at its hand-in step (an extra sheet a message brings): its line in that step's list of jobs. */
   job?: string;
@@ -88,6 +92,8 @@ export interface Register {
   /** Step → a column that arrives as a colleague's first draft (T3.1 step 10): written once, into empty cells only.
    *  Such a column has no `cells` check: a live flag would point at the slips; `checkRows` judges it. */
   draft?: Record<number, (d: Desk, p: Progress) => { col: number; v: string[] } | undefined>;
+  /** Step → who produced the draft, said above the table in place of "A colleague filled" (T8.1: a formula did). */
+  draftBy?: Record<number, string>;
   /** Step → cells a finding step shows as a colleague's slip, by the row's first cell, until found (T3.2 step 8). The
    *  register's rows stay right: nothing reaches a later step. */
   slips?: Record<number, { col: number; at: Record<string, string> }>;
@@ -2074,10 +2080,10 @@ export const REGISTERS: Record<string, Register> = {
       { h: "Q" },
       { h: "Requirement statement", wrap: true, w: 260 },
       { h: "Source", wrap: true, w: 150 },
-      { h: "Policy clause", wrap: true, opts: () => CLAUSES },
-      { h: "Coverage (R13)", wrap: true, opts: "step" },
-      { h: "Fix location (R13)", wrap: true, opts: "step" },
-      { h: "Redline (R13 frame)", wrap: true, w: 300 },
+      { h: "Policy clause", what: "The clause that holds the requirement, or none", wrap: true, opts: () => CLAUSES },
+      { h: "Coverage (R13)", what: "How far that clause meets the requirement", wrap: true, opts: "step" },
+      { h: "Fix location (R13)", what: "The document the missing wording is added to", wrap: true, opts: "step" },
+      { h: "Redline (R13 frame)", what: "The sentence to add, in rule R13's frame", wrap: true, w: 300 },
       { h: "Rule" },
     ],
     rows: [
@@ -2125,15 +2131,21 @@ export const REGISTERS: Record<string, Register> = {
     note: {
       2: () => "Search BKB-POL-006 and BKB-ADD-16 for each requirement's action words, and choose the clause that holds them, or none. A bullet of Section 3.1 is counted from the top: the first is bullet 1. Q7 is the Compliance Manager's, from the Inbox.",
       3: () => "Rule R13, in Learn › Rule tables, sets the three ratings. Your clause from step 2 is beside each row.",
-      4: () => "Rule R13, in Learn › Rule tables, says where a fix belongs; BKB-POL-000 Section 5 says what an addendum may do. A covered row has no gap: it shows —.",
-      5: () => "Write a redline for each row you rated Partly or Not covered: “<Role> shall <action> within <time limit>.” Learn › Sentence frames holds the frame. The role is one BKB-POL-006 Section 5 or Section 6 names, written as the policy writes it. Where no document sets the time limit, propose one: it is your proposal, and it is reviewed, not marked. A redline that would make a Group value weaker is “Exception needed” (BKB-POL-000 Section 6). The frame and the role are checked as you type; what each redline says is reviewed at checkpoint HC2.",
+      // What the field is, what each option is, and R13's test, before the learner chooses (tester, 22 Nov 2026: "nothing on
+      // the screen explains what a fix location is or what the options mean").
+      4: (d) => `A gap is closed by adding wording to a document. **Fix location** is which document. **Group policy**: BKB-POL-006 itself, which binds every organisation of the Group. **Organisation addendum**: ${addendum(d)}, your organisation's own, which adds to the Group policy for this organisation only (BKB-POL-000 Section 5 says what an addendum may do). Rule R13's test, in Learn › Rule tables: a requirement that names a country or an office goes to the addendum, and any other goes to the Group policy. Read each row's Requirement statement and Source for a country or an office. A covered row has no gap: it shows —.`,
+      // In order, one decision a line, with a finished example (tester, 22 Nov 2026: one paragraph asked for a frame, a
+      // role from one document, an exception from another and a checkpoint, with no example on the screen). The example
+      // is a rule that is not in the table, so it gives no row away.
+      5: () => "Write one sentence for each row you rated Partly or Not covered, in four steps. **Step 1, the role**: who must act, taken from the Responsible column of BKB-POL-006 Section 6 or from the roles in Section 5, written as the policy writes it. **Step 2, the action**: what that role must do so that the row's Requirement statement is met. **Step 3, the time limit**: how soon. Where no document sets one, propose your own: it is reviewed, not marked. **Step 4, join them** in rule R13's frame: “<Role> shall <action> within <time limit>.” **A finished example**, for a rule that is not in your table: “IAM team shall disable every account of a leaver within 4 hours.” **The one exception**: if your sentence would make a Group value weaker, write “Exception needed” and nothing else (BKB-POL-000 Section 6). The role and the frame are checked as you type, and what each redline says is reviewed at checkpoint HC2.",
     },
     reads: { 3: ["learn|Rule tables"], 4: ["learn|Rule tables"], 5: ["learn|Rule tables", "learn|Sentence frames"] },
     extra: {
       3: [["BKB-POL-006", ["3", "4", "6", "7"]], ["BKB-ADD-16", ["5", "6"]]],
       4: [["BKB-POL-000", ["5"]]],
       // Section 5: message T4.1-J2's Guidance line is read here; a document window shows only the step's cited sections.
-      5: [["BKB-POL-006", ["5", "6"]], ["BKB-POL-000", ["2", "5", "6"]]],
+      // Section 3: the guide's worked redline keeps the policy's least-privilege principle (3.1, first bullet).
+      5: [["BKB-POL-006", ["3", "5", "6"]], ["BKB-POL-000", ["2", "5", "6"]]],
     },
   },
   // T4.1's Lead Implementer extension LI-06, template T-LI-POL: "5.2 checklist (…) with evidence | leadership evidence
@@ -3182,7 +3194,7 @@ export const REGISTERS: Record<string, Register> = {
     code: "LI-PLAN Gap",
     title: "LI-PLAN · Gap sheet, clauses 4–10 (template T-LI-PLAN)",
     on: [6, 12, 16],
-    cols: [{ h: "Clause" }, { h: "Title", wrap: true, w: 200 }, { h: "Your deliverables (Ref-Clause map)", wrap: true, w: 220, prose: true }, { h: "Status (L13)", wrap: true, opts: "step" }, { h: "Not yet accepted (action)", wrap: true, w: 200 }],
+    cols: [{ h: "Clause" }, { h: "Title", wrap: true, w: 200 }, { h: "Your deliverables (Ref-Clause map)", wrap: true, w: 260, prose: true, named: true }, { h: "Status (L13)", wrap: true, opts: "step" }, { h: "Not yet accepted (action)", wrap: true, w: 200 }],
     rows: (TOP.clauses as string[][]).map((c) => [...c, "", ""]),
     mine: () => true,
     steps: { 6: [3], 12: [4] },
@@ -3193,8 +3205,8 @@ export const REGISTERS: Record<string, Register> = {
     view: { 6: [1, 2], 12: [1, 2, 3] },
     checkRows: { 6: { label: 0, col: 3 }, 12: { label: 0, col: 4 } },
     note: {
-      6: (d) => `Rule L13 (Learn › Rule tables): ${d.rules.L13?.[1] ?? ""} Each row lists the clause's deliverables. Where it lists several: Conforms when every one is accepted; Gap when none is in your review records; Partial for anything between, or when one was accepted with review comments. Your review records are on Home › Waiting On.`,
-      12: () => "For each clause you rated Partial or Gap: the deliverables of its row that are not accepted yet, those not in your review records (Home › Waiting On) and those accepted with review comments. Type their codes separated by ;.",
+      6: (d) => `What this step is for: a gap analysis shows, clause by clause, how much of ISO/IEC 27001 the work done so far covers. Each row lists the deliverables of this programme that are evidence for the clause, with the name and the task of each. Their review results on Home › Waiting On are written for this exercise. They are not the results of your own hand-ins. Rule L13 (Learn › Rule tables): ${d.rules.L13?.[1] ?? ""} Where a row lists several: Conforms when every one is accepted; Gap when none is in your review records; Partial for anything between, or when one was accepted with review comments. Your review records are on Home › Waiting On.`,
+      12: () => "What this step is for: each gap becomes an action, and the action names the evidence still missing. For each clause you rated Partial or Gap: the deliverables of its row that are not accepted yet, those not in your review records (Home › Waiting On) and those accepted with review comments. Type their codes as the row writes them, separated by ;. Example, clause 4.2: its row lists five deliverables, four are Accepted and LI-FAM is Accepted with review comments, so the cell is LI-FAM. Where a clause has two, put a semicolon (;) between the codes. The review records are written for this exercise, not the results of your own hand-ins.",
     },
     reads: { 6: ["home|Waiting On"], 12: ["home|Waiting On"] },
     handIn: { step: 16, cols: [3, 4], ident: [0, 1] },
@@ -3267,7 +3279,7 @@ export const REGISTERS: Record<string, Register> = {
     ident: [0],
     view: { 15: [1, 2] },
     checkRows: { 15: { label: 0, col: 3 } },
-    note: { 15: () => "Copied from Ref-Milestones (Learn › Reference pages). Clause 6.1.1 asks for every action that addresses an ISMS risk or opportunity to be part of the plan: choose the milestone whose work it belongs to: the one that produces, or holds, the thing the risk threatens. A risk that a review is skipped belongs to the milestone that holds that review, not to one that only comes after it." },
+    note: { 15: () => "What this step is for: clause 6.1.1 asks for every action that addresses a risk to the ISMS itself to be part of the plan, so it is done and tracked like the rest. The matching rule: choose the milestone that produces, or holds, the thing the risk threatens. Example, the first row: the risk is that the only person who knows the Statement of Applicability leaves. The Statement of Applicability is produced in milestone M2, so documenting it and cross-training belong to M2 Statement of Applicability approved. A risk that a review is skipped belongs to the milestone that holds that review, not to one that only comes after it. The milestones are copied from Ref-Milestones (Learn › Reference pages)." },
     reads: { 15: ["learn|Reference pages"] },
     handIn: { step: 16, cols: [3], ident: [0] },
   },
@@ -3304,6 +3316,7 @@ export const REGISTERS: Record<string, Register> = {
     checkRows: { 2: { label: 0, col: 3 } },
     // Arrives as what the colleague's formula gives (corrections item 92). A wrong row is a formula fault, found only by working the date out.
     draft: { 2: () => ({ col: 3, v: VUL_DUE_DRAFT }) },
+    draftBy: { 2: "A colleague's formula produced" },
     note: { 2: () => "A colleague wrote the workbook's due-date formula, and nobody has checked it. Due date shows what it gives. Rule R24: due = first detected + the class's SLA in days. Each finding's class is the one your step 1 gave its kind. Work out each date by hand, in calendar days, and correct any date that differs." },
   },
   "T8.1": {
@@ -4115,7 +4128,7 @@ export const REGISTERS: Record<string, Register> = {
     code: "Ref-Clause map",
     title: "Ref-Clause map · ISO/IEC 27001 clauses 5.1 and 7.2–7.4",
     on: [7],
-    cols: [{ h: "Clause", w: 64 }, { h: "Title", wrap: true, w: 150 }, { h: "Your deliverables that evidence it", wrap: true, w: 250 }, { h: "Mandatory documented information", wrap: true, w: 170 }],
+    cols: [{ h: "Clause", w: 64 }, { h: "Title", wrap: true, w: 150 }, { h: "Your deliverables that evidence it", wrap: true, w: 280, named: true }, { h: "Mandatory documented information", wrap: true, w: 170 }],
     rows: AWRD.clauses as string[][],
     mine: () => false,
     steps: {},
@@ -5070,6 +5083,9 @@ export const regKey = (taskId: string, code: string) => `${taskId}|${code}`;
  * steps it is `on` and the step that hands it in. With no step, the task's first.
  */
 const owns = (k: string, id: string) => k === id || k.startsWith(`${id} `);
+// Every column's description (col-what.ts), where the column does not carry its own.
+for (const [k, r] of Object.entries(REGISTERS)) for (const c of r.cols) if (!c.auto) c.what ??= COL_WHAT[k]?.[c.h] ?? COL_WHAT["*"][c.h];
+
 export function regOf(taskId: string, n?: number): Register | undefined {
   if (n === undefined) return REGISTERS[taskId];
   return Object.entries(REGISTERS).find(([k, r]) => owns(k, taskId) && (r.on.includes(n) || r.handIn?.step === n))?.[1];
@@ -5807,7 +5823,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
     1: [
       {
         id: "late",
-        ask: "A record's review was done five weeks after its quarter ended. Click the attribute it fails.",
+        ask: "A record's review was done five weeks after its quarter ended. Which attribute does it fail? Find it in the What the script says column, then click that row's cell in the Item column.",
         why: "A2 counts the days from the end of the record's quarter to its review date: more than 15 is a deviation.",
         hint: "Read the What the script says column: which attribute is about when the review was done?",
         col: 0,
@@ -5815,7 +5831,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
       {
         id: "self",
-        ask: "The reviewer of a record is the privileged account's own holder. Click the attribute it fails.",
+        ask: "The reviewer of a record is the privileged account's own holder. Which attribute does it fail? Find it in the What the script says column, then click that row's cell in the Item column.",
         why: "A5: someone who reviews their own privileged access gives no independent check (BKB-POL-006 Section 6.2 step 2).",
         hint: "Read the What the script says column: which attribute is about who did the review?",
         col: 0,
@@ -5890,25 +5906,25 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
     8: [
       {
         id: "assess",
-        ask: "Click the Annex A control of the phase in which the notification assessment is made.",
+        ask: "In which phase is the notification assessment made? Find its row in the What it covers column, then click that row's cell in the Annex A control column.",
         why: "A.5.25, Assessment and decision on information security events: the event is confirmed as an incident, its risk rated and the notifications decided. Your BRC-ASSESS is that phase's record.",
-        hint: "Read the What it covers column: which phase names the notification assessment of Section 6.2? Its control is beside it.",
+        hint: "Read down the What it covers column for the row that names the notification assessment of Section 6.2. The answer is that row's cell in the Annex A control column, not its Phase cell.",
         col: 1,
         row: (r) => r[0] === "Assess and decide",
       },
       {
         id: "contain",
-        ask: "Taking a system offline to stop data leaving is Section 6.1's Contain step. Click the phase it belongs to.",
+        ask: "Taking a system offline to stop data leaving is Section 6.1's Contain step. Find the row whose What it covers names Contain, then click that row's cell in the Phase column.",
         why: "Respond, A.5.26: containing, notifying, and eradicating and recovering are all part of the response.",
-        hint: "Which row's What it covers names Contain?",
+        hint: "Which row's What it covers names Contain? Click that row's Phase cell, not its control.",
         col: 0,
         row: (r) => r[0] === "Respond",
       },
       {
         id: "evidence",
-        ask: "Click the control that applies in every phase, not in one.",
+        ask: "One control applies in every phase, not in one. Find its row in the Phase column, then click that row's cell in the Annex A control column.",
         why: "A.5.28, Collection of evidence: logs and one timeline are kept from the first minute, so that what happened can be shown later.",
-        hint: "Look for the row that is not one of the five phases.",
+        hint: "Look in the Phase column for the row that is not one of the five phases. Click that row's Annex A control cell.",
         col: 1,
         row: (r) => r[0].startsWith("Evidence"),
       },
@@ -5948,7 +5964,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
     1: [
       {
         id: "sys",
-        ask: "R33's third test asks whether the closure evidence is a system record, not a statement. Click the column that shows it.",
+        ask: "R33's third test asks whether the closure evidence is a system record, not a statement. Which tracker column shows that? Find it in What it records, then click that row's name in the first column, Column.",
         why: "Evidence type says what the evidence is: a system export passes the third test; an e-mail from the owner saying “done” is a statement, and does not.",
         hint: "Read the What it records column for the one about what the evidence is.",
         col: 0,
@@ -5956,7 +5972,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
       {
         id: "retest",
-        ask: "Click the column that shows whether the fix worked when the control was tested again.",
+        ask: "Which tracker column shows whether the fix worked when the control was tested again? Find it in What it records, then click that row's name in the first column, Column.",
         why: "Re-test is R33's fourth test: an action closes only once the control has been tested again and passed.",
         hint: "Read the What it records column for the one about testing the control again.",
         col: 0,
@@ -5964,7 +5980,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
       {
         id: "date",
-        ask: "Click the date that days past due are counted to.",
+        ask: "Which date are days past due counted to? Find the row that gives it, then click that row's cell in the What it records column.",
         why: "The test date: each open action's days past due are counted to it, and its next check is 14 days after it (rule R33).",
         hint: "Read the What it records column for a date the tracker's own rows do not hold.",
         col: 1,
@@ -5978,7 +5994,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
     1: [
       {
         id: "src",
-        ask: "Rule R34 accepts only a file produced by a system. Click the column that shows how a file was produced.",
+        ask: "Rule R34 accepts only a file produced by a system. Which index column shows how a file was produced? Find it in What it records, then click that row's name in the first column, Column.",
         why: "Source says how the file was produced: a system export is the system's own record; a screenshot is captured by hand, and an undated one shows no time at all.",
         hint: "Read the What it records column for the one about how a file was produced.",
         col: 0,
@@ -5986,7 +6002,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
       {
         id: "hash",
-        ask: "Click the column the auditor can use to prove a file they received has not changed since it was filed.",
+        ask: "Which index column can the auditor use to prove a file they received has not changed since it was filed? Find it in What it records, then click that row's name in the first column, Column.",
         why: "SHA-256 is the file's fingerprint, taken when it was filed. The log records it with each file sent, and any change to the file gives another.",
         hint: "Read the What it records column for the one that changes if the file changes.",
         col: 0,
@@ -5994,7 +6010,7 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
       },
       {
         id: "res",
-        ask: "The auditor's finding names a file of test results. Click the column that shows a test's outcome.",
+        ask: "The auditor's finding names a file of test results. Which index column shows a test's outcome? Find it in What it records, then click that row's name in the first column, Column.",
         why: "Result holds the outcome of a test, for the files that are test results; it is empty for every other file.",
         hint: "Read the What it records column for the one about test results.",
         col: 0,

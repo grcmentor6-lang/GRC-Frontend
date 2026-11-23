@@ -234,7 +234,7 @@ export function MessageNotice({ task, n }: { task: Task; n: number }) {
     <div data-guide="message-notice" role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 border-y border-[#F3D08A] bg-[#FFFBF2] px-4 py-2.5">
       <Icon name="inbox" size={16} className="shrink-0 text-[#92400E]" />
       <p className="min-w-[180px] flex-1 text-[13px] leading-snug text-[#78350F]">
-        <strong className="font-semibold">New message from {desk.inj[id].sender}.</strong> Reply in the Inbox before you complete this step.
+        <strong className="font-semibold">New message from {desk.inj[id].sender}.</strong> It is a separate part of this task{desk.inj[id].assess ? ` (${desk.inj[id].assess.toLowerCase()})` : ""}, not part of this step&rsquo;s own work. Do the step, and reply in the Inbox before you complete it.
       </p>
       <button type="button" data-guide="message-open" onClick={() => openTool("inbox|*")} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded bg-[#4338CA] px-3.5 text-[13px] font-semibold text-white hover:brightness-90 focus-ring">
         Open Inbox
