@@ -52,6 +52,7 @@ function TaskNode({ task, state, activeId, activeTaskCode }: { task: LearningTas
   // Only the active/current task is expanded by default; reactively open it as progress moves here.
   const shouldOpen = onThisTask || state === "current";
   const [open, setOpen] = useState(shouldOpen);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the group when its task becomes current, and keeps the learner's own toggle otherwise
   useEffect(() => { if (shouldOpen) setOpen(true); }, [shouldOpen]);
   const tone = meta ? VERB_TONES[meta.standardTone] ?? VERB_TONES.indigo : VERB_TONES.indigo;
   const locked = state === "locked";
@@ -141,6 +142,7 @@ function CategoryNode({ category, tasks, taskStates, activeId, activeTaskCode }:
     (t) => t.code === activeTaskCode || t.steps.some((s) => s.id === activeId) || taskStates.get(t.code) === "current",
   );
   const [open, setOpen] = useState(hasActive);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the group when its task becomes current, and keeps the learner's own toggle otherwise
   useEffect(() => { if (hasActive) setOpen(true); }, [hasActive]);
   return (
     <div>

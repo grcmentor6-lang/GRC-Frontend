@@ -41,6 +41,7 @@ export default function SignUpPage() {
   useEffect(() => {
     const savedStep = sessionStorage.getItem("grc_signup_step");
     const savedEmail = sessionStorage.getItem("grc_signup_email");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- restores the signup step from sessionStorage after mount, so the first render matches the server's
     if (savedEmail) setEmail(savedEmail);
     if (savedStep === "verify" || savedStep === "profile") setStep(savedStep as Step);
   }, []);
@@ -60,6 +61,7 @@ export default function SignUpPage() {
       sessionStorage.removeItem("grc_signup_email");
       router.replace("/app");
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- moves to the profile step once the signed-in user has loaded
       setStep("profile");
     }
   }, [loading, user, router]);

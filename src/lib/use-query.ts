@@ -145,6 +145,7 @@ export function useCachedQuery<T>(key: string | null, fetcher: () => Promise<T>)
 
     const cached = cache.get(key) as T | undefined;
     if (cache.has(key)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- shows the cached or empty state at once when the key changes
       setData(cached);
       setLoading(false); // show stale data immediately
     } else {

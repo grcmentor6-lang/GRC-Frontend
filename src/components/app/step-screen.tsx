@@ -384,6 +384,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the previous step's state when the step changes
     setTourStep(-1); // close the tour during navigation so it never shows a stale step
     setPaired([]);
     // A hover on the step's link in the tree may already have these in flight — see
@@ -497,6 +498,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
   const [override, setOverride] = useState(false);
   const [stuck, setStuck] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the previous step's state when the step changes
     setOverride(false); setStuck(false);
     const t = setTimeout(() => setStuck(true), 10 * 60_000);
     return () => clearTimeout(t);
@@ -737,6 +739,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
 
   // Guided walkthrough steps, in order, skipping any target this activity doesn't have.
   const tourSteps: TourStep[] = [];
+  // eslint-disable-next-line react-hooks/refs -- the refs are read inside getEl when the tour runs, not while rendering
   if (content?.objective) tourSteps.push({
     title: "Start with the objective",
     body: "This is the goal of the step — what a good deliverable must achieve. Read it first so everything else has context.",
@@ -744,6 +747,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
     getEl: () => objectiveRef.current,
     onEnter: () => setBriefShown(true),
   });
+  // eslint-disable-next-line react-hooks/refs -- the refs are read inside getEl when the tour runs, not while rendering
   if (content?.whatToDo && content.whatToDo.length > 0) tourSteps.push({
     title: "Follow what to do",
     body: "These are the concrete actions to work through. Tackle them in order — each one feeds your deliverable.",
@@ -751,12 +755,14 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
     getEl: () => whatToDoRef.current,
     onEnter: () => setBriefShown(true),
   });
+  // eslint-disable-next-line react-hooks/refs -- the refs are read inside getEl when the tour runs, not while rendering
   if (references.length > 0) tourSteps.push({
     title: "Open the reference material",
     body: `The facts, rules and artefacts you need to do this step correctly — ${references.length} document${references.length > 1 ? "s" : ""} here. Click it any time to read alongside your work.`,
     icon: "book",
     getEl: () => referenceBtnRef.current,
   });
+  // eslint-disable-next-line react-hooks/refs -- the refs are read inside getEl when the tour runs, not while rendering
   if (hasChecklist) tourSteps.push({
     title: "Watch the checklist",
     body: "Every acceptance criterion the mentor grades against. It ticks off live as you type — aim for all green before submitting.",
@@ -779,6 +785,7 @@ export function StepScreen({ source }: { source?: StepScreenSource } = {}) {
   const fields = locked
     ? []
     : fieldGuide(activity.verb.id).filter((f) => typeof document !== "undefined" && !!document.querySelector(`[data-guide="${f.key}"]`));
+  // eslint-disable-next-line react-hooks/refs -- the refs are read inside getEl when the tour runs, not while rendering
   tourSteps.push({
     title: locked ? "The work you submitted" : "Fill in your deliverable",
     body: fields.length

@@ -53,6 +53,7 @@ export function useLinkedInVerify<T>(storageKey: string) {
     const stashed = sessionStorage.getItem(storageKey);
     if (stashed) {
       try {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- restores the stashed form after the redirect; sessionStorage cannot be read while rendering on the server
         setRestored(JSON.parse(stashed) as T);
       } catch {
         /* ignore */

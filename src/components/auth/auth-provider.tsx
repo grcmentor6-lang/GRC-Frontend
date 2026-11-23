@@ -60,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Register the silent refresh used by lib/api on 401.
   const registered = useRef(false);
+  // eslint-disable-next-line react-hooks/refs -- a one-time registration that must run before any child's first request
   if (!registered.current) {
     registered.current = true;
     setRefreshHandler(async () => {
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     hydrateQueryCache();
     const known = cachedUser();
     if (known) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- shows the cached user at once; it is revalidated just below
       setUserState(known);
       setLoading(false); // revalidated below; a 401 there still drops them back to sign-in
     }

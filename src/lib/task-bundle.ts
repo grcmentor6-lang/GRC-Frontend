@@ -172,6 +172,7 @@ export function useTaskBundle(taskCode: string | undefined): TaskBundleState {
 
   useEffect(() => {
     if (!taskCode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- shows the cached or empty state at once when the key changes
       setState({ bundle: undefined, loading: false, error: null });
       return;
     }

@@ -530,6 +530,26 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
   // `alsoShow` in the target's own layer: its box, lit by a second hole.
   const [also, setAlso] = useState<Box | null>(null);
   const [pos, setPos] = useState<Pos | null>(null);
+  // The card dragged aside by its header (owner, 23 Nov 2026: on a short screen a tall card has no clear place, so the
+  // learner can move it off what they need). Kept per card: the next card is placed afresh.
+  const [nudge, setNudge] = useState({ step: -1, x: 0, y: 0 });
+  const off = nudge.step === step ? nudge : { step, x: 0, y: 0 };
+  const dragCard = (e: React.PointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    const z = appZoom(), sx = e.clientX, sy = e.clientY, bx = off.x, by = off.y, el = e.currentTarget;
+    el.setPointerCapture(e.pointerId);
+    const move = (m: PointerEvent) => {
+      const card = tipRef.current, base = pos;
+      if (!card || !base) return;
+      // Held inside the screen: the header must stay reachable to drag it back.
+      const maxX = window.innerWidth / z - card.offsetWidth - MARGIN, maxY = window.innerHeight / z - 60;
+      const x = Math.min(maxX - base.left, Math.max(MARGIN - base.left, bx + (m.clientX - sx) / z));
+      const y = Math.min(maxY - base.top, Math.max(MARGIN - base.top, by + (m.clientY - sy) / z));
+      setNudge({ step, x, y });
+    };
+    const up = () => { el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); };
+    el.addEventListener("pointermove", move); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  };
   const [shown, setShown] = useState(false);
   // The cursor steps aside while the mentee is typing in the lit field it points at.
   const [typing, setTyping] = useState(false);
@@ -902,8 +922,8 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
         style={{
           width: TIP_W,
           maxHeight: window.innerHeight / appZoom() - 2 * MARGIN,
-          top: pos?.top ?? window.innerHeight / 2,
-          left: pos?.left ?? (window.innerWidth - TIP_W) / 2,
+          top: (pos?.top ?? window.innerHeight / 2) + off.y,
+          left: (pos?.left ?? (window.innerWidth - TIP_W) / 2) + off.x,
           opacity: shown ? 1 : 0,
           transform: shown ? "translate(0) scale(1)" : `${ENTER_OFFSET[side]} scale(0.98)`,
         }}
@@ -914,10 +934,10 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
         aria-modal="true"
         aria-label={`Guide: ${current.title}`}
       >
-        {!floating && <span className="absolute h-3.5 w-3.5 rotate-45 rounded-[2px] bg-white" style={caretPos} aria-hidden />}
+        {!floating && !off.x && !off.y && <span className="absolute h-3.5 w-3.5 rotate-45 rounded-[2px] bg-white" style={caretPos} aria-hidden />}
 
         {/* header: icon tile, "Guide · Step X of N" over the title, close */}
-        <div className="relative shrink-0 flex items-start gap-3 px-5 pt-5">
+        <div data-guide-drag onPointerDown={dragCard} title="Drag to move this card" className="relative shrink-0 flex cursor-grab touch-none select-none items-start gap-3 px-5 pt-5 active:cursor-grabbing">
           <span className="shrink-0 grid place-items-center w-[38px] h-[38px] rounded-[10px] bg-[#4338CA] text-white">
             <Icon name={current.icon ?? "sparkle"} size={18} />
           </span>

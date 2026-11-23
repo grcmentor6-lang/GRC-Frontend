@@ -61,13 +61,16 @@ export default function WaitlistPage() {
   // person who may not be the one on LinkedIn, so they stay on captcha.
   const li = useLinkedInVerify<typeof form>("wl_student");
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- puts the form back after the LinkedIn round-trip
     if (li.restored) setForm((f) => ({ ...f, ...li.restored }));
   }, [li.restored]);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- puts the form back after the LinkedIn round-trip
     if (li.identity) setForm((f) => ({ ...f, name: li.identity!.name, email: li.identity!.email }));
   }, [li.identity]);
   // Coming back from LinkedIn is always the individual flow — land on that tab.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- puts the form back after the LinkedIn round-trip
     if (li.identity || li.error) setAudience("student");
   }, [li.identity, li.error]);
 

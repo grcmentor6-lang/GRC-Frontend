@@ -28,9 +28,11 @@ export function ApplyForm({ roles }: { roles: { title: string; code: string }[] 
   const li = useLinkedInVerify<typeof form>("wl_reviewer");
   // Restore the form after the LinkedIn round-trip, then lock name/email to the verified identity.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- puts the form back after the LinkedIn round-trip
     if (li.restored) setForm((f) => ({ ...f, ...li.restored }));
   }, [li.restored]);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- puts the form back after the LinkedIn round-trip
     if (li.identity) setForm((f) => ({ ...f, name: li.identity!.name, email: li.identity!.email }));
   }, [li.identity]);
 
