@@ -93,7 +93,7 @@ export function DeskApp() {
   return (
     <MotionConfig reducedMotion="user">
       {/* The shell shows at once, locked; the desk mounts afresh on the saved work, as its starting task depends on it. */}
-      <DeskLoaded key={`${user.startDate ?? ""}|${status}`} desk={desk} who={user.email} startIso={user.startDate} preview={ALL_WEEKS_OPEN || user.role === "admin"} locked={status === "loading"} />
+      <DeskLoaded key={`${user.startDate ?? ""}|${status}`} desk={desk} who={user.email} startIso={user.startDate} preview={ALL_WEEKS_OPEN || user.role === "admin" || deskOpenFor(user.email)} locked={status === "loading"} />
     </MotionConfig>
   );
 }
