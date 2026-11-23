@@ -27,6 +27,40 @@ import { Label, press } from "./ui";
  * The dock wears its own colour, ink indigo, used nowhere else on the desk at this weight: while a test runs it is the
  * one thing on screen that is on the clock, and it should read that way from anywhere on the desk.
  */
+/** Paper falling once when a week is first seen complete (testing team, 23 Nov 2026). Once per week per browser. */
+function WeekConfetti({ week }: { week: number }) {
+  // Decided once, when the line first shows: this page is only drawn in the browser, after the check has loaded.
+  const [on, setOn] = useState(() => {
+    const k = `grc101.week-done.W${week}`;
+    try {
+      if (localStorage.getItem(k)) return false;
+      localStorage.setItem(k, "1");
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    const t = setTimeout(() => setOn(false), 2600);
+    return () => clearTimeout(t);
+  }, []);
+  if (!on) return null;
+  const hues = ["#4338CA", "#16A34A", "#F59E0B", "#DB2777", "#0EA5E9"];
+  return (
+    <span aria-hidden className="pointer-events-none fixed inset-0 z-[90] overflow-hidden">
+      {/* Its own keyframes: transform and opacity only, and nothing at all under reduced motion. */}
+      <style>{`@keyframes confettiFall{from{transform:translate3d(0,-12vh,0) rotate(0deg)}to{transform:translate3d(var(--drift,0px),105vh,0) rotate(var(--spin,540deg))}}.confetti-piece{animation:confettiFall var(--dur,1.8s) cubic-bezier(.3,.6,.6,1) var(--delay,0s) both}@media (prefers-reduced-motion:reduce){.confetti-piece{display:none}}`}</style>
+      {Array.from({ length: 36 }, (_, i) => (
+        <span
+          key={i}
+          className="confetti-piece absolute top-0 block h-[10px] w-[6px] rounded-[1px]"
+          style={{ left: `${(i * 37) % 100}%`, background: hues[i % hues.length], ["--delay" as string]: `${(i % 9) * 0.07}s`, ["--dur" as string]: `${1.5 + (i % 5) * 0.15}s`, ["--drift" as string]: `${((i % 7) - 3) * 22}px`, ["--spin" as string]: `${360 + (i % 4) * 180}deg` }}
+        />
+      ))}
+    </span>
+  );
+}
+
 export function KnowledgeCheck({ id }: { id: string }) {
   const { desk, start, openTask, progress, liveTest, openTest } = useDesk();
   const openRef = useOpenRef();
@@ -172,6 +206,7 @@ export function KnowledgeCheck({ id }: { id: string }) {
           );
         return (
           <div data-kc="week-done" className="mt-6 flex flex-wrap items-center gap-3 rounded-[10px] border border-[#BBF7D0] bg-[#F0FDF4] px-4 py-3.5">
+            <WeekConfetti week={week.n} />
             <p className="min-w-0 flex-1 text-[13.5px] text-[#14532D]"><strong className="font-semibold">Week {week.n} is complete.</strong> Every task is submitted and the knowledge check is done.</p>
             {next && <button type="button" data-kc="next-week" onClick={() => openTask(next)} className={`h-9 rounded-lg bg-[#166534] px-4 text-[13px] font-semibold text-white hover:brightness-110 ${press}`}>Go to Week {week.n + 1}</button>}
           </div>

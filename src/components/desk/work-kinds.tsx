@@ -345,6 +345,10 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
                 Join them with an underscore <span className="font-mono font-semibold text-[#111827]">_</span> and end with{" "}
                 <span className="font-mono font-semibold text-[#111827]">.{ext.join(" or .")}</span>
               </p>
+              {/* The name put together (owner, 23 Nov 2026: a box that waits for an input shows what to type). */}
+              <p data-guide="file-name-whole" className="mt-1.5 text-[12px] text-[#3F4757]">
+                Put together: <span className="select-all break-all font-mono text-[13px] font-semibold text-[#111827]">{desk.mentee}_{task.id}_{c}_v1.{ext[0]}</span>
+              </p>
             </div>
             {v.trim() && !ok && <span className="text-[12px] text-[#92400E]">Not quite. Type the four parts above in order, joined by _, then .{ext[0]}.</span>}
           </div>
@@ -450,18 +454,21 @@ const handInSpan = (reg: Register) => {
 const listed = (v: string) =>
   v ? v.split(", ").map((x, i, a) => <Fragment key={i}><span className="whitespace-nowrap">{x}</span>{i < a.length - 1 ? ", " : ""}</Fragment>) : "";
 
-/** Deliverable codes, each on its own line with the name the programme gives it and the task that produces it. */
-function Named({ v, desk }: { v: string; desk: Desk }) {
+/** Deliverable codes, each on its own line with the name the programme gives it and the task that produces it.
+ *  "LI-SOA; LI-RTP" and "LI-POL (5.2 check)" are read too; an entry that is not a code is shown as written. */
+export function Named({ v, desk }: { v: string; desk: Desk }) {
   const tasks = Object.values(desk.tasks);
   return (
     <span className="grid gap-1">
-      {v.split(", ").map((code) => {
-        const from = tasks.filter((t) => t.subs.some((x) => x.code === code));
-        const name = from[0]?.subs.find((x) => x.code === code)?.name;
+      {v.split(/\s*[;,]\s+/).map((item) => {
+        const m = item.match(/^([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)(?: \((.+)\))?$/);
+        const from = m ? tasks.filter((t) => t.subs.some((x) => x.code === m[1])) : [];
+        const name = m ? from[0]?.subs.find((x) => x.code === m[1])?.name : undefined;
+        if (!m || !name) return <span key={item}>{item}</span>;
         return (
-          <span key={code}>
-            <span className="whitespace-nowrap font-semibold">{code}</span>
-            {name && <span className="text-[#5B6474]"> · {name} ({from.length > 1 ? "every task" : from[0].id})</span>}
+          <span key={item}>
+            <span className="whitespace-nowrap font-semibold">{m[1]}</span>
+            <span className="text-[#5B6474]"> · {name} ({from.length > 1 ? "every task" : from[0].id}){m[2] ? `: ${m[2]}` : ""}</span>
           </span>
         );
       })}

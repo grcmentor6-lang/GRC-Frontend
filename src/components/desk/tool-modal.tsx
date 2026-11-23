@@ -569,7 +569,14 @@ function Screen({ toolKey }: { toolKey: string }) {
             <strong className="font-semibold">Exercise data for {here.task}.</strong> These are the review records this task works from, written for the exercise as if returned for your deliverables. They are not reviews of your actual hand-ins: no reviewer has read your work or asked you to resubmit it, and your scores are unchanged.
           </span>
         </p>
-        <ToolScreen mock={mock} flush />
+        {/* Each code with the name the programme gives the deliverable (testing team, 23 Nov 2026: "the codes are not explained"). */}
+        <ToolScreen
+          mock={{ ...mock, pl: { ...mock.pl, r: ((mock.pl as { r?: string[][] }).r ?? []).map(([code, ...rest]) => {
+            const name = Object.values(desk.tasks).flatMap((t) => t.subs).find((x) => x.code === code)?.name;
+            return [name ? `${code} · ${name}` : code, ...rest];
+          }) } }}
+          flush
+        />
       </>
     );
   return <ToolScreen mock={mock} flush />;

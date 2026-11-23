@@ -2,6 +2,7 @@ import type { TourStep } from "@/components/app/guided-tour";
 import { docTable } from "@/lib/desk/docs";
 import { localizable, toLearner } from "@/lib/desk/names";
 import { expandGuides } from "@/lib/desk/acronyms";
+import { STUDY, regOf } from "@/lib/desk/registers";
 
 /**
  * Walk-throughs for steps, shown in the step's modal the first time it opens (and again from
@@ -128,7 +129,8 @@ const nameAndSubmit = (ext: string, steps: string): TourStep[] => [
     body: "Type the file name in the box.",
     steps: [
       { lead: "Use the four parts listed under the box", text: "Keep them in the order shown, joined by underscores." },
-      { lead: `End with .${ext}`, text: "Next unlocks once the name is right." },
+      { lead: `End with .${ext}` },
+      { lead: "Type the name as the last line under the box writes it", text: "**Put together** shows the whole name, with your own mentee ID. Next unlocks once the name is right." },
     ],
     getEl: () => $('[data-guide="file-name"]'),
     pointAt: () => $('[data-guide="file-name-input"]'),
@@ -908,7 +910,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Answer question 1",
       icon: "edit",
-      body: "Answer question 1 for ISO/IEC 27001. If you are not sure, answer anyway: a wrong answer explains itself.",
+      body: "Answer question 1 for ISO/IEC 27001: was it made by a parliament or a regulator? ISO is a standards body, neither of those, so click **No**. A wrong answer explains itself.",
       getEl: () => $('[data-guide="ladder"] li[data-q="0"]'),
       // At the question's number, never at Yes or No: the cursor must not suggest an answer. Not the middle of its
       // text either: the cursor's body then lay over the No button and hid the words being read.
@@ -919,7 +921,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Answer question 2",
       icon: "edit",
-      body: "Answer question 2 the same way. Once you answer Yes, you stop: that is how R01 works.",
+      body: "Question 2: can an organisation get a certificate? Yes: an accredited body certifies an organisation against ISO/IEC 27001. Click **Yes**. Once you answer Yes, you stop: that is how R01 works.",
       getEl: () => $('[data-guide="ladder"] li[data-q="1"]'),
       // At the question's number, never at Yes or No: the cursor must not suggest an answer. Not the middle of its
       // text either: the cursor's body then lay over the No button and hid the words being read.
@@ -1221,8 +1223,8 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       icon: "edit",
       body: "Answer the first question by clicking a line of Section 1.",
       steps: [
-        { lead: "Count down Section 1.1 to its fifth service" },
-        { lead: "Click that service in Section 1 of the brief", text: "A wrong line turns amber and the question gives a hint." },
+        { lead: "Count down Section 1.1 to its fifth service", text: "Inbound and outbound customer service, Technical support and helpdesk, Collections and credit management, Healthcare claims support (US clients), then the fifth: Financial services support (KYC, fraud)." },
+        { lead: "Click **Financial services support (KYC, fraud)** in Section 1 of the brief", text: "This first question is worked for you. The other two are yours: a wrong line turns amber and the question gives a hint." },
       ],
       getEl: () => $('[data-guide="brief-worked"]'),
       alsoShow: () => $('[data-guide="study"]'),
@@ -1363,7 +1365,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Copy the first one",
       icon: "edit",
-      body: "Type the first Manila asset exactly as written. Next unlocks once it is one of them.",
+      body: "The first Manila asset, worked. The other Manila assets are yours.",
+      steps: [
+        { lead: "Read down the **Office** column of Section 8.1's table", text: "The rows that read Manila, Philippines are your office's." },
+        { lead: "Take the first of them", text: "Its Asset cell reads Treasury management system." },
+        { lead: "Type **Treasury management system**", text: "Exactly as written, on the first line of the box. Next unlocks once it is in." },
+      ],
       getEl: () => $('[data-guide="brief-section"] textarea'),
       alsoShow: () => $(ADD16_WINDOW),
       nextWhen: firstLineRight,
@@ -2154,9 +2161,10 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "OBL-01 has a joint, framed as a button.",
       steps: [
         { lead: "Read the words on each side of it", fork: [{ when: "Two duties", then: "Click the joint: the second duty moves to a new row below." }, { when: "One duty", then: "Leave the row whole." }] },
+        { lead: "OBL-01, worked", text: "It reads \"72h to NPC and data subjects\". Telling the regulator and telling the people affected are two duties, each with its own recipient and its own evidence. So click the joint, **and**." },
       ],
       tips: [
-        { kind: "note", text: "Next unlocks once the row is split." },
+        { kind: "note", text: "Next unlocks once the row is split. The other row with a joint is yours." },
       ],
       getEl: () => $('[data-guide="split"] li'),
       // At the row, never at the joint: whether to split is the mentee's call.
@@ -2401,7 +2409,8 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "Remove the two rows that bind neither Manila nor Warsaw.",
       steps: [
         { lead: "Check each row's source against Section 2", text: "Section 2 of the addendum names each office's laws." },
-        { lead: "Click the × at the end of each row that binds neither office", text: "Next unlocks at 15 rows; the line beside the table then says whether you chose right." },
+        { lead: "The first one, worked", text: "The row copied from Section 6's **US health information** overlay: its Applies to cell reads Phoenix, which is neither of your offices. Click the × at the end of that row." },
+        { lead: "Find the second the same way", text: "One more Section 6 row applies to Phoenix alone. Next unlocks at 15 rows; the line beside the table then says whether you chose right." },
       ],
       tips: [
         { kind: "avoid", text: "removing a contract row. All three stay." },
@@ -2444,7 +2453,13 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Compare Manila",
       icon: "edit",
-      body: "Read the Philippines row and choose. Next unlocks once your call matches what the two sources say.",
+      body: "Manila, worked. Warsaw is yours.",
+      steps: [
+        { lead: "Read your register's clock for Manila", text: "The card shows it: 72h to NPC and data subjects." },
+        { lead: "Read Annex A's **Philippines** row", text: "Its breach notification cell reads 48h to NPC; 72h to data subjects." },
+        { lead: "Compare", text: "Data subjects agree at 72h. The NPC does not: 72h in the addendum, 48h in Annex A." },
+        { lead: "Choose **Differs from Annex A**", text: "Next unlocks once it is chosen." },
+      ],
       getEl: () => $('[data-guide="compare"] [data-compare="Manila"]'),
       alsoShow: () => $(ERM_WINDOW),
       nextWhen: () => !!$('[data-guide="compare"] [data-compare="Manila"] [aria-pressed="true"]') && !/Look again/.test($('[data-guide="compare"] [data-compare="Manila"]')?.innerText ?? ""),
@@ -2455,9 +2470,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       icon: "edit",
       body: "A difference is recorded on the row it touches, so its owners can resolve it.",
       steps: [
-        { lead: "Read Annex A's clock for each party" },
-        { lead: "Hold each against your rows" },
-        { lead: "Click the row it differs on", text: "Next unlocks once that is right." },
+        { lead: "Read Annex A's clock for each party", text: "48h to NPC; 72h to data subjects." },
+        { lead: "Hold each against your rows", text: "Your data-subjects row says 72h: the same. Your NPC row says 72h: Annex A says 48h." },
+        { lead: "Click the row **72h to NPC**", text: "That is the row the difference touches. Next unlocks once it is clicked." },
       ],
       getEl: () => $('[data-guide="compare"] [data-compare="Manila"]'),
       alsoShow: () => $(ERM_WINDOW),
@@ -2627,9 +2642,16 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Place clause 4",
       icon: "edit",
-      body: "Type the phase rule L01 gives **clause 4**: Plan, Do, Check or Act. Next unlocks once it follows the rule.",
+      body: "Clause 4, worked. The other six clauses are yours.",
+      steps: [
+        { lead: "Find rule **L01** in the rule tables", text: "The window beside the page has moved to it. Its What to do cell gives each clause a phase: clauses 4 to 7 Plan, clause 8 Do, clause 9 Check, clause 10 Act." },
+        { lead: "Read clause 4's phase", text: "Clause 4 is among 4 to 7, so its phase is Plan: the context is understood before anything is built." },
+        { lead: "Type **Plan**", text: "In the box beside Clause 4 Context of the organisation. Next unlocks once it is typed." },
+      ],
       getEl: () => briefIn("Clause 4 Context of the organisation"),
       pointAt: () => briefIn("Clause 4 Context of the organisation"),
+      alsoShow: () => $('section[role="dialog"][aria-label*="› Rule tables"]'),
+      onEnter: () => rowIn('section[role="dialog"][aria-label*="› Rule tables"]', "L01")?.scrollIntoView({ block: "center" }),
       nextWhen: () => cellIn(briefIn("Clause 4 Context of the organisation")),
       doIt: "Place clause 4",
     },
@@ -2716,7 +2738,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Fill “covers”",
       icon: "edit",
-      body: "Type each department of your office's rows **once**, separated by \"; \". Next unlocks once the list matches Section 8.1.",
+      body: "The whole line, worked: it is one list, so there is no first row to do alone.",
+      steps: [
+        { lead: "Read the **Department** column of Section 8.1, on the Manila rows", text: "Finance & Treasury (Group) twice, Information Security (CISO Office) three times, Corporate IT & Technology twice, Information Security & Privacy once, Service Delivery Operations twice." },
+        { lead: "Keep each department once, in the order it first appears", text: "Five departments." },
+        { lead: "Type them with \"; \" between", text: "**Finance & Treasury (Group); Information Security (CISO Office); Corporate IT & Technology; Information Security & Privacy; Service Delivery Operations**. Next unlocks once the list matches Section 8.1." },
+      ],
       tips: [
         { kind: "avoid", text: "listing a department twice, or one from another office's rows." },
       ],
@@ -2742,6 +2769,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "Search BKB-ADD-16 for anything it lists as excluded.",
       steps: [
         { lead: "Search the addendum", fork: [{ when: "Something listed", then: "Type what you find." }, { when: "Nothing listed", then: "Type **None**." }] },
+        { lead: "What the search finds", text: "BKB-ADD-16 has no section of exclusions and no line that says \"excluded\" or \"out of scope\". Rule L03 leaves nothing out, so the answer is **None**." },
       ],
       tips: [
         { kind: "note", text: "Next unlocks once it matches the addendum." },
@@ -2756,8 +2784,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       icon: "edit",
       body: "L03 takes the interfaces from the TSA Integrations sheet; **BKB-ADD-16 Section 9.1** is its extract.",
       steps: [
-        { lead: "Find the External rows of Section 9.1" },
+        { lead: "Find the External rows of Section 9.1", text: "Read down its Internal / External column. The first three External rows are the CRM platforms, the VoIP and UCaaS platforms and the KYC verification service." },
         { lead: "Copy the **Integration** of the first three, in order", text: "Separated by \"; \". Type the two-way arrow as **<->**." },
+        { lead: "The line, worked", text: "**CRM platforms (Salesforce, Zendesk) <-> client CRM tenants; VoIP and UCaaS platforms <-> telecom carriers; KYC verification service <-> identity-check provider**. Next unlocks once it matches." },
       ],
       getEl: () => briefIn("Interfaces"),
       pointAt: () => briefIn("Interfaces"),
@@ -2778,7 +2807,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Copy the row",
       icon: "edit",
-      body: "The climate-change row is the last row of **Ref-ISMS processes**. Its second cell starts with **Yes** or **No**: write that word. The reason after it is the Group's and stays on the page. Next unlocks once it matches.",
+      body: "The climate-change row is the last row of **Ref-ISMS processes**. Its second cell starts \"Yes — Group decision (BKB-POL-015)\", so type **Yes**. The reason after it is the Group's and stays on the page. Next unlocks once it matches.",
       getEl: () => briefIn("Relevant?"),
       pointAt: () => briefIn("Relevant?"),
       alsoShow: () => (innerWidth > 700 ? $(PAGE_WINDOW("Ref-ISMS processes")) : null),
@@ -7610,7 +7639,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       ],
       getEl: () => $(PAGE_WINDOW("Ref-Actions")),
     },
-    firstItem("The recommendation yourself", "Rule R25, in the note, takes the Ref-Actions action for each deviation type: choose the one your test found. Next unlocks once it is right.", "What the memo says", 7, () => selIs("What the memo says", 7, "CT: Correct the instance and add the missing step to the procedure"), "Choose the recommendation", PAGE_WINDOW("Ref-Actions")),
+    firstItem("The recommendation yourself", "Rule R25, in the note, takes the Ref-Actions action for each deviation type your test found. Your test found one type, on PR-022. Its row in Ref-Actions gives the action: choose **CT: Correct the instance and add the missing step to the procedure**. Next unlocks once it is chosen.", "What the memo says", 7, () => selIs("What the memo says", 7, "CT: Correct the instance and add the missing step to the procedure"), "Choose the recommendation", PAGE_WINDOW("Ref-Actions")),
     checkAnswers("Check my answers then shows each answer and why, and the memo's other parts are written. Your rows lock then."),
     {
       title: "A message has arrived",
@@ -9113,7 +9142,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       getEl: () => $(POL020_WINDOW),
       onEnter: () => $(`${POL020_WINDOW} [data-sec="7.1"]`)?.scrollIntoView({ block: "start" }),
     },
-    firstItem("The report rate's target", "Find the report rate's target in Section 7.1's table and type it as it is written. Next unlocks once it is right.", "Target", 2, () => targetIs("Target", 2, "≥ 60 %"), "Type the report-rate target", POL020_WINDOW),
+    firstItem("The report rate's target", "In Section 7.1's table, the **Report rate** row's Target cell reads ≥ 60 %: staff who report the simulated message, and more is better, so the sign is ≥. Type **≥ 60 %** as it is written. Next unlocks once it is right.", "Target", 2, () => targetIs("Target", 2, "≥ 60 %"), "Type the report-rate target", POL020_WINDOW),
     checkAnswers("Then the report rate's own rate, from the counts in Campaign Results and the formula in its row. Check my answers then shows each metric's answer and why. Your rows lock then, so check them first."),
     finish("**Mark step complete** unlocks once your answers are checked."),
   ],
@@ -10578,12 +10607,23 @@ localizable(STEP_GUIDES);
  */
 const BRIEFED = new Map<string, TourStep[]>();
 export function guideFor(key: string, step?: { t: string; o: string }): TourStep[] | undefined {
-  const g = STEP_GUIDES[key];
-  if (!g?.length || !step) return g;
+  const g0 = STEP_GUIDES[key];
+  if (!g0?.length || !step) return g0;
   if (!BRIEFED.has(key)) {
-    const [first, ...rest] = g;
+    const g = [...g0];
+    // A step of click-a-cell questions: the first is worked on the card that waits for it (owner, 23 Nov 2026).
+    const m = key.match(/^([A-Z]\d+\.\d+)-(\d+)$/);
+    const q = m ? STUDY[m[1]]?.[Number(m[2])]?.[0] : undefined;
+    const reg = m && q && q.col >= 0 ? regOf(m[1], Number(m[2])) : undefined;
+    const row = reg && q ? reg.rows.find((r) => !q.row || q.row(r)) : undefined;
+    const at = q && row ? g.findIndex((c) => !!c.nextWhen) : -1;
+    if (at >= 0 && reg && q && row) {
+      const where = q.col === 0 ? `in the **${reg.cols[0].h}** column` : `the **${reg.cols[q.col].h}** cell of the **${row[reg.ident?.[0] ?? 0]}** row`;
+      g[at] = { ...g[at], tips: [...(g[at].tips ?? []), { kind: "note" as const, text: `Question 1, worked. The cell to click is **${row[q.col]}**, ${where}. ${q.why} The other questions are yours.` }] };
+    }
     const job = { kind: "note" as const, text: `Your job in this step: ${step.t.replace(/[.…]+$/, "")}. It is done when: ${step.o.replace(/\.$/, "")}.` };
-    BRIEFED.set(key, [{ ...first, tips: [job, ...(first.tips ?? [])] }, ...rest]);
+    g[0] = { ...g[0], tips: [job, ...(g[0].tips ?? [])] };
+    BRIEFED.set(key, g);
   }
   return BRIEFED.get(key);
 }

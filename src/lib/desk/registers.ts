@@ -4593,7 +4593,7 @@ export const REGISTERS: Record<string, Register> = {
     title: "LI-MR · Stage 1 readiness: mandatory documented information (rule L24)",
     on: [14, 15],
     cols: [
-      { h: "Clause", w: 70 }, { h: "Documented information", wrap: true, w: 230, prose: true }, { h: "Held in", wrap: true, w: 200, prose: true },
+      { h: "Clause", w: 70 }, { h: "Documented information", wrap: true, w: 230, prose: true }, { h: "Held in", wrap: true, w: 260, prose: true, named: true },
       { h: "Present?", wrap: true, w: 150, opts: (_d, r) => (r[0] === "Ready for the Stage 1 audit (L24)" ? ["Yes", "No"] : ["Present", "Not present"]) },
     ],
     rows: [...(ACTD.mandatory as string[][]).map((r) => [...r, ""]), ["Ready for the Stage 1 audit (L24)", "All 14 items present?", "—", ""]],
