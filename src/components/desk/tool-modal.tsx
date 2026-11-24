@@ -7,7 +7,7 @@ import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { DecisionSummary, LI_TAG, PartHead, Work, thenLabel, thenOf } from "./how-to";
 import { BriefProgress, BriefWork, CopyWork, GridProgress, GridWork, LogWork, RegisterProgress, RegisterWork, LadderWork, RmfFile, RmfProgress, RuleHelper, StudyWork, SubmitWork, TreeWork, ChecklistWork, ReportWork, SplitWork, CompareWork, ConsistencyWork } from "./work-kinds";
-import { DECIDE_FROM, LADDER, STUDY, briefOf, deliverableFor, handedIn, regOf, stepSources } from "@/lib/desk/registers";
+import { DECIDE_FROM, LADDER, STUDY, briefOf, deliverableFor, handedIn, regOf, rowDocs, stepSources } from "@/lib/desk/registers";
 import { gridKey, lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { Inbox, MessageNotice } from "./chat";
 import { ToolScreen } from "./viewer";
@@ -959,7 +959,8 @@ function PolicyLibrary() {
   const { desk, here, openTool, progress } = useDesk();
   const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
   const task = here ? desk.tasks[here.task] : undefined;
-  const cited = new Set((task && step ? stepSources(task, step.n, step.refs.docs) : []).map(([id]) => id));
+  // A step whose rows each name their own policy (T3.2 steps 3 and 6) tags those.
+  const cited = new Set([...(task && step ? stepSources(task, step.n, step.refs.docs) : []).map(([id]) => id), ...(task && step ? rowDocs(task.id, step.n, progress) : [])]);
   const docs = libraryDocs(desk, progress);
   const box = useCitedInView();
   const groups: [string, typeof docs][] = [

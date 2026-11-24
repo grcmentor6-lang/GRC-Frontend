@@ -120,6 +120,8 @@ export interface Register {
   compare?: { step: number; col: number };
   /** Sources a step reads from that its own refs do not name (or name only as a whole document). */
   extra?: Record<number, [string, string[]][]>;
+  /** Step → the column whose cells name the documents its rows are read in: the Policy Library tags them. */
+  docsCol?: Record<number, number>;
   /** What the line beside the step says of the grey rows, where they are not a pattern to copy (T7.1: the register's
    *  existing risks, some of whose acceptance authorities break rule R36). */
   worked?: string;
@@ -1734,6 +1736,8 @@ export const REGISTERS: Record<string, Register> = {
       3: [["BKB-ADD-16", ["1", "2", "3", "6"]]],
       4: [["Organization_Profiles", ["1"]], ["BKB-ADD-16", ["2.2"]]],
       5: [["BKB-POL-000", ["3"]], ["BKB-ADD-16", ["2.2"]]],
+      // 6: the Guidance line of the message placed at this step.
+      6: [["BKB-POL-016", ["3.1"]]],
       7: [["BKB-ERM-001", ["Annex A"]]],
       // 8: the rows of OBL-REG's second sheet, and the index that names their policies.
       8: [["Organization_Profiles", ["3"]], ["BKB-POL-000", ["3"]]],
@@ -1928,13 +1932,21 @@ export const REGISTERS: Record<string, Register> = {
             : // The example names what this row cannot be missing, and another policy's owner.
               fmtHint(`Missing: <what the row lacks>. Owner: <the owner of ${polId(r) || "the row's policy"} in BKB-POL-000 Section 3>`, `Missing: ${r[5] === "none" ? "policy clause" : "procedure"}. Owner: ${otherOwner(polId(r))}`),
       },
-      // Where the row's mapping can be checked: its policy, then a section of it.
+      // Where the row's mapping can be checked: its policy, then the section step 3 read in it. That is the row's
+      // procedure, or Section 6, the list of procedures, where the row has none (owner, 24 Nov 2026: any section of
+      // the policy was taken, so the section meant nothing).
       9: {
-        fix: (v, r, d) => {
+        fix: (v, r) => {
           const m = v.trim().match(/^(BKB-POL-\d{3})[\s,:;–—-]*(?:\u00a7|sec(?:tions?)?\.?)?\s*(\d+(?:\.\d+)*)\.?$/i);
-          return m && m[1].toUpperCase() === polId(r) && outline(d, polId(r)).includes(m[2]) ? `${polId(r)} Section ${m[2]}` : null;
+          const read = /^none$/i.test(r[5] ?? "") ? "6" : secNum(r[5] ?? "");
+          return m && read && m[1].toUpperCase() === polId(r) && m[2] === read ? `${polId(r)} Section ${read}` : null;
         },
-        hint: (r) => (polId(r) ? fmtHint("the row's policy code + the word Section + section number", polId(r) === "BKB-POL-006" ? "BKB-POL-001 Section 3" : "BKB-POL-006 Section 4") : "Choose the row's BKB policy in step 1 first."),
+        hint: (r) =>
+          !polId(r)
+            ? "Choose the row's BKB policy in step 1 first."
+            : !r[5]
+              ? "Fill the row's Procedure section in step 3 first."
+              : fmtHint("the row's policy code + the word Section + the number of the section the row was read in, which the note above names", polId(r) === "BKB-POL-006" ? "BKB-POL-001 Section 3" : "BKB-POL-006 Section 4"),
       },
     },
     handIn: { step: 7, cols: [3, 4, 5, 6, 7, 8, 9], ident: [0, 1] },
@@ -1947,7 +1959,7 @@ export const REGISTERS: Record<string, Register> = {
       3: () => "Each policy's Section 6 lists its procedures by name. Open the row's policy in Policies › Policy Library. A number that is not one of its procedures is flagged; which procedure fits is your call, and an assessor reviews it at checkpoint HC2.",
       5: () => "The Gap frame is in Learn › Sentence frames. Each owner is checked against BKB-POL-000 Section 3 as you type: write the role word for word as Section 3 names it (Group Data Protection Officer, not DPO). What you name as missing is reviewed by an assessor at checkpoint HC2.",
       4: (d) => `Rule R11: ${d.rules.R11?.[1] ?? ""}`,
-      6: () => "Evidence ref says where a reader can check the row: its BKB policy and the section you read. A policy other than the row's, or a section it does not have, is flagged; the section you cite is reviewed at checkpoint HC2.",
+      6: () => "Evidence ref says where a reader can check the row: its BKB policy and the section you read in it in step 3. A row with a procedure cites that procedure's section. A row with none cites Section 6, the list of procedures, where a reader sees that none fits. Policies › Policy Library tags the policies your rows name. Any other policy or section is flagged.",
     },
     reads: {
       1: ["policies|Map to Framework", "policies|Policy Library"],
@@ -1961,6 +1973,8 @@ export const REGISTERS: Record<string, Register> = {
     // BKB-POL-000: Section 3 lists every policy by title, Section 8 which policy carries each sector obligation (COPPA,
     // FERPA …); Section 3 gives each policy's owner, whom the gap sentence names.
     // Step 7: the requirement J3 brings (sheet "T3.2 X") reads its policy's procedures and mapping.
+    // Steps 3 and 6 read each row's own policy (the BKB policy column).
+    docsCol: { 3: 4, 6: 4 },
     extra: { 1: [["BKB-POL-000", ["3", "8"]]], 5: [["BKB-POL-000", ["3"]]], 7: [["BKB-POL-000", ["3", "8"]], ["BKB-POL-014", ["6.1", "6.2", "6.3", "9"]]] },
   },
   // T3.2's Lead Implementer extension LI-05: template T-LI-SOA, "pre-filled with the 93 control IDs and
@@ -5045,7 +5059,6 @@ function overlayExample(d: Desk): string {
 /** The owner of some other policy, for an example: never the owner this row's gap sentence takes. */
 const otherOwner = (id: string) => { const own = obl.policies().find(([x]) => x === id)?.[2]; return obl.policies().find(([, , o]) => o !== own)?.[2] ?? "Group CIO"; };
 const polId = (r: string[]) => (r[4] ?? "").split(" ")[0];
-const outline = (d: Desk, id: string) => (d.library.docs.find(([c]) => c === id)?.[2] ?? []).map(([n]) => n);
 /** A section number in the form a Procedure section has, which this policy's procedures do not include: an example, never an answer. */
 const notProcedure = (d: Desk, id: string) => ["6.1", "6.2", "6.3", "6.4", "6.5", "6.6"].find((n) => !procedures(d, id).includes(n));
 const procedures = (d: Desk, id: string) => (d.library.docs.find(([c]) => c === id)?.[2] ?? []).filter(([, h]) => h.startsWith("Procedure:")).map(([n]) => n);
@@ -5119,6 +5132,14 @@ export function regRows(reg: Register, p: Progress, taskId: string): string[][] 
   if (!reg.grow) return reg.rows;
   const n = Number(p.grids?.[regKey(taskId, reg.code)]?.["#rows"] ?? 0);
   return Array.from({ length: n }, () => reg.cols.map(() => ""));
+}
+
+/** The documents a step's rows name (Register.docsCol), by code. */
+export function rowDocs(taskId: string, n: number, p: Progress): string[] {
+  const reg = regOf(taskId, n);
+  const ci = reg?.docsCol?.[n];
+  if (!reg || ci === undefined) return [];
+  return [...new Set(regRows(reg, p, taskId).map((_, ri) => cellValue(reg, p, taskId, ri, ci).split(" ")[0]).filter(Boolean))];
 }
 
 /** The step that added a row, for a register the mentee builds. */

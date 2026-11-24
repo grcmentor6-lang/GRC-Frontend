@@ -109,7 +109,7 @@ export const COL_WHAT: Record<string, Record<string, string>> = {
     "Procedure section": "Type the policy section with the procedure; none if there is none.",
     "Coverage (R11)": "How fully the policy meets it, by rule R11.",
     "Gap sentence (R12)": "Type what is missing, in rule R12's frame.",
-    "Evidence ref": "Type the document and section you read.",
+    "Evidence ref": "Type the row's policy and the section you read in step 3.",
   },
   "T3.2 X": {
     "Req. ID": "The requirement's ID in its standard.",
@@ -120,7 +120,7 @@ export const COL_WHAT: Record<string, Record<string, string>> = {
     "Procedure section": "Type the policy section with the procedure; none if there is none.",
     "Coverage (R11)": "How fully the policy meets it, by rule R11.",
     "Gap sentence (R12)": "Type what is missing, in rule R12's frame.",
-    "Evidence ref": "Type the document and section you read.",
+    "Evidence ref": "Type the row's policy and the section of its procedure.",
   },
   "T3.2 LI-SOA": {
     Control: "The Annex A control's number.",

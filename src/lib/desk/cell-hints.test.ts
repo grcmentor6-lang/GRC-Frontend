@@ -47,9 +47,11 @@ async function main() {
   check("T3.2 gap sentence", cell("T3.2", 7), row({ 4: P6, 5: "none", 6: "Partial" }), 5,
     ["Missing: procedure. Owner: Group CISO.", "Missing - a procedure; Owner - Group CISO", "missing: procedure, owner: group ciso"],
     ["Missing: procedure. Owner: Group CIO.", "Missing: policy clause. Owner: Group CISO.", "procedure. Group CISO", "Missing: procedure."]);
-  check("T3.2 evidence ref", cell("T3.2", 9), row({ 4: P6 }), 6,
-    ["BKB-POL-006 Section 4", "BKB-POL-006 Sec. 4", "bkb-pol-006, section 6.2.", "BKB-POL-006 - Section 4"],
-    ["BKB-POL-001 Section 3", "BKB-POL-006 Section 99", "BKB-POL-006", "Section 4"]);
+  check("T3.2 evidence ref", cell("T3.2", 9), row({ 4: P6, 5: "Section 6.2" }), 6,
+    ["BKB-POL-006 Section 6.2", "BKB-POL-006 Sec. 6.2", "bkb-pol-006, section 6.2.", "BKB-POL-006 - Section 6.2"],
+    ["BKB-POL-001 Section 6.2", "BKB-POL-006 Section 4", "BKB-POL-006 Section 6", "BKB-POL-006", "Section 6.2"]);
+  // A row with no procedure is checked in Section 6, the list of procedures.
+  check("T3.2 evidence ref, none", cell("T3.2", 9), row({ 4: P6, 5: "none" }), 6, ["BKB-POL-006 Section 6"], ["BKB-POL-006 Section 6.2", "BKB-POL-006 Section 3"]);
   check("T3.2 X procedure", cell("T3.2 X", 5), row({ 4: "BKB-POL-014 Incident Management and Breach Notification Policy" }), 7, [], ["6", "9.9"]);
 
   // T4.1 LI-POL: each key word's section, typed with or without the word.
