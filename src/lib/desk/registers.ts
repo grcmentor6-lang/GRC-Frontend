@@ -5568,7 +5568,9 @@ export function briefFlags(desk: Desk, sec: BriefSection, typed: string[]): (str
   });
 }
 /** The Source line names the section's source (Section and dashes optional). */
-export const briefSrcOk = (desk: Desk, sec: BriefSection, v: string) => !sec.src || norm(v) === norm(sec.src(desk));
+// "L01" for "Rule L01" and "Sec 9" for "Section 9" are the same citation: a learner is never held on its spelling.
+const cite = (x: string) => norm(x.replace(/\bSec\.?(?=\s*\d)/gi, "Section")).replace(/^rule/, "");
+export const briefSrcOk = (desk: Desk, sec: BriefSection, v: string) => !sec.src || cite(v) === cite(sec.src(desk));
 
 export const briefKey = (taskId: string, code: string) => `${taskId}|${code}`;
 

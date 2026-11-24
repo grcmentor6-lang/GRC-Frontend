@@ -1325,8 +1325,13 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
                       <label className="grid grid-cols-[120px_minmax(0,1fr)] items-start gap-2 text-[13px] max-[480px]:grid-cols-1 max-[480px]:gap-0.5">
                         <span className="pt-1.5 font-semibold text-[#3F4757] max-[480px]:pt-0">Source:</span>
                         <span>
-                          <input data-guide="brief-source" value={v[`${i},src`] ?? ""} onChange={(e) => set(`${i},src`, e.target.value)} aria-label={`Source of section ${sec.h}`} aria-invalid={srcOff} placeholder="document and section" className={input} />
-                          {srcOff && flag(`Name the document, then the section it was copied from (${sec.src!(desk).split(" ")[0]} and its section number).`)}
+                          <input data-guide="brief-source" value={v[`${i},src`] ?? ""} onChange={(e) => set(`${i},src`, e.target.value)} aria-label={`Source of section ${sec.h}`} aria-invalid={srcOff} placeholder={/Section/.test(sec.src!(desk)) ? "document and section" : "the rule or page it came from"} className={input} />
+                          {/* The format, never the line itself (owner, 24 Nov 2026): "Rule + rule number", with an example from another rule. */}
+                          {srcOff && flag(/Section/.test(sec.src!(desk))
+                            ? "Not quite. The format is: document code + the word Section + section number, and nothing else. For example: " + (/BKB-POL-006 Section 4/.test(sec.src!(desk)) ? "BKB-STD-001 Section 3." : "BKB-POL-006 Section 4.")
+                            : /^Rule/.test(sec.src!(desk))
+                              ? "Not quite. This section was worked from a rule, which has no section number. The format is: Rule + rule number. For example: " + (/R07/.test(sec.src!(desk)) ? "Rule R12." : "Rule R07.")
+                              : "Not quite. This section was worked from a reference page, which has no section number. The format is the page's name alone, as Learn › Reference pages lists it. For example: " + (/Ref-Sampling/.test(sec.src!(desk)) ? "Ref-Keywords." : "Ref-Sampling."))}
                         </span>
                       </label>
                     ) : (
