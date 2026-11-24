@@ -1330,8 +1330,8 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
                           {srcOff && flag(/Section/.test(sec.src!(desk))
                             ? "Not quite. The format is: document code + the word Section + section number, and nothing else. For example: " + (/BKB-POL-006 Section 4/.test(sec.src!(desk)) ? "BKB-STD-001 Section 3." : "BKB-POL-006 Section 4.")
                             : /^Rule/.test(sec.src!(desk))
-                              ? "Not quite. This section was worked from a rule, which has no section number. The format is: Rule + rule number. For example: " + (/R07/.test(sec.src!(desk)) ? "Rule R12." : "Rule R07.")
-                              : "Not quite. This section was worked from a reference page, which has no section number. The format is the page's name alone, as Learn › Reference pages lists it. For example: " + (/Ref-Sampling/.test(sec.src!(desk)) ? "Ref-Keywords." : "Ref-Sampling."))}
+                              ? "Not quite. The format is: Rule + rule number. For example: " + (/R07/.test(sec.src!(desk)) ? "Rule R12." : "Rule R07.")
+                              : "Not quite. The format is: the reference page's name, as Learn › Reference pages lists it. For example: " + (/Ref-Sampling/.test(sec.src!(desk)) ? "Ref-Keywords." : "Ref-Sampling."))}
                         </span>
                       </label>
                     ) : (
