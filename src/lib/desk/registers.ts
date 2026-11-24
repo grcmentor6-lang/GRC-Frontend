@@ -191,6 +191,11 @@ const addendum = (desk: Desk) => (desk.orgs.A as { addendum?: string }).addendum
 // Both spellings of the workbook's name are taken, with or without its underscore: its file code is Organization_Profiles
 // and the platform's own prose writes organisation (tester, 18 Nov 2026).
 const norm = (x: string) => x.toLowerCase().replace(/^source:\s*/, "").replace(/sections?/g, "").replace(/[\s\u00a7—–,;:"'“”‘’_-]/g, "").replace(/organis/g, "organiz");
+/** What a rejected box says (owner, 24 Nov 2026): the format wanted and one example, which is never the row's own answer.
+ *  No reasons, and never the value itself. */
+const fmtHint = (format: string, example?: string) => `Not quite. The format is: ${format}.${example ? ` For example: ${example}.` : ""}`;
+/** A section number as typed: "6.2", "Section 6.2", "Sec. 6.2", a pasted section sign, a trailing full stop. */
+const secNum = (v: string) => v.trim().replace(/^(\u00a7|sec(?:tions?)?\.?)\s*/i, "").replace(/\.$/, "");
 const ordinal = (i: number) => ["the first", "the second", "the third", "the fourth", "the fifth"][i] ?? `number ${i + 1}`;
 /** BKB-ADD-16 Section 4: each interested party with its requirements (null until the addendum is loaded). */
 const parties = (desk: Desk) => docTable(addendum(desk), "4")?.map((r) => [r[0], bullets(r[1]), r[2] ?? "", r[3] ?? ""] as [string, string[], string, string]) ?? null;
@@ -622,7 +627,7 @@ function evpGap(r: string[]): { best: string; why: string } {
 }
 /** Step 5: a follow-up typed in R18's words, recorded with its control's ID and its dates as YYYY-MM-DD (a format check). */
 function evpFollowFix(v: string): string | null {
-  const m = v.trim().replace(/\s+/g, " ").match(/^please send 2 more files for (c\d{2})\b.*? covering (.+?) to (.+?) by (.+?)\.?$/i);
+  const m = v.trim().replace(/\s+/g, " ").match(/^please send (?:2|two) more files for (c\d{2})\b.*? covering (.+?) (?:to|until|-|–|—) (.+?) by (.+?)\.?$/i);
   if (!m) return null;
   const a = isoDate(m[2]), b = isoDate(m[3]), due = isoDate(m[4]);
   return a && b && due ? `Please send 2 more files for ${m[1].toUpperCase()} covering ${a} to ${b} by ${due}.` : null;
@@ -842,10 +847,10 @@ const ramFix = (v: string, r: string[]): string | null => {
   return v.trim() || null;
 };
 const RAM_HINT: Record<string, string> = {
-  [RAM_ONLY[7][0]]: "Five names from score 1 up to score 5, separated by ;.",
-  [RAM_ONLY[7][1]]: "Five names from score 1 up to score 5, separated by ;.",
-  [RAM_ONLY[8][0]]: "The number only.",
-  [RAM_ONLY[8][1]]: "Each of Critical, High and Medium with its days.",
+  [RAM_ONLY[7][0]]: fmtHint("five names, from score 1 up to score 5, with ; between them", "Very low; Low; Medium; High; Very high"),
+  [RAM_ONLY[7][1]]: fmtHint("five names, from score 1 up to score 5, with ; between them", "Very low; Low; Medium; High; Very high"),
+  [RAM_ONLY[8][0]]: fmtHint("a whole number, with no words", "15"),
+  [RAM_ONLY[8][1]]: fmtHint("rating + number + days, for Critical, High and Medium, with ; between them", "Critical 7 days; High 14 days; Medium 60 days"),
 };
 /** Steps 7 to 9: LI-RAM arrives as a colleague's first pass (corrections item 91). The slips are real ones: BKB-ERM-001's next column or band, a word from the ratings; step 9's are
  *  the Charter's MEDIUM-criticality column, whose "Org CEO" is what the register's Medium rows show. No row repeats another, so a slip is found only by reading. */
@@ -1164,7 +1169,7 @@ const actReopened = (p: Progress, r: string[]) => !!p.rowChecks?.["T12.1-3"] && 
 const actNext = longDate(ACTD.next);
 const actRequest = (id: string, issue: string, ask: string) => (ask ? `Please send ${ask.charAt(0).toLowerCase()}${ask.slice(1)} for ${id} covering “${issue}” by ${actNext}.` : "");
 /** Step 5: days past due as a whole number ("012" → "12"); null for anything else. A format check, not the answer. */
-const actDays = { fix: (v: string) => (/^\d{1,3}$/.test(v.trim()) ? String(Number(v.trim())) : null), hint: () => "Type a whole number of days: 0 where the due date has not passed." };
+const actDays = { fix: (v: string) => { const m = v.trim().match(/^(\d{1,3})(?:\s*days?)?\.?$/i); return m ? String(+m[1]) : null; }, hint: () => fmtHint("a whole number of days, 0 where the due date has not passed", "45") };
 const actChecked = (p: Progress, ...ns: number[]) => ns.every((n) => !!p.rowChecks?.[`T12.1-${n}`]);
 /** The counts of ACT-MRI, from the checked steps 2 to 5 ("" until all four are checked). */
 function actCount(label: string, p: Progress): string {
@@ -1238,7 +1243,7 @@ const audHashDraft = (p: Progress, id: string) => {
 };
 const isFollowUp = (id: string) => AUD.followups.some((r) => r[0] === id);
 /** Step 4: a SHA-256 as the index shows it, 16 characters; null for anything else. A format check, not the answer. */
-const audHash = { fix: (v: string) => (/^[0-9a-f]{16}$/i.test(v.trim()) ? v.trim().toLowerCase() : null), hint: () => "Type the SHA-256 exactly as Evidence › Evidence Library shows it: 16 letters and digits, from the row of the file sent." };
+const audHash = { fix: (v: string) => (/^[0-9a-f]{16}$/i.test(v.trim()) ? v.trim().toLowerCase() : null), hint: () => fmtHint("16 letters and digits, as Evidence › Evidence Library shows the SHA-256 of the file sent", "4c7e19a03bd25f68") };
 /** LI-NCR-R's lines, written from the checked steps 7, 9, 10 and 11 ("" until each is done). */
 function audFrame(line: string, p: Progress): string {
   if (line.startsWith("Requirement")) return p.decisions?.["T12.2-D5"]?.best ? `${AUD.finding[1]} Change management (ISO/IEC 27001:2022 Annex A), as AUD-FINDING gives it` : "";
@@ -1644,12 +1649,12 @@ export const REGISTERS: Record<string, Register> = {
         },
         hint: (r, d, _ri, by) =>
           by === 4
-            ? "A customer's requirement rests on its contract with the organisation: type Client contract."
+            ? "Not quite. The format is: the kind of agreement the requirement rests on, as the step's note names it. For example: Supplier agreement."
             : by !== 3
             ? `Copy the Data-protection law cell of the ${r[5] || "office's"} row of ${addendum(d)} Section 2.`
             : obl.rows6(d)?.some((x) => same(x[1], r[1]))
-              ? `Type the law or standard this row's own requirement names, as ${addendum(d)} Section 6 writes it. Each overlay names a different one.`
-              : `Find this row's Obligation in ${addendum(d)} Section 2.2 and type the rule its Article / clause names, without the section number. Each row has its own.`,
+              ? fmtHint(`the name of the law or standard in this row's requirement, as ${addendum(d)} Section 6 writes it`, sourceExample(r, d, true))
+              : fmtHint(`the name of the rule in this row's Article / clause (${addendum(d)} Section 2.2), without the section number`, sourceExample(r, d, false)),
       },
       // As BKB-ADD-16 Section 2.2 gives it for the row's obligation.
       3: {
@@ -1693,16 +1698,15 @@ export const REGISTERS: Record<string, Register> = {
       11: {
         fix: (v, r, d, _ri, by) => {
           const want = obl.ref(d, r[1], by);
-          return want && norm(v) === norm(want) ? want : null;
+          return want && cite(v) === cite(want) ? want : null;
         },
         hint: (r, d, _ri, by) =>
           obl.ref(d, r[1], by)
             ? by === 4
               ? evidenceHint4(r[11] ?? "")
-              : // Short: the cell is narrow, and the step 1 note explains the field in full.
-                norm(r[11] ?? "").startsWith(norm(addendum(d)))
-                ? `The document is right. Add the section this row was copied from, like "${addendum(d)} Section 1": the number is what is missing or wrong.`
-                : `Type the document code and the section number this row was copied from, like "${addendum(d)} Section 1". The number is needed.`
+              : // Short: the cell is narrow, and the step 1 note explains the field in full. No row's ref is Section 1.
+                (norm(r[11] ?? "").startsWith(norm(addendum(d))) ? "The document is right. " : "Not quite. ") +
+                `The format is: document code + the word Section + section number. For example: ${addendum(d)} Section 1.`
             : "Copy the obligation first.",
       },
     },
@@ -1901,17 +1905,18 @@ export const REGISTERS: Record<string, Register> = {
         fix: (v, r, d) => {
           const t = v.trim();
           if (/^none$/i.test(t)) return "none";
-          const n = t.replace(/^(\u00a7|sections?)\s*/i, "");
+          const n = secNum(t);
           return procedures(d, polId(r)).includes(n) ? `Section ${n}` : null;
         },
-        hint: (r) => (polId(r) ? `Type the number of a “Procedure:” section of ${polId(r)} (Policies › Policy Library), or none.` : "Choose the row's BKB policy in step 1 first."),
+        hint: (r, d) => (polId(r) ? fmtHint(`the number of a “Procedure:” section of ${polId(r)} (Policies › Policy Library), or none`, notProcedure(d, polId(r))) : "Choose the row's BKB policy in step 1 first."),
       },
       // R12: "Missing: <policy clause / procedure / control>. Owner: <policy owner>." The owner is read in
       // BKB-POL-000 Section 3 for the row's policy; a row with no procedure is missing one.
       7: {
         fix: (v, r) => {
           if (!r[6]) return null;
-          const m = v.trim().match(/^Missing:\s*(.+?)\.\s*Owner:\s*(.+?)\.?$/i);
+          // The frame's own marks are not the test: a dash for a colon, a comma or semicolon for the full stop between.
+          const m = v.trim().match(/^Missing\s*[:–—-]?\s*(.+?)\s*[.;,]\s*Owner\s*[:–—-]?\s*(.+?)\.?$/i);
           const owner = obl.policies().find(([id]) => id === polId(r))?.[2];
           if (!m || !owner || !same(m[2], owner)) return null;
           if (r[5] === "none" && !/procedure/i.test(m[1])) return null;
@@ -1920,15 +1925,16 @@ export const REGISTERS: Record<string, Register> = {
         hint: (r) =>
           !r[6]
             ? "Rate this row's coverage in step 4 first."
-            : `Write it in R12's frame: “Missing: <what the row lacks>. Owner: <the owner of ${polId(r) || "the row's policy"} in BKB-POL-000 Section 3>.” Check both parts.`,
+            : // The example names what this row cannot be missing, and another policy's owner.
+              fmtHint(`Missing: <what the row lacks>. Owner: <the owner of ${polId(r) || "the row's policy"} in BKB-POL-000 Section 3>`, `Missing: ${r[5] === "none" ? "policy clause" : "procedure"}. Owner: ${otherOwner(polId(r))}`),
       },
       // Where the row's mapping can be checked: its policy, then a section of it.
       9: {
         fix: (v, r, d) => {
-          const m = v.trim().match(/^(BKB-POL-\d{3})\s*(?:\u00a7|sections?)?\s*([\d.]+)$/i);
+          const m = v.trim().match(/^(BKB-POL-\d{3})[\s,:;–—-]*(?:\u00a7|sec(?:tions?)?\.?)?\s*(\d+(?:\.\d+)*)\.?$/i);
           return m && m[1].toUpperCase() === polId(r) && outline(d, polId(r)).includes(m[2]) ? `${polId(r)} Section ${m[2]}` : null;
         },
-        hint: (r) => (polId(r) ? `Name the row's policy, ${polId(r)}, then the section you read in it (Section and its number).` : "Choose the row's BKB policy in step 1 first."),
+        hint: (r) => (polId(r) ? fmtHint("the row's policy code + the word Section + section number", polId(r) === "BKB-POL-006" ? "BKB-POL-001 Section 3" : "BKB-POL-006 Section 4") : "Choose the row's BKB policy in step 1 first."),
       },
     },
     handIn: { step: 7, cols: [3, 4, 5, 6, 7, 8, 9], ident: [0, 1] },
@@ -2122,7 +2128,7 @@ export const REGISTERS: Record<string, Register> = {
           const parts = m[1].replace(/^the /i, "").split(/\s*(?:\/|,|and|then)\s*/i).filter(Boolean);
           return parts.length && parts.every((x) => POL006_ROLES.some((r) => same(r, x))) ? `${t.replace(/\.?$/, "")}.` : null;
         },
-        hint: () => "Write it in R13's frame: “<Role> shall <action> within <time limit>.”, with a role as BKB-POL-006 Section 5 or Section 6 names it (such as IAM team), and a time limit. Or “Exception needed”.",
+        hint: () => fmtHint("<Role> shall <action> within <time limit>, with a role BKB-POL-006 Section 5 or Section 6 names, or the words Exception needed", "Asset owner shall confirm the asset list within 30 days"),
       },
     },
     // Step 4 is R13's "where to fix" on the row's own requirement: checked on the desk, no key.
@@ -2168,10 +2174,11 @@ export const REGISTERS: Record<string, Register> = {
     cells: {
       3: {
         fix: (v, r) => {
-          const n = v.trim().replace(/^(\u00a7|sections?)\s*/i, "");
+          const n = secNum(v);
           return pol001Has(r[0]).includes(n) ? `Section ${n}` : null;
         },
-        hint: (r) => `Type the number of a section of BKB-POL-001 whose heading or text has “${r[0]}”: its number only.`,
+        // The example is a section of the policy without the key word: never the row's answer.
+        hint: (r) => fmtHint(`the number only, of a section of BKB-POL-001 whose heading or text has “${r[0]}”`, (docNow("BKB-POL-001") ?? []).map((x) => x.num).find((n) => /^\d/.test(n) && !pol001Has(r[0]).includes(n))),
       },
     },
     checkRows: { 7: { label: 0, col: 2, rule: l08 } },
@@ -2555,7 +2562,7 @@ export const REGISTERS: Record<string, Register> = {
     },
     cells: {
       3: { fix: (v) => (/^\s*\d+\s*$/.test(v) ? String(+v) : null), hint: () => "Type the number of files, as a number (for example 3)." },
-      6: { fix: (v) => evpFollowFix(v), hint: () => "Write it in rule R18's words: Please send 2 more files for <control> covering <period> by <due date>. Type dates as 2026-01-31 or 31 January 2026." },
+      6: { fix: (v) => evpFollowFix(v), hint: (r) => fmtHint("Please send 2 more files for <control> covering <start date> to <end date> by <due date>", `Please send 2 more files for ${r[1] === "C03" ? "C04" : "C03"} covering 2024-01-01 to 2024-12-31 by 2025-01-15`) },
     },
     ident: [1, 2],
     view: { 4: [4], 5: [5, 7] },
@@ -3026,7 +3033,7 @@ export const REGISTERS: Record<string, Register> = {
         },
       },
     },
-    cells: { 1: { fix: (v) => rruIds(v), hint: () => "Type Risk IDs as the register writes them (R-16-HQ-02), separated by ;, or none." } },
+    cells: { 1: { fix: (v) => rruIds(v), hint: () => fmtHint("Risk IDs as the register writes them, with ; between them, or none", "R-16-HQ-14; R-16-HQ-15") } },
     ident: [0],
     checkRows: { 8: { label: 0, col: 1 } },
     then: { 8: "Complete RR-NOTE" },
@@ -3200,7 +3207,7 @@ export const REGISTERS: Record<string, Register> = {
     steps: { 6: [3], 12: [4] },
     only: { 12: (r, p) => !!topBest(p, 6, r[0]) && topBest(p, 6, r[0]) !== "Conforms" },
     derived: { 4: { from: [], quiet: true, value: (v, p) => (topBest(p, 6, v(0)) === "Conforms" ? "—" : null) } },
-    cells: { 4: { fix: (v, r) => codesIn(v, r[2]), hint: () => "Type codes of this clause's deliverables, as its row writes them, separated by ;." } },
+    cells: { 4: { fix: (v, r) => codesIn(v, r[2]), hint: (r) => fmtHint("codes of this clause's deliverables, as its row writes them, with ; between them", [["VUL-TEST", "VUL-MEMO"], ["RSK-TOP5", "RSK-ACC"]].find((x) => !x.some((c) => r[2].includes(c)))?.join("; ")) } },
     ident: [0],
     view: { 6: [1, 2], 12: [1, 2, 3] },
     checkRows: { 6: { label: 0, col: 3 }, 12: { label: 0, col: 4 } },
@@ -4116,8 +4123,8 @@ export const REGISTERS: Record<string, Register> = {
     // Worked out from the two values on the row, so the hand-in says whether last campaign met each target.
     derived: { 3: { from: [1, 2], quiet: true, value: (v) => { const t = v(1).match(/^(≤|≥) ([\d.]+)/), r = parseFloat(v(2)); if (!t || Number.isNaN(r)) return ""; return (t[1] === "≤" ? r <= +t[2] : r >= +t[2]) ? "Met" : "Not met"; } } },
     cells: {
-      1: { fix: (v) => pctTarget(v), hint: () => "Write a target as its source writes it: “≤” or “≥”, the number and “%” (you may type <= or >=)." },
-      2: { fix: (v) => { const m = v.trim().match(/^(\d+(?:[.,]\d+)?)\s*%?$/); return m ? `${m[1].replace(",", ".")} %` : null; }, hint: () => "Write the rate as a number and “%”." },
+      1: { fix: (v) => pctTarget(v), hint: () => fmtHint("≤ or ≥ + number + % (<= or >= also work)", "≥ 80 %") },
+      2: { fix: (v) => { const m = v.trim().match(/^(\d+(?:[.,]\d+)?)\s*%?$/); return m ? `${m[1].replace(",", ".")} %` : null; }, hint: () => fmtHint("number + %", "12 %") },
     },
     checkRows: { 5: { label: 0, col: 1, with: 2 } },
     note: { 5: () => "Target. Click rate: the KRI of the Amsterdam register's phishing risk (Risk Register › Heat Map with KRIs). Report rate: BKB-POL-020 Section 7.1 (Policies › Policy Library). Write each as its source writes it: “≤” or “≥”, the number and “%”. On a keyboard, type <= or >=. Last campaign's rate: work it out from the counts on Awareness › Campaign Results, with the formula in the row." },
@@ -4796,10 +4803,10 @@ REGISTERS["T3.2 X"] = {
     4: { fix: (v) => (/breach notification/i.test(v) ? v : null), hint: () => "Find the requirement's key word in Policies › Map to Framework, then read that policy's title in BKB-POL-000 Section 3." },
     5: {
       fix: (v, r, d) => {
-        const n = v.trim().replace(/^(\u00a7|sections?)\s*/i, "");
+        const n = secNum(v);
         return (d.library.docs.find(([c]) => c === polId(r))?.[2] ?? []).some(([x, h]) => x === n && /^Procedure:.*notification/i.test(h)) ? `Section ${n}` : null;
       },
-      hint: (r) => (polId(r) ? `Read the “Procedure:” headings of ${polId(r)} Section 6 (Policies › Policy Library): which one is about what the requirement asks?` : "Choose the row's BKB policy first."),
+      hint: (r, d) => (polId(r) ? fmtHint(`the number of the “Procedure:” section of ${polId(r)} (Policies › Policy Library) that is about what the requirement asks`, notProcedure(d, polId(r))) : "Choose the row's BKB policy first."),
     },
     6: { fix: (v, r) => (v === r11(r).best ? v : null), hint: () => "Rule R11 (Learn › Rule tables): count what the row holds, a control, a policy and a procedure." },
   },
@@ -4993,10 +5000,10 @@ function overlayOffices(d: Desk, ob: string): string | null {
  *  step's note gives them too, and the field is a reference, not a test. */
 function evidenceHint4(v: string): string {
   const [book, sheet] = [/organi[sz]ation.?profiles/i.test(v), /key.?requirements/i.test(v)];
-  if (book && sheet) return 'Both names are right. Type them in this order with nothing else: "Organization_Profiles - Key Requirements".';
-  if (book) return "The workbook is right. Add its sheet after it: Key Requirements.";
-  if (sheet) return "The sheet is right. Put the workbook before it: Organization_Profiles.";
-  return 'These rows are copied from a workbook, not from the addendum, so the reference is the workbook, then its sheet: "Organization_Profiles - Key Requirements".';
+  if (book && sheet) return "Both names are right. The format is: workbook name + space, hyphen, space + sheet name, and nothing else. For example: Asset_Register - Assets.";
+  if (book) return "The workbook is right. Add the sheet's name after it, as the step's note gives it. The format is: workbook name - sheet name. For example: Asset_Register - Assets.";
+  if (sheet) return "The sheet is right. Put the workbook's name before it, as the step's note gives it. The format is: workbook name - sheet name. For example: Asset_Register - Assets.";
+  return "Not quite. The format is: workbook name - sheet name, as the step's note gives them. For example: Asset_Register - Assets.";
 }
 
 /** T3.1 step 3: is the typed Source instrument this row's own? (Tester, 18 Nov 2026: one value was accepted on all ten
@@ -5004,6 +5011,12 @@ function evidenceHint4(v: string): string {
  *  without the section number. A Section 6 overlay: words of its own requirement or its name ("PCI DSS v4.0.1", "GDPR").
  *  Nothing to check against until the Obligation is chosen.
  *  ponytail: a words-of-the-requirement match, so "scope must be" passes on the card row; a list to choose from if that matters. */
+/** A Source instrument from another row, for the hint: one this row's own check refuses, so it is never the answer. */
+function sourceExample(r: string[], d: Desk, overlay: boolean): string | undefined {
+  // ponytail: an overlay's standard is the leading name of its requirement; a list of names if the addendum's wording changes.
+  const names = overlay ? (obl.rows6(d) ?? []).map((x) => x[1].match(/^[A-Z]+(?: DSS v[\d.]*\d| Security Rule)/)?.[0] ?? "") : obl.details(d).filter((x) => x[0] === "Section 2.1").map((x) => x[2].split(" Sec.")[0]);
+  return names.find((x) => x && !sourceOk(x, r, d));
+}
 function sourceOk(v: string, r: string[], d: Desk): boolean {
   const sq = (x: string) => x.toLowerCase().replace(/[^a-z0-9]/g, "");
   const t = sq(v);
@@ -5029,8 +5042,12 @@ function overlayExample(d: Desk): string {
 
 /** T3.2: the row's BKB policy ID ("BKB-POL-017"), its sections, and its "Procedure:" sections, as the
  *  Policy Library lists them. */
+/** The owner of some other policy, for an example: never the owner this row's gap sentence takes. */
+const otherOwner = (id: string) => { const own = obl.policies().find(([x]) => x === id)?.[2]; return obl.policies().find(([, , o]) => o !== own)?.[2] ?? "Group CIO"; };
 const polId = (r: string[]) => (r[4] ?? "").split(" ")[0];
 const outline = (d: Desk, id: string) => (d.library.docs.find(([c]) => c === id)?.[2] ?? []).map(([n]) => n);
+/** A section number in the form a Procedure section has, which this policy's procedures do not include: an example, never an answer. */
+const notProcedure = (d: Desk, id: string) => ["6.1", "6.2", "6.3", "6.4", "6.5", "6.6"].find((n) => !procedures(d, id).includes(n));
 const procedures = (d: Desk, id: string) => (d.library.docs.find(([c]) => c === id)?.[2] ?? []).filter(([, h]) => h.startsWith("Procedure:")).map(([n]) => n);
 /** Learn › Reference pages › Ref-27002 attributes: [control, title, theme, type, properties, concepts]. */
 const attrs = (d: Desk) => (d.pages["Ref-27002 attributes"]?.r ?? []) as string[][];
@@ -5568,8 +5585,8 @@ export function briefFlags(desk: Desk, sec: BriefSection, typed: string[]): (str
   });
 }
 /** The Source line names the section's source (Section and dashes optional). */
-// "L01" for "Rule L01" and "Sec 9" for "Section 9" are the same citation: a learner is never held on its spelling.
-const cite = (x: string) => norm(x.replace(/\bSec\.?(?=\s*\d)/gi, "Section")).replace(/^rule/, "");
+// "L01" for "Rule L01" and "Sec 9" for "Section 9" are the same citation, with or without a full stop after it: a learner is never held on its spelling.
+const cite = (x: string) => norm(x.trim().replace(/\.$/, "").replace(/\bSec\.?(?=\s*\d)/gi, "Section")).replace(/^rule/, "");
 export const briefSrcOk = (desk: Desk, sec: BriefSection, v: string) => !sec.src || cite(v) === cite(sec.src(desk));
 
 export const briefKey = (taskId: string, code: string) => `${taskId}|${code}`;
