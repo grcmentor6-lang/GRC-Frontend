@@ -11,7 +11,7 @@ import { api } from "@/lib/api";
 import { gridKey, gridStatus, submitWhy } from "@/lib/desk/work";
 import { Toned } from "./ui";
 import { tierTone } from "@/lib/desk/cell-tone";
-import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, givenLines, ladderSteps, addRow, isSeeded, seedRows, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
+import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, srcKind, givenLines, ladderSteps, addRow, isSeeded, seedRows, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
 import { useDoc, useDocs } from "./doc-text";
 import { WalkCard, WalkStep } from "./walk-card";
 import { NoteList } from "./step-text";
@@ -1325,13 +1325,14 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
                       <label className="grid grid-cols-[120px_minmax(0,1fr)] items-start gap-2 text-[13px] max-[480px]:grid-cols-1 max-[480px]:gap-0.5">
                         <span className="pt-1.5 font-semibold text-[#3F4757] max-[480px]:pt-0">Source:</span>
                         <span>
-                          <input data-guide="brief-source" value={v[`${i},src`] ?? ""} onChange={(e) => set(`${i},src`, e.target.value)} aria-label={`Source of section ${sec.h}`} aria-invalid={srcOff} placeholder={/Section/.test(sec.src!(desk)) ? "document and section" : "the rule or page it came from"} className={input} />
+                          <input data-guide="brief-source" value={v[`${i},src`] ?? ""} onChange={(e) => set(`${i},src`, e.target.value)} aria-label={`Source of section ${sec.h}`} aria-invalid={srcOff} placeholder={{ section: "document and section", document: "the document it came from", rule: "the rule it came from", page: "the reference page it came from" }[srcKind(sec.src!(desk))]} className={input} />
                           {/* The format, never the line itself (owner, 24 Nov 2026): "Rule + rule number", with an example from another rule. */}
-                          {srcOff && flag(/Section/.test(sec.src!(desk))
-                            ? "Not quite. The format is: document code + the word Section + section number, and nothing else. For example: " + (/BKB-POL-006 Section 4/.test(sec.src!(desk)) ? "BKB-STD-001 Section 3." : "BKB-POL-006 Section 4.")
-                            : /^Rule/.test(sec.src!(desk))
-                              ? "Not quite. The format is: Rule + rule number. For example: " + (/R07/.test(sec.src!(desk)) ? "Rule R12." : "Rule R07.")
-                              : "Not quite. The format is: the reference page's name, as Learn › Reference pages lists it. For example: " + (/Ref-Sampling/.test(sec.src!(desk)) ? "Ref-Keywords." : "Ref-Sampling."))}
+                          {srcOff && flag({
+                            section: "Not quite. The format is: document code + the word Section + section number, and nothing else. For example: " + (/BKB-POL-006 Section 4/.test(sec.src!(desk)) ? "BKB-STD-001 Section 3." : "BKB-POL-006 Section 4."),
+                            document: "Not quite. The format is: document code. For example: " + (/BKB-POL-006/.test(sec.src!(desk)) ? "BKB-STD-001." : "BKB-POL-006."),
+                            rule: "Not quite. The format is: Rule + rule number. For example: " + (/R07/.test(sec.src!(desk)) ? "Rule R12." : "Rule R07."),
+                            page: "Not quite. The format is: the reference page's name, as Learn › Reference pages lists it. For example: " + (/Ref-Sampling/.test(sec.src!(desk)) ? "Ref-Keywords." : "Ref-Sampling."),
+                          }[srcKind(sec.src!(desk))])}
                         </span>
                       </label>
                     ) : (

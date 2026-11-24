@@ -687,6 +687,9 @@ def t31(w: dict) -> None:
     steps[14]["refs"]["docs"] = [["BKB-ADD-16", ["8.1"]]]
     sub(16, "o", VALUES, "Out of scope and interfaces recorded (L03)")
     steps[15]["refs"]["docs"].append(["BKB-ADD-16", []])  # L03: only what the addendum lists as excluded
+    # Step 16 reads the addendum alone. Ref-ISMS processes is step 17's page: tagged here, it sent a learner to it for
+    # the Boundaries section's Source line (owner, 24 Nov 2026).
+    steps[15]["refs"]["pages"] = []
     sub(16, "help", RULE, "")
     sub(17, "o", VALUES, "Climate-change row copied (L03)")
     sub(17, "help", COPY, "Copy the climate-change row of Ref-ISMS processes exactly as it is written, then name the page in the Source line.")

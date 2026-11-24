@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { docLines, docNow, docTable, loadDoc } from "./docs";
-import { REGISTERS, briefSrcOk, type BriefSection } from "./registers";
+import { BRIEFS, REGISTERS, briefSrcOk, srcKind, type BriefSection } from "./registers";
 
 const pub = join(import.meta.dirname, "../../../public");
 (globalThis as { fetch: unknown }).fetch = async (u: string) => {
@@ -75,6 +75,13 @@ async function main() {
   const sec = { src: () => "Rule L01" } as unknown as BriefSection;
   for (const v of ["Rule L01", "L01", "rule l01.", "Rule L01 "]) assert.ok(briefSrcOk(desk, sec, v), `brief source: "${v}"`);
   for (const v of ["Rule L02", "Rule", "L1", "Rule L01 Section 2"]) assert.ok(!briefSrcOk(desk, sec, v), `brief source: "${v}" refused`);
+
+  // A section worked from a whole document (T3.1 LI-SCOPE, Boundaries): the document alone, or with the section one of
+  // its lines reads; never another section, another document or a reference page (owner, 24 Nov 2026).
+  const whole = BRIEFS["T3.1 LI-SCOPE"].sections[1];
+  for (const v of ["BKB-ADD-16", "BKB-ADD-16 Section 9.1", "bkb-add-16, sec 9.1"]) assert.ok(briefSrcOk(desk, whole, v), `whole document: "${v}" taken`);
+  for (const v of ["BKB-ADD-16 Section 2", "Ref-ISMS processes", "BKB-ADD-36", "Section 9.1"]) assert.ok(!briefSrcOk(desk, whole, v), `whole document: "${v}" refused`);
+  assert.deepEqual(["Rule L01", "Ref-Sampling", "BKB-ADD-16 Section 9", "BKB-ADD-16"].map(srcKind), ["rule", "page", "section", "document"]);
 
   console.log(`cell-hints: ok (${n} boxes: variants taken, wrong values refused, examples never the answer)`);
 }

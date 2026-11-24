@@ -5587,7 +5587,18 @@ export function briefFlags(desk: Desk, sec: BriefSection, typed: string[]): (str
 /** The Source line names the section's source (Section and dashes optional). */
 // "L01" for "Rule L01" and "Sec 9" for "Section 9" are the same citation, with or without a full stop after it: a learner is never held on its spelling.
 const cite = (x: string) => norm(x.trim().replace(/\.$/, "").replace(/\bSec\.?(?=\s*\d)/gi, "Section")).replace(/^rule/, "");
-export const briefSrcOk = (desk: Desk, sec: BriefSection, v: string) => !sec.src || cite(v) === cite(sec.src(desk));
+/** What kind of source a section names, for the format its hint gives: a rule, a reference page, a document's section,
+ *  or a whole document (T3.1 LI-SCOPE's Boundaries, worked from two places of the addendum). */
+export const srcKind = (src: string): "rule" | "page" | "section" | "document" => (/^Rule\b/.test(src) ? "rule" : /^Ref-/.test(src) ? "page" : /\bSection\b/.test(src) ? "section" : "document");
+export const briefSrcOk = (desk: Desk, sec: BriefSection, v: string) => {
+  if (!sec.src) return true;
+  const want = cite(sec.src(desk)), got = cite(v);
+  if (got === want) return true;
+  // A whole document: the document with one of the sections its own lines read is the same source, said more exactly.
+  if (srcKind(sec.src(desk)) !== "document" || !got.startsWith(want)) return false;
+  const secs = (sec.lines ?? []).flatMap((l) => [...(l.at ?? "").matchAll(/Section (\d+(?:\.\d+)*)/g)].map((m) => m[1]));
+  return secs.includes(got.slice(want.length));
+};
 
 export const briefKey = (taskId: string, code: string) => `${taskId}|${code}`;
 
