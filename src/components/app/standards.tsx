@@ -4,6 +4,8 @@ import { TASK_META } from "@/lib/taskmeta";
 import { CONTROLS_BY_TASK } from "@/lib/controls";
 import { STANDARD_BY_ID, standardForTaskCode } from "@/lib/standards";
 import { Gloss } from "@/components/app/glossary";
+import { LATER_LABEL } from "@/lib/focus";
+import { LATER_BOX, LaterTag } from "@/components/app/later";
 
 // Static tone maps (Tailwind v4 purges dynamic `bg-${tone}` classes). Each framework carries its
 // own colour identity — the banner wears it so the mentee reads the standard at a glance.
@@ -55,6 +57,7 @@ export function StandardBanner({ taskCode, onControls }: { taskCode: string; onC
 
         {/* Meta — compliance vernacular: what this task is assessed against. */}
         <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
+          {alsoNist && <LaterTag className="order-last" />}
           {standard.crossCutting && (
             <span className={`inline-flex items-center gap-1 h-6 px-2 rounded-md text-[10px] font-semibold uppercase tracking-[0.08em] ${t.bg} ${t.text} ring-1 ${t.ring}`}>
               <Icon name="layers" size={11} /> Cross-cutting
@@ -77,8 +80,10 @@ export function StandardBanner({ taskCode, onControls }: { taskCode: string; onC
               <b className="font-semibold text-slate-900 tabular-nums">{controlCount}</b> controls assessed
             </span>
           ))}
+          {/* The cross-walk chip: a frame outside GRC 101's focus is drained to grey and says where it is covered.
+              The task's own standard is never greyed: it is what the task is graded against. */}
           {alsoNist && (
-            <span className={`inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-[11px] leading-none font-medium tracking-tight ${tone(alsoNist.tone).bg} ${tone(alsoNist.tone).text} ring-1 ${tone(alsoNist.tone).ring}`}>
+            <span title={LATER_LABEL} className={`${LATER_BOX} inline-flex items-center gap-1.5 h-6 px-2 rounded-md text-[11px] leading-none font-medium tracking-tight ${tone(alsoNist.tone).bg} ${tone(alsoNist.tone).text} ring-1 ${tone(alsoNist.tone).ring}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${tone(alsoNist.tone).dot}`} /> + {alsoNist.code}
             </span>
           )}

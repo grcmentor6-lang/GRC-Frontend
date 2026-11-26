@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/components/auth/auth-provider";
 import { GuidedTour, markTourSeen, type TourStep } from "@/components/app/guided-tour";
 import { useDesk } from "./desk-context";
 import { FloatWindow } from "./float-window";
-import { allCaptures, deleteCapture, keptFor, labFindings, partRows, type Lab, type LabCapture, type LabPart, type LabRef, type LabRow, type LabState } from "@/lib/desk/labs";
+import { allCaptures, deleteCapture, keptFor, labFindings, LAB_SHOW_AFTER, partRows, type Lab, type LabCapture, type LabPart, type LabRef, type LabRow, type LabState } from "@/lib/desk/labs";
 import { deepMap, toLearner } from "@/lib/desk/names";
 
 const BLANK = "(blank)";
@@ -94,8 +94,9 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
     return [
       { title: "What you will do", body: `${lab.atWork} Here you filter the console, capture what it shows and answer one question at a time.`, getEl: () => $('[data-lab="task"]') },
       { title: "The console's screens", body: "These tabs are the application's own screens. The question on the right says which one to read.", getEl: () => $('[data-lab="tabs"]') },
-      { title: "Try a filter", body: `Practice first: set ${g.col} to ${g.value}. The table keeps only the rows that match.`, getEl: () => $(`[data-lab-filter="${g.col}"]`), nextWhen: () => live.current.filters[g.col] === g.value, doIt: `Set ${g.col} to ${g.value}` },
+      { title: "Try a filter", body: `Work one real row first: set ${g.col} to ${g.value}. This is the console's real data, so the rows left are real; the practice answers no question. The table keeps only the rows that match.`, getEl: () => $(`[data-lab-filter="${g.col}"]`), nextWhen: () => live.current.filters[g.col] === g.value, doIt: `Set ${g.col} to ${g.value}` },
       { title: "Capture evidence", body: "Press Capture evidence. It records this screen, the filters and exactly the rows left in the table, with the UTC time.", getEl: () => $('[data-lab="capture"]'), onEnter: () => { startCount.current = live.current.count; }, waitFor: () => live.current.count > startCount.current, doIt: "Press Capture evidence" },
+      { title: "Read what it shows", body: "Read the rows left: a finding starts like this, with a filter that leaves exactly the rows a question names. Then you capture them, so anyone can rely on what you saw without opening the console.", getEl: () => $('[data-lab="trail"]') },
       { title: "Your evidence ref", body: "This is the reference a colleague can rely on: E-number, screen, filter, rows, UTC time and a SHA-256. This one was practice, so it answers no question: you may delete it, as any capture no right answer rests on. Evidence › Capture Screenshot lists the captures you keep.", getEl: () => $('[data-lab="trail"]') },
       { title: "Now the questions", body: "Each question asks for a capture holding exactly the right rows. Clear filters, find them, capture, then choose the capture here. Replay any time with ▶ Show me how.", getEl: () => $('[data-lab="guide"]') },
     ];
@@ -134,16 +135,16 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
               partDone(p, state) ? <DonePart key={p.id} n={i + 1} part={p} state={state} captures={captures} open={lab.parts[i + 1] === current} /> : p === current ? <Part key={p.id} n={i + 1} part={p} state={state} setState={setState} labId={ref.id} captures={mine} total={lab.parts.length} /> : null,
             )}
             {!current && (
-              // Answering the last question does not finish the lab: Mark complete does, and only then do the findings join
-              // the hand-in. Until it is pressed the box is amber and says so (tester, 4 Nov: missed in T10.1).
+              // Answering the last question does not finish the lab: Mark complete does, and only then is it recorded.
+              // The lab is a required part of its task, so until it is pressed the box is amber and says that Submit waits for it.
               <section ref={findingsBox} data-lab="findings" data-state={state.done ? "done" : "open"} className={`grid gap-2 rounded border bg-white p-3 text-[13px] ${state.done ? "border-[#BBF7D0]" : "border-[#F59E0B] shadow-[inset_3px_0_0_#F59E0B]"}`}>
-                <p className="font-semibold text-[#111827]">Findings for {lab.feed.split(",")[0]}</p>
+                <p className="font-semibold text-[#111827]">Findings for {lab.feed}</p>
                 <ul className="grid list-disc gap-1.5 pl-4 leading-relaxed text-[#3F4757]">{findings.map((f) => <li key={f}>{f}</li>)}</ul>
                 {state.done ? (
-                  <p className="text-[12.5px] text-[#15803D]">Complete. These lines are in {lab.feed}. Close this console to go back to your step and hand the files in.</p>
+                  <p className="text-[12.5px] text-[#15803D]">Complete. This lab is recorded and counts toward {lab.related}. Close this console to go back to your task.</p>
                 ) : (
                   <>
-                    <p className="text-[12.5px] font-medium text-[#78350F]">Not complete yet. These findings join {lab.feed} only when you press Mark complete, before you submit the task.</p>
+                    <p className="text-[12.5px] font-medium text-[#78350F]">Not complete yet. {lab.related}&apos;s Submit stays closed until you press Mark complete.</p>
                     <button type="button" onClick={() => setState((s) => ({ ...s, done: new Date().toISOString() }))} className="h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-110">Mark complete</button>
                   </>
                 )}
@@ -250,7 +251,7 @@ function Brief({ lab, onGuide }: { lab: Lab; onGuide: () => void }) {
   return (
     <section className="grid gap-2 text-[13px] leading-relaxed text-[#3F4757]">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">Lab · for {lab.related}</p>
+        <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">Required lab · {lab.related}</p>
         <button type="button" data-lab="guide" onClick={onGuide} className="inline-flex h-7 items-center gap-1 rounded border border-[#C9CED8] bg-white px-2 text-[12px] font-semibold text-[#3F4757]"><Icon name="play" size={12} /> Show me how</button>
       </div>
       <p><span className="font-semibold text-[#111827]">{lab.owner[0]}:</span> {lab.owner[1]}</p>
@@ -269,30 +270,33 @@ function Part({ n, total, part, state, setState, labId, captures }: { n: number;
   const [ref, setRef] = useState("");
   const [picks, setPicks] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
   const r = state.parts[part.id];
   const rows = part.kind === "rows" ? partRows(part, state, captures) : [];
 
-  type Out = { correct?: boolean | null; hint?: string | null; why?: string | null; rows?: ({ label: string } & LabRow)[]; findings?: string[] };
+  type Out = { correct?: boolean | null; hint?: string | null; why?: string | null; rows?: ({ label: string } & LabRow)[]; findings?: string[]; misses?: number; released?: boolean; recipe?: string | null };
   const send = async (body: object, apply: (o: Out, s: LabState) => LabState) => {
     setBusy(true);
-    setError(false);
+    setError("");
     try {
       const o = await api.post<Out>("/me/desk/lab", { id: labId, part: part.id, ...body });
       setState((s) => {
         const next = apply(o, s);
         return o.findings?.length ? { ...next, findings: o.findings } : next;
       });
-    } catch {
-      setError(true);
+    } catch (e) {
+      setError(e instanceof ApiError && e.status === 429 ? e.message : "Could not check. Try again in a moment.");
     } finally {
       setBusy(false);
     }
   };
   const checkCapture = () => {
     const c = captures.find((x) => x.ref === ref);
-    if (c) send({ view: c.view, ids: c.ids }, (o, s) => ({ ...s, parts: { ...s.parts, [part.id]: { ref, correct: o.correct, hint: o.hint ?? undefined, why: o.why ?? undefined } } }));
+    if (c) send({ view: c.view, ids: c.ids }, (o, s) => ({ ...s, parts: { ...s.parts, [part.id]: { ref, correct: o.correct, hint: o.hint ?? undefined, why: o.why ?? undefined, misses: o.misses, released: o.released || undefined, recipe: o.recipe ?? undefined } } }));
   };
+  // After three wrong checks the server shows the way (the filter to apply, never the rows). The part is then recorded as
+  // shown, not found; the capture is still the learner's to make, so the lab can complete.
+  const showMe = () => send({ show: true }, (o, s) => ({ ...s, parts: { ...s.parts, [part.id]: { ...s.parts[part.id], correct: false, misses: o.misses, released: true, recipe: o.recipe ?? undefined } } }));
   const checkRows = () =>
     send({ picks: rows.map((label) => ({ label, pick: picks[label] })) }, (o, s) => ({ ...s, parts: { ...s.parts, [part.id]: { rows: Object.fromEntries((o.rows ?? []).map(({ label, ...x }) => [label, x])) } } }));
 
@@ -313,6 +317,11 @@ function Part({ n, total, part, state, setState, labId, captures }: { n: number;
           </label>
           <button type="button" disabled={!ref || busy} onClick={checkCapture} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]">{busy ? "Checking…" : "Check this capture"}</button>
           {r?.correct === false && <p role="status" data-lab="hint" className="text-[12.5px] leading-relaxed text-[#B91C1C]">{r.hint}</p>}
+          {r?.released && r.recipe ? (
+            <p data-lab="recipe" className="rounded border border-[#FDE68A] bg-[#FFFBEB] px-2 py-1.5 text-[12.5px] leading-relaxed text-[#78350F]"><span className="font-semibold">The answer, shown to you:</span> {r.recipe} This question will be recorded as shown, not found.</p>
+          ) : (
+            (r?.misses ?? 0) >= LAB_SHOW_AFTER && <button type="button" data-lab="show-answer" disabled={busy} onClick={showMe} className="h-9 rounded border border-[#C9CED8] bg-white px-4 text-[13px] font-semibold text-[#111827] hover:bg-[#F3F4F7] disabled:opacity-60">Show me the answer</button>
+          )}
         </>
       ) : (
         <>
@@ -330,7 +339,7 @@ function Part({ n, total, part, state, setState, labId, captures }: { n: number;
           <button type="button" disabled={busy || rows.some((l) => !picks[l])} onClick={checkRows} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]">{busy ? "Checking…" : "Check my answers"}</button>
         </>
       )}
-      {error && <p className="text-[12.5px] text-[#B91C1C]">Could not check. Try again.</p>}
+      {error && <p className="text-[12.5px] text-[#B91C1C]">{error}</p>}
     </section>
   );
 }
@@ -343,11 +352,11 @@ function DonePart({ n, part, state, captures, open }: { n: number; part: LabPart
   const cap = captures.find((c) => c.ref === r.ref);
   return (
     <details open={open} data-lab="done" data-part={part.id} className="rounded border border-[#DDE1E8] bg-white px-3 py-2 text-[13px]">
-      <summary className="cursor-pointer font-semibold text-[#111827]">{n}. {part.title} · {part.kind === "capture" ? <span className="text-[#15803D]">Right, {r.ref}</span> : <span className={right === rows.length ? "text-[#15803D]" : "text-[#B91C1C]"}>{right} of {rows.length} right</span>}</summary>
+      <summary className="cursor-pointer font-semibold text-[#111827]">{n}. {part.title} · {part.kind === "capture" ? r.released ? <span data-lab="shown" className="text-[#78350F]">Shown, not found · {r.ref}</span> : <span className="text-[#15803D]">Right, {r.ref}</span> : <span className={right === rows.length ? "text-[#15803D]" : "text-[#B91C1C]"}>{right} of {rows.length} right</span>}</summary>
       {part.kind === "capture" ? (
         <div className="mt-1 grid gap-1 text-[12.5px] leading-relaxed text-[#3F4757]">
           <p className="font-mono text-[12px] text-[#111827]">{cap?.ids.join(", ")}</p>
-          <p>{r.why}</p>
+          {r.released ? <p>{r.recipe}</p> : <p>{r.why}</p>}
         </div>
       ) : (
         <ul className="mt-1 grid gap-1.5 text-[12.5px] leading-relaxed text-[#3F4757]">

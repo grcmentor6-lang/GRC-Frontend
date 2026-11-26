@@ -84,7 +84,14 @@ export function useSaveState(who: string) {
   return useSyncExternalStore(s.subscribe, () => s.saveState, () => s.saveState);
 }
 
-export const stepKey = (taskId: string, n: number) => `${taskId}-${n}`;
+/** Keys a save the server refused for good was set aside for ("section\0key"): the desk says so once. */
+export function useDroppedSaves(who: string) {
+  const s = storeFor(who);
+  const dropped = useSyncExternalStore(s.subscribe, () => s.dropped, () => s.dropped);
+  return { dropped, dismiss: s.dismissDropped };
+}
+
+export const stepKey =(taskId: string, n: number) => `${taskId}-${n}`;
 
 export type TaskStatus = "submitted" | "started" | "todo";
 export function taskStatus(p: Progress, t: { id: string; steps: { n: number }[] }): TaskStatus {

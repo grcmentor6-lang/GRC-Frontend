@@ -2,6 +2,7 @@ import { isFillCell, rmfTable, workKind, type Desk, type Step, type Task } from 
 import { ATTEST, RMF, attestDone, fileExts, fileNameOk, openBefore, rmfAt, rmfExpected, rmfFilled, rmfGiven, rmfKey, submitCodes } from "./forms";
 import { LADDER, STUDY, briefOf, briefStatus, compareDone, derivedAt, handedIn, liveRow, regEmpty, regKey, regOf, regRows, regStatus, reportDone } from "./registers";
 import { stepKey, type Progress } from "./progress";
+import { labWhy } from "./labs";
 import { waitingAt } from "./inbox";
 import { CANONICAL_ID, optionOrder, shown } from "./option-order";
 
@@ -98,6 +99,10 @@ export function submitWhy(desk: Desk, p: Progress, task: Task, s: Step): string 
   if (waitingAt(desk, p, task.id, s.n).length) return "Reply to your message in the Inbox first.";
   const before = openBefore(p, task, s);
   if (before.length) return `Finish step${before.length > 1 ? "s" : ""} ${before.join(", ")} first.`;
+  // A Tech Lab of the task is required, but it holds back only the task's final hand-in, never an earlier step's own Submit
+  // (an evidence pack's receipt): the server seals the task, not the step, on the same rule.
+  const lab = s.n === task.steps.length ? labWhy(task.id, p) : null;
+  if (lab) return lab;
   const gaps = gapsWhy(desk, p, task, s.n);
   if (gaps) return gaps;
   if (handedIn(task.id, s.n).some((reg) => regEmpty(desk, p, task, s.n, reg).length)) return "Wait for the lines the platform writes from your answers.";

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Card, Bar } from "@/components/ui/primitives";
 import { SkeletonCardGrid } from "@/components/ui/skeleton";
-import type { Desk, Task } from "@/lib/desk/model";
+import { areasOf, type Desk, type Task } from "@/lib/desk/model";
 import { stepKey, taskStatus, type Progress, type TaskStatus } from "@/lib/desk/progress";
 import { NOT_SCORED, fmtWhen, recordCounts, recordEmpty, useDeskRecord, useTaskScores } from "@/lib/desk-record";
 import type { Scores } from "@/lib/desk/badges";
@@ -14,7 +14,7 @@ import { OrgName } from "@/lib/desk/org-tone";
 
 /**
  * Reports — the learner's GRC 101 record as a register: each opened task with its organisation, the
- * domains it practises, the ISO/IEC 27001 clauses its steps cite, its deliverables, and where the
+ * areas of responsibility it practises (his "Responsibility" column), the ISO/IEC 27001 clauses its steps cite, its deliverables, and where the
  * learner's own work on it stands. Everything comes from the desk catalogue and this account's saved
  * desk work (lib/desk-record), the same source and the same counts as My Submissions.
  */
@@ -38,7 +38,7 @@ function toRow(desk: Desk, p: Progress, t: Task, scores: Scores | null): Row {
     task: t,
     org: orgs.map((o) => o.name).join(" · "),
     industry: orgs.map((o) => o.industry).join(" · "),
-    domains: t.meta.domains,
+    domains: areasOf(t.resp),
     clauses: Array.from(new Set(t.steps.flatMap((s) => s.refs.clauses))),
     status: taskStatus(p, t),
     done: t.steps.filter((s) => p.done[stepKey(t.id, s.n)]).length,

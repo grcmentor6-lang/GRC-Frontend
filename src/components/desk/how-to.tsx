@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { Label, press } from "./ui";
-import { QUESTIONS, qTitle, krActivities, krFor, rmfTable, splitKr, stepRefs, type QuestionKey, type Step, type Task } from "@/lib/desk/model";
+import { QUESTIONS, qTitle, krActivities, krFor, rmfTable, splitKr, stepRefs, workKind, type QuestionKey, type Step, type Task } from "@/lib/desk/model";
+import { SubmitWork } from "./work-kinds";
 import { decisionChecked, stepKey, type DecisionFeedback, type Progress } from "@/lib/desk/progress";
 import { api } from "@/lib/api";
 import { ATTEST, RMF, attestDone, attestKey, type Attest } from "@/lib/desk/forms";
@@ -18,6 +19,7 @@ import { FloatWindow } from "./float-window";
 import { UndertakingCard } from "./undertaking";
 import { lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { MessageNotice } from "./chat";
+import { LABS, labDone, labOpen } from "@/lib/desk/labs";
 import { useDeskIdentity } from "@/lib/desk/identity";
 import { canonAt, optionOrder, relabel, reorderStep, shown } from "@/lib/desk/option-order";
 import { Marked, StepInstruction, Where } from "./step-text";
@@ -33,7 +35,7 @@ export function isStepComplete(p: Progress, task: Task, s: Step): boolean {
  * away. One step is open at a time: opening another closes it, and the key results follow.
  */
 export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: number; onFocus: (n: number) => void; locked: boolean }) {
-  const { desk, progress, stepLock } = useDesk();
+  const { desk, progress, stepLock, openTool } = useDesk();
   const doneCount = task.steps.filter((x) => isStepComplete(progress, task, x)).length;
   // The first step not yet done is the one to do next; it carries the UP NEXT tag.
   const next = locked ? 0 : (task.steps.find((x) => !isStepComplete(progress, task, x))?.n ?? 0);
@@ -193,6 +195,22 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                 />
               )}
             </li>
+            {/* A Tech Lab of the task, once the step it follows is done: a required item, which Submit waits for. */}
+            {LABS.filter((l) => l.task === task.id && l.after === stepKey(task.id, s.n) && labOpen(l, progress)).map((l) => {
+              const ok = labDone(l, progress);
+              const name = l.tool.split("|")[1].replace(" (business SaaS)", "");
+              return (
+                <li key={l.id} data-lab-row={l.id} data-state={ok ? "done" : "todo"} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#E9ECF1] bg-[#FFFBEB] px-4 py-2.5 shadow-[inset_3px_0_0_#D97706]">
+                  <Icon name={ok ? "check" : "bolt"} size={15} className={`shrink-0 ${ok ? "text-[#15803D]" : "text-[#B45309]"}`} />
+                  <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#78350F]">Tech Lab · required</span>
+                  <span className="min-w-0 flex-1 text-[13.5px] font-semibold text-[#111827]">{name}: {desk.sections.systems?.tools.find((t) => `systems|${t.n}` === l.tool)?.d.split(" · ")[0] ?? "a check of the system"}</span>
+                  <span className="text-[12px] text-[#78350F]">{ok ? "Complete" : "Not complete: Submit waits for it"}</span>
+                  <button type="button" onClick={() => openTool(l.tool, "view")} className="inline-flex h-7 items-center rounded border border-[#C9CED8] bg-white px-2 text-[12px] font-semibold text-[#3F4757] focus-ring">
+                    {ok ? "Open again" : "Open the lab"}
+                  </button>
+                </li>
+              );
+            })}
             </Fragment>
           );
         })}
@@ -249,12 +267,16 @@ function stepCopy(s: Step): { short: string; title: string; detail: string } {
   // "Decide:" / "Decide for each row:" is what the Type column already says, so the table drops it.
   // The pack writes a per-row decision "DECIDE (for each item): …"; neither form is shown twice.
   const lead = /^decide( for each row| \(for each (item|row)\))?:\s*/i;
-  const short = s.kind === "do" ? s.t : s.t.replace(lead, "");
+  const cut = s.t.replace(lead, "");
+  // "Decide for each row: the type of each document" reads as a sentence once the lead is gone.
+  const short = s.kind === "do" ? s.t : cut.charAt(0).toUpperCase() + cut.slice(1);
   // A Lead Implementer step's text opens with its extension ("[LI-05 — Statement of Applicability (SoA)] "),
   // which the row's LI chip already names.
-  const body = s.w.split(/\s*Options:/)[0].replace(LI_TAG, "").replace(lead, "").trim();
+  // The question ends at its options, or at its second part where the options were taken out (GRC 101's rebuild, docs/li101).
+  const body = s.w.split(/\s*(?:Options|Then):/)[0].replace(LI_TAG, "").replace(lead, "").trim();
   if (/(…|\.\.\.)$/.test(s.t)) return { short, title: body, detail: "" };
-  const rest = body.startsWith(short) ? body.slice(short.length).replace(/^[\s.?:]+/, "").trim() : body === short ? "" : body;
+  const lower = (x: string) => x.toLowerCase();
+  const rest = lower(body).startsWith(lower(short)) ? body.slice(short.length).replace(/^[\s.?:]+/, "").trim() : body;
   return { short, title: short, detail: rest };
 }
 
@@ -680,12 +702,14 @@ function Attestation({ task, a, readOnly }: { task: Task; a: Attest; readOnly: b
 
 /** Where the mentee does the activity. File uploads replace the typed box in Phase 3. */
 export function Work({ task, s, readOnly, bare, aside }: { task: Task; s: Step; readOnly: boolean; /** The caller draws the heading (and its own controls beside it). */ bare?: boolean; /** A decision's action, on the row of its rule. */ aside?: ReactNode }) {
-  const { progress, update } = useDesk();
+  const { desk, progress, update } = useDesk();
   const key = stepKey(task.id, s.n);
   const pick = progress.picks[key];
   const setPick = (v: string | Record<string, string>) => update((p) => ({ ...p, picks: { ...p.picks, [key]: v } }));
 
   if (s.kind === "pick" && s.opt) return <Decision task={task} s={s} readOnly={readOnly} bare={bare} aside={aside} />;
+  // A hand-in step with no screen of its own ("LI-FAM submitted with manifest"): named and submitted here, in its row.
+  if (s.kind === "do" && !s.key && workKind(s, desk) === "submit") return <SubmitWork task={task} s={s} readOnly={readOnly} />;
 
   if (s.kind === "each" && s.opt) {
     const rows = task.panel.pl.r ?? [];

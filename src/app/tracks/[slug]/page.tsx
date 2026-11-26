@@ -33,48 +33,48 @@ const COURSES: Record<string, Course> = {
     title: "Foundations",
     role: "GRC Analyst · 0–2 years",
     available: true,
-    tagline: "Learn governance, risk and compliance by doing the actual work — mentor-graded, standards-aligned, and built around real enterprise engagements.",
+    tagline: "Learn governance, risk and compliance by doing the actual work: one simulated ISO/IEC 27001 engagement, checked automatically against answer keys, with no human mentor review.",
     teaser: "",
     overview:
-      "GRC 101 takes you from zero to job-ready through three simulated enterprise engagements. You don't watch lectures — you do the work an entry-level GRC analyst does: building an asset register, running a controls gap analysis, and mapping personal-data flows for GDPR. Every deliverable is graded by an AI mentor against a two-layer scheme and a five-dimension rubric, with Socratic feedback so you improve revision over revision.",
+      "GRC 101 takes you from zero to job-ready through one simulated enterprise engagement: you join the GRC team at GlobalConnect Customer Solutions in Manila, a call-centre operator, for 12 weeks and 25 tasks, with worked examples from LearnTech Amsterdam. You don't watch lectures. You do the work of an ISO/IEC 27001 implementation team: scope and gap analysis, risk assessment and treatment, the Statement of Applicability, control testing, internal audit and certification readiness. Every step is checked automatically against answer keys held on the server, and six checkpoints (HC1 to HC6) check a fortnight's work the same way. No person grades or reviews your work.",
     level: "Beginner · no prior experience",
     learn: [
-      "Inventory and classify information assets against ISO 27001 (Public / Internal / Confidential).",
-      "Run a CIS Controls v8 IG1 gap analysis and quantify compliance per control group.",
-      "Prioritise remediation by risk exposure and write actionable recommendations.",
-      "Map data flows and apply GDPR — produce a RoPA entry (Art. 30) and a DPIA screening decision.",
-      "Request information, interview stakeholders, and present findings for sign-off.",
-      "Document evidence the way an auditor actually expects to read it.",
+      "Write the ISMS scope and rate the requirements of ISO/IEC 27001 clauses 4 to 10 against what an office actually does.",
+      "Assess risks, choose treatments and complete the Statement of Applicability for all 93 Annex A controls.",
+      "Run control sprints: test evidence for individual controls and record gaps with a next action and an owner.",
+      "Make practitioner decisions where more than one answer is defensible, and see the reasoning for each option.",
+      "Plan an internal audit, write nonconformity reports and prepare a management review.",
+      "Get ready for the Stage 1 and Stage 2 certification audits and answer the auditor's requests.",
     ],
     engagements: [
       {
-        code: "AA-001",
-        title: "Information Asset Inventory & Classification",
-        org: "CloudTech · Customer Platform",
-        standard: "ISO 27001",
+        code: "Weeks 1–2",
+        title: "Foundation: the ISMS, its context and the baseline gap",
+        org: "GlobalConnect Manila · 5 tasks",
+        standard: "ISO/IEC 27001",
         tone: "indigo",
-        body: "Build a complete, classified asset register — what data exists, where it lives, who owns it, and how sensitive it is. Classify against ISO 27001 A.5.9 / A.5.12 and flag ownerless or personal-data assets for remediation.",
+        body: "Onboard to the programme, learn the ISO/IEC 27000 family and the ISMS cycle, write the scope and process list, and rate clauses 4 to 10 in a baseline gap analysis.",
       },
       {
-        code: "AA-002",
-        title: "CIS Controls v8 IG1 Gap Analysis",
-        org: "CloudTech",
-        standard: "CIS v8",
+        code: "Weeks 3–6",
+        title: "Policy, roles, risk, the SoA and support",
+        org: "GlobalConnect Manila · 8 tasks",
+        standard: "Clauses 5 to 7",
         tone: "emerald",
-        body: "Assess each IG1 safeguard with evidence, calculate compliance percentage per control group, prioritise the top gaps by risk exposure, and compile a remediation report you present for validation.",
+        body: "Check the information security policy, assign roles, set the risk method and treat the risks, complete the Statement of Applicability, and cover competence, awareness and documented information.",
       },
       {
-        code: "AA-003",
-        title: "Privacy Data-Flow Mapping & GDPR Applicability",
-        org: "LearnTech · Student Enrolment",
-        standard: "GDPR",
+        code: "Weeks 7–12",
+        title: "Controls, audit and certification readiness",
+        org: "GlobalConnect Manila, with LearnTech worked examples · 12 tasks",
+        standard: "Clauses 8 to 10",
         tone: "amber",
-        body: "Map how personal data flows through a real process, establish the lawful basis, and produce the two foundational GDPR artefacts — a RoPA entry to Article 30 and a 9-criterion DPIA screening decision.",
+        body: "Test access, supplier, incident, physical, technical and change controls in control sprints, measure performance, run the internal audit, hold the management review and prepare for the certification audit.",
       },
     ],
-    standards: ["ISO 27001", "NIST CSF", "CIS Controls v8", "GDPR"],
+    standards: ["ISO/IEC 27001:2022 (the whole of GRC 101)", "Other standards come in GRC 301 and GRC 501"],
     outcomes: [
-      { icon: "file", title: "A real CV", body: "Every graded task compiles into a structured, evidence-backed CV section recruiters can verify." },
+      { icon: "file", title: "A real CV", body: "Every completed task compiles into a structured, evidence-backed CV section recruiters can verify." },
       { icon: "ribbon", title: "Credential badges", body: "Earn credential badges as you complete each method category of the track." },
       { icon: "shield", title: "Verifiable certificate", body: "Finish the track to unlock a GRC 101 certificate with a verifiable public link." },
       { icon: "briefcase", title: "Job matches", body: "Completed work maps to real GRC role requirements and surfaces matching jobs." },
@@ -216,7 +216,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
           {/* Inside the course — engagements */}
           <section className="bg-[#FAFAF7]">
             <div className="max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-20">
-              <SectionHead eyebrow="Curriculum" icon="layers" sub="Three simulated enterprise engagements, each a complete project → task → activity workflow graded by your AI mentor.">
+              <SectionHead eyebrow="Curriculum" icon="layers" sub="One simulated engagement in three stages, 25 tasks in all, every step checked automatically against answer keys.">
                 Inside the <span className="text-indigo-600">course</span>
               </SectionHead>
               <Stagger className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -280,7 +280,7 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
               <div className="relative overflow-hidden rounded-3xl px-8 py-12 text-center text-white" style={{ background: "linear-gradient(135deg, #4f46e5 0%, #5b53e8 45%, #7c3aed 100%)" }}>
                 <div className="pointer-events-none absolute -top-16 -right-10 w-64 h-64 rounded-full bg-white/10 blur-2xl" />
                 <h2 className="relative text-[26px] md:text-[32px] font-semibold tracking-[-0.02em]">Ready to start {course.code}?</h2>
-                <p className="relative mt-2 text-[14.5px] text-indigo-100/90 max-w-lg mx-auto tracking-tight">Your first mentor-graded task takes minutes to begin — no prior experience needed.</p>
+                <p className="relative mt-2 text-[14.5px] text-indigo-100/90 max-w-lg mx-auto tracking-tight">Your first task takes minutes to begin — no prior experience needed.</p>
                 <Link href="/signup" className="relative mt-6 inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-white text-indigo-700 text-[14px] font-semibold tracking-tight no-underline hover:bg-indigo-50 transition-colors">
                   Start {course.code} <Icon name="arrowRight" size={15} />
                 </Link>

@@ -1,0 +1,765 @@
+{
+ "_": "T5.2 dataset SOA-93 (his New items: \"facts about Manila for each of the 93 controls with applicability key\"): per Annex A control of ISO/IEC 27001:2022, its title and sprint as his ISO coverage sheet gives them, and a fact about the Manila office that says what calls for the control. The key (applicability and source, rule L06) is server-side, backend/scripts/li101_written_T5.2.json. registers.ts builds sheet LI-SOA from it, build-li101.py the dataset. Platform-written, logged in docs/GRC101_Content_Corrections.md (T5.2).",
+ "sources": [
+  "Risk",
+  "Legal requirement",
+  "Contractual requirement",
+  "Business need"
+ ],
+ "worked": {
+  "c": "A.5.23",
+  "title": "Information security for use of cloud services",
+  "fact": "Amsterdam's learning platform runs on a cloud provider; the school data processing agreements require the provider's security to be assessed before pupils' data is placed with it.",
+  "applicable": "Applicable",
+  "source": "Contractual requirement",
+  "inclusion": "Called for by a contractual requirement (rule L06): the school data processing agreements.",
+  "implemented": "Implemented",
+  "evidence": "AMS_Cloud-Provider-Assessment_2026.pdf"
+ },
+ "controls": [
+  {
+   "c": "A.5.1",
+   "title": "Policies for information security",
+   "week": 3,
+   "task": "T3.2",
+   "sprint": "1",
+   "fact": "The Group policies apply at Manila through SITL-ADD-16, and the Group requires every office to keep the policies in force approved, communicated and reviewed (SITL-POL-000 Section 7)."
+  },
+  {
+   "c": "A.5.2",
+   "title": "Information security roles and responsibilities",
+   "week": 3,
+   "task": "T3.2",
+   "sprint": "1",
+   "fact": "The Data Privacy Act 2012 requires Manila to appoint a Data Protection Officer (SITL-ADD-16 Section 2.1); the GRC Charter sets the Group's other ISMS roles."
+  },
+  {
+   "c": "A.5.3",
+   "title": "Segregation of duties",
+   "week": 3,
+   "task": "T3.2",
+   "sprint": "1",
+   "fact": "The Manila risk register treats the risk of one person in the finance team of three creating a false supplier and paying it with this control."
+  },
+  {
+   "c": "A.5.4",
+   "title": "Management responsibilities",
+   "week": 3,
+   "task": "T3.2",
+   "sprint": "1",
+   "fact": "The Group requires every manager to accept their security duties and to brief their people before access is given (SITL-POL-001 Section 5)."
+  },
+  {
+   "c": "A.5.5",
+   "title": "Contact with authorities",
+   "week": 8,
+   "task": "T8.1",
+   "sprint": "8",
+   "fact": "The Data Privacy Act 2012 requires serious personal data breaches to be notified to the National Privacy Commission within 72 hours (SITL-ADD-16 Section 2)."
+  },
+  {
+   "c": "A.5.6",
+   "title": "Contact with special interest groups",
+   "week": 4,
+   "task": "T4.2",
+   "sprint": "3",
+   "fact": "Manila needs early warning of threats aimed at the BPO sector, which the sector's information sharing and analysis centre (ISAC) gives its members."
+  },
+  {
+   "c": "A.5.7",
+   "title": "Threat intelligence",
+   "week": 4,
+   "task": "T4.2",
+   "sprint": "3",
+   "fact": "Your risk treatment plan (LI-RTP, T5.1) treats risk R-16-HQ-16, the exploited flaw in the remote-access VPN, with this control: each new advisory on the VPN product, from the vendor and the sector ISAC, is taken into the risk assessment."
+  },
+  {
+   "c": "A.5.8",
+   "title": "Information security in project management",
+   "week": 5,
+   "task": "T5.2",
+   "sprint": "4a",
+   "fact": "Manila runs about six projects a year: client onboardings, customer-portal releases and infrastructure changes. NPC Advisory 2017-03 requires a Privacy Impact Assessment before each new BPO contract. Every project uses Manila's own project template, approved by the Org CISO in May 2025, and is logged in the project register with its stage-gate records; no other office uses the template, and it has never been reviewed. The template's security review is an optional box, ticked for 2 of the 6 projects of 2026, and only the SIEM's move to a hybrid set-up has a written security impact note. No project records security requirements for what it delivers, or who answers for security in it."
+  },
+  {
+   "c": "A.5.9",
+   "title": "Inventory of information and other associated assets",
+   "week": 4,
+   "task": "T4.1",
+   "sprint": "2",
+   "fact": "The Group requires every office to keep its assets in the Group asset register, each with an owner, reviewed every year (SITL-ADD-16 Section 5, SITL-POL-003)."
+  },
+  {
+   "c": "A.5.10",
+   "title": "Acceptable use of information and other associated assets",
+   "week": 4,
+   "task": "T4.1",
+   "sprint": "2",
+   "fact": "Client data-protection agreements require agents to use client data, e-mail and the internet only for the client's service."
+  },
+  {
+   "c": "A.5.11",
+   "title": "Return of assets",
+   "week": 4,
+   "task": "T4.1",
+   "sprint": "2",
+   "fact": "Agent turnover is high, and the Manila risk register treats the risk of leavers keeping laptops, headsets and building badges with this control."
+  },
+  {
+   "c": "A.5.12",
+   "title": "Classification of information",
+   "week": 4,
+   "task": "T4.1",
+   "sprint": "2",
+   "fact": "Client data-protection agreements require client data to be handled by its classification; Manila labels it Client-Confidential or Client-Restricted (SITL-ADD-16 Section 7)."
+  },
+  {
+   "c": "A.5.13",
+   "title": "Labelling of information",
+   "week": 4,
+   "task": "T4.1",
+   "sprint": "2",
+   "fact": "The Group requires every office to label information with its own label for each Group tier (SITL-ADD-16 Section 7)."
+  },
+  {
+   "c": "A.5.14",
+   "title": "Information transfer",
+   "week": 4,
+   "task": "T4.1",
+   "sprint": "2",
+   "fact": "Client contracts require end-customer data to pass to and from the client CRM tenants and payment gateways only over the agreed secure channels (SITL-ADD-16 Section 9.1)."
+  },
+  {
+   "c": "A.5.15",
+   "title": "Access control",
+   "week": 7,
+   "task": "T7.1",
+   "sprint": "6",
+   "fact": "The Manila risk register treats the risk of agents opening the accounts of clients they do not serve with this control."
+  },
+  {
+   "c": "A.5.16",
+   "title": "Identity management",
+   "week": 7,
+   "task": "T7.1",
+   "sprint": "6",
+   "fact": "Client data-protection agreements require every action on client data to be traced to one named agent, which the shared CRM log-ins on some accounts break (CTX-ISS-6)."
+  },
+  {
+   "c": "A.5.17",
+   "title": "Authentication information",
+   "week": 7,
+   "task": "T7.1",
+   "sprint": "6",
+   "fact": "The Manila risk register treats the risk of agents sharing passwords or writing them down at their workstations with this control."
+  },
+  {
+   "c": "A.5.18",
+   "title": "Access rights",
+   "week": 7,
+   "task": "T7.1",
+   "sprint": "6",
+   "fact": "PCI DSS, which the card-handling clients' contracts require, asks for access to card data to be granted by role and reviewed."
+  },
+  {
+   "c": "A.5.19",
+   "title": "Information security in supplier relationships",
+   "week": 7,
+   "task": "T7.2",
+   "sprint": "7",
+   "fact": "Manila depends on suppliers for payroll, telecom, the CRM and identity checks; the Group requires every office to manage supplier risk from due diligence to exit (SITL-POL-013)."
+  },
+  {
+   "c": "A.5.20",
+   "title": "Addressing information security within supplier agreements",
+   "week": 7,
+   "task": "T7.2",
+   "sprint": "7",
+   "fact": "The Data Privacy Act 2012 requires a written agreement with every processor that handles personal data for Manila, the outside payroll provider among them."
+  },
+  {
+   "c": "A.5.21",
+   "title": "Managing information security in the ICT supply chain",
+   "week": 7,
+   "task": "T7.2",
+   "sprint": "7",
+   "fact": "Manila buys its workstations, headsets and network equipment from IT vendors; the Manila risk register treats the risk of tampered or unsupported equipment with this control."
+  },
+  {
+   "c": "A.5.22",
+   "title": "Monitoring, review and change management of supplier services",
+   "week": 7,
+   "task": "T7.2",
+   "sprint": "7",
+   "fact": "Nobody checks the payroll provider's work (GAP-25, 8.1); the Group requires critical suppliers to be reassessed every year (SITL-ADD-16 Section 5)."
+  },
+  {
+   "c": "A.5.23",
+   "title": "Information security for use of cloud services",
+   "week": 7,
+   "task": "T7.2",
+   "sprint": "7",
+   "fact": "Manila runs no cloud servers of its own, but its CRM, workforce management, VoIP and HR systems are cloud services (SaaS); client data-protection agreements require the security of these services to be assessed."
+  },
+  {
+   "c": "A.5.24",
+   "title": "Information security incident management planning and preparation",
+   "week": 8,
+   "task": "T8.1",
+   "sprint": "8",
+   "fact": "The Data Privacy Act 2012 gives Manila 72 hours to notify the NPC and the people affected by a breach, which needs incident roles and steps prepared in advance."
+  },
+  {
+   "c": "A.5.25",
+   "title": "Assessment and decision on information security events",
+   "week": 8,
+   "task": "T8.1",
+   "sprint": "8",
+   "fact": "The new financial-services client's security schedule requires any security incident affecting its data to be reported to it within 24 hours (Organization_Profiles Section 3)."
+  },
+  {
+   "c": "A.5.26",
+   "title": "Response to information security incidents",
+   "week": 8,
+   "task": "T8.1",
+   "sprint": "8",
+   "fact": "The Manila risk register treats the risk of a breach of client data spreading because the response is slow with this control."
+  },
+  {
+   "c": "A.5.27",
+   "title": "Learning from information security incidents",
+   "week": 8,
+   "task": "T8.1",
+   "sprint": "8",
+   "fact": "The Group requires every office to review its incidents and feed the lessons back into its controls (SITL-POL-014)."
+  },
+  {
+   "c": "A.5.28",
+   "title": "Collection of evidence",
+   "week": 8,
+   "task": "T8.1",
+   "sprint": "8",
+   "fact": "The new financial-services client's security schedule requires a root-cause report within 5 working days of each incident affecting its data (Organization_Profiles Section 3), which rests on the evidence kept."
+  },
+  {
+   "c": "A.5.29",
+   "title": "Information security during disruption",
+   "week": 8,
+   "task": "T8.2",
+   "sprint": "9",
+   "fact": "Client service-level schedules require operational uptime each month (SITL-ADD-16 Section 2.2), during an incident or an outage too."
+  },
+  {
+   "c": "A.5.30",
+   "title": "ICT readiness for business continuity",
+   "week": 8,
+   "task": "T8.2",
+   "sprint": "9",
+   "fact": "The Manila risk register treats the risk of the data centre's core network failing during a typhoon with this control."
+  },
+  {
+   "c": "A.5.31",
+   "title": "Legal, statutory, regulatory and contractual requirements",
+   "week": 8,
+   "task": "T8.2",
+   "sprint": "9",
+   "fact": "The Data Privacy Act 2012, the Cybercrime Prevention Act 2012 and the Labor Code of the Philippines all apply to the Manila office (SITL-ADD-16 Sections 2 and 4)."
+  },
+  {
+   "c": "A.5.32",
+   "title": "Intellectual property rights",
+   "week": 8,
+   "task": "T8.2",
+   "sprint": "9",
+   "fact": "Manila sells no products of its own, but every workstation runs licensed software and the customer portal uses open-source components; the licence agreements set what may be installed and used."
+  },
+  {
+   "c": "A.5.33",
+   "title": "Protection of records",
+   "week": 8,
+   "task": "T8.2",
+   "sprint": "9",
+   "fact": "The Data Privacy Act 2012 requires personal data to be kept no longer than its purpose needs; Manila keeps call recordings and client records."
+  },
+  {
+   "c": "A.5.34",
+   "title": "Privacy and protection of personal identifiable information (PII)",
+   "week": 8,
+   "task": "T8.2",
+   "sprint": "9",
+   "fact": "The Data Privacy Act 2012 applies to the end-customer personal data Manila handles, and the National Privacy Commission is its lead regulator (SITL-ADD-16 Section 1)."
+  },
+  {
+   "c": "A.5.35",
+   "title": "Independent review of information security",
+   "week": 8,
+   "task": "T8.2",
+   "sprint": "9",
+   "fact": "Clients audit Manila's data-protection controls once a year under their data-protection agreements (CTX-ISS-6)."
+  },
+  {
+   "c": "A.5.36",
+   "title": "Compliance with policies, rules and standards for information security",
+   "week": 8,
+   "task": "T8.2",
+   "sprint": "9",
+   "fact": "The Group requires every office to measure compliance with its policies through KPIs, control testing and internal audit (SITL-POL-001 Section 8)."
+  },
+  {
+   "c": "A.5.37",
+   "title": "Documented operating procedures",
+   "week": 6,
+   "task": "T6.2",
+   "sprint": "5",
+   "fact": "Manila's IT team runs the data centre, the backups and the call-recording servers; the Group requires operating procedures for them (SITL-POL-009)."
+  },
+  {
+   "c": "A.6.1",
+   "title": "Screening",
+   "week": 6,
+   "task": "T6.2",
+   "sprint": "5",
+   "fact": "Client contracts for the financial-services accounts require background checks on agents before they handle account data."
+  },
+  {
+   "c": "A.6.2",
+   "title": "Terms and conditions of employment",
+   "week": 6,
+   "task": "T6.2",
+   "sprint": "5",
+   "fact": "The Group requires every employee's terms of employment to state their security responsibilities (SITL-POL-019)."
+  },
+  {
+   "c": "A.6.3",
+   "title": "Information security awareness, education and training",
+   "week": 6,
+   "task": "T6.1",
+   "sprint": "4",
+   "fact": "The Data Privacy Act 2012 requires annual privacy awareness training for all staff (SITL-ADD-16 Section 2.1); new agents are trained once, at induction (GAP-25, 7.3)."
+  },
+  {
+   "c": "A.6.4",
+   "title": "Disciplinary process",
+   "week": 6,
+   "task": "T6.2",
+   "sprint": "5",
+   "fact": "The Labor Code of the Philippines sets the due process Manila must follow before it disciplines an employee, a security breach included."
+  },
+  {
+   "c": "A.6.5",
+   "title": "Responsibilities after termination or change of employment",
+   "week": 6,
+   "task": "T6.2",
+   "sprint": "5",
+   "fact": "Client data-protection agreements require agents' confidentiality duties to continue after they leave Manila."
+  },
+  {
+   "c": "A.6.6",
+   "title": "Confidentiality or non-disclosure agreements",
+   "week": 6,
+   "task": "T6.2",
+   "sprint": "5",
+   "fact": "Client contracts require Manila to bind agents, contractors and the payroll provider to confidentiality agreements."
+  },
+  {
+   "c": "A.6.7",
+   "title": "Remote working",
+   "week": 6,
+   "task": "T6.2",
+   "sprint": "5",
+   "fact": "Agents never work from home, but night-shift supervisors and IT on-call staff connect through the remote-access VPN, from home too; the Manila risk register treats the risk of an unsecured home connection with this control."
+  },
+  {
+   "c": "A.6.8",
+   "title": "Information security event reporting",
+   "week": 8,
+   "task": "T8.1",
+   "sprint": "8",
+   "fact": "In a spot check 4 of 10 agents could not say where to report a suspicious call (GAP-25, 7.3); the Group requires everyone to report security events and weaknesses (SITL-POL-001 Section 5)."
+  },
+  {
+   "c": "A.7.1",
+   "title": "Physical security perimeters",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "PCI DSS, which the card-handling clients' contracts require, asks for a physical security perimeter around the areas where card data is handled."
+  },
+  {
+   "c": "A.7.2",
+   "title": "Physical entry",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "The Manila risk register treats the risk of unauthorised people reaching the call-centre floors with this control."
+  },
+  {
+   "c": "A.7.3",
+   "title": "Securing offices, rooms and facilities",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "The Group requires every office to secure its offices and rooms according to what they hold (SITL-POL-008)."
+  },
+  {
+   "c": "A.7.4",
+   "title": "Physical security monitoring",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "Client data-protection agreements require CCTV coverage of the floors where client data is handled."
+  },
+  {
+   "c": "A.7.5",
+   "title": "Protecting against physical and environmental threats",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "The Manila risk register treats the risk of typhoons and floods damaging the data centre with this control."
+  },
+  {
+   "c": "A.7.6",
+   "title": "Working in secure areas",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "The Manila data centre is the office's only secure area: IT staff and supplier engineers work inside it, and the Group requires rules for working in secure areas (SITL-POL-008)."
+  },
+  {
+   "c": "A.7.7",
+   "title": "Clear desk and clear screen",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "Client data-protection agreements forbid agents to keep paper notes or mobile phones with client data on their desks."
+  },
+  {
+   "c": "A.7.8",
+   "title": "Equipment siting and protection",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "Agents' screens face the open floor; the Group requires equipment to be sited so that it is protected from damage and from being overlooked (SITL-POL-008)."
+  },
+  {
+   "c": "A.7.9",
+   "title": "Security of assets off-premises",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "Agents' workstations never leave the floor, but team leaders and managers take laptops home; the Group requires equipment off the premises to be protected (SITL-POL-008)."
+  },
+  {
+   "c": "A.7.10",
+   "title": "Storage media",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "PCI DSS, which the card-handling clients' contracts require, asks for media holding card data to be controlled and destroyed securely."
+  },
+  {
+   "c": "A.7.11",
+   "title": "Supporting utilities",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "Client service-level schedules require monthly uptime, and the data centre and call-centre floors depend on mains power and air conditioning."
+  },
+  {
+   "c": "A.7.12",
+   "title": "Cabling security",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "Manila's data centre and call-centre floors are cabled for data and voice; the Manila risk register treats the risk of cables being cut or tapped with this control."
+  },
+  {
+   "c": "A.7.13",
+   "title": "Equipment maintenance",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "Supplier engineers service the PBX and the data centre's UPS; the Group requires equipment to be maintained as its maker specifies (SITL-POL-008)."
+  },
+  {
+   "c": "A.7.14",
+   "title": "Secure disposal or re-use of equipment",
+   "week": 9,
+   "task": "T9.1",
+   "sprint": "10",
+   "fact": "The Data Privacy Act 2012 requires personal data to be disposed of securely; Manila retires workstations and call-recording disks every year."
+  },
+  {
+   "c": "A.8.1",
+   "title": "User endpoint devices",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "The Manila risk register treats the risk of malware on agents' shared workstations with this control; your POL-SET (T3.1) found no Group policy on endpoints."
+  },
+  {
+   "c": "A.8.2",
+   "title": "Privileged access rights",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "PCI DSS, which the card-handling clients' contracts require, asks for administrator access to be restricted to those who need it and reviewed."
+  },
+  {
+   "c": "A.8.3",
+   "title": "Information access restriction",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "The Manila risk register treats the risk of agents seeing more client data than their call needs with this control."
+  },
+  {
+   "c": "A.8.4",
+   "title": "Access to source code",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "Manila's developers build the customer portal in-house and keep its code in a Git repository; the Group requires access to source code to be restricted (SITL-POL-012)."
+  },
+  {
+   "c": "A.8.5",
+   "title": "Secure authentication",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "The Manila risk register treats the risk of a stolen password opening the VPN or the CRM with this control."
+  },
+  {
+   "c": "A.8.6",
+   "title": "Capacity management",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "Client service-level schedules require calls to be answered at agreed levels each month, which needs enough telephony and CRM capacity."
+  },
+  {
+   "c": "A.8.7",
+   "title": "Protection against malware",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "The Manila risk register treats the risk of ransomware on the call-centre network with this control."
+  },
+  {
+   "c": "A.8.8",
+   "title": "Management of technical vulnerabilities",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "Your risk treatment plan (LI-RTP, T5.1) treats risk R-16-HQ-16 with this control: the vendor's fix for the exploited VPN flaw, applied within the patching deadline of SITL-POL-010. The new financial-services client's security schedule also asks for the annual penetration-test summary."
+  },
+  {
+   "c": "A.8.9",
+   "title": "Configuration management",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "PCI DSS, which the card-handling clients' contracts require, asks for a secure configuration standard for every system in the card-data environment."
+  },
+  {
+   "c": "A.8.10",
+   "title": "Information deletion",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "The Data Privacy Act 2012 requires personal data to be deleted once the purpose it was collected for is served."
+  },
+  {
+   "c": "A.8.11",
+   "title": "Data masking",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "PCI DSS, which the card-handling clients' contracts require, asks for card numbers to be masked when they are displayed, as they are on agents' CRM screens."
+  },
+  {
+   "c": "A.8.12",
+   "title": "Data leakage prevention",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "The Manila risk register treats the risk of agents copying client data out by e-mail or USB stick with this control."
+  },
+  {
+   "c": "A.8.13",
+   "title": "Information backup",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "The Group requires Manila's backups to be restore-tested twice a year (SITL-ADD-16 Section 5, SITL-POL-009)."
+  },
+  {
+   "c": "A.8.14",
+   "title": "Redundancy of information processing facilities",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "Client service-level schedules require monthly uptime; the core network and telephony at the Manila data centre have no second path today."
+  },
+  {
+   "c": "A.8.15",
+   "title": "Logging",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "PCI DSS, which the card-handling clients' contracts require, asks for every access to card data to be logged."
+  },
+  {
+   "c": "A.8.16",
+   "title": "Monitoring activities",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "Your risk treatment plan (LI-RTP, T5.1) treats risk R-16-HQ-16 with this control: the VPN gateway's logs sent to the SIEM, with alerts on unusual log-ins. The Group also requires SIEM coverage of mission-critical and internet-facing systems (SITL-ADD-16 Section 5)."
+  },
+  {
+   "c": "A.8.17",
+   "title": "Clock synchronization",
+   "week": 9,
+   "task": "T9.2",
+   "sprint": "11",
+   "fact": "The SIEM lines up events from Manila's on-premises and cloud systems; the Group requires their clocks to be synchronised (SITL-POL-009)."
+  },
+  {
+   "c": "A.8.18",
+   "title": "Use of privileged utility programs",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "The Manila risk register treats the risk of administrator tools being used to get round the controls on the CRM terminals with this control."
+  },
+  {
+   "c": "A.8.19",
+   "title": "Installation of software on operational systems",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "Agents cannot install software, but IT staff can; the Group requires software on operational systems to be installed only through change management (SITL-POL-009)."
+  },
+  {
+   "c": "A.8.20",
+   "title": "Networks security",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "The Manila risk register treats the risk of an attacker moving from the VPN into the call-centre network with this control."
+  },
+  {
+   "c": "A.8.21",
+   "title": "Security of network services",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "The telecom carriers' service-level agreements set the security and availability of the connections Manila buys (SITL-ADD-16 Section 4)."
+  },
+  {
+   "c": "A.8.22",
+   "title": "Segregation of networks",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "Your risk treatment plan (LI-RTP, T5.1) treats risk R-16-HQ-16 with this control: VPN users kept to the agent desktop network, apart from the client data systems. PCI DSS, which the card-handling clients' contracts require, also asks for the card-data environment to be segmented (SITL-ADD-16 Section 6)."
+  },
+  {
+   "c": "A.8.23",
+   "title": "Web filtering",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "All web traffic from the office, the guest Wi-Fi included, leaves through one internet connection; the Manila risk register treats the risk of staff opening malicious websites with this control."
+  },
+  {
+   "c": "A.8.24",
+   "title": "Use of cryptography",
+   "week": 10,
+   "task": "T10.1",
+   "sprint": "12",
+   "fact": "NPC Circular 16-01 requires personal data to be encrypted when stored and when sent; Manila's PKI and key management serve that encryption (SITL-ADD-16 Section 8.1)."
+  },
+  {
+   "c": "A.8.25",
+   "title": "Secure development life cycle",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "Manila builds its customer portal in-house; the Group requires security in every stage of development (SITL-POL-012)."
+  },
+  {
+   "c": "A.8.26",
+   "title": "Application security requirements",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "The customer portal takes end-customers' card payments, and PCI DSS, which the card-handling clients' contracts require sets security requirements for such applications."
+  },
+  {
+   "c": "A.8.27",
+   "title": "Secure system architecture and engineering principles",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "The Group requires secure engineering principles for every system built in-house, the customer portal among them (SITL-POL-012)."
+  },
+  {
+   "c": "A.8.28",
+   "title": "Secure coding",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "The Manila risk register treats the risk of an injection flaw in the customer portal exposing end-customer data with this control."
+  },
+  {
+   "c": "A.8.29",
+   "title": "Security testing in development and acceptance",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "The new financial-services client's security schedule asks for the annual penetration-test summary of the systems that handle its data, the customer portal among them."
+  },
+  {
+   "c": "A.8.30",
+   "title": "Outsourced development",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "Manila builds its customer portal in-house with its own developers and outsources no development work: no supplier writes code for it."
+  },
+  {
+   "c": "A.8.31",
+   "title": "Separation of development, test and production environments",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "The Manila risk register treats the risk of untested portal changes reaching production with this control."
+  },
+  {
+   "c": "A.8.32",
+   "title": "Change management",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "Most changes at Manila are made as they come (GAP-25, 6.3); the Group requires every change to operational systems to go through change management (SITL-POL-009)."
+  },
+  {
+   "c": "A.8.33",
+   "title": "Test information",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "The portal team tests new releases with copies of production data, end-customer records included; the Data Privacy Act 2012 limits personal data to the purpose it was collected for."
+  },
+  {
+   "c": "A.8.34",
+   "title": "Protection of information systems during audit testing",
+   "week": 10,
+   "task": "T10.2",
+   "sprint": "13",
+   "fact": "Clients' yearly audits under their data-protection agreements include technical tests on Manila's live systems."
+  }
+ ]
+}

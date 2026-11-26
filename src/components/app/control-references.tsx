@@ -6,6 +6,8 @@ import { itemHref, resolveRef } from "@/lib/library";
 import { VERB_TONES } from "@/lib/tones";
 import { CONTROLS_BY_TASK, type Control } from "@/lib/controls";
 import { Plaque } from "@/components/app/plaque";
+import { isLater } from "@/lib/focus";
+import { LATER_BOX, LATER_INK, LaterLegend } from "@/components/app/later";
 
 /**
  * The crosswalk (form 02) — two authorities bridged.
@@ -43,7 +45,8 @@ function Crosswalk({ anchor, mapped }: {
           &#8596;
         </b>
       </div>
-      <div className="border border-[#a8cede] bg-[#e2eff6] px-3 py-2.5 min-w-0">
+      {/* A cross-walked standard outside GRC 101's focus (lib/focus.ts) keeps its half and loses its hue. */}
+      <div className={`border border-[#a8cede] bg-[#e2eff6] px-3 py-2.5 min-w-0 ${isLater(mapped.standard) ? LATER_BOX : ""}`}>
         <span className="block font-mono text-[10px] font-semibold tracking-[0.07em] text-[#0b6e99] mb-1">
           {mapped.standard}
         </span>
@@ -83,6 +86,10 @@ export function ControlReferences({ taskCode, linkToLibrary = false }: {
   const controlsFor = (std: string) => byStandard.find(([s]) => s === std)?.[1] ?? [];
 
   if (!reg) return null;
+  // Only a cross-walked standard is ever greyed. The anchor is what this task is graded against: greying it, or
+  // calling it "outside GRC 101", would contradict the panel's first line (the six tasks anchored on CIS, GDPR or NIST).
+  const laterStd = (std: string) => std !== anchorStd && isLater(std);
+  const anyLater = mappedStds.some(laterStd);
 
   return (
     <>
@@ -102,6 +109,7 @@ export function ControlReferences({ taskCode, linkToLibrary = false }: {
         </p>
         {/* Crosswalk (form 02) first: what this task is graded against, and what that maps onto.
             Nothing renders when the task has no mapped frame — a one-sided bridge is not a bridge. */}
+        {anyLater && <LaterLegend className="mb-4" />}
         {mappedStds.length > 0 && (
           <div className="mb-5 space-y-2">
             <span className="block font-mono text-[9.5px] uppercase tracking-[0.08em] text-slate-400">
@@ -120,9 +128,10 @@ export function ControlReferences({ taskCode, linkToLibrary = false }: {
         <div className="space-y-4">
           {byStandard.map(([standard, controls]) => {
             const tone = VERB_TONES[controls[0].tone] ?? VERB_TONES.indigo;
+            const later = laterStd(standard);
             return (
-              <div key={standard}>
-                <div className="flex items-center gap-2 mb-2">
+              <div key={standard} className={later ? LATER_BOX : ""}>
+                <div className={`flex items-center gap-2 mb-2 ${later ? LATER_INK : ""}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${tone.dot}`} />
                   <span className="text-[11.5px] font-semibold text-slate-700 tracking-tight">{standard}</span>
                   <span className="h-px flex-1 bg-slate-200/60" />

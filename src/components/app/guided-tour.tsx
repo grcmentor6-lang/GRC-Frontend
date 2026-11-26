@@ -63,6 +63,10 @@ export type TourStep = {
    *  resuming when it closes; or a test for a step whose Next hands over the screen (a sheet to fill), resuming once
    *  it holds. */
   away?: string | (() => boolean);
+  /** On a phone, the card takes at most half the screen and its middle scrolls: for a long card that waits for a value,
+   *  which otherwise fills the screen and covers the cell it waits for with Next locked (tester, 25 Nov 2026). Opt-in,
+   *  so no other card moves. */
+  low?: boolean;
 };
 
 /** Hidden-state offset for the card's directional entrance (settles toward the target). */
@@ -100,6 +104,10 @@ type Keep = {
   also: Box | null;
   /** The part of the target the step points at (`pointAt`): the cell being filled. */
   focus: Box | null;
+  /** What else the learner works with while the card is up: the step panel's live controls and an open toolbar menu
+   *  (laptop, 26 Nov 2026: the card sat on the step panel's Check button and on the menu beside it). Kept off where
+   *  there is a clear place, like `also`. */
+  soft?: Box[];
 };
 
 /** The area two boxes share. */
@@ -136,7 +144,7 @@ function place(r: Box | null, th: number, zoom: number, keep: Keep = { raised: n
   // What a place must never cover, and what it covers of the rest. A card's own area is far under HARD.
   const HARD = 1e7;
   const hard = (p: Pos) => overlap(card(p), keep.focus) + overlap(card(p), keep.raised);
-  const cost = (p: Pos) => HARD * hard(p) + overlap(card(p), keep.also) + overlap(card(p), lit);
+  const cost = (p: Pos) => HARD * hard(p) + overlap(card(p), keep.also) + overlap(card(p), lit) + (keep.soft ?? []).reduce((n, b) => n + overlap(card(p), b), 0);
   // Beside a box, kept on screen: centred on it, or level with its start (-1) or end (1) when above or below.
   // Pushed back onto the box by the screen's edge, it has no side to put an arrow on.
   const at = (a: Box, s: Exclude<Side, "float">, align: -1 | 0 | 1 = 0): Pos => {
@@ -172,6 +180,34 @@ function place(r: Box | null, th: number, zoom: number, keep: Keep = { raised: n
   const sided = costs.map((c, i) => (tries[i].side !== "float" && !hard(tries[i]) ? c : Infinity));
   const best = Math.min(...sided);
   return best < Infinity ? tries[sided.indexOf(best)] : tries[costs.indexOf(least)];
+}
+
+/** How a phone card is drawn: whole, as a title line and its buttons, or that line docked to the bottom edge. */
+export type Fit = "full" | "compact" | "dock";
+/** At or under this width (CSS px) the card spans the screen, so "beside the target" is never a place. */
+export const PHONE_W = 700;
+
+/**
+ * Where a card goes on a phone, where it spans the screen and so can only sit above or below what it points at. It never
+ * covers that: the side away from it first (above a target in the lower half, below otherwise), then the other side;
+ * whole if it fits there, else as one line and its buttons. Each box of `keep` is tried in turn (the lit target, then
+ * the cell pointed at inside it). Where nothing fits, the short card docks to the bottom edge and the caller scrolls the
+ * target up above it (learners dragged the card aside up to three times to reach options and rows: li101 task reports,
+ * 26 Nov 2026). Never on a window raised over the card's layer (`raised`), which would take its buttons.
+ */
+export function phonePlace(keep: Box[], vw: number, vh: number, fullH: number, compactH: number, raised: Box | null = null): { pos: Pos; fit: Fit } {
+  const left = Math.max(MARGIN, Math.min((vw - TIP_W) / 2, vw - TIP_W - MARGIN));
+  for (const t of keep) {
+    const sides = t.top + t.height / 2 > vh / 2 ? (["top", "bottom"] as const) : (["bottom", "top"] as const);
+    for (const [fit, h] of [["full", fullH], ["compact", compactH]] as const) {
+      for (const side of sides) {
+        const top = side === "top" ? t.top - GAP - h : t.top + t.height + GAP;
+        if (top < MARGIN || top + h > vh - MARGIN || overlap({ top, left, width: TIP_W, height: h }, raised)) continue;
+        return { pos: { side, top, left, arrow: clamp(t.left + t.width / 2 - left, 18, TIP_W - 18) }, fit };
+      }
+    }
+  }
+  return { pos: { side: "float", top: vh - compactH - MARGIN, left, arrow: 0 }, fit: "dock" };
 }
 
 /**
@@ -315,7 +351,7 @@ function sinkCovering(el: HTMLElement | null): () => void {
   // The topmost thing there that is not the tour's own dim and click-blockers.
   const hit = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((n) => !n.closest("[data-guide-tour]"));
   // Never the target's own window: mid-scroll the centre lands on a neighbouring row of the same list, and
-  // sinking that layer sent the window under the step's modal (T4.1 step 1, BKB-POL-006 in the Policy Library).
+  // sinking that layer sent the window under the step's modal (T4.1 step 1, SITL-POL-006 in the Policy Library).
   if (!hit || el.contains(hit) || topLayer(hit) === topLayer(el)) return () => {};
   return raiseOver(hit as HTMLElement, "1");
 }
@@ -550,6 +586,16 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
     const up = () => { el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up); };
     el.addEventListener("pointermove", move); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
   };
+  // A phone card's form (phonePlace), and the card the learner opened back up from it ("More"): kept per card.
+  const [fitAt, setFitAt] = useState<{ step: number; fit: Fit }>({ step: -1, fit: "full" });
+  const fit = fitAt.step === step ? fitAt.fit : "full";
+  const [more, setMore] = useState(-1);
+  const fitRef = useRef<Fit>("full");
+  const moreRef = useRef(-1);
+  useLayoutEffect(() => { moreRef.current = more; });
+  // Its two heights, each measured while it is drawn that way; and the card whose target was scrolled above the dock.
+  const heights = useRef<{ full: number | null; compact: number }>({ full: null, compact: 104 });
+  const docked = useRef(-1);
   const [shown, setShown] = useState(false);
   // The cursor steps aside while the mentee is typing in the lit field it points at.
   const [typing, setTyping] = useState(false);
@@ -570,7 +616,8 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
   const wants = step >= 0 && step < steps.length;
   const active = useTourTurn(wants) && wants;
   // Before every other effect below, which all read it (declared first, so it runs first).
-  useLayoutEffect(() => { stepRef.current = active ? steps[step] : null; });
+  const stepNo = useRef(-1);
+  useLayoutEffect(() => { stepRef.current = active ? steps[step] : null; stepNo.current = step; });
   // The way the learner is moving: a card passed over (`skip`) on the way back passes over backwards, or Back
   // onto it would bounce straight forward again.
   const prevStep = useRef(-1);
@@ -610,7 +657,49 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
       b ? { top: b.top / z, left: b.left / z, width: b.width / z, height: b.height / z } : null;
     const raised = clearOf ? inPage(ar) : null;
     // The part of each that shows: a cell scrolled half under its pane's edge keeps the card off what is on screen.
-    const p = place(r, tipRef.current?.offsetHeight ?? 170, z, { raised, also: inPage(alsoEl && shownPart(alsoEl)), focus: inPage(s.pointAt?.()?.getBoundingClientRect()) });
+    const focusEl = s.pointAt?.() ?? null;
+    const focus = inPage(focusEl?.getBoundingClientRect());
+    const th = tipRef.current?.offsetHeight ?? 170;
+    let p: Pos;
+    if (r && window.innerWidth <= PHONE_W) {
+      const vw = window.innerWidth / z, vh = window.innerHeight / z;
+      const left = Math.max(MARGIN, Math.min((vw - TIP_W) / 2, vw - TIP_W - MARGIN));
+      const hs = heights.current;
+      // Read off the card as drawn, not as last decided: a decision not yet rendered would be measured at the wrong height.
+      const drawn = tipRef.current?.dataset.form;
+      if (drawn === "full") hs.full = th; else if (drawn === "short") hs.compact = th;
+      if (moreRef.current === stepNo.current) {
+        // Opened back up by the learner: whole, at the screen's edge away from the target, its middle scrolling.
+        p = { side: "float", top: r.top + r.height / 2 > vh / 2 ? MARGIN : vh - th - MARGIN, left, arrow: 0 };
+      } else {
+        const res = phonePlace(focus ? [r, focus] : [r], vw, vh, hs.full ?? th, hs.compact, raised);
+        p = res.pos;
+        if (res.fit !== fitRef.current) { fitRef.current = res.fit; setFitAt({ step: stepNo.current, fit: res.fit }); }
+        // Docked: the target scrolled up above the card, once per card, so a learner's own scrolling is not fought.
+        const n = focusEl ?? s.getEl();
+        if (res.fit === "dock" && docked.current !== stepNo.current && n) {
+          docked.current = stepNo.current;
+          const room = (vh - hs.compact - MARGIN - GAP) * z;
+          const b = n.getBoundingClientRect();
+          const tall = b.height > room - 64 * z;
+          if (tall ? b.top > room / 2 : b.bottom > room) {
+            const prev = n.style.scrollMarginBottom;
+            n.style.scrollMarginBottom = `${window.innerHeight - room}px`;
+            n.scrollIntoView({ block: tall ? "start" : "end", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+            n.style.scrollMarginBottom = prev;
+          }
+        }
+      }
+    } else {
+      // The step panel's controls the learner may use next, and the toolbar menu if one is open: none inside the target.
+      const tEl = s.getEl();
+      const soft = [...document.querySelectorAll<HTMLElement>('aside[aria-label^="Your work"] :is(button, input, select, textarea):not([disabled]), [data-guide-menu]')]
+        // Not "Show me how": it replays the guide already on screen, so a card on it hides nothing the learner needs.
+        .filter((n) => !tEl?.contains(n) && !n.contains(tEl) && !n.closest("[data-guide-tour]") && n.dataset.guide !== "show-me-how")
+        .map((n) => inPage(shownPart(n)))
+        .filter((b): b is Box => !!b);
+      p = place(r, th, z, { raised, also: inPage(alsoEl && shownPart(alsoEl)), focus, soft });
+    }
     if (!last.pos || last.pos.side !== p.side || last.pos.top !== p.top || last.pos.left !== p.left || last.pos.arrow !== p.arrow) {
       last.pos = p;
       setPos(p);
@@ -623,6 +712,9 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
     if (!active) return;
     const s = stepRef.current!;
     lastRef.current = { box: null, pos: null };
+    // Each card measured and placed afresh, whole first.
+    fitRef.current = "full";
+    heights.current.full = null; docked.current = -1;
     const backwards = step < prevStep.current;
     prevStep.current = step;
     if (s.skip?.()) {
@@ -662,7 +754,7 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
     // the My Tasks window): either way it is scrolled to, so the step points at all of it.
     const hidden = (n: HTMLElement) => {
       const b = n.getBoundingClientRect();
-      // A row wholly below its pane's edge (BKB-ERM-001 under the fold of the Policy Library, T7.1 step 8) is
+      // A row wholly below its pane's edge (SITL-ERM-001 under the fold of the Policy Library, T7.1 step 8) is
       // in the viewport by its box, but none of it shows: the hole lit whatever sat there instead.
       const part = shownPart(n);
       return !inView(b) || !part || part.height < b.height - 2;
@@ -748,6 +840,13 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
     // Hidden as the step ends (the previous step's cleanup hides the card before the next one is placed).
     return () => { window.removeEventListener("resize", onResize); setShown(false); ro.disconnect(); thaw(); drop(); lower(); cancelAnimationFrame(sinkId); clearTimeout(resinkId); clearTimeout(fitId); unsink(); cancelAnimationFrame(raf); clearInterval(poll); clearTimeout(showId); };
   }, [step, active, reposition, steps.length]);
+
+  // The card changed form (or the learner opened it up): placed again at its new height.
+  useLayoutEffect(() => {
+    if (!active) return;
+    lastRef.current.pos = null;
+    reposition();
+  }, [fit, more, active, reposition]);
 
   // A "do it" step: watch for the action and move on when it has happened.
   useEffect(() => {
@@ -852,6 +951,11 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
   const canBack = steps.slice(0, step).some((x) => !x.skip?.());
   const side: Side = pos?.side ?? "float";
   const floating = side === "float";
+  // A phone card drawn short (phonePlace): its title and its buttons, "More" opening the rest. Opened up, it takes at
+  // most a little over half the screen and its middle scrolls.
+  const phone = window.innerWidth <= PHONE_W && box !== OFFSCREEN;
+  const opened = phone && more === step;
+  const short = phone && fit !== "full" && !opened;
 
   // Caret: a small white square turned 45° and half tucked under the card edge that faces the target.
   const caretPos: React.CSSProperties =
@@ -921,7 +1025,7 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: TIP_W,
-          maxHeight: window.innerHeight / appZoom() - 2 * MARGIN,
+          maxHeight: opened ? (window.innerHeight / appZoom()) * 0.55 : current.low && window.innerWidth <= PHONE_W ? (window.innerHeight / appZoom()) * 0.5 : window.innerHeight / appZoom() - 2 * MARGIN,
           top: (pos?.top ?? window.innerHeight / 2) + off.y,
           left: (pos?.left ?? (window.innerWidth - TIP_W) / 2) + off.x,
           opacity: shown ? 1 : 0,
@@ -933,17 +1037,22 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
         role="dialog"
         aria-modal="true"
         aria-label={`Guide: ${current.title}`}
+        data-form={short ? "short" : opened ? "opened" : "full"}
       >
         {!floating && !off.x && !off.y && <span className="absolute h-3.5 w-3.5 rotate-45 rounded-[2px] bg-white" style={caretPos} aria-hidden />}
 
         {/* header: icon tile, "Guide · Step X of N" over the title, close */}
-        <div data-guide-drag onPointerDown={dragCard} title="Drag to move this card" className="relative shrink-0 flex cursor-grab touch-none select-none items-start gap-3 px-5 pt-5 active:cursor-grabbing">
-          <span className="shrink-0 grid place-items-center w-[38px] h-[38px] rounded-[10px] bg-[#4338CA] text-white">
-            <Icon name={current.icon ?? "sparkle"} size={18} />
+        <div data-guide-drag onPointerDown={dragCard} title="Drag to move this card" className={`relative shrink-0 flex cursor-grab touch-none select-none gap-3 active:cursor-grabbing ${short ? "items-center px-4 pt-3" : "items-start px-5 pt-5"}`}>
+          <span className={`shrink-0 grid place-items-center rounded-[10px] bg-[#4338CA] text-white ${short ? "w-[30px] h-[30px]" : "w-[38px] h-[38px]"}`}>
+            <Icon name={current.icon ?? "sparkle"} size={short ? 15 : 18} />
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold tracking-[0.09em] uppercase text-[#4338CA] tabular-nums">Guide · Step {step + 1} of {steps.length}</p>
-            <h3 className="mt-0.5 text-[18px] font-bold tracking-[-0.012em] text-[#111827] leading-snug" style={{ textWrap: "balance" }}>{current.title}</h3>
+            {short ? (
+              <h3 className="truncate text-[15px] font-bold tracking-[-0.012em] text-[#111827] leading-snug">{current.title}</h3>
+            ) : (
+              <h3 className="mt-0.5 text-[18px] font-bold tracking-[-0.012em] text-[#111827] leading-snug" style={{ textWrap: "balance" }}>{current.title}</h3>
+            )}
           </div>
           {!required && <button onClick={onClose} aria-label="Skip guide" className="focus-ring shrink-0 -mr-1.5 -mt-1 w-7 h-7 rounded-md flex items-center justify-center text-[#9CA3AF] hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer">
             <Icon name="x" size={16} />
@@ -951,7 +1060,8 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
         </div>
 
         {/* The middle scrolls when a long card would not fit the screen; header and controls stay put. */}
-        <div className="min-h-0 overflow-y-auto">
+        {/* Drawn short, the text is still read out: only its picture is held back until "More". */}
+        <div className={short ? "sr-only" : "min-h-0 overflow-y-auto"}>
           <GuideLines body={current.body} intro={!!current.steps?.length} />
           <GuideBody steps={current.steps} tips={current.tips} />
           {current.demo && <div className="px-5">{current.demo}</div>}
@@ -959,15 +1069,19 @@ export function GuidedTour({ steps, step, onStep, onClose, onAway, required }: {
         {(current.waitFor || current.nextWhen) && <p className="sr-only">{current.doIt ?? "Do it now to continue"}</p>}
 
         {/* footer: progress dots and count left, controls right */}
-        <div className="shrink-0 flex items-center justify-between gap-3 mt-4 px-5 pt-3.5 pb-4 border-t border-[#EEF0F3]">
-          <div className="flex items-center gap-2 min-w-0">
+        <div className={`shrink-0 flex items-center justify-between gap-3 border-t border-[#EEF0F3] ${short ? "mt-2.5 px-4 pt-2 pb-2.5" : "mt-4 px-5 pt-3.5 pb-4"}`}>
+          {phone && (short || opened) ? (
+            <button onClick={() => setMore(opened ? -1 : step)} aria-expanded={opened} className="focus-ring h-9 -ml-1.5 px-1.5 rounded-lg text-[#4338CA] hover:bg-[#F1F2FF] text-[13.5px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors">
+              {opened ? "Less" : "More"} <Icon name="chevronDown" size={14} className={opened ? "" : "rotate-180"} />
+            </button>
+          ) : <div className="flex items-center gap-2 min-w-0">
             <div className="flex items-center gap-[5px] min-w-0 overflow-hidden">
               {steps.map((_, i) => (
                 <span key={i} className={`shrink-0 h-1.5 rounded-full transition-all duration-300 ${i === step ? "w-5 bg-[#4338CA]" : i < step ? "w-1.5 bg-[#A5B4FC]" : "w-1.5 bg-[#DFE2EA]"}`} />
               ))}
             </div>
             <span className="shrink-0 text-[12px] text-[#6B7280] tabular-nums">{step + 1} / {steps.length}</span>
-          </div>
+          </div>}
           <div className="flex items-center gap-1 shrink-0">
             {canBack ? (
               <button onClick={() => onStep(step - 1)} className="focus-ring h-9 px-2.5 rounded-lg text-[#4B5563] hover:text-slate-900 hover:bg-slate-100 text-[13.5px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors">

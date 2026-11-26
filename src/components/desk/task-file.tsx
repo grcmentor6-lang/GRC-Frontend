@@ -10,6 +10,7 @@ import { dayIndex, dueDate, fmtDay, krActivities, splitKr, type Task } from "@/l
 import { stepKey, taskStatus } from "@/lib/desk/progress";
 import { badgeOfTask, standing as badgeStanding } from "@/lib/desk/badges";
 import { lockedWhy } from "@/lib/desk/work";
+import { labWhy } from "@/lib/desk/labs";
 import { OrgName } from "@/lib/desk/org-tone";
 import { MethodMedal } from "@/components/badges/method-medal";
 import Link from "next/link";
@@ -94,7 +95,7 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
               </Link>
             )}
             {task.hc && (
-              <span className="rounded-[3px] bg-[#111827] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-white" title={`Assessor checkpoint ${task.hc}`}>
+              <span className="rounded-[3px] bg-[#111827] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-white" title={`Checkpoint ${task.hc}`}>
                 {task.hc}
               </span>
             )}
@@ -324,6 +325,8 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
   // A locked button says why, naming the next thing to do (owner, 2 Nov 2026): the first open step, and what it waits on.
   const first = open[0];
   const why = first ? lockedWhy(desk, progress, task, first, start) : null;
+  // A Tech Lab of the task is required: with every step done, Submit task still waits for it, and says which one.
+  const labMsg = labWhy(task.id, progress);
   return (
     <footer aria-label="Submit" className="flex flex-wrap items-stretch justify-between gap-4 bg-[#F7F8FA] pl-4">
       <div className="grid gap-1.5 py-3">
@@ -334,6 +337,12 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
               ? `${left} ${left === 1 ? "step" : "steps"} left before you can submit`
               : "Every step is complete."}
         </p>
+        {!submitted && !locked && !first && labMsg && (
+          <p data-guide="submit-task-why" data-lab-left className="inline-flex items-start gap-1.5 text-[12.5px] font-medium text-[#78350F]">
+            <Icon name="info" size={14} className="mt-px shrink-0" />
+            {labMsg}
+          </p>
+        )}
         {!submitted && !locked && first && (
           <p data-guide="submit-task-why" className="inline-flex items-start gap-1.5 text-[12.5px] font-medium text-[#78350F]">
             <Icon name="info" size={14} className="mt-px shrink-0" />
@@ -356,7 +365,7 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
       {!submitted && (
         <button
           type="button"
-          disabled={locked || left > 0}
+          disabled={locked || left > 0 || !!labMsg}
           onClick={() => update((p) => ({ ...p, submitted: { ...p.submitted, [task.id]: new Date().toISOString() } }))}
           className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] disabled:hover:brightness-100"
         >

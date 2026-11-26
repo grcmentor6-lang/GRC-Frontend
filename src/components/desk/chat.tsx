@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import type { Task } from "@/lib/desk/model";
-import { INJ_AT, released, waitingAt } from "@/lib/desk/inbox";
+import { holdStep, released, waitingAt } from "@/lib/desk/inbox";
 import { api } from "@/lib/api";
 import type { DecisionFeedback } from "@/lib/desk/progress";
 import { useDeskIdentity } from "@/lib/desk/identity";
@@ -208,7 +208,7 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
             {fb.why && <p>{relabel(fb.why, order)}</p>}
           </div>
         )}
-        {picked && here?.task === m.task && INJ_AT[id] === here.n && (
+        {picked && here?.task === m.task && holdStep(desk, id) === here.n && (
           <div className="flex justify-end">
             <button type="button" data-guide="message-back" onClick={() => closeTool("inbox|*")} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus-ring active:scale-[0.98]">
               Back to step {here.n} <Icon name="arrowRight" size={14} />

@@ -589,7 +589,7 @@
   ],
   "r": [
    [
-    "Automated purge of a student's PII within 30 days of account deletion, across the learning platform, SIS and data warehouse (BKB-ADD-36 Section 2.1)",
+    "Automated purge of a student's PII within 30 days of account deletion, across the learning platform, SIS and data warehouse (SITL-ADD-36 Section 2.1)",
     "A.8.10",
     "2027 Q1",
     "DPO"

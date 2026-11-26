@@ -78,10 +78,10 @@ export const rmfMiss = (t: number) => `${t},miss`;
  * full name and mentee ID) and the four data rules (each ticked, then saved). The pack describes them
  * only in a line each, so every item below restates a line of the pack, and says which:
  *   Undertaking — "Own work, workspace files only, report outside data. E-signature." (F1.1 panel);
- *     "Accounts are personal. Sharing breaks the undertaking" (F1.1-D1, BKB-POL-024 Section 3.1).
+ *     "Accounts are personal. Sharing breaks the undertaking" (F1.1-D1, SITL-POL-024 Section 3.1).
  *   Data rules — the engine's ADM-RULES form (GRC101_Engine/p_tasks.py, F1.1 submission): "synthetic
  *     data only; own work only; no AI tools for task work (all help is pre-written on the platform);
- *     no Tier 3/4 data outside the platform". Tier names are BKB-STD-001 Section 3's.
+ *     no Tier 3/4 data outside the platform". Tier names are SITL-STD-001 Section 3's.
  * `then` names the step's second part, as its own task, under the decision.
  * Not yet reviewed by a GRC professional.
  */

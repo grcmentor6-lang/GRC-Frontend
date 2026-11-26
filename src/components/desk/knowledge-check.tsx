@@ -19,7 +19,7 @@ import { Label, press } from "./ui";
  * server's (services/desk_kc.py): questions are served only once the attempt is started, picks are saved as they are
  * made, and the attempt is submitted when the time is up with the answers given so far.
  *
- * Open book: every rule (R16, L03), reference page (Ref-Sampling) and document section (BKB-ADD-16 Section 2) a
+ * Open book: every rule (R16, L03), reference page (Ref-Sampling) and document section (SITL-ADD-16 Section 2) a
  * question names is a link that opens it where it lives on the desk (owner, 12 Nov 2026: "open it where it actually
  * exists, in the toolbar"): Learn › Rule tables, Learn › Reference pages or the Policy Library document, as a window
  * beside the test, with the cited row or section brought into view and marked.
@@ -128,10 +128,17 @@ export function KnowledgeCheck({ id }: { id: string }) {
         {due && <Fact k="Due">{fmtDay(due)}</Fact>}
       </dl>
       {st.kind === "final" && (
-        <p className="mt-3 text-[13px] text-[#5B6474]">This screen holds the exam&apos;s {st.size} questions. The practical station (an access extract with hidden exceptions) is not on the desk yet.</p>
+        <p className="mt-3 text-[13px] text-[#5B6474]">This screen holds the exam&apos;s {st.size} questions. Some of them are the practical station: rows of an access extract, each to judge for an exception. The timed 60-row extract itself is not on the desk yet.</p>
       )}
 
-      {!st.open && (
+      {/* A check already taken is never shown as locked: its result stands. Where a task of its week is open again (it was
+          rebuilt), a further attempt waits for that task, and the line says so without a padlock. */}
+      {!st.open && st.attempts.length > 0 && (
+        <p data-kc="held" className="mt-5 rounded-[10px] border border-[#E3E5EA] bg-[#F7F8FA] px-4 py-3 text-[13.5px] text-[#3F4757]">
+          <strong className="font-semibold text-[#111827]">Your result stands.</strong> A further attempt opens once {st.opensAfter.filter((t) => !progress.submitted[t]).join(" and ") || "this week's tasks"} {st.opensAfter.filter((t) => !progress.submitted[t]).length > 1 ? "are" : "is"} handed in again.
+        </p>
+      )}
+      {!st.open && !st.attempts.length && (
         <div data-kc="closed" className="mt-5 flex items-start gap-3 rounded-[10px] border border-[#E3E5EA] bg-[#F7F8FA] px-4 py-3.5">
           <Icon name="lock" size={17} className="mt-0.5 shrink-0 text-[#5B6474]" />
           <div className="text-[14px] text-[#111827]">
@@ -479,7 +486,7 @@ function useRefSplit(): (s: string) => Part[] {
   const { desk } = useDesk();
   const re = useMemo(() => {
     const pages = Object.keys(desk.pages).sort((a, b) => b.length - a.length).map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    return new RegExp(`\\b([RL]\\d{2})\\b|(${pages.join("|") || "(?!)"})(?![\\w-])|\\b(BKB-[A-Z]+-\\d+)(?: Sections? (\\d+(?:\\.\\d+)*))?`, "g");
+    return new RegExp(`\\b([RL]\\d{2})\\b|(${pages.join("|") || "(?!)"})(?![\\w-])|\\b(SITL-[A-Z]+-\\d+)(?: Sections? (\\d+(?:\\.\\d+)*))?`, "g");
   }, [desk]);
   return useCallback(
     (s: string) => {

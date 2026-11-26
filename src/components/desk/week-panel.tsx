@@ -251,7 +251,7 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
               {hc && (
                 <li className="flex items-center gap-3 px-5 py-2.5 text-[#111827]">
                   <span className="grid w-[18px] shrink-0 place-items-center"><span className="h-2 w-2 rounded-full bg-[#111827]" /></span>
-                  Assessor checkpoint {w.hc}
+                  Checkpoint {w.hc}
                 </li>
               )}
             </ul>

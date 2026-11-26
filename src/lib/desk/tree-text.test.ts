@@ -1,5 +1,5 @@
 // Run: npx tsx src/lib/desk/tree-text.test.ts
-// The decision trees drawn as the tree card: BKB-STD-001 Section 5's lines and Ref-Rules R01's ladder cell, on the pack's text.
+// The decision trees drawn as the tree card: SITL-STD-001 Section 5's lines and Ref-Rules R01's ladder cell, on the pack's text.
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { blocks, clean, parseDoc } from "./docs";
@@ -8,8 +8,8 @@ import { ladderCell, treeRun } from "./tree-text";
 const dir = new URL("../../../public/desk/docs/", import.meta.url);
 const paras = (body: string) => blocks(body).map((b) => (b.t === "p" ? clean(b.text) : ""));
 
-// BKB-STD-001 Section 5: five questions, then "Otherwise", and the line after the tree left as a paragraph.
-const std = parseDoc(readFileSync(new URL("BKB-STD-001.md", dir), "utf8")).find((s) => s.num === "5")!;
+// SITL-STD-001 Section 5: five questions, then "Otherwise", and the line after the tree left as a paragraph.
+const std = parseDoc(readFileSync(new URL("SITL-STD-001.md", dir), "utf8")).find((s) => s.num === "5")!;
 const run = treeRun(paras(std.body))!;
 assert.equal(run.steps.length, 6);
 assert.equal(run.steps[0].then, "Tier 1");
@@ -27,9 +27,9 @@ for (const f of readdirSync(dir).filter((x) => x.endsWith(".md"))) {
 }
 assert.equal(treeRun(["Is it? → Tier 1.", "A plain line."]), null, "no Otherwise, no tree");
 
-// Ref-Rules R01: the words before the ladder, five steps, the last "Otherwise".
+// A rule written as a ladder (the old R01's text, kept here as the sample): the words before it, five steps, the last "Otherwise".
 const desk = JSON.parse(readFileSync(new URL("../../../public/desk/sample.json", import.meta.url), "utf8"));
-const r01 = (desk.pages["Ref-Rules"].r as string[][]).find((r) => r[0] === "R01")![2];
+const r01 = 'Ask in this order and stop at the first "yes": 1) Made by a parliament or a regulator? → Law / regulation. 2) Can an organisation get a certificate? → Certifiable standard. 3) Is the result an auditor\'s report on controls? → Attestation framework. 4) Is it contract wording? → Model contract. 5) Otherwise → Voluntary framework.';
 const l = ladderCell(r01)!;
 assert.equal(l.lead, 'Ask in this order and stop at the first "yes":');
 assert.deepEqual(l.steps.map((x) => x.then), ["Law / regulation", "Certifiable standard", "Attestation framework", "Model contract", "Voluntary framework"]);
@@ -38,8 +38,8 @@ assert.ok(l.steps[4].otherwise);
 assert.equal(l.tail, "");
 assert.equal(ladderCell("1) Made by a parliament? → Law. 2) Otherwise → Framework. Source: Charter.")?.tail, "Source: Charter.");
 
-// Rows that only use arrows (R14's "1 Trigger received → 2 Check input", R36's "Low → Risk owner") stay text.
-for (const r of desk.pages["Ref-Rules"].r as string[][]) if (r[0] !== "R01") assert.equal(ladderCell(r[2]), null, r[0]);
+// Rows that only use arrows (R36's "Low → Risk owner") stay text.
+for (const r of desk.pages["Ref-Rules"].r as string[][]) assert.equal(ladderCell(r[2]), null, r[0]);
 assert.equal(ladderCell(desk.pages["Ref-Test rules"].r[1][1]), null, "(1) … → 7 days is a class table, not questions");
 
 console.log("tree-text: ok");

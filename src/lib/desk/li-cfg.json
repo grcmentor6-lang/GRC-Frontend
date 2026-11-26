@@ -1,0 +1,71 @@
+{
+  "_": "T10.1 (LI101): his new items CFG / NET / T-LI-CFG. `cfg`: dataset CFG, the 12 settings of six Manila systems, each [id, system, classification, setting, baseline (Manila's hardening checklist, citing the SITL rule it carries out), configured value at 30 November 2026], and `fix`: the three fixes offered per setting. `net`: dataset NET, the segmentation (zone rows) and the extract of the core firewall's rules. `cry`: sheet Crypto's rows, [key, system, purpose, the extract line it was found in]. `map`: the Learn › Reference page TSA-16 Asset_System_Map. No answer key here: keys are in backend/scripts/li101_written.json (T10.1-1, T10.1-2). Platform-written, logged in docs/GRC101_Content_Corrections.md (T10.1).",
+  "cfg": [
+    ["CFG-01", "Core network and infrastructure (core firewall FW-MNL-01)", "Client-Confidential (Tier 3)", "Management access", "SSH v2 or HTTPS only; Telnet and HTTP off (SITL-STD-001 Section 6, Tier 3 internal transmission: encrypted channels, TLS 1.2+)", "SSH v2 on; HTTPS on; Telnet on, on the management interface"],
+    ["CFG-02", "Core network and infrastructure (core firewall FW-MNL-01)", "Client-Confidential (Tier 3)", "Administrator sign-in", "Through the IAM, with MFA; one local emergency account, its password held in the PAM vault (SITL-STD-001 Section 6, Tier 3 access: MFA; SITL-TECH-000 Section 2: identity is the control plane)", "RADIUS to the IAM, MFA required for every administrator; one local emergency account, its password in the PAM vault"],
+    ["CFG-03", "Enterprise directory and email", "Client-Confidential (Tier 3)", "Mail transport encryption", "TLS 1.2 or higher on every connection (SITL-STD-001 Section 6, Tier 3: encrypted channels, TLS 1.2+; e-mail encrypted when external)", "TLS 1.2 and 1.3 offered on every connection; TLS 1.0 and 1.1 off. Certificate: RSA 2048, held in the mail gateway's certificate store, renewed every 12 months, last 2026-03-02"],
+    ["CFG-04", "Enterprise directory and email", "Client-Confidential (Tier 3)", "Directory (LDAP) connections", "LDAPS (TLS 1.2+) only; plain LDAP binds refused (SITL-STD-001 Section 6, Tier 3: encrypted channels)", "LDAPS on port 636 for most applications; plain LDAP binds on port 389 still accepted, used by three legacy applications"],
+    ["CFG-05", "Identity and access management (IAM)", "Client-Restricted (Tier 4)", "Administrator MFA", "Phishing-resistant MFA (FIDO2 security key or certificate) for every administrator; admin sessions through PAM (SITL-STD-001 Section 6, Tier 4 access)", "Administrators approve a push notification on the mobile authenticator app; admin sessions run through PAM"],
+    ["CFG-06", "Identity and access management (IAM)", "Client-Restricted (Tier 4)", "Privileged session recording", "Every privileged session recorded (SITL-ADD-16 Section 5: session recording for privileged access on Mission Critical systems)", "Recording on for every privileged session; recordings kept 12 months"],
+    ["CFG-07", "PKI and secrets / key management", "Client-Restricted (Tier 4)", "CA key storage", "CA private keys in the HSM, not exportable (SITL-STD-001 Section 6, Tier 4 storage: org-managed keys in an HSM or KMS)", "Root CA offline, its key in the HSM. Issuing CA key: RSA 4096, in the HSM, not exportable; generated 2024-06-10, renewed every 5 years"],
+    ["CFG-08", "PKI and secrets / key management", "Client-Restricted (Tier 4)", "Console connections", "TLS 1.3 only (SITL-STD-001 Section 6, Tier 4 internal transmission: end-to-end or TLS 1.3)", "HTTPS with TLS 1.2 and 1.3 offered. Certificate: ECDSA P-256, held in the console server's certificate store, renewed every 12 months, last 2026-09-14"],
+    ["CFG-09", "Call recording servers", "Client-Restricted (Tier 4)", "Encryption at rest", "Encrypted, with the key held in the HSM or a KMS (SITL-STD-001 Section 6, Tier 4 storage: org-managed keys)", "Archive database encrypted with AES-256 (transparent data encryption). Its key is in a plain-text file on the same server; created 2023-04-18, never rotated, no rotation period set"],
+    ["CFG-10", "Call recording servers", "Client-Restricted (Tier 4)", "Removable media", "USB storage blocked; any exception approved by the CISO (SITL-STD-001 Section 6, Tier 4 removable media)", "USB storage blocked by the endpoint policy; no exceptions granted"],
+    ["CFG-11", "Client transaction data store (cloud)", "Client-Restricted (Tier 4)", "Encryption key", "Customer-managed key in an approved cloud KMS (SITL-STD-001 Section 6, Tier 4 cloud: customer-managed keys)", "Encrypted at rest with AES-256; customer-managed key in the cloud provider's KMS, rotated every 12 months, last 2026-08-01"],
+    ["CFG-12", "Client transaction data store (cloud)", "Client-Restricted (Tier 4)", "Data residency", "Data only in the regions the client contracts allow, enforced by a region policy (SITL-STD-001 Section 6, Tier 4: residency enforced; Section 11, finding F3)", "Replicas in three regions; no region policy set, so any region may be used"]
+  ],
+  "fix": {
+    "CFG-01": ["Turn Telnet off on the management interface; keep SSH v2 and HTTPS", "Keep Telnet on, reachable only from the management zone", "Turn HTTPS off; keep SSH v2 and Telnet"],
+    "CFG-02": ["Remove the local emergency account", "Require a FIDO2 security key for every firewall administrator", "Move the emergency account's password out of the PAM vault to the IT safe"],
+    "CFG-03": ["Turn TLS 1.2 off and offer TLS 1.3 only", "Replace the RSA 2048 certificate with an RSA 4096 one", "Turn TLS 1.1 back on for older client mail servers"],
+    "CFG-04": ["Move the three legacy applications to LDAPS, then refuse plain LDAP binds on port 389", "Keep port 389 open for the three legacy applications and list them in the checklist", "Close port 636 and keep port 389 for every application"],
+    "CFG-05": ["Add number matching to the push approval and keep it for administrators", "Enrol every administrator on a FIDO2 security key and turn push approval off for admin roles", "Let administrators sign in directly, outside PAM, with push approval"],
+    "CFG-06": ["Record every user session, not only privileged ones", "Shorten the recording retention to three months", "Stop recording sessions run from the PAM vault"],
+    "CFG-07": ["Export the issuing CA key to a backup file on the file server", "Move the issuing CA key to the cloud KMS", "Bring the root CA online so it can sign certificates directly"],
+    "CFG-08": ["Keep TLS 1.2 and renew the console certificate every six months", "Turn TLS 1.2 off on the PKI console and offer TLS 1.3 only", "Turn TLS 1.3 off and keep TLS 1.2, which every browser supports"],
+    "CFG-09": ["Restrict the plain-text key file to the server administrators", "Turn the database encryption off, since the server sits in the data centre", "Move the database key into the HSM, rotate it, and delete the plain-text key file"],
+    "CFG-10": ["Allow Group-issued encrypted USB drives for the QA team", "Unblock USB storage for the server administrators", "Remove the endpoint policy and block USB ports physically"],
+    "CFG-11": ["Switch to the provider-managed key, rotated by the provider", "Rotate the key every month instead of every 12 months", "Copy the key to a file on the application server as a backup"],
+    "CFG-12": ["Reduce the replicas to one region of the provider's choice", "Record the three regions in the asset register and leave the policy unset", "Set a region policy that pins the data to the regions the client contracts allow"]
+  },
+  "net": [
+    ["Zone", "Guest Wi-Fi (VLAN 50)", "—", "—", "—", "Visitors' laptops and staff personal phones; meant for internet access only"],
+    ["Zone", "Agent floor (VLAN 10)", "—", "—", "—", "Call-centre workstations and CRM access terminals"],
+    ["Zone", "Server zone (VLAN 20)", "—", "—", "—", "File server FS-MNL-01, the call recording servers, the directory and email servers"],
+    ["Zone", "Security zone (VLAN 30)", "—", "—", "—", "PKI and the HSM, the IAM servers, the SIEM collectors"],
+    ["Zone", "Card-data zone (VLAN 40)", "—", "—", "—", "Payment-handling desks for financial clients: the PCI DSS card-data environment (SITL-ADD-16 Section 6)"],
+    ["Zone", "Management (VLAN 99)", "—", "—", "—", "Management interfaces of the firewall and the switches"],
+    ["R-01", "Agent floor", "Internet", "HTTP, HTTPS through the Group web proxy", "Allow", "Category filtering on"],
+    ["R-02", "Guest Wi-Fi", "Internet", "HTTP, HTTPS through the Group web proxy", "Allow", "Category filtering on"],
+    ["R-03", "Agent floor", "Server zone", "SMB (445) to FS-MNL-01; LDAPS (636) and LDAP (389) to the directory", "Allow", "File shares and directory look-ups"],
+    ["R-04", "Guest Wi-Fi", "Server zone", "Any", "Allow", "Added 2025-11-12 for a client demonstration; no change ticket, no end date"],
+    ["R-05", "Server zone", "Warsaw office", "Site-to-site VPN: IPsec (IKEv2), AES-256-GCM, pre-shared key held in the firewall configuration, changed every 24 months, last 2025-05-20", "Allow", "Directory and file replication with Warsaw"],
+    ["R-06", "Management", "Network devices", "SSH (22), HTTPS (443), Telnet (23)", "Allow", "From the management zone only"],
+    ["R-07", "Card-data zone", "Any other zone", "Any", "Deny", "Card-data segmentation (PCI DSS overlay, SITL-ADD-16 Section 6)"],
+    ["R-08", "Any", "Any", "Any", "Deny", "Default rule; every hit logged to the SIEM"]
+  ],
+  "cry": [
+    ["K-01", "Enterprise directory and email", "Mail transport TLS certificate", "CFG-03: Certificate: RSA 2048, held in the mail gateway's certificate store, renewed every 12 months, last 2026-03-02"],
+    ["K-02", "PKI and secrets / key management", "Issuing CA signing key", "CFG-07: Issuing CA key: RSA 4096, in the HSM, not exportable; generated 2024-06-10, renewed every 5 years"],
+    ["K-03", "PKI and secrets / key management", "PKI console TLS certificate", "CFG-08: Certificate: ECDSA P-256, held in the console server's certificate store, renewed every 12 months, last 2026-09-14"],
+    ["K-04", "Call recording servers", "Archive database encryption key", "CFG-09: Archive database encrypted with AES-256 (transparent data encryption). Its key is in a plain-text file on the same server; created 2023-04-18, never rotated, no rotation period set"],
+    ["K-05", "Client transaction data store (cloud)", "Data encryption key (customer-managed)", "CFG-11: Encrypted at rest with AES-256; customer-managed key in the cloud provider's KMS, rotated every 12 months, last 2026-08-01"],
+    ["K-06", "Core network and infrastructure (core firewall FW-MNL-01)", "Site-to-site VPN to Warsaw", "NET R-05: IPsec (IKEv2), AES-256-GCM, pre-shared key held in the firewall configuration, changed every 24 months, last 2025-05-20"]
+  ],
+  "cryOpts": {
+    "alg": ["AES-128", "AES-256", "RSA 2048", "RSA 4096", "ECDSA P-256"],
+    "store": ["HSM (PKI and secrets / key management)", "Cloud KMS (customer-managed)", "The system's own certificate store", "The firewall configuration", "A plain-text file on the same server"],
+    "owner": ["Head of Infrastructure", "Chief Information Officer (CIO)", "Chief Information Security Officer (CISO)", "Chief Delivery Officer", "Security Architecture & Standards Manager"],
+    "rot": ["12 months", "24 months", "5 years", "None set"]
+  },
+  "map": [
+    ["Core network and infrastructure (core firewall FW-MNL-01)", "Infrastructure", "Head of Infrastructure", "Client-Confidential", "Management (VLAN 99)", "On premises, Manila data centre"],
+    ["Enterprise directory and email", "Identity", "Chief Information Officer (CIO)", "Client-Confidential", "Server zone (VLAN 20)", "Hybrid: on premises at Manila and cloud"],
+    ["Identity and access management (IAM)", "Identity", "Chief Information Security Officer (CISO)", "Client-Restricted", "Security zone (VLAN 30)", "Hybrid: on premises at Manila and cloud"],
+    ["PKI and secrets / key management", "Identity", "Chief Information Security Officer (CISO)", "Client-Restricted", "Security zone (VLAN 30)", "On premises, Manila data centre"],
+    ["SIEM and log analytics platform", "Security operations", "Chief Information Security Officer (CISO)", "Client-Restricted", "Security zone (VLAN 30)", "Hybrid: on premises at Manila and cloud"],
+    ["Call recording servers", "Data", "Chief Delivery Officer", "Client-Restricted", "Server zone (VLAN 20)", "On premises, Manila data centre"],
+    ["File server FS-MNL-01", "Data", "Head of Infrastructure", "Client-Confidential", "Server zone (VLAN 20)", "On premises, Manila data centre"],
+    ["Client transaction data store (cloud)", "Data", "Chief Delivery Officer", "Client-Restricted", "Cloud", "Cloud (multi-region, IaaS/PaaS)"]
+  ]
+}

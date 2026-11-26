@@ -1,0 +1,257 @@
+{
+ "_": "T12.2 (certification readiness): what the learner sees. Platform-written, logged in docs/GRC101_Content_Corrections.md (T12.2). Keys are server-side.",
+ "index": [
+  [
+   "M2610-00001_F2.1_LI-SCOPE_v1.docx",
+   "ISMS scope statement of the Manila office, with the ten ISMS processes (your hand-in, F2.1)",
+   "Clauses 4.3, 4.4",
+   "2026-10-15",
+   "5f876ee9e27d6e931e76b173483f588e4d84d74164f606fbf0a675f49d3eb2a0"
+  ],
+  [
+   "T-LI-SCOPE_worked-example.docx",
+   "The LearnTech Educational Solutions scope for its Amsterdam office: the worked example that comes with the template",
+   "Clause 4.3",
+   "2026-10-01",
+   "484057b39ead0dee2b884c0e6712e7d5ae96dcc88d734e277cde57774910e2b5"
+  ],
+  [
+   "M2610-00001_T4.2_RR-UPD_v1.xlsx",
+   "Manila office risk register: the assessed risks with their likelihood, impact and rating, and a change log (your hand-in, T4.2)",
+   "Clauses 6.1.2, 8.2",
+   "2026-11-01",
+   "ae366fabd7b7e0dfbbddd37d3f1c70f9ae2a534c0a3cc0aba8c93ed8f8422580"
+  ],
+  [
+   "M2610-00001_T5.1_LI-RTP_v1.xlsx",
+   "Manila risk treatment plan: each risk's option, controls, owner and due date, the residual ratings, and the risk owners' approval (your hand-in, T5.1)",
+   "Clauses 6.1.3, 8.3",
+   "2026-11-05",
+   "7105a0225557c8a730d61d205f3814c7b68baede7a4663fffc030e5e1e8b1238"
+  ],
+  [
+   "SITL_Group-SoA_generic_v1.xlsx",
+   "The Group's generic Statement of Applicability, written in 2025 before any office's risk assessment; it names no office",
+   "Clause 6.1.3 d)",
+   "2025-06-30",
+   "80dfd1a9f49e32e968aa41db63fed759a3bf18f09cfd647b5df6a7448cfbf0d7"
+  ],
+  [
+   "M2610-00001_T5.2_LI-SOA_v1.xlsx",
+   "Statement of Applicability of the Manila ISMS: the 93 Annex A controls, each applicable or not with its justification, and whether it is implemented, as updated after the last control sprint (your hand-in, T5.2, kept current to week 12)",
+   "Clause 6.1.3 d)",
+   "2026-12-18",
+   "1d5fcda5b40a82cb820e6dc79a99e3953490ee65fd4b18270ec04866ad206e22"
+  ],
+  [
+   "M2610-00001_T11.2_LI-AUD_v1.xlsx",
+   "Internal audit programme of the Manila ISMS for 2026–2027, and the plan of its first audit (your hand-in, T11.2)",
+   "Clause 9.2",
+   "2026-12-20",
+   "0d6cfb0343904c1e046b99fe000cb710aaafa3ae88ac070af70099ef668b8c98"
+  ],
+  [
+   "M2610-00001_T11.2_LI-NCR_v1.xlsx",
+   "The nonconformities the first internal audit raised, each with its clause (your hand-in, T11.2)",
+   "Clauses 9.2, 10.2",
+   "2026-12-20",
+   "a964fc72ebe1feea9f0d01686d3716317355d238b859e3e81b7372d26115230f"
+  ],
+  [
+   "M2610-00001_T12.1_LI-MR_v1.xlsx",
+   "Management-review pack: the inputs of Clause 9.3.2 gathered for the review booked for 14 January 2027, and the readiness check (your hand-in, T12.1)",
+   "Clause 9.3",
+   "2026-12-24",
+   "35dddc134831c54ac2c32074cc4bdca66714d7d7d2ed7a0c6ffa5a4c00f254f0"
+  ],
+  [
+   "M2610-00001_T3.2_CIT-S1_v1.xlsx",
+   "Control implementation tracker, sprint 1: the status, level, evidence ref and next action of A.5.1 to A.5.4 (your hand-in, T3.2)",
+   "A.5.1–A.5.4",
+   "2026-10-25",
+   "0c5595cdd23e387075924dd7c23171d6043d27543bc7f9ef2a2568a83d859f75"
+  ],
+  [
+   "M2610-00001_T3.2_LI-A.5.3-01_v1.xlsx",
+   "The conflicting duties found at the Manila office in the October 2026 walk-through, and who holds each (your evidence pack, T3.2)",
+   "A.5.3",
+   "2026-10-25",
+   "c5c09830d58598806c2f8b697cb77db1088642c2f01ef37f17f502f857ddc3d9"
+  ],
+  [
+   "M2610-00001_T10.2_CHG-TEST_v1.xlsx",
+   "Change sample test: production changes to the customer portal sampled from the change-ticket export for October to December 2026, each tested for approval, testing and rollback (your hand-in, T10.2)",
+   "A.8.32",
+   "2026-12-13",
+   "9f77213f1b0e6781b9b9bb93bdf70e8c66231711d9aa0141f3642e290eb77947"
+  ],
+  [
+   "Change-board_screenshot.png",
+   "Screenshot of the change board, taken from a team lead's screen: no date and no system name shown",
+   "A.8.32",
+   "Not dated",
+   "24d6a7f6b14da601ecda17737af6be6db31ce26b3fca8da27f4560f2e6700089"
+  ],
+  [
+   "SITL-POL-001_v1.0.pdf",
+   "The Group information security policy, version 1.0, from the Group Policy Library",
+   "Clause 5.2",
+   "2026-10-01",
+   "e61ef3f6c86231ab9c7797bb7a3d43d5602f541b1e910acff738500a726866ca"
+  ],
+  [
+   "Manila_security-bulletin_2026-11.pdf",
+   "November security bulletin to Manila staff: phishing reminders and the new visitor sign-in rule",
+   "Clause 7.4",
+   "2026-11-30",
+   "444493c1d3ee8b1d9806b46e14cb3f0b89ca49de76bf112923b3552f3e826162"
+  ]
+ ],
+ "requests": [
+  [
+   "REQ-01",
+   "Clause 4.3",
+   "The ISMS scope of the Manila office, as documented information."
+  ],
+  [
+   "REQ-02",
+   "Clause 6.1.3 d)",
+   "The Statement of Applicability of the Manila ISMS."
+  ],
+  [
+   "REQ-03",
+   "Clauses 6.1.3, 8.3",
+   "The risk treatment plan, with the risk owners' approval of it and of the residual risks."
+  ],
+  [
+   "REQ-04",
+   "Clause 9.2",
+   "The internal audit programme of the Manila ISMS."
+  ],
+  [
+   "REQ-05",
+   "Clause 9.3",
+   "The minutes of the latest management review of the Manila ISMS, with its decisions."
+  ],
+  [
+   "REQ-06",
+   "A.5.3",
+   "The conflicting duties identified at the Manila office, and who holds each."
+  ],
+  [
+   "REQ-07",
+   "A.8.32",
+   "Evidence that changes to production systems are controlled: your test of a sample of the changes made in the period."
+  ],
+  [
+   "REQ-08",
+   "Clause 5.2 f)",
+   "The record that the information security policy was communicated to the Manila workforce."
+  ]
+ ],
+ "portal": [
+  [
+   "REQ-01",
+   "AP-77104",
+   "2026-12-28 09:12"
+  ],
+  [
+   "REQ-02",
+   "AP-77109",
+   "2026-12-28 09:20"
+  ],
+  [
+   "REQ-03",
+   "AP-77113",
+   "2026-12-28 09:31"
+  ],
+  [
+   "REQ-04",
+   "AP-77158",
+   "2026-12-28 14:05"
+  ],
+  [
+   "REQ-05",
+   "AP-77160",
+   "2026-12-28 14:22"
+  ],
+  [
+   "REQ-06",
+   "AP-77181",
+   "2026-12-28 16:48"
+  ],
+  [
+   "REQ-07",
+   "AP-77203",
+   "2026-12-29 07:15"
+  ],
+  [
+   "REQ-08",
+   "AP-77204",
+   "2026-12-29 07:26"
+  ]
+ ],
+ "finding": [
+  [
+   "Finding",
+   "NC-1, graded minor nonconformity, in the certification body's Stage 1 report of 12 February 2027 (Stage 1 held on 8 and 9 February 2027, after the first internal audits of January 2027 and the management review of 14 January 2027)"
+  ],
+  [
+   "Requirement",
+   "ISO/IEC 27001:2022 Clause 9.2.2: the audit programme takes into consideration the importance of the processes concerned and the results of previous audits."
+  ],
+  [
+   "What the auditor found",
+   "The internal audit programme of the Manila ISMS (LI-AUD, 20 December 2026) covers A.8.32 Change management, but no internal audit held before Stage 1 did: the January 2027 audits took the clauses first and leave the change process to a later round. Every production change to the customer portal passes through that process, LI-SOA (as updated in week 12) marks A.8.32 applicable and partially implemented, and the office's own change test, CHG-TEST of December 2026, found it not effective (6 deviations in 25 changes)."
+  ],
+  [
+   "Evidence the auditor names",
+   "LI-AUD, sheet Programme; LI-SOA, row A.8.32; CHG-TEST, conclusion"
+  ],
+  [
+   "Interview note",
+   "The Information Security Auditor said the rounds were put in order clause by clause and then sprint by sprint, and the change test's result was not looked at when the January round was chosen."
+  ],
+  [
+   "Next audit",
+   "Stage 2, booked for 12 to 14 April 2027"
+  ]
+ ],
+ "cert": [
+  "The ISMS scope (LI-SCOPE), the information security policy and the risk assessment and treatment method are reviewed as documents.",
+  "The Statement of Applicability (LI-SOA) and the risk treatment plan (LI-RTP) are reviewed, with whether the office is ready for the next stage.",
+  "The auditor checks that internal audits and management reviews are planned and performed at the Manila office (LI-AUD, LI-MR).",
+  "The auditor interviews staff on the Manila floor and samples records of the Statement of Applicability's controls in operation.",
+  "Findings are graded major or minor nonconformities, and the lead auditor recommends whether to certify.",
+  "No later than 12 months after the certification decision, an audit checks part of the ISMS and how earlier nonconformities were closed.",
+  "In the third year, another audit of part of the ISMS, with the internal audits, management reviews and complaints since the last one.",
+  "Before the certificate expires at the end of year three, an audit of the whole ISMS starts a new three-year cycle."
+ ],
+ "stages": [
+  "Stage 1",
+  "Stage 2",
+  "Surveillance",
+  "Recertification"
+ ],
+ "ncr": {
+  "Correction": [
+   "Ask the certification body to take A.8.32 out of the audit scope",
+   "Write an internal audit report for A.8.32 dated before the Stage 1 audit",
+   "Bring the internal audit of A.8.32 Change management (IA-23) forward and hold it before the Stage 2 audit",
+   "Train the Information Security Auditor again on audit planning"
+  ],
+  "Root cause": [
+   "The Information Security Auditor forgot to include A.8.32",
+   "The rounds were ordered clause by clause and sprint by sprint, not by the importance of the processes and the results of earlier audits and tests such as CHG-TEST (Clause 9.2.2)",
+   "Change management is a low risk at the Manila office",
+   "The audit programme was written in December, too late to cover everything"
+  ],
+  "Corrective action": [
+   "Audit A.8.32 before the Stage 2 audit",
+   "Add a reminder to audit A.8.32 again next year",
+   "Issue a written warning to the Information Security Auditor",
+   "Change how the programme is planned: order each round by risk, the importance of the processes and the results of earlier audits and tests, and re-plan it after every test and audit result"
+  ]
+ },
+ "none": "No evidence available"
+}

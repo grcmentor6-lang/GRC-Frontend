@@ -35,7 +35,7 @@ for (const id of desk.order) {
     if (want) assert.ok(desk.sections[want], `${id} step ${s.n}: ${want} is a toolbar menu`);
   }
 }
-assert.ok(steps > 250, "every step read");
+assert.ok(steps >= 216, "every step read");
 
 // toolOpen reads the tasks that use a tool from an index built once per desk. It must answer as the rule itself does,
 // walked step by step: a tool opens once the learner has reached a task with a step that uses it.
@@ -44,7 +44,8 @@ assert.ok(steps > 250, "every step read");
   const keys: string[] = desk.secs.flatMap((s: { k: string } | null) => (s ? desk.sections[s.k].tools.map((t: { n: string }) => `${s.k}|${t.n}`) : []));
   const used = new Set(order.flatMap((id) => desk.tasks[id].steps.flatMap((s: { n: number }) => stepUses(desk.tasks[id], s.n))));
   const gated = keys.filter((k) => used.has(k) && !/^(home|learn)\|/.test(k));
-  assert.ok(gated.length > 30, "tools that wait for a task");
+  // Few until the rebuilt tasks get their screens back (GRC 101 to the Lead Implementer workbook, docs/li101 Phase 2).
+  assert.ok(gated.length > 0, "tools that wait for a task");
   let checks = 0, open = 0;
   for (const k of [0, 1, 5, 12, 20, order.length]) {
     const p = { done: {} as Record<string, boolean>, submitted: {} as Record<string, string> };
@@ -59,6 +60,22 @@ assert.ok(steps > 250, "every step read");
       }
     }
   }
-  assert.ok(open > 0 && open < checks, "some tools open and some not");
+  assert.ok(open > 0 && open <= checks, "some tools open"); // "and some not" again once Phase 2 gives the rebuilt steps screens
+}
+
+// FIRST_MENU's lists are edited by many hands: an edit that drops the separating space glues two ids ("T7.2-1T7.2-2"),
+// and both steps silently lose their menu. Every id stands alone, once, and names a real step.
+{
+  const src = readFileSync(join(import.meta.dirname, "tools.ts"), "utf8");
+  const block = src.slice(src.indexOf("const FIRST_MENU"), src.indexOf("const firstMenu"));
+  const ids = [...block.matchAll(/^\s+\w+: "([^"]*)"/gm)].flatMap((m) => m[1].split(" "));
+  assert.ok(ids.length > 0, "FIRST_MENU read");
+  for (const id of ids) {
+    assert.ok(!/[0-9][FT][0-9]/.test(id), `FIRST_MENU: ids run together in "${id}"`);
+    assert.match(id, /^[FT]\d+\.\d+-\d+$/, `FIRST_MENU: "${id}" is one step id`);
+    const [t, n] = [id.slice(0, id.lastIndexOf("-")), Number(id.slice(id.lastIndexOf("-") + 1))];
+    assert.ok(desk.tasks[t]?.steps.some((s: { n: number }) => s.n === n), `FIRST_MENU: ${id} is a step`);
+  }
+  assert.equal(new Set(ids).size, ids.length, "FIRST_MENU: no id twice");
 }
 console.log(`tools ok: ${steps} steps, ${overrides} open another section than their own`);

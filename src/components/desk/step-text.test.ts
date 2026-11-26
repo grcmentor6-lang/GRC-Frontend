@@ -12,15 +12,18 @@ const desk = JSON.parse(readFileSync(new URL("../../../public/desk/sample.json",
 const secs = ["home", "evidence", "frameworks", "access", "risk", "vendors", "testing", "policies", "awareness", "regwatch", "learn", "inbox", "systems"];
 assert.deepEqual(SECTIONS, secs.map((k) => desk.sections[k].t));
 assert.deepEqual(TOOLS, secs.filter((k) => k !== "inbox").flatMap((k) => desk.sections[k].tools.map((t: { n: string }) => t.n.replace(/ \(business SaaS\)$/, ""))));
-assert.deepEqual(PAGES, Object.keys(desk.pages));
+// As sets: the build appends a new page wherever its first run lands, and the matcher sorts by length (order means nothing).
+assert.deepEqual([...PAGES].sort(), Object.keys(desk.pages).sort());
 
 // Documents, their sections, clauses, controls and reference pages: amber, without the full stop.
-eq("This card asks the questions of BKB-STD-001 Section 5 **one at a time, in order**.", ["doc:BKB-STD-001 Section 5", "field:one at a time, in order"]);
+eq("This card asks the questions of SITL-STD-001 Section 5 **one at a time, in order**.", ["doc:SITL-STD-001 Section 5", "field:one at a time, in order"]);
 eq("Read **Section 6.3, step 6** of the addendum.", ["doc:Section 6.3, step 6"]);
-eq("Read BKB-POL-013 Section 3.1.", ["doc:BKB-POL-013 Section 3.1"]);
+eq("Read SITL-POL-013 Section 3.1.", ["doc:SITL-POL-013 Section 3.1"]);
 eq("Sheet 1 is that plan, A1 to A6.", ["doc:Sheet 1", "code:A1", "code:A6"]);
+// A SOC 2 criterion id is one code, with its number whole.
+eq("Its list offers CC5.1, CC5.2 and CC5.3. CC6 is the series.", ["code:CC5.1", "code:CC5.2", "code:CC5.3", "code:CC6"]);
 eq("Clause 5.1 asks for it; clauses 4.1 and 4.2 say so. Annex A's A.5.18 too.", ["doc:Clause 5.1", "doc:clauses 4.1 and 4.2", "doc:Annex A", "doc:A.5.18"]);
-eq("Click **Ref-27000 family**, then Ref-UAR test plan and **Charter** and **Organization_Profiles**.", ["doc:Ref-27000 family", "doc:Ref-UAR test plan", "doc:Charter", "doc:Organization_Profiles"]);
+eq("Click **Ref-Maturity Model**, then Ref-Policy portal and **Charter** and **Organization_Profiles**.", ["doc:Ref-Maturity Model", "doc:Ref-Policy portal", "doc:Charter", "doc:Organization_Profiles"]);
 // Platform buttons: bold, quoted, after a verb, or a label that is nothing else.
 eq("Once every row is filled, click **Check my answers**. It shows why.", ["btn:Check my answers"]);
 eq("Click **▶ Show me how** on the step.", ["btn:▶ Show me how"]);
@@ -64,7 +67,7 @@ for (const s of [
   "More than one can sound reasonable. Hold each one against the situation's facts.",
 ]) eq(s, []);
 // Nothing is lost: the parts put back together are the string, less the bold markers.
-const s = "Click **Check my answers**: it reads BKB-ADD-16 Section 9, A-03 and Home › My Organisation.";
+const s = "Click **Check my answers**: it reads SITL-ADD-16 Section 9, A-03 and Home › My Organisation.";
 assert.equal(markParts(s).map((p) => p.text).join(""), s.replace(/\*\*/g, ""));
 // Round 3: Submit as the button it names; sections opened from; the checklist's pair and lone button leads.
 eq("Submit opens once steps 1 to 5 are complete. If Submit is grey, read the line.", ["btn:Submit", "btn:Submit"]);

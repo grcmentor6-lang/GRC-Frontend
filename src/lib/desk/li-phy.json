@@ -1,0 +1,72 @@
+{
+  "_": "T9.1 (LI101): dataset PHY, his new item \"Floor plan and 20 captioned photos with control key; walkthrough checklist\" (template T-LI-PHY). There are no photographs: the floor plan of the Manila head office is drawn from `plan` (components/desk/phy-plan.tsx, an inline SVG), and each photo is a numbered point on it with a caption saying what the photo shows. registers.ts builds sheets Floor plan (PHY-PLAN) and Photos (PHY-WALK) from it; build-li101.py builds dataset PHY from it. No answer key here: the markings and the per-photo control and finding are in backend/scripts/li101_written_T9.1.json. Platform-written, logged in docs/GRC101_Content_Corrections.md (T9.1).",
+  "office": "GlobalConnect Customer Solutions, Manila head office: floor 12 of a shared office tower",
+  "markings": ["Public area", "Perimeter entry point", "Office area", "Secure area"],
+  "rule": "Mark each point of the floor plan by who may be there. Public area: outside the office's perimeter, where anyone in the building, or a visitor not yet let in, can be. Perimeter entry point: a door in the perimeter, through which people or goods come into the office. Office area: inside the perimeter, open to all staff. Secure area: a room inside the perimeter that holds information-processing equipment, or Restricted (Tier 4) information or media, and that only named people may enter.",
+  "points": [
+    ["Z1", "Lift lobby", "The building's shared lift lobby on floor 12. Everyone who uses the lifts passes through it."],
+    ["Z2", "Reception", "GlobalConnect's reception desk and visitor seats. Visitors wait here until the receptionist signs them in and lets them through."],
+    ["D1", "Main doors", "Glass doors from reception into the office. Staff open them with their badge; the receptionist opens them for a visitor."],
+    ["Z3", "Agent floor", "Open-plan floor with 220 agent workstations, where every agent on shift works."],
+    ["Z4", "Managers' offices", "Offices of the team leaders and managers, off the agent floor."],
+    ["Z5", "Meeting rooms", "Four meeting rooms, used by staff and by visitors with their host."],
+    ["Z6", "Records room", "Print room and records store: the printers, and locked steel cabinets holding paper copies of clients' customers' identity documents (KYC), classified Client-Restricted."],
+    ["Z7", "Server room", "The Manila data centre: the core network, the PBX and the call-recording servers. Only the IT staff named on its access list badge in."],
+    ["Z8", "IT store", "Spare and returned laptops, removable media, and equipment waiting for disposal. Only the IT desk staff badge in."],
+    ["D2", "Goods entrance", "Door from the service lift, for deliveries and the cleaning contractor. It opens by badge."],
+    ["D3", "Fire exit", "Fire door to the stairwell, alarmed, opening outward."]
+  ],
+  "photos": [
+    ["P01", "D1 Main doors", "The glass doors from reception into the office: a badge reader on each side, and a sign asking staff not to let anyone follow them in."],
+    ["P02", "Z7 Server room", "The inside of the server room door: a notice forbids photography and recording without IT approval; beside it, the sign-in sheet shows each contractor's visit with the name of the IT escort."],
+    ["P03", "Z3 Agent floor", "Two people wearing red visitor badges walk between the agent workstations; no member of staff is with them."],
+    ["P04", "Corridor by Z8 IT store", "The corridor of the secure rooms: cameras cover the reception doors and the server room door; the IT store door, further along, has no camera on it."],
+    ["P05", "D3 Fire exit", "The fire exit to the stairwell, wedged open with a fire extinguisher; the alarm panel beside it reads \"Door alarm isolated\"."],
+    ["P06", "Z1 Lift lobby", "Above a lifted ceiling tile at the lift lobby: the office's wall runs up to the concrete slab, with no gap to climb through."],
+    ["P07", "Z7 Server room", "The server room door from the corridor: plain and locked, marked only \"Room 12-07\"; nothing says what is inside."],
+    ["P08", "Z3 Agent floor", "An agent's desk at 19:00, after the shift has gone: the screen is locked, the desk is clear and the drawer is locked."],
+    ["P09", "Z5 Meeting rooms", "A meeting-room whiteboard, not wiped since yesterday's client review, lists a client's customer names and account numbers."],
+    ["P10", "Z7 Server room", "The server room ceiling: smoke detectors and the nozzles of the gas fire-suppression system; the cylinder's inspection tag is dated May 2026."],
+    ["P11", "Z7 Server room", "A water stain on a ceiling tile above rack 3 of the server room; the floor 13 staff kitchen is directly above, and no water sensor is fitted."],
+    ["P12", "Z7 Server room", "The server racks: front and back doors locked; a sign at the room's door says \"No food or drink\"."],
+    ["P13", "Z3 Agent floor, by Z2", "Three workstations beside the reception glass: their screens, showing customer records, face the visitor seats."],
+    ["P14", "Corridor by Z5 Meeting rooms", "An open rack in the corridor holds the agent floor's network patch panel; it has no door, and the cables are unlabelled."],
+    ["P15", "Z7 Server room", "Under the server room's raised floor: power cables in one tray, network cables in a separate tray, each labelled at both ends."],
+    ["P16", "Z7 Server room", "The UPS panel reads \"Battery OK, 32 min\"; its service sticker says August 2026, and the building generator's monthly test sheet is pinned beside it."],
+    ["P17", "Z7 Server room", "The side of a cooling unit: its service log shows a visit every quarter by the supplier's named engineer, the last in September 2026, each signed."],
+    ["P18", "Z8 IT store", "A locked cage in the IT store: returned laptops and loose hard disks waiting for disposal, unlabelled, with no list of what is inside."],
+    ["P19", "Z8 IT store", "The IT desk's off-site device register: each laptop issued for home working, with its asset tag, holder, manager's approval and \"Encrypted: yes\"."],
+    ["P20", "Z5 Meeting rooms", "A USB memory stick left in a meeting-room PC; it has no Group asset label, and IT finds it is not encrypted and not in the media register."]
+  ],
+  "plan": {
+    "w": 800,
+    "h": 500,
+    "areas": [
+      ["Z1", 20, 190, 110, 110],
+      ["Z2", 130, 190, 120, 110],
+      ["Z3", 250, 20, 350, 290],
+      ["Z4", 600, 20, 180, 120],
+      ["Z5", 600, 140, 180, 120],
+      ["Z6", 250, 360, 120, 120],
+      ["Z7", 370, 360, 230, 120],
+      ["Z8", 600, 360, 110, 120]
+    ],
+    "outside": [
+      ["Stairwell", 130, 20, 120, 80],
+      ["Service lift", 710, 360, 70, 120]
+    ],
+    "corridor": [250, 310, 530, 50],
+    "above": ["Floor 13 staff kitchen, directly above", 378, 388, 214, 20],
+    "doors": [
+      ["D1", 250, 230, 250, 270],
+      ["D2", 710, 380, 710, 420],
+      ["D3", 250, 40, 250, 80]
+    ],
+    "photos": {
+      "P01": [272, 250], "P02": [395, 428], "P03": [345, 170], "P04": [655, 335], "P05": [272, 60],
+      "P06": [75, 262], "P07": [480, 345], "P08": [470, 90], "P09": [650, 200], "P10": [435, 428],
+      "P11": [475, 428], "P12": [515, 428], "P13": [280, 290], "P14": [570, 335], "P15": [395, 458],
+      "P16": [435, 458], "P17": [475, 458], "P18": [630, 425], "P19": [670, 455], "P20": [730, 215]
+    }
+  }
+}

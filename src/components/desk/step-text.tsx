@@ -92,26 +92,60 @@ export function StepInstruction({ text, opened = false, className = "" }: { text
 /** The toolbar's sections and their tools, as `desk.sections` names them (step-text.test.ts holds them to sample.json). */
 export const SECTIONS = ["Home", "Evidence", "Frameworks", "Access Reviews", "Risk Register", "Vendors", "Control Testing", "Policies", "Awareness", "Regulatory Watch", "Learn", "Inbox", "Systems"];
 export const TOOLS = [
-  "My plan", "My Tasks", "Waiting On", "Assessor Notes", "Calendar", "My Organisation", "My Scores",
-  "Capture Screenshot", "Import Log / Report", "Upload Config File", "Link to Control", "Request Evidence", "Evidence Library", "Audit Requests (PBC)", "Defect Codes",
-  "Framework Library", "Map Control", "Crosswalk View", "Gap Finder", "Export Mapping",
-  "Start Review", "Generate Sample", "Privilege Check", "Terminated User Check", "Reviewer Sign-off", "Track Remediation",
-  "New Risk", "Score Risk", "Assign Owner", "Mitigation Tracker", "Heat Map with KRIs", "Asset Register",
-  "Vendor Intake", "Set Risk Tier", "Send Questionnaire", "SOC Report Review", "Contract & DPA Check", "Flag Risk", "Reassessment Reminder",
-  "Test Plan", "Patch Timeline Check", "Vulnerability Remediation Check", "Configuration Check", "Restore Test Review", "Record Result", "Raise Finding",
-  "Policy Library", "New from Template", "Review & Redline", "Map to Framework", "Send for Approval", "Version History", "Policy Exceptions",
-  "Content Templates", "Newsletter Builder", "Phishing Campaign Planner", "Campaign Results",
-  "Regulation Tracker", "Add Update", "Briefing Builder", "Impact Log", "Obligations Register", "RoPA & Data Flows", "Breach Clock Calculator",
-  "Framework Quick Reference", "Glossary", "Business Risk Translator", "Stakeholder Directory", "Skills Tracker", "Working time", "Rule tables", "Sentence frames", "Knowledge Checks", "Reference pages",
-  "AppAdmin", "NetShield", "LedgerSim", "DataSentry", "LogLens",
+  "My plan", "My Tasks", "Waiting On", "Checkpoints", "Calendar", "My Organisation", "My Scores",
+  "Capture Screenshot", "Import Log / Report", "Upload Config File", "Link to Control", "Evidence Library", "Audit Requests (PBC)", "Defect Codes",
+  "Framework Library", "Map Control", "Gap Finder", "Export Mapping",
+  "Privilege Check",
+  "New Risk", "Score Risk", "Assign Owner", "Mitigation Tracker", "Asset Register",
+  "Vendor Intake", "Set Risk Tier", "Contract & DPA Check",
+  "Test Plan", "Vulnerability Remediation Check", "Configuration Check", "Restore Test Review", "Record Result", "Raise Finding",
+  "Policy Library", "New from Template", "Review & Redline", "Map to Framework", "Version History",
+  "Content Templates", "Newsletter Builder",
+  "Regulation Tracker", "Add Update", "Briefing Builder", "Obligations Register", "RoPA & Data Flows",
+  "Framework Quick Reference", "Glossary", "Business Risk Translator", "Working time", "Rule tables", "Sentence frames", "Knowledge Checks", "Reference pages",
+  // The Tech Lab on Systems: five required simulators, one per sprint (lib/desk/labs.ts).
+  "LedgerSim", "AppAdmin", "LogLens", "NetShield", "DataSentry",
 ];
 /** Learn › Reference pages, by name (`desk.pages`), and the documents named by a word rather than a code. */
 export const PAGES = [
-  "Ref-Rules", "Ref-Actions", "Ref-Frames", "Ref-Questions", "Ref-Clauses", "Ref-SOC checks", "Ref-Conditions", "Ref-Content", "Ref-Keywords", "Ref-SoA exclusions", "Ref-Sampling",
-  "Ref-Defect codes", "Ref-Test rules", "Ref-Work log fields", "Ref-Chain", "Ref-27002 attributes", "Ref-27000 family", "Ref-Certification card", "Ref-Clause map", "Ref-Locations",
-  "Ref-ISMS processes", "Ref-Leadership", "Ref-Competence", "Ref-Communications", "Ref-Cloud", "Ref-UAR codes", "Ref-Objectives", "Ref-Milestones", "Ref-Change types",
-  "Ref-Review inputs", "Ref-Measure card", "Ref-5-Whys", "Ref-Templates", "Ref-Capability map", "RA-36 Risk register (HQ Istanbul)", "TSA-36 Control_Mapping", "TSA-36 Roadmap",
-  "Ref-UAR test plan", "TSA-36 Technology_Stack",
+  "Ref-Rules", "Ref-Test rules", "Ref-27002 attributes", "Ref-Certification card", "Ref-ISMS processes",
+  "TSA-16 Office_Deployment", "Ref-Maturity Model", "Ref-Policy portal",
+  // T3.2 and the later sprints: the Lead Implementer task library (li-sprints.json), one page per control.
+  "LI-A.5.1", "LI-A.5.2", "LI-A.5.3", "LI-A.5.4", "LI-Q fixed questions",
+  // T12.1: the files of the management-review pack.
+  "Ref-Review pack",
+  // T4.1: sprint 2's deep dives (their first citation is in T11.2's Review Deck, hence here).
+  "LI-A.5.9", "LI-A.5.12",
+  // T5.2: sprint 4a's deep dive.
+  "LI-A.5.8",
+  // T11.2: the Review Deck's fixed questions.
+  "RV-Q fixed questions", "Ref-Review references",
+  // T4.1: sprint 2's other controls.
+  "LI-A.5.10", "LI-A.5.11", "LI-A.5.13", "LI-A.5.14",
+  // T6.1: sprint 4's control.
+  "LI-A.6.3",
+  // T6.1: the Group ISMS communication plan (SITL-POL-020 Section 5 names it).
+  "Ref-Communications",
+  // T4.2: sprint 3's controls.
+  "LI-A.5.6", "LI-A.5.7",
+  // T7.1: sprint 6's controls.
+  "LI-A.5.15", "LI-A.5.16", "LI-A.5.17", "LI-A.5.18",
+  // T7.2: sprint 7's controls, and rule L19's sheet (the cloud shared-responsibility model and fixed questions).
+  "LI-A.5.19", "LI-A.5.20", "LI-A.5.21", "LI-A.5.22", "LI-A.5.23", "Ref-Cloud",
+  // T9.1: sprint 10's controls.
+  "LI-A.7.1", "LI-A.7.2", "LI-A.7.3", "LI-A.7.4", "LI-A.7.5", "LI-A.7.6", "LI-A.7.7", "LI-A.7.8", "LI-A.7.9", "LI-A.7.10", "LI-A.7.11", "LI-A.7.12", "LI-A.7.13", "LI-A.7.14",
+  // T8.2: sprint 9's controls.
+  "LI-A.5.29", "LI-A.5.30", "LI-A.5.31", "LI-A.5.32", "LI-A.5.33", "LI-A.5.34", "LI-A.5.35", "LI-A.5.36",
+  // T8.1: sprint 8's controls.
+  "LI-A.5.5", "LI-A.5.24", "LI-A.5.25", "LI-A.5.26", "LI-A.5.27", "LI-A.5.28", "LI-A.6.8",
+  // T9.2: sprint 11's controls.
+  "LI-A.8.1", "LI-A.8.2", "LI-A.8.3", "LI-A.8.4", "LI-A.8.5", "LI-A.8.6", "LI-A.8.7", "LI-A.8.8", "LI-A.8.13", "LI-A.8.14", "LI-A.8.15", "LI-A.8.16", "LI-A.8.17",
+  // T10.1: sprint 12's controls, and the Manila systems' owners and zones (his input "SITL-TSA-16 Asset_System_Map sheet").
+  "LI-A.8.9", "LI-A.8.24", "LI-A.8.10", "LI-A.8.11", "LI-A.8.12", "LI-A.8.18", "LI-A.8.19", "LI-A.8.20", "LI-A.8.21", "LI-A.8.22", "LI-A.8.23", "TSA-16 Asset_System_Map",
+  // T10.2: sprint 13's controls, and the pack's sampling table (rule R15).
+  "LI-A.8.28", "LI-A.8.32", "LI-A.8.25", "LI-A.8.33", "LI-A.8.34", "LI-A.8.26", "LI-A.8.27", "LI-A.8.29", "LI-A.8.30", "LI-A.8.31", "Ref-Sampling",
+  // T6.2: sprint 5's controls, and the wiki page of step 2.
+  "LI-A.6.1", "LI-A.6.7", "LI-A.5.37", "LI-A.6.5", "LI-A.6.2", "LI-A.6.4", "LI-A.6.6", "Ref-Wiki backup page",
 ];
 const DOC_WORDS = ["Charter", "Defect Codes"];
 
@@ -132,7 +166,7 @@ function esc(s: string) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 const NUM = "\\d+(?:\\.\\d+)*";
 const RANGE = `${NUM}(?:\\s*(?:[–-]|to|and|,)\\s*${NUM})*`;
 const DOC = [
-  `\\bBKB-[A-Z]+-\\d+[A-Z]?(?:\\s+Sections?\\s+${RANGE})?`,
+  `\\bSITL-[A-Z]+-\\d+[A-Z]?(?:\\s+Sections?\\s+${RANGE})?`,
   `\\bSections?\\s+${RANGE}(?:, step \\d+)?`,
   `\\bSheets?\\s+\\d+(?:\\s*(?:[–-]|to|and)\\s*\\d+)?`,
   `\\b[Cc]lauses?\\s+${RANGE}`,
@@ -159,7 +193,8 @@ const PATH = `\\b(?:${alt(SECTIONS)})(?: › (?:${alt(TOOLS)}|[A-Z][\\w&'-]*(?: 
 // A tool by name anywhere; a section where it is clicked or opened ("Click Policies", "from the Inbox").
 const TOOL = `(?<![\\w-])(?:${alt(TOOLS)})(?![\\w-])|(?<=${VERB}|\\b(?:[Oo]pen|in|from) the )(?:${alt(SECTIONS)})\\b(?! [a-z]+ frame\\b)`;
 // "One A4 page" is paper, not a code; a hash name (SHA-256) is a value, shaded as one.
-const CODE = `\\b(?!SHA-)(?:[A-Z](?:-[A-Z0-9]{2,}){2,}|[A-Z][A-Z0-9]+(?:-[A-Z0-9]+)+|T-[A-Z]{2,}|[FT]\\d{1,2}\\.\\d|[A-Z]{1,3}\\d{1,3}(?! pages?\\b))\\b`;
+// A SOC 2 criterion (CC6.1) is one code: without its own pattern the chip took "CC6" and left ".1" outside it.
+const CODE = `\\b(?!SHA-)(?:[A-Z](?:-[A-Z0-9]{2,}){2,}|[A-Z][A-Z0-9]+(?:-[A-Z0-9]+)+|T-[A-Z]{2,}|[FT]\\d{1,2}\\.\\d|CC\\d\\.\\d|[A-Z]{1,3}\\d{1,3}(?! pages?\\b))\\b`;
 const FIELD = `\\bSHA-\\d+\\b|\\b(?:Accept|Reject)(?= or (?:Accept|Reject)\\b)|(?<=\\b(?:Accept|Reject) or )(?:Accept|Reject)\\b|(?<=\\bthe )[A-Z][\\w-]*(?: [a-z]+)* frame\\b|(?<![\\w.])\\.(?:xlsx|docx|pdf|csv)\\b|\\bOrg [AB]\\b|\\b[A-Z]-\\d{2,3}\\b|\\bcolumns?\\s+[A-Z](?:\\s*(?:to|and|[–-])\\s*[A-Z])?\\b|\\b[Rr]ows?\\s+\\d+(?:\\s*(?:to|and|[–-])\\s*\\d+)?\\b`;
 const TAG = `(?<=\\btagged )Step \\d+`;
 const whole = (re: string) => new RegExp(`^(?:${re})$`);
@@ -168,7 +203,7 @@ const [IS_BUTTON, IS_DOC, IS_CODE, IS_FIELD, IS_PATH, IS_TOOL] = [
 ];
 
 const SHORT = whole(SHORT_BUTTONS);
-/** A phrase that opens with a document or its part: "BKB-POL-006 Section 3.1 bullet 5", "A.5.18 Access rights". */
+/** A phrase that opens with a document or its part: "SITL-POL-006 Section 3.1 bullet 5", "A.5.18 Access rights". */
 const DOC_LED = new RegExp(`^(?:${DOC})\\b`);
 
 export type MarkKind = "text" | "doc" | "btn" | "path" | "field" | "code" | "tag" | "bold" | "org";

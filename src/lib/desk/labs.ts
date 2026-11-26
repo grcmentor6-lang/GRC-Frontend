@@ -6,6 +6,7 @@ import type { Progress } from "./progress";
  * One console, components/desk/lab-console.tsx, plus data per lab. To add a lab: its console data at
  * public/desk/labs/<id>.json, its key in backend/_seed/grc101_lab_keys.json, a line in LABS, and its row in
  * the Systems menu (build-desk-sample.py: LABS_BUILT). Nothing in the browser says which rows are defects.
+ * Labs are required: see LABS below.
  */
 export interface LabRef {
   id: string;
@@ -13,20 +14,35 @@ export interface LabRef {
   tool: string;
   /** The desk task its findings feed. */
   task: string;
-  /** Step of that task whose completion opens the lab ("reached" at the next step): a lab must not answer steps still to do. */
-  after: string;
+  /** Step of that task whose completion opens the lab: a lab must not answer steps still to do. */
+  after: string | null;
 }
 
+// The five Tech Lab simulators are mandatory parts of GRC 101 (owner, 26 Nov 2026). Each joins one sprint, opens when the step
+// named in `after` is done (a lab must not answer steps still to do), and its task's Submit stays closed until the lab is
+// marked complete with its findings recorded (lib/desk/work.ts submitWhy; the server decides the same in api/desk.py and
+// services/desk_record.py). `after` must come before the task's hand-in step. Placement and why: docs/li101/labs.md.
 export const LABS: LabRef[] = [
-  { id: "TL-16-BUS-25-BIZ01-C", tool: "systems|AppAdmin (business SaaS)", task: "T6.1", after: "T6.1-7" },
-  { id: "TL-36-INF-07-NET02-C", tool: "systems|NetShield", task: "T8.2", after: "T8.2-6" },
+  { id: "TL-36-BUS-03-FIN01-C", tool: "systems|LedgerSim", task: "T3.2", after: "T3.2-5" },
+  { id: "TL-16-BUS-25-BIZ01-C", tool: "systems|AppAdmin (business SaaS)", task: "T7.1", after: "T7.1-4" },
+  { id: "TL-36-SOC-14-SIEM01-O", tool: "systems|LogLens", task: "T9.2", after: "T9.2-5" },
+  { id: "TL-36-INF-07-NET02-C", tool: "systems|NetShield", task: "T10.1", after: "T10.1-5" },
   { id: "TL-36-SOC-08-DLP02-C", tool: "systems|DataSentry", task: "T10.1", after: "T10.1-5" },
-  { id: "TL-36-SOC-14-SIEM01-O", tool: "systems|LogLens", task: "T10.2", after: "T10.2-6" },
-  { id: "TL-36-BUS-03-FIN01-C", tool: "systems|LedgerSim", task: "T9.2", after: "T9.2-4" },
 ];
 
 export const labOf = (toolKey: string) => LABS.find((l) => l.tool === toolKey);
-export const labOpen = (l: LabRef, p?: Progress) => !p || !!p.done[l.after] || !!p.submitted[l.task];
+export const labOpen = (l: LabRef, p?: Progress) => !!l.after && (!p || !!p.done[l.after] || !!p.submitted[l.task]);
+/** A lab is complete once Mark complete is pressed, which the console allows only with the findings in. */
+export const labDone = (l: LabRef, p: Progress) => !!p.labs?.[l.id]?.done && !!p.labs?.[l.id]?.findings?.length;
+/** The task's labs that are open and not complete yet: what its Submit waits for. */
+export const labsLeft = (task: string, p: Progress) => LABS.filter((l) => l.task === task && labOpen(l, p) && !labDone(l, p));
+/** "Finish the Tech Lab LedgerSim (Systems › LedgerSim on the toolbar) first.", or null. */
+export const labWhy = (task: string, p: Progress): string | null => {
+  const left = labsLeft(task, p);
+  if (!left.length) return null;
+  const n = (l: LabRef) => l.tool.split("|")[1].replace(" (business SaaS)", "");
+  return `Finish the Tech Lab ${left.map(n).join(" and ")} first (Systems on the toolbar): ${left.length > 1 ? "they are" : "it is"} part of this task.`;
+};
 
 export interface LabView {
   key: string;
@@ -82,7 +98,20 @@ export interface LabRow {
   correct: boolean | null;
   why: string;
 }
-export type LabResult = { ref?: string; why?: string; hint?: string; correct?: boolean | null; rows?: Record<string, LabRow> };
+export type LabResult = {
+  ref?: string;
+  why?: string;
+  hint?: string;
+  correct?: boolean | null;
+  rows?: Record<string, LabRow>;
+  /** Capture parts: wrong checks so far (the server's count), and whether the answer was shown: the part then reads
+   *  "shown, not found", scores nothing and bars "with distinction". `recipe` is the filter it was shown. */
+  misses?: number;
+  released?: boolean;
+  recipe?: string;
+};
+/** Wrong checks after which a capture part may ask to be shown the answer (the server's LAB_SHOW_AFTER). */
+export const LAB_SHOW_AFTER = 3;
 export interface LabState {
   /** Part id → its result; a capture part is finished only when `correct`. */
   parts: Record<string, LabResult>;
@@ -112,18 +141,11 @@ export function labFindings(p: Progress, id: string): string[] {
   const caps = allCaptures(p);
   return (s?.findings ?? []).map((f) =>
     f.replace(/\{(\w+)\}/g, (_, part) => {
+      if (s?.parts[part]?.released) return `the filter shown to you after ${LAB_SHOW_AFTER} tries`; // a part found with help is not evidence of the learner's own
       const c = caps.find((x) => x.ref === s?.parts[part]?.ref);
       return c ? `${c.ref} (${c.utc})` : "";
     }),
   );
-}
-
-/** The lab's findings for the task's hand-in, once complete and only if complete before it was sealed. */
-export function labFeed(p: Progress, task: string): string {
-  const l = LABS.find((x) => x.task === task);
-  const s = l && p.labs?.[l.id];
-  if (!l || !s?.done || (p.submitted[task] && p.submitted[task] < s.done)) return "";
-  return labFindings(p, l.id).join(" ");
 }
 
 /** Rows of a `rows` part, from the learner's own earlier parts. */

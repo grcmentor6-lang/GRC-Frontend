@@ -6,6 +6,10 @@ Writes public/desk/sample.json. Answer-key material is stripped: a task message'
 its reason and its check line are what the automated review reveals after submission, so they
 must never ship to the browser.
 
+Then run scripts/build-li101.py: GRC 101 was rebuilt to the Lead Implementer workbook (docs/li101), and that overlay
+replaces every task but F1.1. The per-task datasets this script reads (named src/lib/desk/<x>-t<nn>.json below) moved
+to scripts/desk-sample-data/ on 25 Nov 2026, when the desk stopped reading them.
+
 ponytail: stand-in until Phase 1, when the backend runs the engine per mentee and serves the
 same shape from /me/desk. Delete this script then.
 """
@@ -17,6 +21,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from acronyms import expand, explained_in  # scripts/acronyms.py: first-occurrence acronym expansion
+from group_name import rename_group  # scripts/group_name.py: the pack's BKB is SITL on the platform
 
 MONTHS = {m: i for i, m in enumerate(
     ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], 1)}
@@ -42,6 +47,8 @@ def main(src: str) -> None:
     html = Path(src).read_text(encoding="utf8")
     i = html.index("const W=") + len("const W=")
     w, _ = json.JSONDecoder().raw_decode(html[i:])
+    # The group is SITL here, BKB in the pack: renamed as it is read, so every rewrite below matches the new name.
+    w = json.loads(rename_group(json.dumps(w, ensure_ascii=False)))
     start = date.fromisoformat(w["start"])
 
     for k in DROP:
@@ -73,7 +80,7 @@ def main(src: str) -> None:
     # The undertaking is signed at the end of step 3, not in step 2: the mentee signs once both
     # conduct questions are answered and the four data rules read and saved, and before step 4, the
     # first contact with data ("Without a signed undertaking your account is not opened for data",
-    # BKB-POL-024 §6.1 step 3). Decided by the owner, 2026-10-28. Step numbers are unchanged, so KR2
+    # SITL-POL-024 §6.1 step 3). Decided by the owner, 2026-10-28. Step numbers are unchanged, so KR2
     # ("Activities 2–3") still holds.
     sign = ' Then: open the undertaking below and read it. Type your full name and mentee ID, add your signature and click "Sign" (ADM-UND).'
     assert sign in f11[1]["w"], f11[1]["w"]
@@ -204,15 +211,15 @@ def main(src: str) -> None:
         # `derived`), not something read from a source.
         ('For each Optional row type \\"Optional — not mapped\\".', 'Optional rows are filled for you.', 1),
         ('Optional rows get \\"Optional — not mapped\\".', 'Optional rows are filled for you (\\"Optional — not mapped\\").', 2),
-        # F1.2 step 5: § and – are on no ordinary keyboard. The desk records "BKB-ADD-16 2-3" in full
+        # F1.2 step 5: § and – are on no ordinary keyboard. The desk records "SITL-ADD-16 2-3" in full
         # (registers.ts `cells`), so the step says what to type, and how it is recorded.
         # F1.2 step 5 is its question: which kind of evidence ref is acceptable. The column G typing that
         # followed added nothing (owner, 2026-10-28): the desk writes each row's section itself (§2 where
         # its offices came from an office row, else §3; registers.ts `derived`).
-        (' Then: Type \\"BKB-ADD-16 §2–§3\\" in column G of every GlobalConnect Customer Solutions row.', '', 1),
+        (' Then: Type \\"SITL-ADD-16 §2–§3\\" in column G of every GlobalConnect Customer Solutions row.', '', 1),
         ('Type the addendum name followed by \\"§2–§3\\" in column G of every one of your rows.', 'Column G of every row is then filled for you with the section its offices were read from.', 2),
         ('Decision recorded; evidence ref on every row', 'Decision recorded', 1),
-        ('column G = \\"BKB-ADD-16 §2–§3\\"', "column G cites the section each row's offices came from", 1),
+        ('column G = \\"SITL-ADD-16 §2–§3\\"', "column G cites the section each row's offices came from", 1),
     ]:
         assert blob.count(old) == n, (old, blob.count(old))
         blob = blob.replace(old, new)
@@ -358,6 +365,8 @@ def main(src: str) -> None:
     w = json.loads(blob)
     gaps_pass(w)
     rows_pass(w)
+    outline_from_docs(w)
+    focus_t32(w)
     spell_out(w)
     blob = json.dumps(w, ensure_ascii=False, separators=(",", ":"))
     assert "§" not in blob, "a section sign is left in the sample"
@@ -436,7 +445,7 @@ def f13(w: dict) -> None:
 
     The pack sends the mentee to Information_Asset_Register_by_Department.xlsx ("organisation tab,
     filter ...") and to a DOCX print preview; neither exists on the platform. The register's Mission
-    Critical assets by office are BKB-ADD-16 §8.1; the brief is a page on the desk that says whether it
+    Critical assets by office are SITL-ADD-16 §8.1; the brief is a page on the desk that says whether it
     fits on one A4 page. The brief's Source fields are labelled "Source:", so the mentee types only
     what follows. Listed in docs/GRC101_Content_Corrections.md (items 24-28).
     """
@@ -454,32 +463,32 @@ def f13(w: dict) -> None:
         if field == "t":
             notes[n][1] = s["t"]
 
-    sub(1, "o", "Nothing to produce — you read the worked section", "Section 1 checked against BKB-ADD-16 §1.1")
+    sub(1, "o", "Nothing to produce — you read the worked section", "Section 1 checked against SITL-ADD-16 §1.1")
     # The services list section 1 holds is §1.1 "Services and products"; §1 is the profile table above it.
-    sub(1, "w", "from BKB-ADD-16 §1 — this is the worked example. Put it next to BKB-ADD-16 §1 and check",
-        "from BKB-ADD-16 §1.1 — this is the worked example. Put it next to BKB-ADD-16 §1.1 and check")
-    steps[0]["refs"]["docs"] = [["BKB-ADD-16", ["1.1"]]]
+    sub(1, "w", "from SITL-ADD-16 §1 — this is the worked example. Put it next to SITL-ADD-16 §1 and check",
+        "from SITL-ADD-16 §1.1 — this is the worked example. Put it next to SITL-ADD-16 §1.1 and check")
+    steps[0]["refs"]["docs"] = [["SITL-ADD-16", ["1.1"]]]
     # §9's heading is "Processing activities and data"; the list is its "Client data handled" column.
-    sub(2, "t", 'Open BKB-ADD-16 §9 "Data handled"', 'Open BKB-ADD-16 §9 "Processing activities and data"')
-    sub(2, "w", 'Open BKB-ADD-16 §9 "Data handled". Copy every item of the list into section 2, word for word and in the same order. Type "Source: BKB-ADD-16 §9" under the list.',
-        'Open BKB-ADD-16 §9 "Processing activities and data". Copy every item of its "Client data handled" list into section 2, one per line, word for word and in the same order. Type "BKB-ADD-16 §9" in the Source line under the list.')
+    sub(2, "t", 'Open SITL-ADD-16 §9 "Data handled"', 'Open SITL-ADD-16 §9 "Processing activities and data"')
+    sub(2, "w", 'Open SITL-ADD-16 §9 "Data handled". Copy every item of the list into section 2, word for word and in the same order. Type "Source: SITL-ADD-16 §9" under the list.',
+        'Open SITL-ADD-16 §9 "Processing activities and data". Copy every item of its "Client data handled" list into section 2, one per line, word for word and in the same order. Type "SITL-ADD-16 §9" in the Source line under the list.')
     sub(2, "help", 'Open the addendum §9 ("Data handled"). Copy every item into section 2',
         'Open the addendum §9 and find the "Client data handled" list. Copy every item into section 2')
     sub(2, "help", 'Type "Source: " and the addendum §9 under the list.', "Type the addendum and §9 in the Source line under the list.")
-    sub(3, "w", 'Type "Source: BKB-ADD-16 §2".', 'Type "BKB-ADD-16 §2" in the Source line.')
-    # Step 4: the asset register's Mission Critical assets by office are BKB-ADD-16 §8.1.
+    sub(3, "w", 'Type "Source: SITL-ADD-16 §2".', 'Type "SITL-ADD-16 §2" in the Source line.')
+    # Step 4: the asset register's Mission Critical assets by office are SITL-ADD-16 §8.1.
     s4 = steps[3]
     sub(4, "w", 'Then: Open Information_Asset_Register_by_Department.xlsx, organisation tab. Filter Office = Manila, Philippines and Criticality = Mission Critical. Copy every Asset name shown into section 4, one per line. Type "Source: asset register".',
-        'Then: open BKB-ADD-16 §8.1 "Mission Critical assets": the asset register\'s assets rated Mission Critical, with their office. Copy the Asset of every row whose Office is Manila, Philippines into section 4, one per line. Type "BKB-ADD-16 §8.1" in the Source line.')
+        'Then: open SITL-ADD-16 §8.1 "Mission Critical assets": the asset register\'s assets rated Mission Critical, with their office. Copy the Asset of every row whose Office is Manila, Philippines into section 4, one per line. Type "SITL-ADD-16 §8.1" in the Source line.')
     sub(4, "help", "Then open the asset register, set the two filters (Office = your home office; Criticality = Mission Critical) and copy every asset name the filter shows, one per line.",
         "Then open the addendum §8.1, which lists the register's Mission Critical assets with their office, and copy the Asset of every row of your home office, one per line.")
-    sub(4, "o", "section 4 copied from the register", "section 4 copied from BKB-ADD-16 §8.1")
+    sub(4, "o", "section 4 copied from the register", "section 4 copied from SITL-ADD-16 §8.1")
     s4["tool"], s4["key"], s4["sec"] = "Home › My Organisation", "home|My Organisation", "home"
     s4["refs"]["wbs"] = []
-    s4["refs"]["docs"] = [["BKB-ADD-16", ["8.1"]]]
+    s4["refs"]["docs"] = [["SITL-ADD-16", ["8.1"]]]
     # Step 5: Rule records R04 by itself once a party is in (registers.ts `derived`).
-    sub(5, "w", 'Then: Open template CTX-IP (columns Party · Internal/External · Requirement · Standard/law · Rule · Evidence ref). Copy the first five parties of BKB-ADD-16 §4, in the same order, with the four values given for each. Type "R04" in Rule and "BKB-ADD-16 §4" in Evidence ref.',
-        'Then: open CTX-IP (columns Party · Internal/External · Requirement · Standard/law · Rule · Evidence ref). Copy the first five parties of BKB-ADD-16 §4, in the same order, each with the values given for it. Rule records "R04" and Evidence ref "BKB-ADD-16 §4" by themselves.')
+    sub(5, "w", 'Then: Open template CTX-IP (columns Party · Internal/External · Requirement · Standard/law · Rule · Evidence ref). Copy the first five parties of SITL-ADD-16 §4, in the same order, with the four values given for each. Type "R04" in Rule and "SITL-ADD-16 §4" in Evidence ref.',
+        'Then: open CTX-IP (columns Party · Internal/External · Requirement · Standard/law · Rule · Evidence ref). Copy the first five parties of SITL-ADD-16 §4, in the same order, each with the values given for it. Rule records "R04" and Evidence ref "SITL-ADD-16 §4" by themselves.')
     sub(5, "help", 'Type "R04" and the source in the last two columns.', "Rule records R04, and Evidence ref the source, by themselves.")
     # Step 6: the desk draws the brief at A4 and says whether it fits; there is no print preview.
     sub(6, "w", 'Then: Open the print preview of CTX-BRIEF: it must show 1 page and the label "Internal" in the footer. Save both files in 02_Working as',
@@ -488,24 +497,24 @@ def f13(w: dict) -> None:
     # The task card and references name the workbook; name what the platform has.
     blob = json.dumps(t, ensure_ascii=False)
     for old, new in [
-        ("Information_Asset_Register_by_Department.xlsx (organisation tab — synthetic)", "The asset register's Mission Critical assets by office (BKB-ADD-16 §8.1)"),
-        ("Information_Asset_Register_by_Department.xlsx — Organisation tab: Asset, Owner, Classification, Criticality", "BKB-ADD-16 — §8.1 Mission Critical assets (the asset register's, by office)"),
-        ("see Information_Asset_Register_by_Department.xlsx", "see BKB-ADD-16 §8.1"),
-        ("Information_Asset_Register_by_Department.xlsx", "BKB-ADD-16 §8.1"),
+        ("Information_Asset_Register_by_Department.xlsx (organisation tab — synthetic)", "The asset register's Mission Critical assets by office (SITL-ADD-16 §8.1)"),
+        ("Information_Asset_Register_by_Department.xlsx — Organisation tab: Asset, Owner, Classification, Criticality", "SITL-ADD-16 — §8.1 Mission Critical assets (the asset register's, by office)"),
+        ("see Information_Asset_Register_by_Department.xlsx", "see SITL-ADD-16 §8.1"),
+        ("Information_Asset_Register_by_Department.xlsx", "SITL-ADD-16 §8.1"),
     ]:
         blob = blob.replace(old, new)
     w["tasks"]["F1.3"] = json.loads(blob)
     lib = w["library"]["cited_by_task"]["F1.3"]
-    w["library"]["cited_by_task"]["F1.3"] = [x.replace("Information_Asset_Register_by_Department.xlsx — Organisation tab: Asset, Owner, Classification, Criticality", "BKB-ADD-16 — §8.1 Mission Critical assets (the asset register's, by office)") for x in lib]
+    w["library"]["cited_by_task"]["F1.3"] = [x.replace("Information_Asset_Register_by_Department.xlsx — Organisation tab: Asset, Owner, Classification, Criticality", "SITL-ADD-16 — §8.1 Mission Critical assets (the asset register's, by office)") for x in lib]
     for k, c in enumerate(w["cards"].get("F1.3", [])):
-        w["cards"]["F1.3"][k] = json.loads(json.dumps(c, ensure_ascii=False).replace("Information_Asset_Register_by_Department.xlsx — Organisation tab: Asset, Owner, Classification, Criticality", "BKB-ADD-16 — §8.1 Mission Critical assets (the asset register's, by office)").replace("see Information_Asset_Register_by_Department.xlsx", "see BKB-ADD-16 §8.1"))
+        w["cards"]["F1.3"][k] = json.loads(json.dumps(c, ensure_ascii=False).replace("Information_Asset_Register_by_Department.xlsx — Organisation tab: Asset, Owner, Classification, Criticality", "SITL-ADD-16 — §8.1 Mission Critical assets (the asset register's, by office)").replace("see Information_Asset_Register_by_Department.xlsx", "see SITL-ADD-16 §8.1"))
     assert "Information_Asset_Register" not in json.dumps([w["tasks"]["F1.3"], w["notes"]["F1.3"], w["cards"].get("F1.3")], ensure_ascii=False)
 
 
 def f21(w: dict) -> None:
     """F2.1 in the platform's own terms (tester report, 28 Oct 2026), keeping the pack's intent.
 
-    The worked rows' paths do not follow BKB-STD-001 §5's questions, so step 1 finds the parts of a
+    The worked rows' paths do not follow SITL-STD-001 §5's questions, so step 1 finds the parts of a
     finished row instead of tracing them against §5; step 2's walk records path and tier itself; step 3's
     Rule column records R05 itself; §6 has no "Transmission" column, only Internal and External
     transmission rows; steps 4 and 5 fill CLS-RES, which is on Risk › Asset Register, reading from the
@@ -523,19 +532,19 @@ def f21(w: dict) -> None:
             assert old in notes[n][2], (n, notes[n][2])
             notes[n][2] = notes[n][2].replace(old, new)
 
-    sub(1, "w", "Read them next to BKB-STD-001 §5.", "Find in them the three parts every finished row has.")
+    sub(1, "w", "Read them next to SITL-STD-001 §5.", "Find in them the three parts every finished row has.")
     sub(1, "o", "Nothing to produce — you read the worked rows", "Three things found in the worked rows A-01 and A-02")
-    sub(1, "help", "Put BKB-STD-001 §5 (the tree) next to them and follow each path question by question. That is exactly what you will do for the other six.",
-        "Find in them the tier, the path that reached it and the facts the questions were answered from. In step 2 you walk the tree (BKB-STD-001 §5) for the other six.")
+    sub(1, "help", "Put SITL-STD-001 §5 (the tree) next to them and follow each path question by question. That is exactly what you will do for the other six.",
+        "Find in them the tier, the path that reached it and the facts the questions were answered from. In step 2 you walk the tree (SITL-STD-001 §5) for the other six.")
     steps[0]["refs"]["docs"] = []
     sub(2, "help", "Write the path, stop when the tree gives a tier, select that tier.",
         "Stop when the tree gives a tier: the walk beside the table records the path and the tier.")
     sub(3, "help", 'Write "R05" in the Rule column.', "The Rule column records R05 by itself.")
-    sub(5, "w", 'Then: Copy the "Transmission" value for Tier 3 and for Tier 4 from the BKB-STD-001 §6 matrix.',
-        'Then: copy the "External transmission" value for Tier 3 and for Tier 4 from the BKB-STD-001 §6 matrix, and type "BKB-STD-001 §6" as the source.')
+    sub(5, "w", 'Then: Copy the "Transmission" value for Tier 3 and for Tier 4 from the SITL-STD-001 §6 matrix.',
+        'Then: copy the "External transmission" value for Tier 3 and for Tier 4 from the SITL-STD-001 §6 matrix, and type "SITL-STD-001 §6" as the source.')
     sub(5, "help", 'find the "Transmission" column, copy the value of the Tier 3 row and the Tier 4 row. Write "§6" as the source.',
-        'find the "External transmission" row, copy its value in the Tier 3 and the Tier 4 column. Write "BKB-STD-001 §6" as the source.')
-    sub(4, "w", "(one label per tier; the template shows the four tiers).", '(one label per tier; the template shows the four tiers), and type "BKB-ADD-16 §7" as the source.')
+        'find the "External transmission" row, copy its value in the Tier 3 and the Tier 4 column. Write "SITL-STD-001 §6" as the source.')
+    sub(4, "w", "(one label per tier; the template shows the four tiers).", '(one label per tier; the template shows the four tiers), and type "SITL-ADD-16 §7" as the source.')
     # CLS-RES is worked on Risk › Asset Register; the Policy Library is where steps 4 and 5 read from.
     for n in (4, 5):
         s = steps[n - 1]
@@ -618,15 +627,15 @@ def t31(w: dict) -> None:
     RULE = " Write the rule ID in the Rule column."
     VALUES = "Values copied with evidence ref"
 
-    sub(1, "t", "Open BKB-ADD-16 §2", "Copy your two offices' rows of BKB-ADD-16 §2")
-    sub(1, "w", "Open BKB-ADD-16 §2. Copy the rows for Manila, Philippines and Warsaw, Poland.",
-        "Open BKB-ADD-16 §2 (Policies › Policy Library). The register has one row ready for Manila, Philippines and one for Warsaw, Poland. Fill each: "
+    sub(1, "t", "Open SITL-ADD-16 §2", "Copy your two offices' rows of SITL-ADD-16 §2")
+    sub(1, "w", "Open SITL-ADD-16 §2. Copy the rows for Manila, Philippines and Warsaw, Poland.",
+        "Open SITL-ADD-16 §2 (Policies › Policy Library). The register has one row ready for Manila, Philippines and one for Warsaw, Poland. Fill each: "
         "the office's Breach notification cell is its obligation, its Data-protection law the source instrument.")
     sub(1, "o", VALUES, "2 rows, one per office, copied from §2 with their evidence ref")
-    sub(1, "help", OPEN, "Open BKB-ADD-16 from Policies › Policy Library and read §2 before you write anything. Copy each value exactly as it is written there.")
+    sub(1, "help", OPEN, "Open SITL-ADD-16 from Policies › Policy Library and read §2 before you write anything. Copy each value exactly as it is written there.")
     sub(2, "o", "Decision T3.1-D1 recorded with the rule used", "Decision T3.1-D1 checked; every row holds one duty (R10)")
     sub(3, "w", "Copy the lead-regulator rows from §2.1 and the sector rows from §6.",
-        "Copy the lead-regulator rows from BKB-ADD-16 §2.1 and the sector rows from §6, one register row for each.")
+        "Copy the lead-regulator rows from SITL-ADD-16 §2.1 and the sector rows from §6, one register row for each.")
     sub(3, "o", VALUES, "10 rows copied from §2.1 and §6, with their evidence ref")
     sub(3, "help", COPY, "Copy each line exactly as it is written in the source — same spelling, same numbers. Then write where you found it (document and section) in the Evidence ref column.")
     old4 = 'Open Organization_Profiles. Copy the first three "Key Requirements" for GlobalConnect Customer Solutions as contract obligations.'
@@ -634,8 +643,8 @@ def t31(w: dict) -> None:
     sub(4, "w", "Then: " + old4, "Then: " + new4)
     sub(4, "help", old4, new4[0].upper() + new4[1:])
     sub(4, "o", "Decision T3.1-D2 recorded with the rule used", "Decision T3.1-D2 checked; 3 contract rows copied")
-    old5 = "For each row copy the owner role, the evidence and the frequency from the linked BKB policy (BKB-POL-000 index). Write the rule used."
-    new5 = "for each row choose the BKB policy that implements it (BKB-POL-000 index); its owner role is filled from the index by itself. Copy the deadline or frequency the obligation states."
+    old5 = "For each row copy the owner role, the evidence and the frequency from the linked SITL policy (SITL-POL-000 index). Write the rule used."
+    new5 = "for each row choose the SITL policy that implements it (SITL-POL-000 index); its owner role is filled from the index by itself. Copy the deadline or frequency the obligation states."
     sub(5, "w", "Then: " + old5, "Then: " + new5)
     sub(5, "help", old5, new5[0].upper() + new5[1:])
     sub(5, "o", "Decision T3.1-D3 recorded with the rule used", "Decision T3.1-D3 checked; every row linked to its policy")
@@ -681,12 +690,12 @@ def t31(w: dict) -> None:
     for n in range(15, 20):
         tool(n, "home|My Organisation")
     sub(15, "t", "Open T-LI-SCOPE", "Complete the scope statement")
-    sub(15, "w", "covers ___ at ___.\"", "covers ___ at ___.\" Covers: the departments of your office in BKB-ADD-16 §8.1. At: the office.")
+    sub(15, "w", "covers ___ at ___.\"", "covers ___ at ___.\" Covers: the departments of your office in SITL-ADD-16 §8.1. At: the office.")
     sub(15, "o", VALUES, "Scope statement completed, with its source")
-    sub(15, "help", OPEN, "Open BKB-ADD-16 from Policies › Policy Library: §8.1 lists your office's departments. Rule L03: in scope = the office and its departments.")
-    steps[14]["refs"]["docs"] = [["BKB-ADD-16", ["8.1"]]]
+    sub(15, "help", OPEN, "Open SITL-ADD-16 from Policies › Policy Library: §8.1 lists your office's departments. Rule L03: in scope = the office and its departments.")
+    steps[14]["refs"]["docs"] = [["SITL-ADD-16", ["8.1"]]]
     sub(16, "o", VALUES, "Out of scope and interfaces recorded (L03)")
-    steps[15]["refs"]["docs"].append(["BKB-ADD-16", []])  # L03: only what the addendum lists as excluded
+    steps[15]["refs"]["docs"].append(["SITL-ADD-16", []])  # L03: only what the addendum lists as excluded
     # Step 16 reads the addendum alone. Ref-ISMS processes is step 17's page: tagged here, it sent a learner to it for
     # the Boundaries section's Source line (owner, 24 Nov 2026).
     steps[15]["refs"]["pages"] = []
@@ -715,7 +724,7 @@ def t31(w: dict) -> None:
 def t32(w: dict) -> None:
     """T3.2 in the platform's own terms (tester report, 28 Oct 2026), keeping the pack's intent.
 
-    No step chose the BKB policy before step 3 asked for "the policy"'s procedure section; step 1 asked for
+    No step chose the SITL policy before step 3 asked for "the policy"'s procedure section; step 1 asked for
     ID, standard and title, which MAP-8 already gives; the three candidate controls of step 2 are not in the
     pack; LI-05 opened Map Control, MAP-XW's screen. Step 1 now chooses the policy, step 2 the control from
     Annex A, step 3 reads the policy's procedures; LI-05 is worked in Frameworks › Export Mapping ("MAP-XW
@@ -743,26 +752,26 @@ def t32(w: dict) -> None:
 
     LI = "[LI-05 — Statement of Applicability (SoA)] "
     OPEN = "Open what the step names. Your inputs are in the task folder 01_Inputs; the reference pages are under Learn › Reference. Read before you write anything."
-    sub(1, "t", "Open dataset MAP-8", "Choose the BKB policy that covers each requirement")
+    sub(1, "t", "Open dataset MAP-8", "Choose the SITL policy that covers each requirement")
     sub(1, "w", "Open dataset MAP-8. Copy the requirement ID, standard and title into the template.",
-        "Your 8 requirements from dataset MAP-8 are already in MAP-XW. For each, choose the BKB policy that covers it: "
-        "Frameworks › Crosswalk View gives the policy of common key words, and BKB-POL-000 (Policies › Policy Library) lists "
+        "Your 8 requirements from dataset MAP-8 are already in MAP-XW. For each, choose the SITL policy that covers it: "
+        "Frameworks › Crosswalk View gives the policy of common key words, and SITL-POL-000 (Policies › Policy Library) lists "
         "every policy in §3 and the policy of each sector obligation in §8.")
-    sub(1, "o", "Values copied with evidence ref", "BKB policy chosen for the 8 requirements")
-    # The order the key follows (corrections item 47): BKB-POL-000 §8 names the policy that implements each
+    sub(1, "o", "Values copied with evidence ref", "SITL policy chosen for the 8 requirements")
+    # The order the key follows (corrections item 47): SITL-POL-000 §8 names the policy that implements each
     # kind of standard; a narrower policy takes a requirement only where a Crosswalk View key word is what the
     # requirement and that policy's title are both about.
-    sub(1, "help", OPEN, "Start with BKB-POL-000 §8: it names the policy that implements each kind of standard. Then read the requirement itself: "
-        "where one of its words is a key word in Frameworks › Crosswalk View, and that policy's title (BKB-POL-000 §3) is about the same thing, "
+    sub(1, "help", OPEN, "Start with SITL-POL-000 §8: it names the policy that implements each kind of standard. Then read the requirement itself: "
+        "where one of its words is a key word in Frameworks › Crosswalk View, and that policy's title (SITL-POL-000 §3) is about the same thing, "
         "that narrower policy covers it. A key word is a lead, not an answer: read the requirement and the title together.")
-    steps[0]["refs"]["docs"] = [["BKB-POL-000", ["3", "8"]]]
+    steps[0]["refs"]["docs"] = [["SITL-POL-000", ["3", "8"]]]
     sub(2, "t", "choose the matching Annex A control f…", "choose the Annex A control that implements it")
     sub(2, "w", "Guidance: policy §9 mapping tables.", "Guidance: Frameworks › Crosswalk View, for the policy you chose in step 1.")
     # Step 2 offers three candidate controls per requirement (platform-written, corrections item 47): the
     # pack's text "from the three candidates shown" now holds.
     old3 = 'Check the policy for a procedure section. Write its number, or "none".'
     sub(3, "t", old3, "Find the procedure in each row's policy")
-    sub(3, "w", old3, 'Open each row\'s BKB policy in Policies › Policy Library. If one of its "Procedure:" sections carries out the requirement, type its number (e.g. 6.1); otherwise type "none".')
+    sub(3, "w", old3, 'Open each row\'s SITL policy in Policies › Policy Library. If one of its "Procedure:" sections carries out the requirement, type its number (e.g. 6.1); otherwise type "none".')
     sub(3, "o", "Step ticked in the work log", 'Procedure section or "none" recorded for the 8 requirements')
     sub(3, "help", "Do only what the step says, for the rows it names. If a rule is named, follow its numbered questions in order.",
         'Open the row\'s policy from Policies › Policy Library: its §6 lists its procedures by name. Type the number of the one that carries out the requirement, or "none" if no procedure does. R11 counts it in step 4.')
@@ -773,16 +782,16 @@ def t32(w: dict) -> None:
         " Rule R12 is in Learn › Rule tables; the gap sentences of part 2 follow it.")
     l06 = (' Rule L06 (SoA applicability): Every control is Applicable. A control is Not applicable only if it appears in Ref-SoA exclusions '
            '(Learn › Reference); copy the justification shown there. Justification for applicable controls: copy the first source found in '
-           'this order — risk register treatment ID, law in addendum §2, contract in Organization_Profiles, "Group baseline (BKB-POL-001)".')
+           'this order — risk register treatment ID, law in addendum §2, contract in Organization_Profiles, "Group baseline (SITL-POL-001)".')
     sub(12, "help", l06, " Rule L06 (Learn › Reference pages › Ref-Rules) says when a control may be Not applicable, and where a justification comes from: read it before you choose.")
     sub(2, "o", "Per-row decisions recorded in MAP-XW", "Annex A control chosen for the 8 requirements")
     sub(4, "o", "Per-row decisions recorded in MAP-XW", "Coverage rated with R11 for the 8 requirements")
     sub(5, "o", "Decision T3.2-D3 recorded with the rule used", "Decision T3.2-D3 checked; a gap sentence (R12) on every Partial or None row")
     sub(6, "t", 'Fill "Evidence ref" for every row.', "Fill Evidence ref for every row")
-    sub(6, "w", 'Fill "Evidence ref" for every row.', "Fill Evidence ref for every row: the row's BKB policy, then the section of it you read (BKB-POL-… §…).")
+    sub(6, "w", 'Fill "Evidence ref" for every row.', "Fill Evidence ref for every row: the row's SITL policy, then the section of it you read (SITL-POL-… §…).")
     sub(6, "o", "Step ticked in the work log", "Evidence ref recorded for the 8 rows")
     sub(6, "help", "Copy the value exactly as it is written in the source — same spelling, same numbers. Then write where you found it (document and section, or row ID) in the Evidence ref column.",
-        "Name where a reader can check each row: its BKB policy and the section you read in it, such as its procedure section or §9 Framework mapping.")
+        "Name where a reader can check each row: its SITL policy and the section you read in it, such as its procedure section or §9 Framework mapping.")
     sub(7, "t", 'Submit MAP-XW. Click "Done".', "Hand in MAP-XW")
     sub(7, "w", 'Submit MAP-XW. Click "Done".', "Check that MAP-XW has no empty cell, name the file and submit it.")
     tool(7, "frameworks|Map Control")
@@ -803,7 +812,7 @@ def t32(w: dict) -> None:
     sub(10, "o", "Per-row decisions recorded in MAP-XW", "Implementation status of the 12 deep-dive controls recorded with L07")
     sub(11, "o", "Per-row decisions recorded in MAP-XW", "Cybersecurity concept recorded for the 12 deep-dive controls")
     sub(12, "o", "Decision T3.2-D7 recorded with the rule used", "Decision T3.2-D7 checked; the consistency check finds no row against L06")
-    # Steps 9 and 12 cited BKB-POL-001 (no text on the platform) and Organization_Profiles for L06's
+    # Steps 9 and 12 cited SITL-POL-001 (no text on the platform) and Organization_Profiles for L06's
     # justification, which is awaiting content: nothing there answers either step.
     for n in (9, 12):
         steps[n - 1]["refs"]["docs"] = []
@@ -839,7 +848,7 @@ def t41(w: dict) -> None:
     row: step 2 now records each requirement's clause, and step 5 writes the redlines the engine's step 4 asks
     for ("Write the redline with the R13 frame"; POL-GAP is "Gap table and redlines"). Steps 6 and 10 hand the
     files in where they were filled. The Review & Redline screen showed another policy's six requirements
-    (BKB-POL-017's); it now shows dataset POL-GAP. Listed in docs/GRC101_Content_Corrections.md (item 57).
+    (SITL-POL-017's); it now shows dataset POL-GAP. Listed in docs/GRC101_Content_Corrections.md (item 57).
     """
     t = w["tasks"]["T4.1"]
     steps = t["steps"]
@@ -865,20 +874,20 @@ def t41(w: dict) -> None:
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     # Step 1: the engine's step copies the document-control values too ("Copy the document-control values into
     # POL-CUR. Write Yes or No for each checklist line"); POL-CUR is "Check | Yes/No | Value copied | Evidence ref".
-    sub(1, "w", "decide Yes or No. Options:", "copy the value from the document-control table of BKB-POL-006 (§11) and decide Yes or No. Options:")
-    sub(1, "w", "Guidance: the document-control table.", "Guidance: the document-control table, read against BKB-POL-000 §2 and §7.")
+    sub(1, "w", "decide Yes or No. Options:", "copy the value from the document-control table of SITL-POL-006 (§11) and decide Yes or No. Options:")
+    sub(1, "w", "Guidance: the document-control table.", "Guidance: the document-control table, read against SITL-POL-000 §2 and §7.")
     sub(1, "o", "Per-row decisions recorded in POL-CUR", "Value copied and Yes or No decided for the 6 lines of POL-CUR")
-    sub(1, "help", SCORED, "Copy each line's value from BKB-POL-006 §11 as written, then decide whether it meets the line: BKB-POL-000 §2 says who approves a policy, §7 how its lifecycle runs. " + CHECK)
-    steps[0]["refs"]["docs"] = [["BKB-POL-006", ["11"]], ["BKB-POL-000", ["2", "7"]]]
-    old2 = "Open POL-GAP. For Q1, search BKB-POL-006 Access Control and Identity Management Policy and BKB-ADD-16 for the action words of the requirement."
+    sub(1, "help", SCORED, "Copy each line's value from SITL-POL-006 §11 as written, then decide whether it meets the line: SITL-POL-000 §2 says who approves a policy, §7 how its lifecycle runs. " + CHECK)
+    steps[0]["refs"]["docs"] = [["SITL-POL-006", ["11"]], ["SITL-POL-000", ["2", "7"]]]
+    old2 = "Open POL-GAP. For Q1, search SITL-POL-006 Access Control and Identity Management Policy and SITL-ADD-16 for the action words of the requirement."
     sub(2, "t", "Open POL-GAP", "Find the clause that covers each requirement")
-    sub(2, "w", old2, "Open POL-GAP. For each requirement, starting with Q1, search BKB-POL-006 Access Control and Identity Management Policy "
-        "and BKB-ADD-16 for the action words of the requirement, and record the clause that holds them, or none.")
+    sub(2, "w", old2, "Open POL-GAP. For each requirement, starting with Q1, search SITL-POL-006 Access Control and Identity Management Policy "
+        "and SITL-ADD-16 for the action words of the requirement, and record the clause that holds them, or none.")
     sub(2, "o", "POL-GAP updated", "Policy clause, or none, recorded for Q1 to Q6")
     sub(2, "help", "Open what the step names. Your inputs are in the task folder 01_Inputs; the reference pages are under Learn › Reference. Read before you write anything.",
-        "Pick out the requirement's action words: what must be done, to what. Look for them in BKB-POL-006 §3 to §7 and in BKB-ADD-16 §5 and §6 "
+        "Pick out the requirement's action words: what must be done, to what. Look for them in SITL-POL-006 §3 to §7 and in SITL-ADD-16 §5 and §6 "
         "(Policies › Policy Library). A bullet of §3.1 is counted from the top: the first is bullet 1. Check my answers then shows each row's clause and why.")
-    steps[1]["refs"]["docs"] = [["BKB-POL-006", ["3", "4", "6", "7"]], ["BKB-ADD-16", ["5", "6"]]]
+    steps[1]["refs"]["docs"] = [["SITL-POL-006", ["3", "4", "6", "7"]], ["SITL-ADD-16", ["5", "6"]]]
     sub(3, "o", "Per-row decisions recorded in POL-CUR", "Coverage decided with R13 for Q1 to Q6")
     sub(3, "help", SCORED, CHECK)
     sub(4, "o", "Per-row decisions recorded in POL-CUR", "Fix location decided with R13 for every gap")
@@ -888,8 +897,8 @@ def t41(w: dict) -> None:
         '"<Role> shall <action> within <time limit>." Never make a Group value weaker; if a redline would, write "Exception needed".')
     sub(5, "o", "Step ticked in the work log", "A redline in the R13 frame for every gap")
     sub(5, "help", "Do only what the step says, for the rows it names. If a rule is named, follow its numbered questions in order.",
-        "Policy language is \"shall\" (BKB-POL-000 §2). Name the role that acts, as BKB-POL-006 §5 or §6 names it, the action the requirement asks for, "
-        "and a time limit. A covered row needs no redline. The frame is checked as you type; what each redline says is reviewed at checkpoint HC2.")
+        "Policy language is \"shall\" (SITL-POL-000 §2). Name the role that acts, as SITL-POL-006 §5 or §6 names it, the action the requirement asks for, "
+        "and a time limit. A covered row needs no redline. The frame is checked as you type; what each redline says is format-checked and kept with your hand-in.")
     sub(6, "t", 'Submit POL-CUR and POL-GAP. Click "Done".', "Hand in POL-CUR and POL-GAP")
     sub(6, "w", 'Submit POL-CUR and POL-GAP. Click "Done".', "Check that POL-CUR and POL-GAP have no empty cell, name the two files and submit them.")
     tool(6, "policies|Review & Redline")
@@ -935,8 +944,8 @@ def t41(w: dict) -> None:
     assert krs[1].endswith("· Activities 2–3, 5") and krs[2].startswith("KR3 — Fix location correct for every gap;"), krs
     krs[1] = krs[1].replace("· Activities 2–3, 5", "· Activities 2–3")
     krs[2] = "KR3 — Fix location and a redline in the R13 frame for every gap; POL-CUR and POL-GAP submitted · Activities 4–6"
-    # The Review & Redline screen and the task's panel listed BKB-POL-017's probes (data-subject requests, DPIAs …);
-    # the mentee's dataset POL-GAP (Datasets_M2610-00001_W04.xlsx) is BKB-POL-006's, which the task assigns.
+    # The Review & Redline screen and the task's panel listed SITL-POL-017's probes (data-subject requests, DPIAs …);
+    # the mentee's dataset POL-GAP (Datasets_M2610-00001_W04.xlsx) is SITL-POL-006's, which the task assigns.
     rows = [[r[0], r[1], r[2], "◆ Decide"] for r in w["ds"]["POL-GAP"]["r"]]
     for panel in (t["panel"], w["tp"]["policies|Review & Redline"]):
         assert panel["pl"]["r"][0][1].startswith("Data-subject requests"), panel["pl"]["r"][0]
@@ -945,16 +954,16 @@ def t41(w: dict) -> None:
         # The task's three files are worked here, POL-CUR and LI-POL as well as POL-GAP: the screen is not titled
         # after one of them.
         assert panel["tool"] == "Policies › Review & Redline (POL-GAP)", panel["tool"]
-        panel["tool"], panel["stamp"] = "Policies › Review & Redline", "BKB-POL-006 and BKB-POL-001 review"
+        panel["tool"], panel["stamp"] = "Policies › Review & Redline", "SITL-POL-006 and SITL-POL-001 review"
 
 
 def t42(w: dict) -> None:
     """T4.2 in the platform's own terms (desk-step-builder, 28 Oct 2026), keeping the pack's intent.
 
-    The mentee's SOP topic is "Approving a new cloud service" (BKB-POL-021 §6.1). Rule R14 fixes six SOP steps;
-    §6.1 gives each line a role, an output and (platform-written) a time limit, and BKB-ADD-36 §5 tightens two of
+    The mentee's SOP topic is "Approving a new cloud service" (SITL-POL-021 §6.1). Rule R14 fixes six SOP steps;
+    §6.1 gives each line a role, an output and (platform-written) a time limit, and SITL-ADD-36 §5 tightens two of
     them. Step 1 chooses each SOP step's action, step 2 its time limit, step 3 its role (the pack offered an access
-    SOP's roles), step 5 its output. LI-07 fills the document-control block and life-cycle from BKB-POL-000 §7.1
+    SOP's roles), step 5 its output. LI-07 fills the document-control block and life-cycle from SITL-POL-000 §7.1
     (platform-written) and the mandatory-documents register; Ref-Locations' "Document or record" column, the key of
     step 9, leaves the browser. Steps 6 and 10 hand the files in where they were filled. Text read before a decision
     is answered no longer states its outcome. Listed in docs/GRC101_Content_Corrections.md (item 58).
@@ -983,71 +992,71 @@ def t42(w: dict) -> None:
     # Step 1: open the template and choose, for each of R14's six steps, the §6.1 line that carries it out.
     old1 = "Open the SOP template. The six steps are already written (rule R14)."
     sub(1, "t", old1, "Choose the action of each SOP step")
-    sub(1, "w", old1, "Open the SOP template: its six steps are fixed by rule R14. For each step, choose the action of BKB-POL-021 §6.1 that carries it out.")
+    sub(1, "w", old1, "Open the SOP template: its six steps are fixed by rule R14. For each step, choose the action of SITL-POL-021 §6.1 that carries it out.")
     sub(1, "o", "Step ticked in the work log", "Action chosen for the 6 steps of SOP-DOC")
     old1h = "Open what the step names. Your inputs are in the task folder 01_Inputs; the reference pages are under Learn › Reference. Read before you write anything. "
-    sub(1, "help", old1h, "BKB-POL-021 §6.1 (Policies › Policy Library) is the procedure your SOP implements; it has seven lines and the SOP six steps, so one line has no step of its own. "
+    sub(1, "help", old1h, "SITL-POL-021 §6.1 (Policies › Policy Library) is the procedure your SOP implements; it has seven lines and the SOP six steps, so one line has no step of its own. "
         "For each SOP step choose the §6.1 action that does what the step's name says. " + CHECK + " ")
-    steps[0]["refs"]["docs"] = [["BKB-POL-021", ["6.1"]]]
+    steps[0]["refs"]["docs"] = [["SITL-POL-021", ["6.1"]]]
     # Step 2: D1, then each step's time limit. The pack's "Then" sent the mentee to find the clause their task page names.
-    old2 = 'Open the source document named on your task page (BKB-POL-021 §6.1). Find the clause for "Approving a new cloud service".'
-    sub(2, "w", "Then: " + old2, "Then: record the time limit of each SOP step, from BKB-POL-021 §6.1 and BKB-ADD-36 §5.")
-    sub(2, "help", "Then do the step that follows: " + old2, "Then record each SOP step's time limit: BKB-POL-021 §6.1 gives one for each line, and BKB-ADD-36 §5 lists LearnTech's own values for some of them. " + CHECK)
+    old2 = 'Open the source document named on your task page (SITL-POL-021 §6.1). Find the clause for "Approving a new cloud service".'
+    sub(2, "w", "Then: " + old2, "Then: record the time limit of each SOP step, from SITL-POL-021 §6.1 and SITL-ADD-36 §5.")
+    sub(2, "help", "Then do the step that follows: " + old2, "Then record each SOP step's time limit: SITL-POL-021 §6.1 gives one for each line, and SITL-ADD-36 §5 lists LearnTech's own values for some of them. " + CHECK)
     sub(2, "o", "Decision T4.2-D1 recorded with the rule used", "Decision T4.2-D1 checked; the time limit of each SOP step recorded")
-    steps[1]["refs"]["docs"] = [["BKB-POL-021", ["6.1"]], ["BKB-ADD-36", ["5"]]]
+    steps[1]["refs"]["docs"] = [["SITL-POL-021", ["6.1"]], ["SITL-ADD-36", ["5"]]]
     # Step 3: the pack's options (Requester, System owner, IAM team, Control owner) are an access SOP's; this SOP's
-    # roles are BKB-POL-021's.
-    sub(3, "w", "Options: A) Requester  B) System owner  C) IAM team  D) Control owner. Guidance: the policy RACI table.", "Guidance: the Responsible column of BKB-POL-021 §6.1.")
+    # roles are SITL-POL-021's.
+    sub(3, "w", "Options: A) Requester  B) System owner  C) IAM team  D) Control owner. Guidance: the policy RACI table.", "Guidance: the Responsible column of SITL-POL-021 §6.1.")
     steps[2]["opt"] = sorted(["Business owner", "Cloud operations", "Internal Audit", "Org CISO", "Security Architect", "Security Architecture & Standards Manager", "Vendor / Third-Party Risk Analyst"])
     sub(3, "o", "Per-row decisions recorded in SOP-DOC", "Responsible role chosen for the 6 steps of SOP-DOC")
     sub(3, "help", "Choose from the options shown — nothing is written from nothing. The platform scores each row against the key after you submit.",
-        "The role is the one BKB-POL-021 §6.1 names for the line the step carries out. " + CHECK)
-    steps[2]["refs"]["docs"] = [["BKB-POL-021", ["6.1"]]]
+        "The role is the one SITL-POL-021 §6.1 names for the line the step carries out. " + CHECK)
+    steps[2]["refs"]["docs"] = [["SITL-POL-021", ["6.1"]]]
     # Step 4: the policy's RACI table is §5, Roles and responsibilities.
     old4 = "Copy the RACI roles from the policy RACI table."
     sub(4, "t", old4, "Copy the policy's roles into the SOP's RACI")
-    sub(4, "w", old4, "Copy the policy's roles table, BKB-POL-021 §5, into the SOP's RACI: for each role, choose its responsibility as §5 writes it.")
-    sub(4, "o", "Values copied with evidence ref", "The 8 roles of BKB-POL-021 §5 copied with their responsibilities")
+    sub(4, "w", old4, "Copy the policy's roles table, SITL-POL-021 §5, into the SOP's RACI: for each role, choose its responsibility as §5 writes it.")
+    sub(4, "o", "Values copied with evidence ref", "The 8 roles of SITL-POL-021 §5 copied with their responsibilities")
     sub(4, "help", "Copy the value exactly as it is written in the source — same spelling, same numbers. Then write where you found it (document and section, or row ID) in the Evidence ref column.",
-        "BKB-POL-021 §5, Roles and responsibilities, is the policy's RACI table: one row per role. Choose each role's responsibility as §5 writes it. " + CHECK)
-    steps[3]["refs"]["docs"] = [["BKB-POL-021", ["5"]]]
+        "SITL-POL-021 §5, Roles and responsibilities, is the policy's RACI table: one row per role. Choose each role's responsibility as §5 writes it. " + CHECK)
+    steps[3]["refs"]["docs"] = [["SITL-POL-021", ["5"]]]
     # Step 5: D3, then the outputs (the records the SOP leaves) and the exception step. Read before D3 is answered, the
     # text names no escalation contact.
     old5 = "Copy the records list and the escalation contact from the policy."
-    sub(5, "w", "Then: " + old5, "Then: record what each SOP step produces, from BKB-POL-021 §6.1, and complete the last step from §8.")
-    sub(5, "help", "Then do the step that follows: " + old5, "Then record what each SOP step produces (its output: the record it leaves), from BKB-POL-021 §6.1, and complete the last step from §8. " + CHECK)
+    sub(5, "w", "Then: " + old5, "Then: record what each SOP step produces, from SITL-POL-021 §6.1, and complete the last step from §8.")
+    sub(5, "help", "Then do the step that follows: " + old5, "Then record what each SOP step produces (its output: the record it leaves), from SITL-POL-021 §6.1, and complete the last step from §8. " + CHECK)
     sub(5, "o", "Decision T4.2-D3 recorded with the rule used", "Decision T4.2-D3 checked; the output of each SOP step recorded")
-    steps[4]["refs"]["docs"] = [["BKB-POL-021", ["6.1", "8"]]]
+    steps[4]["refs"]["docs"] = [["SITL-POL-021", ["6.1", "8"]]]
     sub(6, "t", 'Submit SOP-DOC. Click "Done".', "Hand in SOP-DOC")
     sub(6, "w", 'Submit SOP-DOC. Click "Done".', "Check that SOP-DOC has no empty cell, name the file and submit it.")
     tool(6, "policies|New from Template")
-    # Step 7: D4, then the document-control block by BKB-POL-000 §7.1 (platform-written).
+    # Step 7: D4, then the document-control block by SITL-POL-000 §7.1 (platform-written).
     old7 = "Copy the metadata block from the template to the top of your SOP. Fill ID, version, owner, approver, dates, label."
-    sub(7, "w", "Then: " + old7, "Then: fill your SOP's document-control block (ID, version, owner, approver, dates, label) by BKB-POL-000 §7.1.")
-    sub(7, "help", "Then do the step that follows: " + old7, "Then fill the SOP's document-control block, field by field, by the rules of BKB-POL-000 §7.1. " + CHECK)
-    sub(7, "o", "Decision T4.2-D4 recorded with the rule used", "Decision T4.2-D4 checked; the SOP's document-control block filled (BKB-POL-000 §7.1)")
-    steps[6]["refs"]["docs"] = [["BKB-POL-000", ["7.1", "2", "3"]]]
-    # Step 8: the life-cycle's roles, from BKB-POL-000 §7.1 (platform-written; the pack's "template" text does not exist).
+    sub(7, "w", "Then: " + old7, "Then: fill your SOP's document-control block (ID, version, owner, approver, dates, label) by SITL-POL-000 §7.1.")
+    sub(7, "help", "Then do the step that follows: " + old7, "Then fill the SOP's document-control block, field by field, by the rules of SITL-POL-000 §7.1. " + CHECK)
+    sub(7, "o", "Decision T4.2-D4 recorded with the rule used", "Decision T4.2-D4 checked; the SOP's document-control block filled (SITL-POL-000 §7.1)")
+    steps[6]["refs"]["docs"] = [["SITL-POL-000", ["7.1", "2", "3"]]]
+    # Step 8: the life-cycle's roles, from SITL-POL-000 §7.1 (platform-written; the pack's "template" text does not exist).
     old8 = "Copy the 7-line life-cycle text from the template."
     sub(8, "t", old8, "Record who does each stage of the SOP's life-cycle")
-    sub(8, "w", LI + old8, LI + "For each of the seven stages of your SOP's life-cycle, record who does it, by BKB-POL-000 §7.1, naming each role as it is held for BKB-POL-021.")
+    sub(8, "w", LI + old8, LI + "For each of the seven stages of your SOP's life-cycle, record who does it, by SITL-POL-000 §7.1, naming each role as it is held for SITL-POL-021.")
     sub(8, "o", "Values copied with evidence ref", "Who does each of the 7 life-cycle stages recorded")
     sub(8, "help", "Copy the value exactly as it is written in the source — same spelling, same numbers. Then write where you found it (document and section, or row ID) in the Evidence ref column.",
-        "BKB-POL-000 §7.1's second table gives the role for each stage. Where it says Policy owner, record the role that owns BKB-POL-021 (BKB-POL-000 §3). " + CHECK)
-    steps[7]["refs"]["docs"] = [["BKB-POL-000", ["7.1", "3"]]]
+        "SITL-POL-000 §7.1's second table gives the role for each stage. Where it says Policy owner, record the role that owns SITL-POL-021 (SITL-POL-000 §3). " + CHECK)
+    steps[7]["refs"]["docs"] = [["SITL-POL-000", ["7.1", "3"]]]
     # Step 9: Document or Record from the standard's own words (Framework Quick Reference), then the location.
-    sub(9, "w", "decide Document or Record. Options:", "decide Document or Record, then copy where BKB keeps it from Ref-Locations. Options:")
-    sub(9, "o", "Per-row decisions recorded in SOP-DOC", "Document or Record decided, and the BKB location recorded, for the 14 rows of LI-DOC")
+    sub(9, "w", "decide Document or Record. Options:", "decide Document or Record, then copy where SITL keeps it from Ref-Locations. Options:")
+    sub(9, "o", "Per-row decisions recorded in SOP-DOC", "Document or Record decided, and the SITL location recorded, for the 14 rows of LI-DOC")
     sub(9, "help", "Choose from the options shown — nothing is written from nothing. The platform scores each row against the key after you submit.",
         "Read each row's documented information against Learn › Framework Quick Reference › ISO/IEC 27001 documented information: does the standard ask for it to be maintained, or retained? "
-        "Then copy its BKB library location from Ref-Locations (Learn › Reference pages), by clause. " + CHECK)
+        "Then copy its SITL library location from Ref-Locations (Learn › Reference pages), by clause. " + CHECK)
     sub(10, "t", 'Submit LI-DOC. Click "Done".', "Hand in LI-DOC")
     sub(10, "w", LI + 'Submit LI-DOC. Click "Done".', LI + "Check that LI-DOC has no empty cell, name the file and submit it.")
     tool(10, "policies|New from Template")
     # KR1 and the card said "the stricter source" and "addenda may only tighten": D1's answer, read before it is asked.
     krs = t["krs"]
-    assert krs[0].startswith("KR1 — Every time limit taken from the stricter source (BKB-ADD-36 §5 over the policy)"), krs[0]
-    krs[0] = "KR1 — Every SOP step's action and time limit taken from BKB-POL-021 §6.1 or BKB-ADD-36 §5 · Activities 1–2"
+    assert krs[0].startswith("KR1 — Every time limit taken from the stricter source (SITL-ADD-36 §5 over the policy)"), krs[0]
+    krs[0] = "KR1 — Every SOP step's action and time limit taken from SITL-POL-021 §6.1 or SITL-ADD-36 §5 · Activities 1–2"
     oldl = "Find the LOW-band parameter for an office and know that addenda may only tighten"
     newl = "Find the parameter an addendum sets for an office, and how it stands against the Group policy"
     learn = t["card"]["What will I learn"]
@@ -1082,7 +1091,7 @@ def t42(w: dict) -> None:
         return [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", name)]
     qr.sort(key=by_name)
     for d in w["library"]["docs"]:
-        if d[0] == "BKB-POL-000":
+        if d[0] == "SITL-POL-000":
             secs = [x[0] for x in d[2]]
             d[2].insert(secs.index("7") + 1, ["7.1", "Document control of procedures"])
 
@@ -1093,7 +1102,7 @@ def t51(w: dict) -> None:
     PBC-LIST is built on the mentee's dataset PBC-6 (the panel showed another six controls). The platform copies each
     control in; step 1 chooses the evidence each request asks for (the engine's own first step), step 2 copies the
     system, step 3 the R15 sample, step 4 the owner (the pack's "Owner option 1–3" placeholders become a shortlist from
-    the GRC Charter §16 RACI), steps 5 and 6 the R16 due date and R17's criteria after their questions. BKB-POL-016 §6.2
+    the GRC Charter §16 RACI), steps 5 and 6 the R16 due date and R17's criteria after their questions. SITL-POL-016 §6.2
     and §7.1 are platform-written. LI-08 fills LI-CERT from the Ref-Certification card. Text read before a question no
     longer states its answer. Steps 7 and 13 hand the files in where they were filled. Corrections item 60.
     """
@@ -1147,10 +1156,10 @@ def t51(w: dict) -> None:
     # Step 1: the platform copies the controls in; the mentee chooses what each request asks for.
     old1 = "Open dataset PBC-6. Copy the six controls into the template."
     sub(1, "t", old1, "Choose the evidence each request asks for")
-    sub(1, "w", old1, "Dataset PBC-6 lists the six controls in scope of the audit, and PBC-LIST has a request for each. For each control, choose the evidence that shows it operated during the audit period, by BKB-POL-016 §6.2.")
+    sub(1, "w", old1, "Dataset PBC-6 lists the six controls in scope of the audit, and PBC-LIST has a request for each. For each control, choose the evidence that shows it operated during the audit period, by SITL-POL-016 §6.2.")
     sub(1, "o", "Values copied with evidence ref", "Evidence requested chosen for the 6 requests of PBC-LIST")
-    sub(1, "help", OPEN, "BKB-POL-016 §6.2 (Policies › Policy Library) says what a request asks for. Read each control's description and choose the evidence that shows it ran. " + CHECK)
-    steps[0]["refs"]["docs"] = [["BKB-POL-016", ["6.2"]]]
+    sub(1, "help", OPEN, "SITL-POL-016 §6.2 (Policies › Policy Library) says what a request asks for. Read each control's description and choose the evidence that shows it ran. " + CHECK)
+    steps[0]["refs"]["docs"] = [["SITL-POL-016", ["6.2"]]]
     # Step 2: the system is copied; the period is the task's own input, written by the platform.
     old2t = "For each control copy the system and write the period 2025-09-05 to 2…"
     sub(2, "t", old2t, "Copy each control's system from dataset PBC-6")
@@ -1159,23 +1168,23 @@ def t51(w: dict) -> None:
     sub(2, "o", "Values copied with evidence ref", "System copied for the 6 requests; population and period recorded")
     sub(2, "help", "Repeat the same small action for every row the step names, one row at a time, and write the source next to each value.",
         "Open Evidence › Audit Requests (PBC) from the toolbar: dataset PBC-6 opens beside your list. Copy each control's System as written there. A value that is not the dataset's is flagged with where to read it.")
-    steps[1]["refs"]["docs"] = [["BKB-POL-016", ["6.2"]]]
+    steps[1]["refs"]["docs"] = [["SITL-POL-016", ["6.2"]]]
     # Step 3: R15. The help's "random seed … Select sample" names a feature the platform does not have.
     sub(3, "help", "Choose from the options shown — nothing is written from nothing. The platform scores each row against the key after you submit. Rule R15 (Sample size): Look up the control frequency in Ref-Sampling and copy the minimum sample. Select the sample with the random seed shown on your task page (the platform does the selection when you click \"Select sample\"). Reference page (Learn › Reference): Ref-Sampling.",
         "Rule R15: find the control's frequency in dataset PBC-6 (Evidence › Audit Requests (PBC)), then its minimum sample in Ref-Sampling (Learn › Reference pages). " + CHECK)
     sub(3, "o", "Per-row decisions recorded in PBC-LIST", "Minimum sample chosen for the 6 requests of PBC-LIST")
     # Step 4: the pack's options were placeholders ("Owner option 1–3"); each row offers a shortlist of three roles
-    # from the GRC Charter §16 RACI, which BKB-POL-016 §6.2 names (platform-written). Worked on the list itself.
+    # from the GRC Charter §16 RACI, which SITL-POL-016 §6.2 names (platform-written). Worked on the list itself.
     sub(4, "w", "Options: A) Owner option 1  B) Owner option 2  C) Owner option 3. Guidance: asset register / RACI.",
-        "Options: A) the three roles shortlisted in each row. Guidance: the RACI of the GRC Charter, §16, as BKB-POL-016 §6.2 says.")
+        "Options: A) the three roles shortlisted in each row. Guidance: the RACI of the GRC Charter, §16, as SITL-POL-016 §6.2 says.")
     steps[3]["opt"] = sorted({"Security Awareness & Training Specialist", "Chief Information Security Officer (CISO)", "Compliance Manager", "Vulnerability Management Governance Analyst",
                               "Cyber Risk Manager", "Privacy Compliance Analyst", "Data Protection Officer (DPO)", "Vendor / Third-Party Risk Analyst",
                               "Cyber Threat Intelligence Analyst", "Incident Response & Crisis Manager", "Information Security Auditor"})
     sub(4, "help", "Choose from the options shown — nothing is written from nothing. The platform scores each row against the key after you submit.",
-        "Each row shortlists three roles. BKB-POL-016 §6.2 says which role a request goes to, and the GRC Charter §16 (Policies › Policy Library) is the RACI it names: find the process each control belongs to. " + CHECK)
+        "Each row shortlists three roles. SITL-POL-016 §6.2 says which role a request goes to, and the GRC Charter §16 (Policies › Policy Library) is the RACI it names: find the process each control belongs to. " + CHECK)
     sub(4, "o", "Per-row decisions recorded in PBC-LIST", "Owner chosen for the 6 requests of PBC-LIST")
     tool(4, PBC)
-    steps[3]["refs"]["docs"] = [["BKB-POL-016", ["6.2"]], ["Charter", ["7.1", "16"]]]
+    steps[3]["refs"]["docs"] = [["SITL-POL-016", ["6.2"]], ["Charter", ["7.1", "16"]]]
     # Step 5: D3, then R16 worked out in its steps (period end, fieldwork start, due date); the list takes the due date.
     sub(5, "w", "Then: Apply rule R16. Write the due date.", "Then: by rule R16, work out when the audit period ends, when fieldwork starts and when your requests are due.")
     sub(5, "help", "Then do the step that follows: Apply rule R16. Write the due date.", "Then work out R16's dates for your list, one line at a time; the due date then goes on every request. " + CHECK)
@@ -1230,7 +1239,7 @@ def t51(w: dict) -> None:
     assert rep(w["cards"]["T5.1"], old_s, "Sampling guide — Programme sampling table (Learn › Reference pages › Ref-Sampling)") == 1
     # Owners come from the Charter's RACI: the asset register lists no owner for these systems.
     old_o = "Find the control owner in the asset register / RACI — see Asset register; policy RACI tables"
-    new_o = "Find the control owner in the RACI — see GRC Charter §16; BKB-POL-016 §6.2"
+    new_o = "Find the control owner in the RACI — see GRC Charter §16; SITL-POL-016 §6.2"
     assert rep(t, old_o, new_o) == 1 and rep(w["cards"]["T5.1"], old_o, new_o) == 1
     assert rep(t["inputs"], "Asset register (synthetic) for owners", "GRC Charter §16 RACI for owners") == 1
     # LI-08's card stated D6's and D7's answers and the criteria's order, read before they are asked.
@@ -1243,7 +1252,7 @@ def t51(w: dict) -> None:
     assert rep(li, old_i, new_i) == 1 and rep(w["licards"]["LI-08"], old_i, new_i) == 1
     old_c = "(accreditation by an IAF-member accreditation body to ISO/IEC 17021-1 and ISO/IEC 27006-1; sector experience; auditor competence; languages/offices; cost)"
     assert rep(li, old_c, "(the five criteria of the Ref-Certification card, in its order)") == 1
-    # BKB-POL-016's text is on the platform now (public/desk/docs/BKB-POL-016.md, platform-written).
+    # SITL-POL-016's text is on the platform now (public/desk/docs/SITL-POL-016.md, platform-written).
 
 
 def t52(w: dict) -> None:
@@ -1252,7 +1261,7 @@ def t52(w: dict) -> None:
     Two files, as the task hands them in: EVP-IDX (the 42 files of dataset EVP-REPO, sorted by control) and EVP-GAP (one
     row per PBC request). Step 1 counts the files received per control (EVP-GAP), step 2 walks rule R09 on every file and
     records every failed code, step 3 indexes each accepted file to its PBC-LIST request, step 4 applies R18 per control,
-    step 5 writes R18's follow-up sentence for each gap. BKB-POL-016 Section 6.2 gains the follow-up's due date
+    step 5 writes R18's follow-up sentence for each gap. SITL-POL-016 Section 6.2 gains the follow-up's due date
     (platform-written). The screens show the mentee's dataset (the panel showed 14 files of other controls). Corrections
     item 61.
     """
@@ -1324,21 +1333,21 @@ def t52(w: dict) -> None:
     tool(4, LINK)
     sub(4, "help", SCORE, "EVP-GAP lists each control's files with the decision step 2 checked. " + CHECK)
     sub(4, "o", "Per-row decisions recorded in EVP-IDX", "Gap or No gap decided for the 6 controls of EVP-GAP")
-    # Step 5: R18's sentence for each gap; the due date is BKB-POL-016 Section 6.2's (platform-written).
+    # Step 5: R18's sentence for each gap; the due date is SITL-POL-016 Section 6.2's (platform-written).
     tool(5, LINK)
     sub(5, "t", "Write one request sentence for each gap control in EVP-GAP.", "Write the follow-up request for each gap")
     sub(5, "w", "Write one request sentence for each gap control in EVP-GAP.",
-        "Write one follow-up request for each control with a gap, in the words of rule R18. BKB-POL-016 Section 6.2 says when it is due.")
+        "Write one follow-up request for each control with a gap, in the words of rule R18. SITL-POL-016 Section 6.2 says when it is due.")
     sub(5, "help", "Copy the value exactly as it is written in the source — same spelling, same numbers. Then write where you found it (document and section, or row ID) in the Evidence ref column.",
-        "Rule R18 (Learn › Rule tables) gives the sentence. BKB-POL-016 Section 6.2 (Policies › Policy Library) says by when the missing files must arrive; rule R16 says when fieldwork starts. " + CHECK)
+        "Rule R18 (Learn › Rule tables) gives the sentence. SITL-POL-016 Section 6.2 (Policies › Policy Library) says by when the missing files must arrive; rule R16 says when fieldwork starts. " + CHECK)
     sub(5, "o", "EVP-GAP updated", "Follow-up request written for each control with a gap")
-    steps[4]["refs"]["docs"] = [["BKB-POL-016", ["6.2"]]]
+    steps[4]["refs"]["docs"] = [["SITL-POL-016", ["6.2"]]]
     steps[4]["refs"]["rules"] = ["R18", "R16"]
     # Step 6: handed in where the files were filled.
     sub(6, "t", 'Submit EVP-IDX and EVP-GAP. Click "Done".', "Hand in EVP-IDX and EVP-GAP")
     sub(6, "w", 'Submit EVP-IDX and EVP-GAP. Click "Done".', "Check that EVP-IDX and EVP-GAP have no empty cell, name the two files and submit them.")
     tool(6, LIB)
-    # BKB-POL-016's Section 6.2 follow-up paragraph is on the platform (public/desk/docs/BKB-POL-016.md, platform-written).
+    # SITL-POL-016's Section 6.2 follow-up paragraph is on the platform (public/desk/docs/SITL-POL-016.md, platform-written).
 
 
 def t61(w: dict) -> None:
@@ -1370,7 +1379,7 @@ def t61(w: dict) -> None:
         sec, name = key.split("|")
         s["key"], s["sec"], s["tool"] = key, sec, f"{w['sections'][sec]['t']} › {name}"
 
-    uar = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "uar-t61.json").read_text(encoding="utf8"))
+    uar = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "uar-t61.json").read_text(encoding="utf8"))
     ex, hr = w["ds"]["UAR-EXTRACT"], w["ds"]["HR-ROSTER"]
     assert ex["n"] == 216 and len(ex["r"]) == 60, (ex["n"], len(ex["r"]))
     assert [r[:12] for r in uar["extract"]["r"][:60]] == ex["r"] and uar["hr"]["r"][:60] == hr["r"], "the pack's first 60 accounts changed"
@@ -1389,7 +1398,7 @@ def t61(w: dict) -> None:
     sod = w["ds"]["SOD-MATRIX"]["r"][0]
     tp["access|Start Review"] = {"tool": "Access Reviews › Start Review", "stamp": "Campaign", "kind": "form", "pl": {"f": [
         ["System", "Mitratech TeamConnect"], ["Asset", "Matter & litigation management (Legal & Corporate Affairs, Manila)"],
-        ["Criticality (CLS-RES, F2.1)", "Business Critical"], ["Review frequency (BKB-POL-006 Section 4)", "Semi-annual"],
+        ["Criticality (CLS-RES, F2.1)", "Business Critical"], ["Review frequency (SITL-POL-006 Section 4)", "Semi-annual"],
         ["Population", f"{len(X)} accounts (dataset UAR-EXTRACT)"], ["Review date", review], ["Reviewer", "Asset owner (department head)"],
         ["Registered break-glass accounts", "None registered for this system"], ["Test plan", "A1–A6, fixed (UAR-TEST Sheet 1)"]],
         "wide": [["SoD matrix", f"{sod[0]}: {sod[1].lower()}"]]}}
@@ -1518,7 +1527,7 @@ def t62(w: dict) -> None:
         sec, name = key.split("|")
         s["key"], s["sec"], s["tool"] = key, sec, f"{w['sections'][sec]['t']} › {name}"
 
-    lvr = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "lvr-t62.json").read_text(encoding="utf8"))
+    lvr = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "lvr-t62.json").read_text(encoding="utf8"))
     ds = w["ds"]["LVR-DATA"]
     assert ds["n"] == 145 and len(ds["r"]) == 60, (ds["n"], len(ds["r"]))
     first = {r[0]: r for r in lvr["leavers"]}
@@ -1543,14 +1552,14 @@ def t62(w: dict) -> None:
     sub(1, "w", old1, "Open LVR-REC Sheet 1. For each system, read how its disable log on Access Reviews › Terminated User Check writes the time, and choose what turns it into UTC. Once your answers are checked, the platform converts the times.")
     sub(1, "o", "Step ticked in the work log", "Conversion to UTC checked for the 5 system logs")
     sub(1, "help", "Do exactly what the step says, one action at a time; the step names its source and its output.",
-        "HR records each termination in UTC (BKB-POL-006 Section 6.3, step 1). A disable time can only be compared with it once it is in UTC too. " + CHECK)
+        "HR records each termination in UTC (SITL-POL-006 Section 6.3, step 1). A disable time can only be compared with it once it is in UTC too. " + CHECK)
     # Step 2: "use the Match button" becomes the match itself: the leavers each log has no line for.
     old2 = 'Match each leaver to each system log by employee ID (use the "Match" button).'
     sub(2, "t", 'Match each leaver to each system log by employee ID (use the "Match" …', "Match the leavers to each system's log")
     sub(2, "w", old2, "Match HR's leavers to each system's disable log by Employee ID. For each system, record the leavers it has no disable line for: their accounts are still active.")
     sub(2, "o", "Step ticked in the work log", "Leavers with no disable line checked for the 5 system logs")
     sub(2, "help", "Do exactly what the step says, one action at a time; the step names its source and its output.",
-        "Finding the leavers whose accounts were never disabled is what the weekly reconciliation is for (BKB-POL-006 Section 6.3, step 3). " + CHECK)
+        "Finding the leavers whose accounts were never disabled is what the weekly reconciliation is for (SITL-POL-006 Section 6.3, step 3). " + CHECK)
     # Step 3: the options without their bracketed leaver type, which answered each row by itself.
     sub(3, "t", "Decide for each row: For each leaver, decide which SLA applies", "Set each leaver's SLA (R21)")
     sub(3, "w", "Options: A) 4 hours (voluntary)  B) 1 hour (involuntary).", "Options: A) 4 hours  B) 1 hour.")
@@ -1573,20 +1582,20 @@ def t62(w: dict) -> None:
         " Once your answer is checked, the platform writes rule R20's action into LVR-REC Sheet 2 for each account still active.")
     sub(5, "o", "Decision T6.2-D3 recorded with the rule used", "Decision T6.2-D3 checked")
     steps[4]["refs"]["rules"], steps[4]["refs"]["pages"] = [], []
-    # Step 6: the KPI worked out (R21) against BKB-POL-006 Section 10's target; handed in where the files were filled.
+    # Step 6: the KPI worked out (R21) against SITL-POL-006 Section 10's target; handed in where the files were filled.
     old6 = 'Calculate the KPI. Submit LVR-REC and LVR-KPI. Click "Done".'
     sub(6, "t", old6, "Work out the leaver KPI and hand in LVR-REC and LVR-KPI")
-    sub(6, "w", old6, "Work out the KPI with rule R21: its numerator, its denominator and the percentage, and whether it meets the target of BKB-POL-006 Section 10. Once your answers are checked, name LVR-REC and LVR-KPI and submit them.")
+    sub(6, "w", old6, "Work out the KPI with rule R21: its numerator, its denominator and the percentage, and whether it meets the target of SITL-POL-006 Section 10. Once your answers are checked, name LVR-REC and LVR-KPI and submit them.")
     sub(6, "help", "Do only what the step says, for the rows it names. If a rule is named, follow its numbered questions in order.",
         "Count the leavers LVR-REC Sheet 2 marks fully disabled within the SLA, and all the leavers, then apply rule R21. " + CHECK + " Then name the two files and submit them.")
     steps[5]["refs"]["rules"] = ["R21"]
-    steps[5]["refs"]["docs"] = [["BKB-POL-006", ["10"]]]
+    steps[5]["refs"]["docs"] = [["SITL-POL-006", ["10"]]]
     for n in (1, 2, 3, 4, 6):
         tool(n, KEY)
     # The card's "What will I learn" states D3's answer ("raise an incident when access was used after termination"), read
     # before the question.
     old_l = "Choose the standard action for an exception and raise an incident when access was used after termination — see Rule R20; Ref-Actions U1"
-    new_l = "Decide the action for an account used after termination — see BKB-POL-006 Section 6.3; Rule R20"
+    new_l = "Decide the action for an account used after termination — see SITL-POL-006 Section 6.3; Rule R20"
     learn = t["card"]["What will I learn"]
     assert old_l in learn, learn
     learn[learn.index(old_l)] = new_l
@@ -1613,7 +1622,7 @@ def t71(w: dict) -> None:
     t = w["tasks"]["T7.1"]
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T7.1"]}
-    rru = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "rru-t71.json").read_text(encoding="utf8"))
+    rru = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "rru-t71.json").read_text(encoding="utf8"))
     assert [r[:4] for r in w["ds"]["RRU-EVENTS"]["r"]] == rru["events"], "the pack's events changed"
     assert [r[0] for r in w["ds"]["OFFICE-REGISTER"]["r"]] == [r[0] for r in rru["register"]], "the pack's register changed"
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
@@ -1666,10 +1675,10 @@ def t71(w: dict) -> None:
         help="Rule R06 (Learn › Rule tables) gives the frame. Read each draft against the event's facts in RRU-EVENTS: is each part the right fact, in its place, and is the asset the one the event names? " + CHECK,
         refs=refs(rules=["R06"], ds=["RRU-EVENTS"]))
     put(3, "Decide for each row: For each new risk, decide likelihood and impact", t="Rate each new risk (R07)", opt=["1", "2", "3", "4", "5"],
-        w="For each new risk, score its inherent likelihood, its inherent impact and its residual likelihood with rule R07, from the facts on each line and the scales of BKB-ERM-001 Sections 6.2 and 6.3.",
+        w="For each new risk, score its inherent likelihood, its inherent impact and its residual likelihood with rule R07, from the facts on each line and the scales of SITL-ERM-001 Sections 6.2 and 6.3.",
         o="Ratings checked for N1 to N3 (9 lines)",
-        help="Rule R07 (Learn › Rule tables): find the descriptor that uses the same words as the fact and write its number; the residual likelihood counts the existing controls marked working. The scales are BKB-ERM-001 Sections 6.2 and 6.3 (Policies › Policy Library). The platform then works out each score and rating. " + CHECK,
-        refs=refs(rules=["R07"], docs=[["BKB-ERM-001", ["6.2–6.4"]]]))
+        help="Rule R07 (Learn › Rule tables): find the descriptor that uses the same words as the fact and write its number; the residual likelihood counts the existing controls marked working. The scales are SITL-ERM-001 Sections 6.2 and 6.3 (Policies › Policy Library). The platform then works out each score and rating. " + CHECK,
+        refs=refs(rules=["R07"], docs=[["SITL-ERM-001", ["6.2–6.4"]]]))
     put(4, "Decide for each row: For each risk, choose the acceptance authority", t="Set each new risk's acceptance authority (R36)",
         w="For each new risk, choose who may accept it: rule R36, on its residual rating. Use R36's table even where the register's other rows show a different value.",
         o="Acceptance authority checked for the 3 new risks",
@@ -1677,14 +1686,14 @@ def t71(w: dict) -> None:
     put(5, "Decide for each row: For each risk, choose the matching ISO/IEC 27001 controls", t="Choose each new risk's ISO/IEC 27001 controls (Ref-Keywords)", opt=None,
         w="For each new risk, find the key words of its category in Ref-Keywords (Learn › Reference pages) and choose the Annex A controls of that row.",
         o="Controls checked for the 3 new risks",
-        help="Ref-Keywords lists key words, the BKB policy that covers them and its Annex A controls. Match the words of the risk's category. " + CHECK)
+        help="Ref-Keywords lists key words, the SITL policy that covers them and its Annex A controls. Match the words of the risk's category. " + CHECK)
     # "Repeat for N2 and N3": steps 2-5 already work on all three events. The rows are completed with rule R08 (the pack's
     # guided step "Rate with rule R07. Apply rule R08." and its KR2, "decisions/due dates correct").
     put(6, "Repeat for N2 and N3", t="Set each new risk's decision and due days (R08)",
-        w="Rule R08: compare each new risk's residual score with the appetite and choose its decision. A risk to treat takes the due days of its residual rating (BKB-ERM-001 Section 7).",
+        w="Rule R08: compare each new risk's residual score with the appetite and choose its decision. A risk to treat takes the due days of its residual rating (SITL-ERM-001 Section 7).",
         o="Decision and due checked for the 3 new risks",
-        help="Rule R08 (Learn › Rule tables) gives the appetite and the decision; BKB-ERM-001 Section 7 (Policies › Policy Library) the due days. " + CHECK,
-        refs=refs(rules=["R08"], docs=[["BKB-ERM-001", ["7"]]]))
+        help="Rule R08 (Learn › Rule tables) gives the appetite and the decision; SITL-ERM-001 Section 7 (Policies › Policy Library) the due days. " + CHECK,
+        refs=refs(rules=["R08"], docs=[["SITL-ERM-001", ["7"]]]))
     old7 = 'Then: Apply events C1 and C2 to the rows named in "Applies to". Add change-log rows (R22).'
     new7 = 'Then: Apply events C1 and C2 to the rows named in "Applies to": for each, choose the change it makes. The change log (R22) records it, field by field.'
     assert old7 in steps[6]["w"], steps[6]["w"]
@@ -1696,7 +1705,7 @@ def t71(w: dict) -> None:
     put(8, "Decide: Which risks go", w=steps[7]["w"].replace(old8, "Then: Complete RR-NOTE: list the risks above appetite, and the rows whose acceptance authority is not the one rule R36 gives. The new and changed risks are listed for you."),
         o="Decision T7.1-D6 checked; RR-NOTE completed",
         help=steps[7]["help"].replace("Then do the step that follows: Complete the update-note template (it lists new risks, changed risks and risks above 11 — copy them).",
-                                      "Then complete RR-NOTE from the register on Risk Register › Score Risk and your own three rows.") + " BKB-ERM-001 Section 4 (Policies › Policy Library) sets the appetite.")
+                                      "Then complete RR-NOTE from the register on Risk Register › Score Risk and your own three rows.") + " SITL-ERM-001 Section 4 (Policies › Policy Library) sets the appetite.")
     steps[7]["refs"]["docs"] = []  # Section 4 answers the question only: DECIDE_FROM in registers.ts
     steps[7]["refs"]["rules"] = ["R36"]
     put(9, "Submit RR-UPD and RR-NOTE", t="Hand in RR-UPD and RR-NOTE", w="Check RR-UPD (the register and its change log) and RR-NOTE for empty cells, name RR-UPD and submit both.")
@@ -1732,7 +1741,7 @@ def t71(w: dict) -> None:
     put(17, "Copy owner and due days", t="Set each action's due date (R08)",
         w=LI9 + f"Each action's owner is the risk's owner in RR-UPD, copied for you. Rule R08 gives the due days of a risk to treat by its residual rating: count them from the plan's date, {rru['plan']}, and pick the due date. A retained risk has none: tick none.",
         o="Due date checked for the 3 actions",
-        help="Rule R08 (Learn › Rule tables) and BKB-ERM-001 Section 7 (Policies › Policy Library) give the days. Count calendar days. " + CHECK + " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable.")
+        help="Rule R08 (Learn › Rule tables) and SITL-ERM-001 Section 7 (Policies › Policy Library) give the days. Count calendar days. " + CHECK + " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable.")
     put(18, "Copy the residual score", t="Estimate each risk's residual score after treatment (R07)",
         w=LI9 + "Count each action's control as working and apply rule R07 again: type the residual score expected once the action is done. A retained risk keeps its residual score.",
         o="Expected residual checked for the 3 risks",
@@ -1765,7 +1774,7 @@ def t72(w: dict) -> None:
     t = w["tasks"]["T7.2"]
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T7.2"]}
-    top = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "top-t72.json").read_text(encoding="utf8"))
+    top = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "top-t72.json").read_text(encoding="utf8"))
     assert [r[:3] for r in w["pages"]["Ref-Clause map"]["r"]] == top["clauses"], "the pack's clause map changed"
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI4 = "[LI-04 — Risk assessment method and risk criteria] "
@@ -1853,18 +1862,18 @@ def t72(w: dict) -> None:
         help="Rule L13 (Learn › Rule tables). Each clause's row lists its deliverables, from Ref-Clause map; the review record of every deliverable you have handed in is on Home › Waiting On. " + CHECK + LIX,
         refs=refs(rules=["L13"], tpls=["T-LI-PLAN"], arts=["LI-PLAN"]))
     put(7, "Decide: Which is a measurable ISMS objective",
-        w=then(7, "Then: Copy the likelihood and impact scale names from BKB-ERM-001 Section 6.2–6.4.",
-               "Then: Copy into LI-RAM the names of the likelihood scale (BKB-ERM-001 Section 6.2) and of the impact scale (Section 6.3), from score 1 to score 5."),
-        o="Decision T7.2-D6 checked; scale names in LI-RAM as BKB-ERM-001 writes them",
-        help="A scripted question: Which is a measurable ISMS objective? Read the three options and choose one. When you click Check my answer you see the best option and why. Then copy the scale names into LI-RAM, the risk assessment method card, from BKB-ERM-001 (Policies › Policy Library). A name that is not the document's is flagged at once, with where to read it." + LIX,
-        refs=refs(docs=[["BKB-ERM-001", ["6.2", "6.3"]]], arts=["LI-RAM"]))
+        w=then(7, "Then: Copy the likelihood and impact scale names from SITL-ERM-001 Section 6.2–6.4.",
+               "Then: Copy into LI-RAM the names of the likelihood scale (SITL-ERM-001 Section 6.2) and of the impact scale (Section 6.3), from score 1 to score 5."),
+        o="Decision T7.2-D6 checked; scale names in LI-RAM as SITL-ERM-001 writes them",
+        help="A scripted question: Which is a measurable ISMS objective? Read the three options and choose one. When you click Check my answer you see the best option and why. Then copy the scale names into LI-RAM, the risk assessment method card, from SITL-ERM-001 (Policies › Policy Library). A name that is not the document's is flagged at once, with where to read it." + LIX,
+        refs=refs(docs=[["SITL-ERM-001", ["6.2", "6.3"]]], arts=["LI-RAM"]))
     put(8, "Copy the appetite (11) and the rules R07 and R08", t="Record the appetite and the treatment due days in LI-RAM",
-        w=LI4 + "Copy into LI-RAM the risk appetite of a LOW-criticality organisation (BKB-ERM-001 Section 4) and the due days of each residual rating (Section 7). Rules R07 and R08, the method that uses them, are copied for you.",
-        o="Appetite and due days in LI-RAM as BKB-ERM-001 writes them",
-        help="BKB-ERM-001 (Policies › Policy Library): Section 4 gives each criticality band's appetite as a maximum score; GlobalConnect is a LOW-criticality organisation. Section 7 gives the due days. A value that is not the document's is flagged at once, with where to read it." + LIX,
-        refs=refs(docs=[["BKB-ERM-001", ["4", "7"]]]))
+        w=LI4 + "Copy into LI-RAM the risk appetite of a LOW-criticality organisation (SITL-ERM-001 Section 4) and the due days of each residual rating (Section 7). Rules R07 and R08, the method that uses them, are copied for you.",
+        o="Appetite and due days in LI-RAM as SITL-ERM-001 writes them",
+        help="SITL-ERM-001 (Policies › Policy Library): Section 4 gives each criticality band's appetite as a maximum score; GlobalConnect is a LOW-criticality organisation. Section 7 gives the due days. A value that is not the document's is flagged at once, with where to read it." + LIX,
+        refs=refs(docs=[["SITL-ERM-001", ["4", "7"]]]))
     put(9, "Copy the risk-owner and acceptance rules (R36)", t="Record who accepts each residual rating (R36)",
-        w=LI4 + "For each residual rating, choose who may accept the risk: rule R36, the Charter's delegation table (Section 6.1). The risk-owner rule is written for you from BKB-ERM-001 Sections 2 and 3.",
+        w=LI4 + "For each residual rating, choose who may accept the risk: rule R36, the Charter's delegation table (Section 6.1). The risk-owner rule is written for you from SITL-ERM-001 Sections 2 and 3.",
         o="Acceptance authority checked for the four ratings",
         help="Rule R36 (Learn › Rule tables) copies the Charter's Section 6.1 (Policies › Policy Library). " + CHECK + LIX,
         refs=refs(rules=["R36"]))
@@ -1907,14 +1916,14 @@ def t81(w: dict) -> None:
     scanner's Last scan / Found in last scan columns are platform-written around the pack's answer key, Content Corrections
     item 66). VUL-TEST is worked in Control Testing › Vulnerability Remediation Check: step 1 sets the class of each kind of
     finding (R24), 2 works out four due dates by hand, 3 each finding's status, 4 each exception (R24), 5 each closure's
-    re-scan (BKB-POL-010 Section 6.1), 6 compliance per class (Section 10); 7 asks D5 and writes the memo's recommendations
+    re-scan (SITL-POL-010 Section 6.1), 6 compliance per class (Section 10); 7 asks D5 and writes the memo's recommendations
     (R25); 8 hands in. LI-11: 9 reads the measure card against clause 9.1, 10 asks D6 (no part 2: the platform writes the
     card's fixed fields), 11 rates each class's result against the card's target, 12 hands in.
     """
     t = w["tasks"]["T8.1"]
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T8.1"]}
-    vul = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "vul-t81.json").read_text(encoding="utf8"))
+    vul = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "vul-t81.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI = "[LI-11 — Measurement specification for the SLA KPI] "
     LIX = " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable."
@@ -1951,11 +1960,11 @@ def t81(w: dict) -> None:
         "note": f"The findings of the scanner export of {vul['test']} that are marked closed, with the scanner's latest scan of each."}}
     # Ref-Measure card's formula ("closed within SLA ÷ all findings due in the period") is not the per-class compliance the pack's
     # key computes (findings within SLA, open ones not yet due and valid exceptions included, ÷ all findings of the class): the
-    # card states the one BKB-POL-010 Section 10 defines, so that LI-11's check (step 11) can reproduce VUL-TEST.
+    # card states the one SITL-POL-010 Section 10 defines, so that LI-11's check (step 11) can reproduce VUL-TEST.
     mc = w["pages"]["Ref-Measure card"]["r"]
     f = next(r for r in mc if r[0] == "Formula")
     assert f[1] == "Findings closed within SLA ÷ all findings due in the period × 100, per policy class", f
-    f[1] = "Findings within SLA at the measurement date ÷ all findings of the class × 100, per policy class (BKB-POL-010 Section 10)"
+    f[1] = "Findings within SLA at the measurement date ÷ all findings of the class × 100, per policy class (SITL-POL-010 Section 10)"
 
     old_kr = "KR1 — Class, due date and status correct for ≥ 95 % of 172 findings · Activities 1–3"
     assert old_kr in t["krs"], t["krs"]
@@ -1980,15 +1989,15 @@ def t81(w: dict) -> None:
         help="Rule R24 (Learn › Rule tables), its last sentence, is the validity test: every part of it must hold. " + CHECK,
         refs=refs(rules=["R24"]))
     put(5, "Decide for each row: For each closed finding, decide Verified or Not verified", t="Check each closure was verified by a re-scan",
-        w="For each closed finding, decide whether its fix was verified as BKB-POL-010 Section 6.1 step 4 requires: read its closed date against the scanner's last scan, and what that scan found.",
+        w="For each closed finding, decide whether its fix was verified as SITL-POL-010 Section 6.1 step 4 requires: read its closed date against the scanner's last scan, and what that scan found.",
         o="Verification checked for the 98 closed findings",
-        help="BKB-POL-010 (Policies › Policy Library), Section 6.1 step 4, says when a fix counts as verified. " + CHECK,
-        refs=refs(docs=[["BKB-POL-010", ["6.1"]]]))
+        help="SITL-POL-010 (Policies › Policy Library), Section 6.1 step 4, says when a fix counts as verified. " + CHECK,
+        refs=refs(docs=[["SITL-POL-010", ["6.1"]]]))
     put(6, "Calculate compliance % per class.", t="Work out compliance per class",
-        w="For each class, count the findings within SLA as BKB-POL-010 Section 10 defines it, and type the class's compliance: within SLA / all findings = %, to one decimal.",
+        w="For each class, count the findings within SLA as SITL-POL-010 Section 10 defines it, and type the class's compliance: within SLA / all findings = %, to one decimal.",
         o="Compliance checked for the 4 classes",
-        help="Section 10 of BKB-POL-010 (Policies › Policy Library) says which findings are within SLA. Under each class, the workbook counts its findings by what steps 3 to 5 found. " + CHECK,
-        refs=refs(docs=[["BKB-POL-010", ["10"]]]))
+        help="Section 10 of SITL-POL-010 (Policies › Policy Library) says which findings are within SLA. Under each class, the workbook counts its findings by what steps 3 to 5 found. " + CHECK,
+        refs=refs(docs=[["SITL-POL-010", ["10"]]]))
     # D5's premise ("most breaches are class 1") is not what this office's test shows: asked as the general question it is, and
     # its part 2 is R25 on the office's own counts (Content Corrections item 66).
     old7 = "DECIDE: Most breaches are class 1 on internet-facing assets. Which recommendation comes first?"
@@ -2039,7 +2048,7 @@ def t82(w: dict) -> None:
     t = w["tasks"]["T8.2"]
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T8.2"]}
-    ct = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "ct-t82.json").read_text(encoding="utf8"))
+    ct = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "ct-t82.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI = "[LI-12 — Nonconformity, root cause and corrective action] "
     LIX = " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable."
@@ -2082,8 +2091,8 @@ def t82(w: dict) -> None:
     put(2, 'Apply rule R15. Click "Select sample".', t="Work out the sample (R15)",
         w="Apply rule R15 to the privileged-access review: record LearnTech's control frequency and the minimum sample Ref-Sampling sets for it. Once your answers are checked, the platform selects the quarters with the seed and lists their records in Sheet 2.",
         o="Control frequency and minimum sample checked; quarters selected",
-        help="Rule R15 is in Learn › Rule tables and Ref-Sampling in Learn › Reference pages. LearnTech's control frequencies are in BKB-ADD-36 Section 5 (Policies › Policy Library). " + CHECK,
-        refs=refs(rules=["R15"], pages=["Ref-Sampling"], docs=[["BKB-ADD-36", ["5"]]]))
+        help="Rule R15 is in Learn › Rule tables and Ref-Sampling in Learn › Reference pages. LearnTech's control frequencies are in SITL-ADD-36 Section 5 (Policies › Policy Library). " + CHECK,
+        refs=refs(rules=["R15"], pages=["Ref-Sampling"], docs=[["SITL-ADD-36", ["5"]]]))
     put(3, "Decide for each row: For each sampled item, decide pass or fail per attribute", t="Test each sampled record against A1 to A6",
         w="For each record of the sampled quarters, read A1 to A6 in order and mark every attribute that fails.",
         o=f"Pass or Fail, with every failed attribute, recorded for the {sum(r[1] in ct['sample'] for r in ct['records'])} sampled records",
@@ -2091,8 +2100,8 @@ def t82(w: dict) -> None:
     put(4, "Decide for each row: For each deviation, decide the rating", t="Rate each deviation (R26)",
         w="For each deviation in Sheet 3, choose its rating with rule R26: read its ratings in order, and take the first that fits.",
         o="Rating checked for each deviation",
-        help="Rule R26 (Learn › Rule tables) rates a deviation by what it affects and what went wrong. Which of LearnTech's assets are Mission Critical, office by office, is in BKB-ADD-36 Section 8 (Policies › Policy Library). " + CHECK,
-        refs=refs(rules=["R26"], docs=[["BKB-ADD-36", ["8"]]]))
+        help="Rule R26 (Learn › Rule tables) rates a deviation by what it affects and what went wrong. Which of LearnTech's assets are Mission Critical, office by office, is in SITL-ADD-36 Section 8 (Policies › Policy Library). " + CHECK,
+        refs=refs(rules=["R26"], docs=[["SITL-ADD-36", ["8"]]]))
     put(5, "Decide for each row: Decide the conclusion", t="Conclude the test (R19)",
         w="Work out rule R19 for your test: how many deviations Sheet 3 holds, the highest rating, then the conclusion.",
         o="R19 worked out and the conclusion checked; CT-MEMO's conclusion written",
@@ -2116,10 +2125,10 @@ def t82(w: dict) -> None:
         o="Three of clause 10.2's requirements matched to LI-NCR's fields",
         help="Each field of LI-NCR says what it holds; its entries are made in steps 9 to 11." + LIX)
     put(9, "Complete the NC frame: requirement (copy the clause), evidence (row)", t="Write the nonconformity's requirement and gap",
-        w=LI + "LI-NCR's evidence, PR-022's record, is copied for you. Choose the requirement it breaks, as BKB-POL-006 writes it, and work out the gap: how many days after its quarter ended the review was done.",
+        w=LI + "LI-NCR's evidence, PR-022's record, is copied for you. Choose the requirement it breaks, as SITL-POL-006 writes it, and work out the gap: how many days after its quarter ended the review was done.",
         o="Requirement and gap checked",
-        help="BKB-POL-006 (Policies › Policy Library) holds the requirements; the quarters are in CT-SCRIPT Sheet 1's population. " + CHECK + LIX,
-        refs=refs(docs=[["BKB-POL-006", ["3.1", "4", "6.2"]]], arts=["LI-NCR"]))
+        help="SITL-POL-006 (Policies › Policy Library) holds the requirements; the quarters are in CT-SCRIPT Sheet 1's population. " + CHECK + LIX,
+        refs=refs(docs=[["SITL-POL-006", ["3.1", "4", "6.2"]]], arts=["LI-NCR"]))
     put(10, "Decide for each row: Decide the nonconformity grade", t="Grade the nonconformity (L17)",
         w=LI + "Grade the nonconformity with rule L17: Major or Minor.",
         o="Grade checked",
@@ -2134,8 +2143,8 @@ def t82(w: dict) -> None:
         w=s11.replace(old11, "DECIDE: A change was implemented without approval. Which is a CORRECTIVE action (not a correction)?")
              .replace(then11, "Then: Fill LI-NCR's 5-Whys form with rule L18, from the facts of your own nonconformity; its three action fields are then written for you."),
         o="Decision T8.2-D6 checked; the 5-Whys form checked",
-        help="A scripted question first: which action is corrective, not a correction. When you click Check my answer you see the best option and why. Then the 5-Whys form: rule L18 answers the five questions of Ref-5-Whys with facts from your test's evidence: the note gives the IAM team's answer on PR-022, and BKB-POL-006 Section 6.2 (Policies › Policy Library) the procedure. " + CHECK + LIX,
-        refs=refs(rules=["L18"], docs=[["BKB-POL-006", ["6.2"]]], arts=["LI-NCR"]))
+        help="A scripted question first: which action is corrective, not a correction. When you click Check my answer you see the best option and why. Then the 5-Whys form: rule L18 answers the five questions of Ref-5-Whys with facts from your test's evidence: the note gives the IAM team's answer on PR-022, and SITL-POL-006 Section 6.2 (Policies › Policy Library) the procedure. " + CHECK + LIX,
+        refs=refs(rules=["L18"], docs=[["SITL-POL-006", ["6.2"]]], arts=["LI-NCR"]))
     put(12, "Submit LI-NCR", t="Hand in LI-NCR", w=LI + "Check LI-NCR for empty cells, name it and submit it.")
     tool(12, "testing|Test Plan")
 
@@ -2146,7 +2155,7 @@ def t91(w: dict) -> None:
     The mentee's vendor is Lumen Learner Analytics (dataset VEN-INTAKE; the pack's key: tier High), while the task's panel and
     Vendors › Vendor Intake and Set Risk Tier showed another mentee's vendor (ProctorEye AI Ltd). src/lib/desk/ven-t91.json
     (scratchpad build/T9.1/gen.py) holds the intake form, with four platform-written lines (Requested by, Identifiers sent,
-    Users, Delivery), and the rows of the steps' sheets. BKB-POL-013's text is platform-written; its Section 3.1 says what
+    Users, Delivery), and the rows of the steps' sheets. SITL-POL-013's text is platform-written; its Section 3.1 says what
     R35's terms mean. Step 1 records the facts R35 reads (VEN-TIER), 2 tiers the vendor, 3 asks D2 (VEN-Q is then written),
     4 asks D3 and marks VEN-CL's clauses, 5 hands in; LI-13: 6 the service model and its split, 7 maps the fixed questions
     to their controls, 8 hands in. Content Corrections item 68.
@@ -2154,7 +2163,7 @@ def t91(w: dict) -> None:
     t = w["tasks"]["T9.1"]
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T9.1"]}
-    ven = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "ven-t91.json").read_text(encoding="utf8"))
+    ven = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "ven-t91.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI = "[LI-13 — Cloud services and the ICT supply chain in the questionnaire] "
     LIX = " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable."
@@ -2185,10 +2194,10 @@ def t91(w: dict) -> None:
     tier["f"][0][1], tier["f"][1][1] = v["name"], v["data"]
 
     put(1, "Open VEN-INTAKE. Copy the data access and service facts into VEN-TIER.", t="Record the facts rule R35 tiers by",
-        w="Lumen Learner Analytics' intake form is in Vendors › Vendor Intake. Read it with BKB-POL-013 Section 3.1, which says what each of rule R35's terms means and which line of the form it is read from. Record each fact in VEN-TIER: the highest data tier, then Yes or No for each criterion.",
+        w="Lumen Learner Analytics' intake form is in Vendors › Vendor Intake. Read it with SITL-POL-013 Section 3.1, which says what each of rule R35's terms means and which line of the form it is read from. Record each fact in VEN-TIER: the highest data tier, then Yes or No for each criterion.",
         o="Six tiering facts checked in VEN-TIER",
-        help="BKB-POL-013 (Policies › Policy Library) Section 3.1 defines R35's terms and names the line of the intake form each is read from. " + CHECK,
-        refs=refs(docs=[["BKB-POL-013", ["3.1"]]], ds=["VEN-INTAKE"], arts=["VEN-TIER"]))
+        help="SITL-POL-013 (Policies › Policy Library) Section 3.1 defines R35's terms and names the line of the intake form each is read from. " + CHECK,
+        refs=refs(docs=[["SITL-POL-013", ["3.1"]]], ds=["VEN-INTAKE"], arts=["VEN-TIER"]))
     tool(1, "vendors|Set Risk Tier")
     put(2, "Decide for each row: Decide the vendor tier", t="Tier the vendor (R35)",
         w="Apply rule R35 to the facts step 1 checked: read the tiers from Critical down and stop at the first that matches. Choose the tier in VEN-TIER.",
@@ -2226,10 +2235,10 @@ def t91(w: dict) -> None:
         refs=refs(rules=["L19"], pages=["Ref-Cloud"], ds=["VEN-INTAKE"], arts=["VEN-Q"]))
     tool(6, "vendors|Send Questionnaire")
     put(7, "Copy the 5 fixed questions into VEN-Q.", t="Map the five fixed questions to their controls",
-        w=LI + "Rule L19 adds Ref-Cloud's five fixed cloud and supply-chain questions to VEN-Q: the platform copies them in. For each, choose the Annex A control it gives evidence for: A.5.23, the use of cloud services, or A.5.21, the ICT supply chain. BKB-POL-021 (Cloud Security Policy) implements A.5.23; its Section 3.1 says what it requires of every cloud service.",
+        w=LI + "Rule L19 adds Ref-Cloud's five fixed cloud and supply-chain questions to VEN-Q: the platform copies them in. For each, choose the Annex A control it gives evidence for: A.5.23, the use of cloud services, or A.5.21, the ICT supply chain. SITL-POL-021 (Cloud Security Policy) implements A.5.23; its Section 3.1 says what it requires of every cloud service.",
         o="Five fixed questions in VEN-Q, each mapped to its control and checked",
-        help="BKB-POL-021 Sections 3.1 and 9 (Policies › Policy Library) say what the cloud-services control covers. " + CHECK + LIX,
-        refs=refs(docs=[["BKB-POL-021", ["3.1", "9"]]], arts=["VEN-Q"]))
+        help="SITL-POL-021 Sections 3.1 and 9 (Policies › Policy Library) say what the cloud-services control covers. " + CHECK + LIX,
+        refs=refs(docs=[["SITL-POL-021", ["3.1", "9"]]], arts=["VEN-Q"]))
     tool(7, "vendors|Send Questionnaire")
     put(8, "Submit with VEN-Q.", t="Hand in VEN-Q with its cloud section",
         w=LI + "Check VEN-Q's cloud and supply-chain section (LI-CLD) for empty cells, name the file and submit it.")
@@ -2254,14 +2263,14 @@ def t92(w: dict) -> None:
     The mentee's vendor is Lumen Learner Analytics (dataset SOC2-SUMMARY; the pack's key: S2, S4, S5, S7, S9 fail, review
     date 2026-12-04), while the task's panel and Vendors › SOC Report Review showed another mentee's report (ProctorEye AI
     Ltd). src/lib/desk/soc-t92.json (scratchpad build/T9.2/gen.py) holds Lumen's report, the review date and the rows of the
-    steps' sheets. BKB-POL-013 Section 7.1 says how each check is read (platform-written). Step 1 matches report lines to
+    steps' sheets. SITL-POL-013 Section 7.1 says how each check is read (platform-written). Step 1 matches report lines to
     their checks (STUDY), 2 records each check Pass or Fail (SOC-REV), 3 gives the CUEC its owner, 4 walks R28 on the
     failed checks and records the decision (SOC-DEC), 5 hands in. Content Corrections item 69.
     """
     t = w["tasks"]["T9.2"]
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T9.2"]}
-    soc = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "soc-t92.json").read_text(encoding="utf8"))
+    soc = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "soc-t92.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     refs = lambda **k: {**{"rules": [], "docs": [], "pages": [], "tpls": [], "ds": [], "clauses": [], "arts": [], "wbs": []}, **k}
 
@@ -2282,7 +2291,7 @@ def t92(w: dict) -> None:
     assert t["panel"]["pl"]["f"][0] == ["Vendor", "ProctorEye AI Ltd"] and old["pl"]["f"][0] == ["Vendor", "ProctorEye AI Ltd"], old
     assert old["pl"]["note"] == "Check S1–S9 (R28). Qualified opinion or service out of scope → reject.", old["pl"]["note"]
     report = {"tool": "Vendors › SOC Report Review", "stamp": "SOC 2 summary", "kind": "form",
-              "pl": {"f": soc["report"], "note": f"Your review date: {soc['review']}. Read each line with checks S1–S9 (Ref-SOC checks) and BKB-POL-013 Section 7.1."}}
+              "pl": {"f": soc["report"], "note": f"Your review date: {soc['review']}. Read each line with checks S1–S9 (Ref-SOC checks) and SITL-POL-013 Section 7.1."}}
     t["panel"] = report
     w["tp"]["vendors|SOC Report Review"] = json.loads(json.dumps(report))
 
@@ -2292,10 +2301,10 @@ def t92(w: dict) -> None:
         help="Open the report from the toolbar and keep it beside the checklist. Each question names one line of the report; the check that reads it is the one whose words are about what that line says. A wrong click gives a hint.",
         refs=refs(pages=["Ref-SOC checks"], ds=["SOC2-SUMMARY"]))
     put(2, "Decide for each row: For each check S1–S9, decide pass or fail", t="Record each check S1–S9 Pass or Fail",
-        w="Read Lumen's report (Vendors › SOC Report Review) line by line, as BKB-POL-013 Section 7.1 says, on your review date. Record each check in SOC-REV: Pass, or Fail.",
+        w="Read Lumen's report (Vendors › SOC Report Review) line by line, as SITL-POL-013 Section 7.1 says, on your review date. Record each check in SOC-REV: Pass, or Fail.",
         o="Nine checks checked in SOC-REV",
-        help="BKB-POL-013 (Policies › Policy Library) Section 7.1 says how each check is read and which line of the report it reads; two checks also read Lumen's intake form (Vendors › Vendor Intake). " + CHECK,
-        refs=refs(docs=[["BKB-POL-013", ["7.1"]]], pages=["Ref-SOC checks"], ds=["SOC2-SUMMARY", "VEN-INTAKE"], arts=["SOC-REV"]))
+        help="SITL-POL-013 (Policies › Policy Library) Section 7.1 says how each check is read and which line of the report it reads; two checks also read Lumen's intake form (Vendors › Vendor Intake). " + CHECK,
+        refs=refs(docs=[["SITL-POL-013", ["7.1"]]], pages=["Ref-SOC checks"], ds=["SOC2-SUMMARY", "VEN-INTAKE"], arts=["SOC-REV"]))
     put(3, "Decide for each row: For each CUEC, choose the internal owner", t="Give each CUEC its internal owner",
         w="Each row of SOC-REV's CUEC sheet is a complementary user entity control from Lumen's report: a control Lumen expects LearnTech to run. Choose the internal owner of each from Ref-Conditions (Learn › Reference pages).",
         o="Every CUEC's owner checked in SOC-REV",
@@ -2320,7 +2329,7 @@ def t101(w: dict) -> None:
     processor; the pack's key: no DPIA), while the task's panel and Regulatory Watch › RoPA & Data Flows showed another
     mentee's ("Assessment, quiz responses and grading"), and Risk Register › Asset Register showed GlobalConnect's assets.
     src/lib/desk/ropa-t101.json (scratchpad build/T10.1/gen.py) holds the processing description (platform-written beyond
-    the pack's three lines), the purposes, the data-flow lines and LearnTech's asset register rows (the pack's). BKB-POL-017's
+    the pack's three lines), the purposes, the data-flow lines and LearnTech's asset register rows (the pack's). SITL-POL-017's
     text is platform-written. Step 1 asks D1 (no part 2: the role is the contract register's), 2 the lawful basis of each
     purpose, 3 the data-flow map's shapes and system names, 4 each transfer's mechanism, 5 the DPIA screening, 6 hands in.
     Content Corrections item 70.
@@ -2328,7 +2337,7 @@ def t101(w: dict) -> None:
     t = w["tasks"]["T10.1"]
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T10.1"]}
-    ropa = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "ropa-t101.json").read_text(encoding="utf8"))
+    ropa = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "ropa-t101.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     refs = lambda **k: {**{"rules": [], "docs": [], "pages": [], "tpls": [], "ds": [], "clauses": [], "arts": [], "wbs": []}, **k}
 
@@ -2369,31 +2378,31 @@ def t101(w: dict) -> None:
     put(1, "Decide: LearnTech Educational Solutions processes the data only on",
         w=steps[0]["w"].replace(" " + old1, ""),
         o="Decision T10.1-D1 checked; the role recorded in ROPA",
-        help="A scripted question. Read the situation and the three options, and choose one; BKB-POL-017 Section 3.2 (Policies › Policy Library) says what each role means. When you click Check my answer you see the best option and why. ROPA then records the role from the contract register.",
-        refs=refs(docs=[["BKB-POL-017", ["3.2"]]], arts=["ROPA"]))
+        help="A scripted question. Read the situation and the three options, and choose one; SITL-POL-017 Section 3.2 (Policies › Policy Library) says what each role means. When you click Check my answer you see the best option and why. ROPA then records the role from the contract register.",
+        refs=refs(docs=[["SITL-POL-017", ["3.2"]]], arts=["ROPA"]))
     assert steps[1]["w"].startswith("DECIDE (for each item): For each purpose, choose the lawful basis.") and "addendum Section 2 lawful-basis column" in desect(steps[1]["w"])
     put(2, "Decide for each row: For each purpose, choose the lawful basis", t="Choose the lawful basis of each purpose",
-        w="The RoPA records, for each purpose of the processing, the lawful basis it rests on: for an activity LearnTech carries out for a client, the basis the client relies on. Choose each purpose's lawful basis in ROPA with BKB-POL-017 Section 3.1 (Policies › Policy Library).",
+        w="The RoPA records, for each purpose of the processing, the lawful basis it rests on: for an activity LearnTech carries out for a client, the basis the client relies on. Choose each purpose's lawful basis in ROPA with SITL-POL-017 Section 3.1 (Policies › Policy Library).",
         o="Lawful basis of every purpose checked in ROPA",
-        help="BKB-POL-017 Section 3.1's lawful-basis table asks its questions in order: the first yes gives the basis. " + CHECK,
-        refs=refs(docs=[["BKB-POL-017", ["3.1"]]], arts=["ROPA"]))
+        help="SITL-POL-017 Section 3.1's lawful-basis table asks its questions in order: the first yes gives the basis. " + CHECK,
+        refs=refs(docs=[["SITL-POL-017", ["3.1"]]], arts=["ROPA"]))
     put(3, "Draw the data flow with the template shapes", t="Draw the data flow with the template shapes",
         w="Each row of DFM is one movement of the personal data. Give it its T-ROPA shape (Collect, System, Transfer or Delete), and copy the name of the system it happens in from Risk Register › Asset Register.",
         o="Shape of every flow checked; system names copied from the asset register",
-        help="The note above the table says what each shape means; BKB-POL-017 Section 3.1 (Policies › Policy Library) says what counts as a transfer. Copy each system's name as the asset register writes it. " + CHECK,
-        refs=refs(docs=[["BKB-POL-017", ["3.1"]]], arts=["DFM"]))
+        help="The note above the table says what each shape means; SITL-POL-017 Section 3.1 (Policies › Policy Library) says what counts as a transfer. Copy each system's name as the asset register writes it. " + CHECK,
+        refs=refs(docs=[["SITL-POL-017", ["3.1"]]], arts=["DFM"]))
     tool(3, "regwatch|RoPA & Data Flows")
-    put(4, "Copy each cross-border transfer mechanism from BKB-ADD-36 Section 2", t="Copy each cross-border transfer mechanism from BKB-ADD-36 Section 2",
-        w="For each flow step 3 found to be a transfer, copy the mechanism from the Cross-border transfer column of BKB-ADD-36 Section 2, in the row of the office the data leaves (BKB-POL-017 Section 3.1).",
+    put(4, "Copy each cross-border transfer mechanism from SITL-ADD-36 Section 2", t="Copy each cross-border transfer mechanism from SITL-ADD-36 Section 2",
+        w="For each flow step 3 found to be a transfer, copy the mechanism from the Cross-border transfer column of SITL-ADD-36 Section 2, in the row of the office the data leaves (SITL-POL-017 Section 3.1).",
         o="Mechanism of every transfer copied and checked in DFM",
         help="Copy the cell exactly as Section 2 writes it; the evidence ref is written for you from the row you copied. " + CHECK,
-        refs=refs(docs=[["BKB-ADD-36", ["2"]], ["BKB-POL-017", ["3.1"]]], arts=["DFM"]))
+        refs=refs(docs=[["SITL-ADD-36", ["2"]], ["SITL-POL-017", ["3.1"]]], arts=["DFM"]))
     assert steps[4]["w"].startswith("DECIDE (for each item): Decide whether a DPIA is required.")
     put(5, "Decide for each row: Decide whether a DPIA is required", t="Screen the activity for a DPIA (R29)",
-        w="Read the processing description (Regulatory Watch › RoPA & Data Flows) against each of rule R29's triggers, as BKB-POL-017 Section 6.2 defines them: is it involved, Yes or No? Then record whether a DPIA is required.",
+        w="Read the processing description (Regulatory Watch › RoPA & Data Flows) against each of rule R29's triggers, as SITL-POL-017 Section 6.2 defines them: is it involved, Yes or No? Then record whether a DPIA is required.",
         o="DPIA screening checked in ROPA",
-        help="Rule R29 is in the note above the table; BKB-POL-017 Section 6.2 (Policies › Policy Library) says what each trigger means. " + CHECK,
-        refs=refs(rules=["R29"], docs=[["BKB-POL-017", ["6.2"]]], arts=["ROPA"]))
+        help="Rule R29 is in the note above the table; SITL-POL-017 Section 6.2 (Policies › Policy Library) says what each trigger means. " + CHECK,
+        refs=refs(rules=["R29"], docs=[["SITL-POL-017", ["6.2"]]], arts=["ROPA"]))
     put(6, 'Submit ROPA and DFM. Click "Done".', t="Hand in ROPA and DFM",
         w="Check ROPA and DFM for empty cells, name the two files and submit them.", o="ROPA and DFM submitted with manifest")
     tool(6, "regwatch|RoPA & Data Flows")
@@ -2418,8 +2427,8 @@ def t102(w: dict) -> None:
     subjects in India, Turkey and the United States; the pack's key: GDPR, KVKK, DPDP and US state laws, earliest firm
     deadline 2026-12-11 13:20 UTC), while the task's panel and Regulatory Watch › Breach Clock Calculator showed another
     mentee's (INC-2610-3748). src/lib/desk/brc-t102.json (scratchpad build/T10.2/gen.py) holds the incident record, the
-    regime rows, the R30 conditions, the LI-IRBC phase sheet, the incident timeline and the BC/DR rows. BKB-POL-014 Section 6.3
-    (which regimes apply) and BKB-ADD-36 Section 8.2 (Amsterdam's BIA) are platform-written. Step 1 copies the discovery
+    regime rows, the R30 conditions, the LI-IRBC phase sheet, the incident timeline and the BC/DR rows. SITL-POL-014 Section 6.3
+    (which regimes apply) and SITL-ADD-36 Section 8.2 (Amsterdam's BIA) are platform-written. Step 1 copies the discovery
     time, 2 the offices and countries, 3 decides each regime, 4 works out each deadline and the earliest firm one, 5 walks
     R30's data-subject test, 6 asks D4 (no part 2: the plan records the hold), 7 hands in; 8 reads LI-IRBC's phase sheet
     (STUDY), 9 maps the timeline's events to phases, 10 decides BC and DR (L20), 11 hands in. Content Corrections item 71.
@@ -2427,7 +2436,7 @@ def t102(w: dict) -> None:
     t = w["tasks"]["T10.2"]
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T10.2"]}
-    brc = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "brc-t102.json").read_text(encoding="utf8"))
+    brc = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "brc-t102.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     refs = lambda **k: {**{"rules": [], "docs": [], "pages": [], "tpls": [], "ds": [], "clauses": [], "arts": [], "wbs": []}, **k}
 
@@ -2467,16 +2476,16 @@ def t102(w: dict) -> None:
         refs=refs(ds=["BRC-FACTS"], arts=["BRC-ASSESS"]))
     assert steps[2]["w"].startswith("DECIDE (for each item): For each regime, decide Applies")
     put(3, "Decide for each row: For each regime, decide Applies, Applies if condition met", t="Decide which regimes apply (R30)",
-        w="Each row of BRC-ASSESS's Regimes sheet is a regime from BKB-ADD-36 Section 2. Decide for each whether it applies to this incident, applies only if a condition is met, or does not apply, with BKB-POL-014 Section 6.3.",
+        w="Each row of BRC-ASSESS's Regimes sheet is a regime from SITL-ADD-36 Section 2. Decide for each whether it applies to this incident, applies only if a condition is met, or does not apply, with SITL-POL-014 Section 6.3.",
         o="Every regime's applicability checked in BRC-ASSESS",
-        help="BKB-POL-014 Section 6.3 (Policies › Policy Library) says, step by step, which offices an incident engages and which of their regimes apply; the offices and countries are the ones you copied in step 2. " + CHECK,
-        refs=refs(rules=["R30"], docs=[["BKB-POL-014", ["6.3"]]], arts=["BRC-ASSESS"]))
+        help="SITL-POL-014 Section 6.3 (Policies › Policy Library) says, step by step, which offices an incident engages and which of their regimes apply; the offices and countries are the ones you copied in step 2. " + CHECK,
+        refs=refs(rules=["R30"], docs=[["SITL-POL-014", ["6.3"]]], arts=["BRC-ASSESS"]))
     assert "Choose the earliest firm deadline" in steps[3]["w"]
     put(4, "Decide for each row: Choose the earliest firm deadline", t="Work out each deadline and the earliest firm one",
-        w="For each regime step 3 found to apply, work out its deadline in UTC: the discovery time plus its clock (BKB-POL-014 Section 6.3, step 6). Then write the earliest firm deadline, the one the plan works to.",
+        w="For each regime step 3 found to apply, work out its deadline in UTC: the discovery time plus its clock (SITL-POL-014 Section 6.3, step 6). Then write the earliest firm deadline, the one the plan works to.",
         o="Deadlines and the earliest firm deadline checked in BRC-ASSESS",
         help="Count hours and days in calendar time, weekends included; business days skip Saturdays and Sundays. A regime that applies only if a condition is met has no firm clock. " + CHECK,
-        refs=refs(rules=["R30"], docs=[["BKB-POL-014", ["6.3"]]], arts=["BRC-ASSESS"]))
+        refs=refs(rules=["R30"], docs=[["SITL-POL-014", ["6.3"]]], arts=["BRC-ASSESS"]))
     assert steps[4]["w"].startswith("DECIDE (for each item): Decide whether data subjects must be told.")
     put(5, "Decide for each row: Decide whether data subjects must be told", t="Decide whether data subjects must be told (R30)",
         w="Read the incident record (Regulatory Watch › Breach Clock Calculator) against each condition of rule R30's last sentence: is it met, Yes or No? Then record whether the data subjects must be told.",
@@ -2488,45 +2497,45 @@ def t102(w: dict) -> None:
     s6 = steps[5]
     then6 = ' Then: Fill the plan template and the breach-register entry. Tick "Legal sign-off required".'
     assert s6["w"].endswith(then6) and s6["did"] == "T10.2-D4", s6["w"]
-    help6 = "A scripted question. Read the situation and the three options, and choose one; BKB-POL-014 Section 6.1 (Policies › Policy Library) sets out how notifications are made. When you click Check my answer you see the best option and why. BRC-PLAN then records your answer, with the regimes, deadlines and data-subject decision of steps 2 to 5."
+    help6 = "A scripted question. Read the situation and the three options, and choose one; SITL-POL-014 Section 6.1 (Policies › Policy Library) sets out how notifications are made. When you click Check my answer you see the best option and why. BRC-PLAN then records your answer, with the regimes, deadlines and data-subject decision of steps 2 to 5."
     assert "Then do the step that follows" in s6["help"]
     put(6, "Decide: Marketing wants to send the customer notice today", w=s6["w"][: -len(then6)],
         o="Decision T10.2-D4 checked; BRC-PLAN records it", help=help6,
-        refs=refs(docs=[["BKB-POL-014", ["6.1"]]], arts=["BRC-PLAN"]))
+        refs=refs(docs=[["SITL-POL-014", ["6.1"]]], arts=["BRC-PLAN"]))
     put(7, 'Submit BRC-ASSESS and BRC-PLAN. Click "Done".', t="Hand in BRC-ASSESS and BRC-PLAN",
         w="Check BRC-ASSESS and BRC-PLAN for empty cells, name the two files and submit them.", o="BRC-ASSESS and BRC-PLAN submitted with manifest")
     tool(7, "regwatch|Breach Clock Calculator")
     put(8, "Open T-LI-IRBC.", t="Read LI-IRBC's phase sheet",
-        w="[LI-14 — Incident-management process and business continuity vs disaster recovery] LI-IRBC's Phases sheet (template T-LI-IRBC) gives the five phases of rule L20, the Annex A control of each and the part of BKB-POL-014 it covers. Answer each question by clicking the cell that answers it.",
+        w="[LI-14 — Incident-management process and business continuity vs disaster recovery] LI-IRBC's Phases sheet (template T-LI-IRBC) gives the five phases of rule L20, the Annex A control of each and the part of SITL-POL-014 it covers. Answer each question by clicking the cell that answers it.",
         o="Three questions answered in LI-IRBC's Phases sheet",
         help="Every answer is in the sheet. A wrong click gives a hint. This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable.",
         refs=refs(rules=["L20"], tpls=["T-LI-IRBC"], arts=["LI-IRBC"]))
     assert steps[8]["w"].endswith("DECIDE (for each item): Map each event of the incident to its phase. Options: A) Plan  B) Detect and report  C) Assess and decide  D) Respond  E) Learn. Guidance: rule L20.")
     put(9, "Decide for each row: Map each event of the incident to its phase", t="Map each event of the incident to its phase (L20)",
-        w="[LI-14 — Incident-management process and business continuity vs disaster recovery] Each row of LI-IRBC's Timeline is one event of INC-2610-3001, in UTC. Choose the phase of rule L20 each belongs to, by the part of BKB-POL-014 it carries out.",
+        w="[LI-14 — Incident-management process and business continuity vs disaster recovery] Each row of LI-IRBC's Timeline is one event of INC-2610-3001, in UTC. Choose the phase of rule L20 each belongs to, by the part of SITL-POL-014 it carries out.",
         o="Every event's phase checked in LI-IRBC",
-        help="The note above the table gives each phase and the part of BKB-POL-014 it covers; BKB-POL-014 (Policies › Policy Library) Section 6.1 says what each step of the response does, and Section 4 names the exercises that prepare for one. " + CHECK + " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable.",
-        refs=refs(rules=["L20"], docs=[["BKB-POL-014", ["4", "6.1"]]], clauses=["A.5.24", "A.5.25", "A.5.26", "A.5.27", "A.5.28"], arts=["LI-IRBC"]))
+        help="The note above the table gives each phase and the part of SITL-POL-014 it covers; SITL-POL-014 (Policies › Policy Library) Section 6.1 says what each step of the response does, and Section 4 names the exercises that prepare for one. " + CHECK + " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable.",
+        refs=refs(rules=["L20"], docs=[["SITL-POL-014", ["4", "6.1"]]], clauses=["A.5.24", "A.5.25", "A.5.26", "A.5.27", "A.5.28"], arts=["LI-IRBC"]))
     assert steps[9]["w"].endswith("Decide whether to invoke the BC plan and the DR plan. Options: A) Invoke  B) Do not invoke. Guidance: rule L20 (RTO).")
     put(10, "Decide for each row: Decide whether to invoke the BC plan and the DR plan", t="Decide whether to invoke the BC plan and the DR plan (L20)",
         w="[LI-14 — Incident-management process and business continuity vs disaster recovery] Apply the BC/DR part of rule L20 to INC-2610-3001: for each plan, Invoke or Do not invoke.",
         o="BC and DR decisions checked in LI-IRBC",
-        help="Rule L20 is in the note above the table. The incident record (Regulatory Watch › Breach Clock Calculator) says which system was down and for how long; BKB-ADD-36 Sections 8 and 8.1 (Policies › Policy Library) say which assets are Mission Critical, and Section 8.2 gives each critical process's RTO. " + CHECK + " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable.",
-        refs=refs(rules=["L20"], docs=[["BKB-ADD-36", ["8"]]], clauses=["A.5.29", "A.5.30"], arts=["LI-IRBC"]))
+        help="Rule L20 is in the note above the table. The incident record (Regulatory Watch › Breach Clock Calculator) says which system was down and for how long; SITL-ADD-36 Sections 8 and 8.1 (Policies › Policy Library) say which assets are Mission Critical, and Section 8.2 gives each critical process's RTO. " + CHECK + " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable.",
+        refs=refs(rules=["L20"], docs=[["SITL-ADD-36", ["8"]]], clauses=["A.5.29", "A.5.30"], arts=["LI-IRBC"]))
     tool(11, "regwatch|Breach Clock Calculator")
     put(11, 'Submit LI-IRBC. Click "Done".', t="Hand in LI-IRBC",
         w="[LI-14 — Incident-management process and business continuity vs disaster recovery] Check LI-IRBC for empty cells, name the file and submit it.", o="LI-IRBC submitted with manifest")
 
     # Text seen before step 6 stated D4's answer ("sent only after legal sign-off", "with the legal sign-off box ticked",
     # "legal sign-off kept before sending"). It now says what is done, not what comes out. The card's record line sent the
-    # learner to T3.1's register, which is GlobalConnect's (Org A): LearnTech's clocks are BKB-ADD-36 Section 2's.
+    # learner to T3.1's register, which is GlobalConnect's (Org A): LearnTech's clocks are SITL-ADD-36 Section 2's.
     swaps = [
-        (" The notification plan is drafted by GRC and sent only after legal sign-off (BKB-POL-016 Section 3.1).",
-         " GRC drafts the notification plan for the DPO (BKB-POL-014 Section 6.2)."),
-        ("Draft a notification plan and breach-register entry with the legal sign-off box ticked — see T-BRC; BKB-POL-014 Section 7.1 first-hour checklist",
-         "Draft a notification plan and breach-register entry — see T-BRC; BKB-POL-014 Section 6.1 and Section 7.1 first-hour checklist"),
+        (" The notification plan is drafted by GRC and sent only after legal sign-off (SITL-POL-016 Section 3.1).",
+         " GRC drafts the notification plan for the DPO (SITL-POL-014 Section 6.2)."),
+        ("Draft a notification plan and breach-register entry with the legal sign-off box ticked — see T-BRC; SITL-POL-014 Section 7.1 first-hour checklist",
+         "Draft a notification plan and breach-register entry — see T-BRC; SITL-POL-014 Section 6.1 and Section 7.1 first-hour checklist"),
         ("the clocks come from your Obligations Register (T3.1) and the data from your RoPA (T10.1)",
-         "the clocks come from BKB-ADD-36 Section 2 and the facts from the incident record (BRC-FACTS)"),
+         "the clocks come from SITL-ADD-36 Section 2 and the facts from the incident record (BRC-FACTS)"),
     ]
     x = json.dumps(t, ensure_ascii=False)
     for a, b in swaps:
@@ -2548,9 +2557,9 @@ def t102(w: dict) -> None:
     # The platform-written sections, in the library's headings.
     for d in w["library"]["docs"]:
         secs = [s[0] for s in d[2]]
-        if d[0] == "BKB-POL-014" and "6.3" not in secs:
+        if d[0] == "SITL-POL-014" and "6.3" not in secs:
             d[2].insert(secs.index("6.2") + 1, ["6.3", "Procedure: Which regimes apply, and their deadlines (rule R30)"])
-        if d[0] == "BKB-ADD-36" and "8.2" not in secs:
+        if d[0] == "SITL-ADD-36" and "8.2" not in secs:
             d[2].insert(secs.index("8.1") + 1, ["8.2", "Business impact analysis: critical processes of the Amsterdam office"])
     blob = json.dumps([t, w["notes"]["T10.2"], w["cards"].get("T10.2"), w["tp"]["regwatch|Breach Clock Calculator"], w["tpls"]["T-BRC"]], ensure_ascii=False)
     for bad in ("INC-2610-3748", "DECIDE (for each", "after you submit", "sign-off box", "Then do the step", "Then: Fill", "Obligations Register (T3.1)"):
@@ -2567,7 +2576,7 @@ def t111(w: dict) -> None:
     src/lib/desk/awr-t111.json (scratchpad build/T11.1/gen.py) holds the content bank row of the theme, R31's weeks, the
     Amsterdam register's KRIs (engine context.json), Ref-Clause map, Ref-Competence and Ref-Communications rows, and the
     platform-written parts (D1's card options, the role holders' records, each communication's programme event, the AWR-SIM
-    fields). BKB-POL-020's text and BKB-ADD-36 Section 2.2 are platform-written. Step 1 lays out R31's weeks, 2 asks D1 (no
+    fields). SITL-POL-020's text and SITL-ADD-36 Section 2.2 are platform-written. Step 1 lays out R31's weeks, 2 asks D1 (no
     part 2: AWR-LESSON records the card), 3 matches each quiz question to its behaviour, 4 asks D2 for Amsterdam (no part 2:
     AWR-SIM records the approvals), 5 asks D3 then the metric targets, 6 hands in; 7 reads Ref-Clause map (STUDY), 8 asks D4
     then each role holder's competence, 9 asks D5 then each communication's week, 10 hands in. Content Corrections item 72.
@@ -2578,7 +2587,7 @@ def t111(w: dict) -> None:
         w["cards"]["T11.1"] = json.loads(desect(json.dumps(w["cards"]["T11.1"], ensure_ascii=False)))
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T11.1"]}
-    awr = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "awr-t111.json").read_text(encoding="utf8"))
+    awr = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "awr-t111.json").read_text(encoding="utf8"))
     assert f'"{awr["theme"]}" for {awr["audience"]} at {awr["office"]}' in t["obj"], t["obj"]
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI = " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable."
@@ -2618,23 +2627,23 @@ def t111(w: dict) -> None:
         help="Ref-Content (Learn › Reference pages) gives each question of your theme with its answer in brackets. The answers are written into AWR-LESSON for you. " + CHECK,
         refs=refs(pages=["Ref-Content"], arts=["AWR-LESSON"]))
     tool(3, "awareness|Newsletter Builder")
-    # D2: the pack's question gave its premise ("The office has a works council"); the learner now reads it in BKB-ADD-36
+    # D2: the pack's question gave its premise ("The office has a works council"); the learner now reads it in SITL-ADD-36
     # Section 2.2 (platform-written). No part 2: copying the approvals list copies the answer; AWR-SIM records it.
     old4 = "DECIDE: The office has a works council. Who must approve the phishing simulation? Options: A) HR only  B) HR, Legal and the works council  C) IT. Then: Fill the simulation plan fields. Copy the approvals list with rule R31."
     assert steps[3]["w"] == old4, steps[3]["w"]
     put(4, "Decide: The office has a works council", t="Decide: Who must approve the phishing simulation for the Amsterdam office",
         w=f"DECIDE: Who must approve the phishing simulation for {awr['audience']} at the Amsterdam office? Options: {opts(steps[3]['opt'])}",
         o="Decision T11.1-D2 checked; AWR-SIM records the approvals",
-        help="A scripted question. Read the situation and the three options, and choose one; rule R31 (Learn › Rule tables) says who approves a simulation, and BKB-ADD-36 Section 2.2 (Policies › Policy Library) lists each office's employee bodies. When you click Check my answer you see the best option and why. AWR-SIM then records the approvals.",
-        refs=refs(rules=["R31"], docs=[["BKB-ADD-36", ["2.2"]]], arts=["AWR-SIM"]))
+        help="A scripted question. Read the situation and the three options, and choose one; rule R31 (Learn › Rule tables) says who approves a simulation, and SITL-ADD-36 Section 2.2 (Policies › Policy Library) lists each office's employee bodies. When you click Check my answer you see the best option and why. AWR-SIM then records the approvals.",
+        refs=refs(rules=["R31"], docs=[["SITL-ADD-36", ["2.2"]]], arts=["AWR-SIM"]))
     tool(4, "learn|Rule tables")
     old5 = "Then: Copy the metrics and the formula."
     assert steps[4]["w"].endswith(old5), steps[4]["w"]
     put(5, "Decide: Which metric best shows staff are learning",
         w=steps[4]["w"].replace(old5, "Then: Write each metric's target in AWR-SIM, from the source that sets it."),
         o="Decision T11.1-D3 checked; metric targets checked in AWR-SIM",
-        help="A scripted question first. When you click Check my answer you see the best option and why. Then, in the campaign's measures (Awareness › Campaign Results), write each metric's target: the click-rate target is the KRI of the office's phishing risk (Risk Register › Heat Map with KRIs), the report-rate target is in BKB-POL-020 Section 7.1 (Policies › Policy Library). The formulas are written for you. " + CHECK,
-        refs=refs(docs=[["BKB-POL-020", ["7.1"]]], arts=["AWR-SIM"]))
+        help="A scripted question first. When you click Check my answer you see the best option and why. Then, in the campaign's measures (Awareness › Campaign Results), write each metric's target: the click-rate target is the KRI of the office's phishing risk (Risk Register › Heat Map with KRIs), the report-rate target is in SITL-POL-020 Section 7.1 (Policies › Policy Library). The formulas are written for you. " + CHECK,
+        refs=refs(docs=[["SITL-POL-020", ["7.1"]]], arts=["AWR-SIM"]))
     tool(5, "awareness|Campaign Results")
     put(6, 'Submit AWR-PLAN, AWR-LESSON and AWR-SIM. Click "Done".', t="Hand in AWR-PLAN, AWR-LESSON and AWR-SIM",
         w="Check AWR-PLAN, AWR-LESSON and AWR-SIM for empty cells, name the two files and submit them. AWR-SIM is a platform form: it has no file to name.",
@@ -2720,7 +2729,7 @@ def t111(w: dict) -> None:
                "note": "LearnTech Educational Solutions, Amsterdam office register (RA-36): each risk with the key risk indicator that tracks it, and its target."}}
     for d in w["library"]["docs"]:
         secs = [s[0] for s in d[2]]
-        if d[0] == "BKB-ADD-36" and "2.2" not in secs:
+        if d[0] == "SITL-ADD-36" and "2.2" not in secs:
             d[2].insert(secs.index("2.1") + 1, ["2.2", "Employee representation by office"])
     blob = json.dumps([t, w["notes"]["T11.1"], w["cards"].get("T11.1"), pl, w["guard"]], ensure_ascii=False)
     for bad in ("DECIDE (for each", "after you submit", "Then do the step", "Card 1", "Copy the approvals", "Programme Office and HR", "Copy the metrics", "Apply rule L21"):
@@ -2736,9 +2745,9 @@ def t112(w: dict) -> None:
     The mentee's topic is "EU Digital Services Act guidelines on the protection of minors online (2025)" for LearnTech (the
     task's own text). src/lib/desk/reg-t112.json (scratchpad build/T11.2/gen.py) holds the tracker's entries, the monitoring
     results, the two official sources (saved copies in public/desk/docs/SRC-*.md), REG-EXTRA, the duties, the affected systems and
-    the LearnTech Technology_Stack. Step 1 checks the Regulation Tracker against BKB-ADD-36 Section 2; 2 asks D1, then sorts the
+    the LearnTech Technology_Stack. Step 1 checks the Regulation Tracker against SITL-ADD-36 Section 2; 2 asks D1, then sorts the
     monitoring results (Add Update); 3 logs the sources' dates; 4 asks D2, then sorts source 1's key points into duties and
-    background; 5 does the same for the Regulation's articles; 6 decides applicability office by office (BKB-POL-016 Section
+    background; 5 does the same for the Regulation's articles; 6 decides applicability office by office (SITL-POL-016 Section
     7.2, written); 7 maps each duty to its policy (Impact Log, Ref-Keywords); 8 asks D5, then each action's owner; 9 hands in;
     10-13 (LI-16) the topic type, ISMS elements, layers and new-technology note, in the Impact Log; 14 hands in. Content
     Corrections item 73.
@@ -2749,7 +2758,7 @@ def t112(w: dict) -> None:
         w["cards"]["T11.2"] = json.loads(desect(json.dumps(w["cards"]["T11.2"], ensure_ascii=False)))
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T11.2"]}
-    reg = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "reg-t112.json").read_text(encoding="utf8"))
+    reg = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "reg-t112.json").read_text(encoding="utf8"))
     assert f'"{reg["topic"]}"' in t["obj"], t["obj"]
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI = " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable."
@@ -2769,11 +2778,11 @@ def t112(w: dict) -> None:
         sec, name = key.split("|")
         s["key"], s["sec"], s["tool"] = key, sec, f"{w['sections'][sec]['t']} › {name}"
 
-    put(1, "Open BKB-ADD-36 Section 2. Find the authority for each office.", t="Check the Regulation Tracker's authority for each LearnTech office",
-        w="Before a brief names who supervises an office, the tracker is checked against the addendum. For each of LearnTech's four offices, compare the authority on Regulatory Watch › Regulation Tracker with the Authority column of BKB-ADD-36 Section 2 (Policies › Policy Library).",
-        o="Each office's tracker entry checked against BKB-ADD-36 Section 2",
-        help="The tracker is a copy; the addendum is the source. Read each office's row of BKB-ADD-36 Section 2, in its Authority column. " + CHECK,
-        refs=refs(docs=[["BKB-ADD-36", ["2"]]]))
+    put(1, "Open SITL-ADD-36 Section 2. Find the authority for each office.", t="Check the Regulation Tracker's authority for each LearnTech office",
+        w="Before a brief names who supervises an office, the tracker is checked against the addendum. For each of LearnTech's four offices, compare the authority on Regulatory Watch › Regulation Tracker with the Authority column of SITL-ADD-36 Section 2 (Policies › Policy Library).",
+        o="Each office's tracker entry checked against SITL-ADD-36 Section 2",
+        help="The tracker is a copy; the addendum is the source. Read each office's row of SITL-ADD-36 Section 2, in its Authority column. " + CHECK,
+        refs=refs(docs=[["SITL-ADD-36", ["2"]]]))
     tool(1, "regwatch|Regulation Tracker")
     # D1: the question stays; its part 2 ("Open the official website … Type the topic title in the site search") sent the
     # learner to the live web, which the platform's rules forbid (item 11). The month's monitoring results are on Regulatory
@@ -2806,26 +2815,26 @@ def t112(w: dict) -> None:
         refs=refs(docs=[["SRC-EU-2022-2065", ["2", "3"]]], arts=["REG-BRIEF"]))
     tool(5, "regwatch|Briefing Builder")
     put(6, "Decide for each row: For each office, decide Applies or Does not apply", t="Decide where the guidelines apply, office by office",
-        w="For each LearnTech office, decide whether the guidelines apply to it. Use the three tests of BKB-POL-016 Section 7.2 (Policies › Policy Library) on what the office runs (REG-EXTRA, in the table) and on whom source 1 covers (its key point 2).",
+        w="For each LearnTech office, decide whether the guidelines apply to it. Use the three tests of SITL-POL-016 Section 7.2 (Policies › Policy Library) on what the office runs (REG-EXTRA, in the table) and on whom source 1 covers (its key point 2).",
         o="Applicability of each office checked in REG-BRIEF",
-        help="Rule R02 reads an office's row of BKB-ADD-36 Section 2; the guidelines are not in the addendum yet, so BKB-POL-016 Section 7.2 sets the tests. A colleague's question on the threshold is in the Inbox. " + CHECK,
-        refs=refs(rules=["R02"], docs=[["BKB-POL-016", ["7.2"]], ["BKB-ADD-36", ["2"]], ["SRC-EC-MINORS-2025", ["2"]]], arts=["REG-BRIEF"]))
+        help="Rule R02 reads an office's row of SITL-ADD-36 Section 2; the guidelines are not in the addendum yet, so SITL-POL-016 Section 7.2 sets the tests. A colleague's question on the threshold is in the Inbox. " + CHECK,
+        refs=refs(rules=["R02"], docs=[["SITL-POL-016", ["7.2"]], ["SITL-ADD-36", ["2"]], ["SRC-EC-MINORS-2025", ["2"]]], arts=["REG-BRIEF"]))
     tool(6, "regwatch|Briefing Builder")
-    put(7, "Decide for each row: Choose the affected BKB policies from the shortlist", t="Map each duty to the BKB policy that must carry it",
-        w="In the Impact Log, map each of the eight duties of steps 4 and 5 to the BKB policy whose key words it uses (rule R32, Ref-Keywords in Learn › Reference pages). A duty that uses none of the key words is a gap.",
+    put(7, "Decide for each row: Choose the affected SITL policies from the shortlist", t="Map each duty to the SITL policy that must carry it",
+        w="In the Impact Log, map each of the eight duties of steps 4 and 5 to the SITL policy whose key words it uses (rule R32, Ref-Keywords in Learn › Reference pages). A duty that uses none of the key words is a gap.",
         o="Policy of each duty checked in the Impact Log",
-        help="Ref-Keywords lists key words, the BKB policy they point to and its Annex A controls. A key word counts when the duty uses that word, or its plural. " + CHECK,
+        help="Ref-Keywords lists key words, the SITL policy they point to and its Annex A controls. A key word counts when the duty uses that word, or its plural. " + CHECK,
         refs=refs(rules=["R32"], pages=["Ref-Keywords"], arts=["REG-BRIEF"]))
     tool(7, "regwatch|Impact Log")
-    # D5's part 2 carried its own answer ("date = publication + 30 days"). The learner chooses each action's owner (BKB-POL-000
+    # D5's part 2 carried its own answer ("date = publication + 30 days"). The learner chooses each action's owner (SITL-POL-000
     # Sections 3 and 7); the date, the same on every row, is written by the platform from source 1's publication date (R32).
     old8 = 'Then: Write the actions using the frame "<Owner> updates <policy> by <date>" (date = publication + 30 days).'
     assert steps[7]["w"].endswith(old8), steps[7]["w"]
     put(8, "Decide: The rule was published on 1 October",
         w=steps[7]["w"].replace(old8, "Then: For each affected policy, choose who owns its action, written in the frame “<Owner> updates <policy> by <date>”."),
         o="Decision T11.2-D5 checked; the owner of each action checked in REG-BRIEF",
-        help="A scripted question first: BKB-POL-016 (Policies › Policy Library) sets the deadline. When you click Check my answer you see the best option and why. Then, in REG-BRIEF's actions (Regulatory Watch › Briefing Builder), choose each action's owner: BKB-POL-000 Section 3 names each policy's owner, and Section 7 who drafts a new statement. The action and its date are written for you. " + CHECK,
-        refs=refs(docs=[["BKB-POL-000", ["3", "7"]]], arts=["REG-BRIEF"]))
+        help="A scripted question first: SITL-POL-016 (Policies › Policy Library) sets the deadline. When you click Check my answer you see the best option and why. Then, in REG-BRIEF's actions (Regulatory Watch › Briefing Builder), choose each action's owner: SITL-POL-000 Section 3 names each policy's owner, and Section 7 who drafts a new statement. The action and its date are written for you. " + CHECK,
+        refs=refs(docs=[["SITL-POL-000", ["3", "7"]]], arts=["REG-BRIEF"]))
     tool(8, "regwatch|Briefing Builder")
     put(9, 'Submit REG-BRIEF. Click "Done".', t="Hand in REG-BRIEF",
         w="Check REG-BRIEF's six sheets for empty cells, name the file and submit it.", o="REG-BRIEF submitted with manifest")
@@ -2843,10 +2852,10 @@ def t112(w: dict) -> None:
         refs=refs(rules=["L22"], pages=["Ref-Change types"], arts=["LI-CHG"]))
     tool(11, "regwatch|Impact Log")
     put(12, "Decide for each row: For each affected system, choose its architecture layer", t="Place each affected system on its architecture layer (L22)",
-        w=LI16 + "Five LearnTech systems carry the new duties. For each, find its Domain in TSA-36 Technology_Stack (Learn › Reference pages), then the layer BKB-TECH-000 Section 3 (Policies › Policy Library) places that Domain on.",
+        w=LI16 + "Five LearnTech systems carry the new duties. For each, find its Domain in TSA-36 Technology_Stack (Learn › Reference pages), then the layer SITL-TECH-000 Section 3 (Policies › Policy Library) places that Domain on.",
         o="Layer of each affected system checked in LI-CHG",
         help="Rule L22: a system's layer comes from its Domain column. " + CHECK + LI,
-        refs=refs(rules=["L22"], pages=["TSA-36 Technology_Stack"], docs=[["BKB-TECH-000", ["3"]]], arts=["LI-CHG"]))
+        refs=refs(rules=["L22"], pages=["TSA-36 Technology_Stack"], docs=[["SITL-TECH-000", ["3"]]], arts=["LI-CHG"]))
     tool(12, "regwatch|Impact Log")
     put(13, "Copy the new-technology note", t="Record the new-technology note for the topic type",
         w=LI16 + "LI-CHG records the new-technology note Ref-Change types (Learn › Reference pages) lists for the topic type of step 10. Choose it.",
@@ -2867,13 +2876,13 @@ def t112(w: dict) -> None:
     # The card cited a message the task does not have (T11.2-J1). Where to add now names the screens the steps use.
     swaps = [
         ("Find and cite primary sources (regulator, official journal) with access dates — see Rule R32;", "Find and cite the official sources of a change, with access dates — see Rule R32;"),
-        ("Map a change to affected BKB policies and set actions within the 30-day window — see Rule R32;", "Map a change to affected BKB policies and set actions within BKB-POL-016's window — see Rule R32;"),
-        ("BKB-POL-016 Section 6.1 gives the team 30 days from publication to assess the impact of a change:", "BKB-POL-016 gives the team a fixed time from publication to assess the impact of a change:"),
+        ("Map a change to affected SITL policies and set actions within the 30-day window — see Rule R32;", "Map a change to affected SITL policies and set actions within SITL-POL-016's window — see Rule R32;"),
+        ("SITL-POL-016 Section 6.1 gives the team 30 days from publication to assess the impact of a change:", "SITL-POL-016 gives the team a fixed time from publication to assess the impact of a change:"),
         ("KR1 — Two official sources with address, publication, effective and access dates, and their shall/must duties · Activities 1–5",
          "KR1 — Two official sources with address, publication, application and access dates, and the obligations each sets · Activities 1–5"),
-        ("KR3 — Impact-assessment date = publication + 30 days; REG-BRIEF submitted · Activities 8–9", "KR3 — Impact-assessment date as BKB-POL-016 sets it; REG-BRIEF submitted · Activities 8–9"),
-        ("BKB-POL-016 — Section 3.1 (monthly monitoring, 30-day impact assessment); Section 6.1 Procedure: Regulatory change management",
-         "BKB-POL-016 — Section 3.1 (monitoring and impact assessment); Section 6.1 Procedure: Regulatory change management; Section 7.2 Applicability"),
+        ("KR3 — Impact-assessment date = publication + 30 days; REG-BRIEF submitted · Activities 8–9", "KR3 — Impact-assessment date as SITL-POL-016 sets it; REG-BRIEF submitted · Activities 8–9"),
+        ("SITL-POL-016 — Section 3.1 (monthly monitoring, 30-day impact assessment); Section 6.1 Procedure: Regulatory change management",
+         "SITL-POL-016 — Section 3.1 (monitoring and impact assessment); Section 6.1 Procedure: Regulatory change management; Section 7.2 Applicability"),
         ("A news article is not a rule (inject T11.2-J1) — act on official text, track early signals. ", ""),
         ("Platform: Regulatory Watch › Briefing Builder, Impact Log.", "Platform: Regulatory Watch › Regulation Tracker, Add Update, Briefing Builder, Impact Log."),
         ("<b>What we must do</b> ___ shall ___ within ___.", "<b>What we must do</b> ___ (from the official sources)"),
@@ -2910,7 +2919,7 @@ def t112(w: dict) -> None:
     assert au["pl"]["f"][0] == ["Source", "Official regulator website only"], au
     w["tp"]["regwatch|Add Update#T11.2"] = {"tool": "Regulatory Watch › Add Update", "stamp": f"Monitoring results · {len(reg['feed'])}", "kind": "table",
         "pl": {"h": ["Publisher", "Title", "Web address", "Date"], "r": reg["feed"],
-               "note": f"This month's monitoring results for “{reg['topic']}” (BKB-POL-016 Section 3.1). A change is logged with its sources: the publisher, title and web address, the date published, the date its duties apply from, and the date you read it."}}
+               "note": f"This month's monitoring results for “{reg['topic']}” (SITL-POL-016 Section 3.1). A change is logged with its sources: the publisher, title and web address, the date published, the date its duties apply from, and the date you read it."}}
 
     # Each Regulatory Watch screen the task uses is titled as the toolbar names it (the pack's "Reg Watch › Regulators", "… ›
     # Regulatory brief (REG-BRIEF)", "… › Impact log").
@@ -2925,15 +2934,15 @@ def t112(w: dict) -> None:
     j2, j3 = w["inj"]["T11.2-J2"], w["inj"]["T11.2-J3"]
     assert j2["notice"] == "The rule applies only to organisations with more than 250 staff. New York, United States has 120. Applies?", j2
     assert j3["notice"] == 'The file "REG-EXTRA" in 01_Inputs lists the processes of New York, United States.', j3
-    j2.update(sender="Compliance Manager", ref="BKB-POL-016 Section 7.2",
+    j2.update(sender="Compliance Manager", ref="SITL-POL-016 Section 7.2",
               notice="Before you set applicability, a quick one. Article 19 of the DSA keeps micro and small enterprises out of Article 28: fewer than 50 staff, and a turnover or balance sheet of no more than EUR 10 million. Our Amsterdam office has 46 staff. Does Article 28 apply to Amsterdam?",
               options=["Does not apply: Amsterdam has fewer than 50 staff. Record the threshold.", "Applies: the threshold is LearnTech's size, not one office's. Record the threshold.", "Applies only if the Group decides to apply it."])
-    j3.update(sender="Policy & Governance Analyst", ref="BKB-POL-016 Section 7.2",
+    j3.update(sender="Policy & Governance Analyst", ref="SITL-POL-016 Section 7.2",
               notice="I have put REG-EXTRA in your 01_Inputs folder: what each LearnTech office runs for learners, and LearnTech's headcount and turnover. Its lines are in the applicability table of your step 6.",
               steps=["Read each office's line in step 6's table.", "Decide, office by office, whether the guidelines apply."])
     # Learn › Reference pages: LearnTech's Technology_Stack (step 12), from the engine's TSA-36.
     w["pages"]["TSA-36 Technology_Stack"] = {"h": ["Cap ID", "Domain", "Capability", "Target solution", "System owner"], "r": reg["tsa"], "n": len(reg["tsa"])}
-    # Policies › Policy Library: the two saved official sources, and BKB-POL-016's new Section 7.2.
+    # Policies › Policy Library: the two saved official sources, and SITL-POL-016's new Section 7.2.
     lib = w["library"]["docs"]
     if not any(d[0] == "SRC-EC-MINORS-2025" for d in lib):
         lib += [["SRC-EC-MINORS-2025", "European Commission: guidelines on the protection of minors (saved copy of the official page)", [["1", "Source"], ["2", "Key points"]], {}],
@@ -2941,7 +2950,7 @@ def t112(w: dict) -> None:
                  [["1", "Source"], ["2", "Article 19 — Exclusion for micro and small enterprises"], ["3", "Article 28 — Online protection of minors"], ["4", "Article 93 — Entry into force and application"]], {}]]
     for d in lib:
         secs = [s[0] for s in d[2]]
-        if d[0] == "BKB-POL-016" and "7.2" not in secs:
+        if d[0] == "SITL-POL-016" and "7.2" not in secs:
             d[2].insert(secs.index("7.1") + 1, ["7.2", "Guideline: Applicability of a regulatory change"])
 
     blob = json.dumps([t, w["notes"]["T11.2"], w["cards"].get("T11.2"), w["inj"]["T11.2-J2"], w["inj"]["T11.2-J3"]], ensure_ascii=False)
@@ -2971,7 +2980,7 @@ def t121(w: dict) -> None:
         w["cards"]["T12.1"] = json.loads(desect(json.dumps(w["cards"]["T12.1"], ensure_ascii=False)))
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T12.1"]}
-    act = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "act-t121.json").read_text(encoding="utf8"))
+    act = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "act-t121.json").read_text(encoding="utf8"))
     assert [r[:11] for r in act["tracker"][:19]] == w["ds"]["ACT-TRACKER"]["r"], "ACT-TRACKER changed in the pack"
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI = " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable."
@@ -3163,7 +3172,7 @@ def t122(w: dict) -> None:
         w["cards"]["T12.2"] = json.loads(desect(json.dumps(w["cards"]["T12.2"], ensure_ascii=False)))
     steps = t["steps"]
     notes = {n[0]: n for n in w["notes"]["T12.2"]}
-    aud = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "aud-t122.json").read_text(encoding="utf8"))
+    aud = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "aud-t122.json").read_text(encoding="utf8"))
     assert aud["requests"] == w["ds"]["AUD-REQUESTS"]["r"], "AUD-REQUESTS changed in the pack"
     assert sorted(r[0] for r in aud["index"]) == sorted(r[0] for r in w["ds"]["EVIDENCE-INDEX"]["r"]), "EVIDENCE-INDEX changed in the pack"
     assert [aud["finding"]] == w["ds"]["AUD-FINDING"]["r"], "AUD-FINDING changed in the pack"
@@ -3200,8 +3209,8 @@ def t122(w: dict) -> None:
     put(3, "Decide for each row: For each request, choose the evidence file", t="Answer each request from the repository (rule R34)",
         w="For each of the auditor's requests R-1 to R-8, choose the one file of EVIDENCE-INDEX (Evidence › Evidence Library) that answers it by rule R34, or No evidence available where no file does.",
         o="File or No evidence available checked for every request",
-        help="Rule R34 is in Learn › Rule tables. BKB-POL-016 Section 6.2 says what a request asks for: the record the control produces each time it operates. " + CHECK,
-        refs=refs(rules=["R34"], ds=["EVIDENCE-INDEX"], docs=[["BKB-POL-016", ["6.2"]]]))
+        help="Rule R34 is in Learn › Rule tables. SITL-POL-016 Section 6.2 says what a request asks for: the record the control produces each time it operates. " + CHECK,
+        refs=refs(rules=["R34"], ds=["EVIDENCE-INDEX"], docs=[["SITL-POL-016", ["6.2"]]]))
     put(4, 'Copy the file ID and SHA-256 into AUD-LOG.', t="Log the SHA-256 of each file you send",
         w="AUD-LOG records each file you send with its SHA-256, the fingerprint the repository took when the file was filed: the auditor can then prove the file they received is the one you logged. For each file sent, copy its SHA-256 from Evidence › Evidence Library. The time sent (UTC) is recorded when your answers are checked.",
         o="SHA-256 checked for every file sent; AUD-LOG updated",
@@ -3254,8 +3263,8 @@ def t122(w: dict) -> None:
          "LI-18 KR — NC-1's response written in LI-NCR-R from its evidence row (L25), with the route if it is disputed; LI-NCR-R submitted · Activities 9–12"),
         ("The auditee provides exactly the file that matches the control and the period — never creates evidence after the request — and responds to a finding from the evidence, quoting the requirement.",
          "The auditee answers each request from the evidence repository and responds to a finding from the evidence: what is sent, and how a finding is answered, is what the auditor concludes from."),
-        ('Answer an auditor request with one traceable file (ID, hash, time sent) or an honest "no evidence available" plus an action — see Rule R34; BKB-POL-016 Section 6.2',
-         "Answer an auditor request from the evidence repository and log what you send (ID, hash, time sent) — see Rule R34; BKB-POL-016 Section 6.2"),
+        ('Answer an auditor request with one traceable file (ID, hash, time sent) or an honest "no evidence available" plus an action — see Rule R34; SITL-POL-016 Section 6.2',
+         "Answer an auditor request from the evidence repository and log what you send (ID, hash, time sent) — see Rule R34; SITL-POL-016 Section 6.2"),
         ("Know the escalation route — closing meeting, then the certification body's appeal process (LI-18) — see ISO/IEC 17021-1 (appeals)",
          "Know what happens to a finding still disputed after the audit (LI-18) — see ISO/IEC 17021-1 (appeals)"),
         ("Evidence created after the request is not evidence of past operation (inject T12.2-J2); honesty protects the certificate. The auditee provides evidence, only the auditor concludes (ISO 19011 independence). HC6 scores this task.",
@@ -3348,7 +3357,7 @@ def t122(w: dict) -> None:
         "note": "Your hand-ins from F1.1 to T12.1. Each version is sealed with its SHA-256 and UTC time when you submit it; a resubmission is a new version, and nothing is overwritten."}}
 
     # Injects. J2's sender is this task's owner, and its "the auditor asks you, the intern" names no audit of this variant; the
-    # Compliance Manager coordinates external audits (BKB-POL-016 Section 6.2). J4 came from "Unknown sender (outside the platform)":
+    # Compliance Manager coordinates external audits (SITL-POL-016 Section 6.2). J4 came from "Unknown sender (outside the platform)":
     # a GRC Office colleague now passes it on, which is how such a mix-up reaches an intern.
     j2, j4 = w["inj"]["T12.2-J2"], w["inj"]["T12.2-J4"]
     assert j2["notice"] == 'The auditor asks you, the intern, whether the company "passes". What do you answer?' and j2["sender"] == "Information Security Auditor", j2
@@ -3479,13 +3488,13 @@ def rework_f12(w: dict) -> None:
         holder[field] = new_help + holder[field][len(old_help):]
     assert s5["key"] == "frameworks|Framework Library" and s5["kind"] == "pick", s5
     s5["tool"], s5["key"], s5["sec"] = "Learn & Grow › Glossary", "learn|Glossary", "learn"
-    assert [d[0] for d in s5["refs"]["docs"]] == ["BKB-ADD-16"], s5["refs"]
+    assert [d[0] for d in s5["refs"]["docs"]] == ["SITL-ADD-16"], s5["refs"]
     s5["refs"]["docs"] = []
     # The card: the learning line pointed at a "Capture standard" no screen is called, and gave D3's reason.
     old_learn = 'Give every value a source another person can open — see Capture standard — "Evidence ref"'
     new_learn = 'Record where every value came from — see Learn & Grow › Glossary, "Evidence ref"'
     old_tool = "Frameworks › Framework Library"
-    new_tool = ("Frameworks › Framework Library; Policies › Policy Library (BKB-ADD-16); "
+    new_tool = ("Frameworks › Framework Library; Policies › Policy Library (SITL-ADD-16); "
                 "Learn & Grow › Rule tables, Framework Quick Reference, Glossary; Home › My Tasks")
     learn = t["card"]["What will I learn"]
     assert old_learn in learn, learn
@@ -3516,28 +3525,28 @@ def rework_f12(w: dict) -> None:
     # F1.2-J1 arrives at step 6 (lib/desk/inbox.ts INJ_AT), once the GDPR row's office has been read and checked (step
     # 4) and the evidence-ref question answered (step 5), which its option C would otherwise hint at. The pack's line
     # named no standard; this mentee's Polish-language instrument is the 2018 Act in the Warsaw row of Section 2, and
-    # BKB-ADD-16 Section 2's note now names the translation the Group reads it in.
+    # SITL-ADD-16 Section 2's note now names the translation the Group reads it in.
     j = w["inj"]["F1.2-J1"]
     assert j["notice"] == "A standard is published only in the local language, and you read only English.", j["notice"]
     assert j["sender"] == "Policy & Governance Analyst", j["sender"]
     assert j["options"] == ["Skip the standard", "Translate it with a public AI tool",
                             "Use the official English translation named in the addendum, and record the language"], j["options"]
     org = w["orgs"]["A"]
-    assert org["addendum"] == "BKB-ADD-16" and "Warsaw, Poland" in org["offices"], org
-    j["notice"] = ("Before FAM-MAP goes in: your GDPR row rests on the Warsaw row of BKB-ADD-16 Section 2, which reads "
+    assert org["addendum"] == "SITL-ADD-16" and "Warsaw, Poland" in org["offices"], org
+    j["notice"] = ("Before FAM-MAP goes in: your GDPR row rests on the Warsaw row of SITL-ADD-16 Section 2, which reads "
                    "“GDPR + 2018 Act”. The 2018 Act is Poland's Act of 10 May 2018 on the Protection of Personal Data. Its text "
                    "is published only in Polish, and you read only English. T3.1 builds the Warsaw office's obligations on "
                    "this row. How will you read the Act?")
     j["options"] = ["Skip the Act", "Translate it with a public AI tool",
                     "Use the English translation named in the addendum, and record the language"]
-    j["ref"] = "BKB-ADD-16 Section 2; BKB-POL-022 Section 7.1"
+    j["ref"] = "SITL-ADD-16 Section 2; SITL-POL-022 Section 7.1"
 
 
 def rework_f13(w: dict) -> None:
     """REWORK F1.3 (owner, 30 Oct 2026). Runs on the final text, after rework_f12().
 
     Steps 2 and 3 were straight copies. Sections 2 and 3 of the brief now arrive as a colleague's first draft
-    (registers.ts BRIEFS, `draft`) and the learner checks them against BKB-ADD-16 Sections 9 and 2. The card names
+    (registers.ts BRIEFS, `draft`) and the learner checks them against SITL-ADD-16 Sections 9 and 2. The card names
     the screens the steps use. F1.3-J1 is the Compliance Manager asking about this organisation's four offices; its
     Guidance line named the best option's section, so it now names where to read. Logged in
     docs/GRC101_Content_Corrections.md (item 78).
@@ -3545,23 +3554,23 @@ def rework_f13(w: dict) -> None:
     t = w["tasks"]["F1.3"]
     notes = {r[0]: r for r in w["notes"]["F1.3"]}
     for n, starts, title, text, out, old_help, help_ in [
-        (2, 'Open BKB-ADD-16 §9 "Processing activities and data". Copy every item',
-         "Check section 2 of the draft against BKB-ADD-16 Section 9",
-         'Open BKB-ADD-16 Section 9 "Processing activities and data". Section 2 of your brief arrives as a colleague\'s first '
+        (2, 'Open SITL-ADD-16 §9 "Processing activities and data". Copy every item',
+         "Check section 2 of the draft against SITL-ADD-16 Section 9",
+         'Open SITL-ADD-16 Section 9 "Processing activities and data". Section 2 of your brief arrives as a colleague\'s first '
          'draft. Check every line against the "Client data handled" list, word for word and in the same order, and correct '
          "any line that differs. Name the document and section you checked against in the Source line, then click Check my answers.",
-         "Section 2 checked against BKB-ADD-16 Section 9, with source",
+         "Section 2 checked against SITL-ADD-16 Section 9, with source",
          'Open the addendum §9 and find the "Client data handled" list. Copy every item into section 2 exactly as written and in the same order. '
          "Do not shorten, merge or reword items. Type the addendum and §9 in the Source line under the list.",
          'A colleague started section 2 and it has not been checked. Open the addendum Section 9, find the "Client data handled" '
          "list and compare the draft with it line by line: the same items, the same words, the same order. Correct any line that "
          "differs; never shorten, merge or reword. Then name the document and section in the Source line and click Check my answers."),
-        (3, "Open BKB-ADD-16 §2. Find the row for Manila, Philippines. Copy its five values",
-         "Check section 3 of the draft against BKB-ADD-16 Section 2",
-         "Open BKB-ADD-16 Section 2 and find the row for Manila, Philippines. Section 3 of your brief arrives as a colleague's first "
+        (3, "Open SITL-ADD-16 §2. Find the row for Manila, Philippines. Copy its five values",
+         "Check section 3 of the draft against SITL-ADD-16 Section 2",
+         "Open SITL-ADD-16 Section 2 and find the row for Manila, Philippines. Section 3 of your brief arrives as a colleague's first "
          "draft of five lines: law, authority, breach clock, cyber law, transfer rule. Check each line against that row, word for "
          "word, and correct any that differs. Name the document and section you checked against in the Source line, then click Check my answers.",
-         "Section 3 checked against BKB-ADD-16 Section 2, with source",
+         "Section 3 checked against SITL-ADD-16 Section 2, with source",
          "The addendum §2 has one row per office. Find the row of your home office and copy its five values into the five lines of section 3: law, authority, breach clock, cyber law, transfer rule.",
          "The addendum Section 2 has one row per office. A colleague drafted section 3: check its five lines (law, authority, breach "
          "clock, cyber law, transfer rule) against the row of your home office and correct any that differs. Then name the document "
@@ -3580,7 +3589,7 @@ def rework_f13(w: dict) -> None:
     t["obj"] = t["obj"].replace(old_obj, new_obj)
     assert t["inputs"][0].endswith("as a worked example"), t["inputs"][0]
     t["inputs"][0] += ", and sections 2 and 3 as a colleague's first draft to check"
-    old_tool, new_tool = "Home › My Organisation", "Home › My Organisation, My Tasks; Policies › Policy Library (BKB-ADD-16); Learn & Grow › Rule tables"
+    old_tool, new_tool = "Home › My Organisation", "Home › My Organisation, My Tasks; Policies › Policy Library (SITL-ADD-16); Learn & Grow › Rule tables"
     assert t["card"]["Where to add"].startswith(f"Platform: {old_tool}."), t["card"]["Where to add"]
     t["card"]["Where to add"] = t["card"]["Where to add"].replace(old_tool, new_tool, 1)
     assert old_obj in t["card"]["What will I do"]
@@ -3603,10 +3612,10 @@ def rework_f13(w: dict) -> None:
     assert j["notice"] == "Which is the LEAD regulator for GlobalConnect Customer Solutions?", j["notice"]
     assert j["sender"] == "Compliance Manager", j["sender"]
     assert j["ref"].replace("§", "Section ") == "Addendum Section 2.1", j["ref"]
-    j["notice"] = ("Before your brief goes in: GlobalConnect has four offices, and BKB-ADD-16 Section 2 gives each its own authority. "
+    j["notice"] = ("Before your brief goes in: GlobalConnect has four offices, and SITL-ADD-16 Section 2 gives each its own authority. "
                    "When the ISO/IEC 27001 surveillance auditors open the brief they will ask who our lead regulator is, and I want "
                    "this office to give one answer. Which do we give them?")
-    j["ref"] = "BKB-ADD-16 Section 1; Section 2"
+    j["ref"] = "SITL-ADD-16 Section 1; Section 2"
 
 
 def rework_f21(w: dict) -> None:
@@ -3626,21 +3635,21 @@ def rework_f21(w: dict) -> None:
     assert s["o"] == "Four organisation labels copied with source", s["o"]
     assert s["help"] == notes[4][2] and s["help"].endswith("Nothing to decide."), s["help"]
     s["t"] = notes[4][1] = "Apply GlobalConnect's labels to four items"
-    s["w"] = ("Four items are waiting for their label; each asset owner has set the item's Group tier. Read BKB-ADD-16 Section 7 and "
+    s["w"] = ("Four items are waiting for their label; each asset owner has set the item's Group tier. Read SITL-ADD-16 Section 7 and "
               "choose the label GlobalConnect uses for each item's tier, then click Check my answers.")
-    s["o"] = "Four items labelled and checked against BKB-ADD-16 Section 7"
+    s["o"] = "Four items labelled and checked against SITL-ADD-16 Section 7"
     s["help"] = notes[4][2] = ("Each organisation keeps its own names for the four Group tiers, and its own name is what goes on the file. "
                                "Open the addendum Section 7, find the row of each item's Group tier and choose the label in that row. "
                                "The four items become table 1 of CLS-RES.")
-    assert t["krs"][2].replace("§", "Section ") == "KR3 — Organisation labels copied exactly from BKB-ADD-16 Section 7 · Activity 4", t["krs"]
-    t["krs"][2] = "KR3 — Four items labelled as BKB-ADD-16 Section 7 labels their tiers · Activity 4"
+    assert t["krs"][2].replace("§", "Section ") == "KR3 — Organisation labels copied exactly from SITL-ADD-16 Section 7 · Activity 4", t["krs"]
+    t["krs"][2] = "KR3 — Four items labelled as SITL-ADD-16 Section 7 labels their tiers · Activity 4"
     # The card and inputs are read before D2 (the lowest tier of a seating plan): they said its answer.
     old_learn, new_learn = "apply the never-below-Tier-3 rule", "apply the rule on personal data"
     old_in, new_in = "(never below Tier 3)", "(minimum tiers for personal data and credentials)"
     assert any(old_in in x for x in t["inputs"]), t["inputs"]
     t["inputs"] = [x.replace(old_in, new_in) for x in t["inputs"]]
     old_tool = "Risk Register › Asset Register"
-    new_tool = "Risk Register › Asset Register; Policies › Policy Library (BKB-STD-001, BKB-ADD-16); Learn & Grow › Rule tables; Home › My Tasks"
+    new_tool = "Risk Register › Asset Register; Policies › Policy Library (SITL-STD-001, SITL-ADD-16); Learn & Grow › Rule tables; Home › My Tasks"
     assert t["card"]["Where to add"].startswith(f"Platform: {old_tool}."), t["card"]["Where to add"]
     t["card"]["Where to add"] = t["card"]["Where to add"].replace(old_tool, new_tool, 1)
     assert any(old_learn in x for x in t["card"]["What will I learn"]), t["card"]
@@ -3815,10 +3824,10 @@ def rework_t31(w: dict) -> None:
     # The card, the key results, what is read before a decision.
     swaps = [
         ("Add contractual obligations from customer requirements, not only laws — see", "Read what customers require of the organisation — see"),
-        ("Spot a source-data difference and record it instead of hiding it — see BKB-ERM-001 Annex A vs addendum — \"Differs — addendum governs\"", "Compare a value across two Group sources — see BKB-ERM-001 Annex A and the addendum"),
+        ("Spot a source-data difference and record it instead of hiding it — see SITL-ERM-001 Annex A vs addendum — \"Differs — addendum governs\"", "Compare a value across two Group sources — see SITL-ERM-001 Annex A and the addendum"),
         ("An obligation with no owner will not be met (inject T3.1-J1).", "An obligation with no owner will not be met."),
         ("KR2 — Every row typed and owned correctly (contracts included; owner = policy owner) · Activities 4–5", "KR2 — Every row's Type and owner correct · Activities 4–5"),
-        ("KR3 — Breach clocks and authorities match the addendum 100 %, differences noted; OBL-REG submitted · Activities 7–8", "KR3 — Breach clocks checked against BKB-ERM-001 Annex A; OBL-REG submitted with its OBL-EXTRA rows · Activities 7–8"),
+        ("KR3 — Breach clocks and authorities match the addendum 100 %, differences noted; OBL-REG submitted · Activities 7–8", "KR3 — Breach clocks checked against SITL-ERM-001 Annex A; OBL-REG submitted with its OBL-EXTRA rows · Activities 7–8"),
     ]
     used = set()
 
@@ -3842,7 +3851,7 @@ def rework_t31(w: dict) -> None:
     w["cards"]["T3.1"] = clean(w["cards"]["T3.1"])
     assert len(used) == len(swaps), [a for a, _ in swaps if a not in used]
     old_tool = "Regulatory Watch › Obligations Register"
-    new_tool = "Regulatory Watch › Obligations Register; Frameworks › Framework Library; Home › My Organisation; Policies › Policy Library (BKB-ADD-16, BKB-POL-000, BKB-ERM-001, BKB-POL-016, Organization_Profiles); Learn & Grow › Rule tables, Reference pages, Framework Quick Reference"
+    new_tool = "Regulatory Watch › Obligations Register; Frameworks › Framework Library; Home › My Organisation; Policies › Policy Library (SITL-ADD-16, SITL-POL-000, SITL-ERM-001, SITL-POL-016, Organization_Profiles); Learn & Grow › Rule tables, Reference pages, Framework Quick Reference"
     assert t["card"]["Where to add"].startswith(f"Platform: {old_tool}."), t["card"]["Where to add"]
     t["card"]["Where to add"] = t["card"]["Where to add"].replace(old_tool, new_tool, 1)
     for c in w["cards"]["T3.1"]:
@@ -3872,12 +3881,12 @@ def rework_t31(w: dict) -> None:
     j2, j3 = w["inj"]["T3.1-J2"], w["inj"]["T3.1-J3"]
     assert j2["notice"].startswith('A new customer contract says "notify us of incidents within 24 hours"') and j2["ref"] == "Rule R10", j2
     assert j3["notice"] == 'The file "OBL-EXTRA" in 01_Inputs lists two contract requirements from a new customer.' and j3["sender"] == "Programme office", j3
-    j2.update(ref="BKB-POL-016 Section 3.1",
+    j2.update(ref="SITL-POL-016 Section 3.1",
               notice="One for the register before you close it. A new financial-services client has signed with the Manila office, and its contract says we notify them of any security incident within 24 hours. Your register has 72h to NPC for a personal-data breach. The account team wants one clock on the wall, and I will have to defend it to the client and to NPC. What do we track?",
               options=["72 hours: the law outranks the contract", "Each clock, as its own obligation", "24 hours only: the shorter clock covers the law too"])
     j3.update(sender="Policy & Governance Analyst", ref="Organization_Profiles Section 3",
               notice="That new client's security schedule has come through. Its two requirements are in Organization_Profiles as OBL-EXTRA, Section 3. The first held two duties, so with rule R10 that makes three rows, and they are on a second sheet of your OBL-REG, outside the 15-row extract. Each still needs its frequency, its evidence and its policy before you hand the file in.",
-              steps=["Read the three rows in Organization_Profiles Section 3 (Policies › Policy Library).", "On OBL-REG's second sheet, fill each row's Evidence of compliance, Frequency / deadline and Linked BKB policy. Its owner role follows from the policy."])
+              steps=["Read the three rows in Organization_Profiles Section 3 (Policies › Policy Library).", "On OBL-REG's second sheet, fill each row's Evidence of compliance, Frequency / deadline and Linked SITL policy. Its owner role follows from the policy."])
 
     # D4's option A: two Group sources disagree on a breach clock. A practitioner records both and works to the shorter
     # until the owners resolve it; "the addendum governs" kept the looser 72 hours (professional review, 3 Nov 2026).
@@ -3991,9 +4000,9 @@ def rework_t32(w: dict) -> None:
     j1, j3 = w["inj"]["T3.2-J1"], w["inj"]["T3.2-J3"]
     assert j1["notice"] == "A policy covers the requirement, but no procedure exists yet. What coverage?" and j1["sender"] == "Policy & Governance Analyst", j1
     assert j3["notice"].startswith('The file "MAP-EXTRA" in 01_Inputs has a ninth requirement') and j3["sender"] == "Programme office", j3
-    j1.update(notice="Before I take your crosswalk to the assessor: FERPA 99.37, directory information. BKB-POL-017 covers it and A.5.34 is mapped, but no procedure carries it out yet. Regional Compliance & Legal in Amsterdam say the policy is signed, so they want the row shown as Full. I own this crosswalk and I have to defend every rating at HC2. What goes in the Coverage column?")
+    j1.update(notice="Before I take your crosswalk to the assessor: FERPA 99.37, directory information. SITL-POL-017 covers it and A.5.34 is mapped, but no procedure carries it out yet. Regional Compliance & Legal in Amsterdam say the policy is signed, so they want the row shown as Full. I own this crosswalk and I have to defend every rating. What goes in the Coverage column?")
     j3.update(sender="Data Protection Officer", notice="One more for your crosswalk before it goes in. Amsterdam runs under GDPR, and a LearnTech crosswalk with no line on Art.33 will be my first question at review. I have put it on a second sheet of MAP-XW as requirement M9, outside the 8 dataset rows. Map it as you mapped the others, and only give it a gap sentence if rule R11 leaves a gap.",
-              steps=["Read M9 on MAP-XW's second sheet (Frameworks › Map Control).", "Choose its BKB policy and its control, as in steps 1 and 2.", "Record its procedure section and its coverage, as in steps 3 and 4.", "Add a gap sentence if R11 leaves a gap, and its evidence ref."])
+              steps=["Read M9 on MAP-XW's second sheet (Frameworks › Map Control).", "Choose its SITL policy and its control, as in steps 1 and 2.", "Record its procedure section and its coverage, as in steps 3 and 4.", "Add a gap sentence if R11 leaves a gap, and its evidence ref."])
     blob = json.dumps([t, w["notes"]["T3.2"], w["cards"]["T3.2"], w["li"]["LI-05"], w["licards"]["LI-05"], j1, j3], ensure_ascii=False)
     for bad in ("Programme office", "01_Inputs has a ninth", "Gap Finder", "may not be used as a risk treatment", "must be Applicable", "cannot be a risk treatment"):
         assert bad not in blob, f"T3.2 still says {bad!r}"
@@ -4020,7 +4029,7 @@ def rework_t41(w: dict) -> None:
         assert steps[n - 1]["t"].startswith(old_start), steps[n - 1]["t"]
         steps[n - 1]["t"] = notes[n][1] = title
 
-    # Frameworks › Gap Finder holds POL-GAP (it showed BKB-POL-017's probes): steps 2 to 4 find the gaps there.
+    # Frameworks › Gap Finder holds POL-GAP (it showed SITL-POL-017's probes): steps 2 to 4 find the gaps there.
     Q7 = ["Q7", "Phoenix office: sessions on healthcare client systems must log off automatically after a set period of inactivity.", "HIPAA Security Rule, 45 CFR 164.312(a)(2)(iii)"]
     gf = w["tp"]["frameworks|Gap Finder"]
     assert gf["pl"]["r"][0][1].startswith("Data-subject requests"), gf["pl"]["r"][0]
@@ -4108,7 +4117,7 @@ def rework_t41(w: dict) -> None:
     assert j3["notice"].startswith('The file "POL-EXTRA" in 01_Inputs') and j3["sender"] == "Programme office", j3
     j2.update(notice="Before I read your redlines: Q2. The password rule you are writing will bind every Group organisation. Meanwhile the Phoenix office serves US healthcare clients, and one of them has written HIPAA's password management specification (45 CFR 164.308(a)(5)(ii)(D)) into its business associate agreement at 14 characters, stricter than the rule you are drafting. Where does that requirement go?",
               options=["An approved exception for Phoenix, recorded against the Group rule", "Your Q2 redline: make 14 characters the Group's rule for everyone", j2["options"][2]],
-              ref="Rule R13; BKB-POL-000 Section 5")
+              ref="Rule R13; SITL-POL-000 Section 5")
     j3.update(sender="Compliance Manager", notice="One more requirement for your policy review. A US healthcare client's annual security questionnaire asks how the Phoenix office meets HIPAA's automatic logoff specification, and I want an answer I can stand behind. I have added it to POL-GAP as Q7, under the six dataset rows, so it goes through the same review. Treat it exactly as you treat the others.",
               steps=["Read Q7 on POL-GAP (Frameworks › Gap Finder).", "Find its clause, or none, as for Q1 to Q6.", "Take it through coverage, where the fix belongs and, if needed, a redline, with the other rows."])
     blob = json.dumps([t, w["notes"]["T4.1"], w["cards"]["T4.1"], w["li"]["LI-06"], w["licards"]["LI-06"], j2, j3], ensure_ascii=False)
@@ -4150,11 +4159,11 @@ def rework_t42(w: dict) -> None:
     titled(3, "Decide for each row:", "Choose the responsible role of each SOP step")
     titled(5, "Decide: The owner is on leave", "Decide what the exception step says")
     titled(7, "Decide: What classification", "Decide what classification label your SOP gets")
-    titled(9, "Decide for each row:", "Decide Document or Record, and record where BKB keeps it")
+    titled(9, "Decide for each row:", "Decide Document or Record, and record where SITL keeps it")
     # D1 asked about 4 hours and 1 hour, which no source of this SOP gives. It now asks about the SOP's own two values.
     # Its best option no longer states the rule that decides it.
     old = 'The policy says "within 4 hours"; the addendum Section 5 says "within 1 hour" for your office.'
-    new = 'BKB-POL-021 Section 6.1 gives the vendor assessment "within 10 working days of the request"; BKB-ADD-36 Section 5 gives "within 5 working days of the request".'
+    new = 'SITL-POL-021 Section 6.1 gives the vendor assessment "within 10 working days of the request"; SITL-ADD-36 Section 5 gives "within 5 working days of the request".'
     assert old in steps[1]["w"], steps[1]["w"]
     steps[1]["w"] = steps[1]["w"].replace(old, new)
     helped(2, old, new)
@@ -4164,34 +4173,34 @@ def rework_t42(w: dict) -> None:
     # Step 4: a colleague's draft to check, not a table to copy. J1's Guidance line cites Section 10.
     titled(4, "Copy the policy's roles", "Check a colleague's RACI against the policy")
     s = steps[3]
-    s["w"] = "The SOP's RACI arrives as a colleague's draft. Read each row against BKB-POL-021 Section 5, correct any that differs, then click Check my answers."
-    s["o"] = "The 8 roles' responsibilities checked against BKB-POL-021 Section 5"
-    helped(4, "BKB-POL-021 Section 5, Roles and responsibilities, is the policy's RACI table: one row per role. Choose each role's responsibility as Section 5 writes it.",
-           "A colleague filled in this RACI from memory. BKB-POL-021 Section 5, Roles and responsibilities, is the policy's own table: read every row against it and correct any that differs.")
-    assert s["refs"]["docs"] == [["BKB-POL-021", ["5"]]], s["refs"]
-    s["refs"]["docs"] = [["BKB-POL-021", ["5", "10"]]]
+    s["w"] = "The SOP's RACI arrives as a colleague's draft. Read each row against SITL-POL-021 Section 5, correct any that differs, then click Check my answers."
+    s["o"] = "The 8 roles' responsibilities checked against SITL-POL-021 Section 5"
+    helped(4, "SITL-POL-021 Section 5, Roles and responsibilities, is the policy's RACI table: one row per role. Choose each role's responsibility as Section 5 writes it.",
+           "A colleague filled in this RACI from memory. SITL-POL-021 Section 5, Roles and responsibilities, is the policy's own table: read every row against it and correct any that differs.")
+    assert s["refs"]["docs"] == [["SITL-POL-021", ["5"]]], s["refs"]
+    s["refs"]["docs"] = [["SITL-POL-021", ["5", "10"]]]
     kr = t["krs"][1]
     assert "RACI copied from the policy" in kr, kr
     t["krs"][1] = kr.replace("RACI copied from the policy", "RACI checked against the policy")
     # Step 6: the Records sheet J3 brings, then the hand-in.
     s = steps[5]
     s["w"] = "Decide who keeps each record on SOP-DOC's Records sheet. Check that SOP-DOC has no empty cell, name the file and submit it."
-    s["refs"]["docs"] = [["BKB-POL-021", ["6.1", "8"]], ["BKB-POL-000", ["6"]]]
-    helped(6, "Press Submit:", "The Security Architecture & Standards Manager's message brings a Records sheet: decide who keeps each record, by the note under BKB-POL-021 Section 6.1's table. Then press Submit:")
+    s["refs"]["docs"] = [["SITL-POL-021", ["6.1", "8"]], ["SITL-POL-000", ["6"]]]
+    helped(6, "Press Submit:", "The Security Architecture & Standards Manager's message brings a Records sheet: decide who keeps each record, by the note under SITL-POL-021 Section 6.1's table. Then press Submit:")
     # Steps 7 and 8: Version History shows this SOP's state, Send for Approval its route.
     assert "policies|Version History#T4.2" not in w["tp"]
     w["tp"]["policies|Version History#T4.2"] = {
-        "tool": "Policies › Version History", "stamp": "BKB-POL-021 and its SOP", "kind": "table",
+        "tool": "Policies › Version History", "stamp": "SITL-POL-021 and its SOP", "kind": "table",
         "pl": {"h": ["Document", "Version", "Status", "Effective date"],
-               "r": [["BKB-POL-021 Cloud Security Policy", "1.0", "Approved for adoption", "2026-10-01"],
+               "r": [["SITL-POL-021 Cloud Security Policy", "1.0", "Approved for adoption", "2026-10-01"],
                      ["SOP: Approving a new cloud service", "None yet", "Handed in as SOP-DOC v1, not yet approved", "—"]],
                "note": "SOP-DOC v1 is your file's hand-in number. A document's own version number is set when it is approved. A resubmission creates a new hand-in version; nothing is overwritten."},
     }
-    helped(7, "Then fill the SOP's document-control block, field by field, by the rules of BKB-POL-000 Section 7.1.",
-           "Then fill the SOP's document-control block, field by field, by the rules of BKB-POL-000 Section 7.1. Policies › Version History shows what exists of this SOP so far.")
+    helped(7, "Then fill the SOP's document-control block, field by field, by the rules of SITL-POL-000 Section 7.1.",
+           "Then fill the SOP's document-control block, field by field, by the rules of SITL-POL-000 Section 7.1. Policies › Version History shows what exists of this SOP so far.")
     sa = w["tp"]["policies|Send for Approval"]["pl"]["f"]
     assert sa[1] == ["Reviewer", "Policy & Governance Analyst (Task owner)"], sa
-    # The screen named the task's owner as reviewer; BKB-POL-000 Section 7.1, which the step applies, names the policy owner and the roles in the steps.
+    # The screen named the task's owner as reviewer; SITL-POL-000 Section 7.1, which the step applies, names the policy owner and the roles in the steps.
     sa[1][1] = "Policy owner, with the roles that carry out its steps"
     s = steps[7]
     s["key"], s["sec"], s["tool"] = "policies|Send for Approval", "policies", "Policies › Send for Approval"
@@ -4238,11 +4247,11 @@ def rework_t42(w: dict) -> None:
     j1, j3 = w["inj"]["T4.2-J1"], w["inj"]["T4.2-J3"]
     assert j1["notice"] == "Which KPI best shows the SOP works?" and j1["sender"] == "Policy & Governance Analyst", j1
     assert j3["notice"].startswith('The file "SOP-EXTRA" in 01_Inputs') and j3["sender"] == "Programme office", j3
-    j1.update(notice="Before your SOP goes to the policy owner: the owner reports this policy's KPIs, and BKB-POL-021 Section 10's two measure the cloud estate, not this procedure. They will want one more, with a target, that shows the SOP works. Which should I propose?",
+    j1.update(notice="Before your SOP goes to the policy owner: the owner reports this policy's KPIs, and SITL-POL-021 Section 10's two measure the cloud estate, not this procedure. They will want one more, with a target, that shows the SOP works. Which should I propose?",
               options=["% of staff who have completed training on the SOP", "Number of new cloud services approved each quarter", j1["options"][2]],
-              ref="BKB-POL-021 Section 10; rule R14")
+              ref="SITL-POL-021 Section 10; rule R14")
     j3.update(sender="Security Architecture & Standards Manager", notice="This SOP comes to me for approval, and the first thing I ask of any procedure is who holds its proof. \"Somebody keeps it\" fails a control test. I have listed the six records this procedure leaves on a Records sheet of SOP-DOC, including the onboarding evidence, which has no SOP step of its own. Decide who keeps each one before you hand in.",
-              steps=["Read the Records sheet of SOP-DOC, below the RACI.", "Read the note under BKB-POL-021 Section 6.1's table.", "Choose who keeps each record."])
+              steps=["Read the Records sheet of SOP-DOC, below the RACI.", "Read the note under SITL-POL-021 Section 6.1's table.", "Choose who keeps each record."])
     blob = json.dumps([t, w["notes"]["T4.2"], w["cards"]["T4.2"], w["li"]["LI-07"], w["licards"]["LI-07"], j1, j3], ensure_ascii=False)
     for bad in ("Programme office", "01_Inputs lists", "4 hours", "The average", "T4.2-J2", "Number of pages", "may only tighten", "without any record"):
         assert bad not in blob, f"T4.2 still says {bad!r}"
@@ -4280,7 +4289,7 @@ def rework_t51(w: dict) -> None:
     # Step 1: says what to read and what to choose (the owner, trying it, could not tell).
     s = steps[0]
     assert s["w"].startswith("Dataset PBC-6 lists the six controls"), s["w"]
-    s["w"] = "Each row is one control the auditor will test. In its Evidence requested list, choose the one record that shows the control ran during the audit period. BKB-POL-016 Section 6.2 says what counts."
+    s["w"] = "Each row is one control the auditor will test. In its Evidence requested list, choose the one record that shows the control ran during the audit period. SITL-POL-016 Section 6.2 says what counts."
     helped(1, "Read each control's description and choose the evidence that shows it ran.", "Its row Evidence requested is the test. Read each control's description and choose the record that control leaves each time it runs.")
     # Step 2: a colleague's first pass to check, not a column to copy.
     titled(2, "Copy each control's system", "Check a colleague's systems against dataset PBC-6")
@@ -4289,7 +4298,7 @@ def rework_t51(w: dict) -> None:
     s["o"] = "System checked for the 6 requests; population and period recorded"
     helped(2, "Copy each control's System as written there. A value that is not the dataset's is flagged with where to read it.",
            "A colleague filled in System from memory: compare each row with the dataset and choose the dataset's system where it differs. " + CHECK)
-    assert s["refs"]["docs"] == [["BKB-POL-016", ["6.2"]]], s["refs"]
+    assert s["refs"]["docs"] == [["SITL-POL-016", ["6.2"]]], s["refs"]
     s["refs"]["docs"] = []
     # Standing rule (Decisions Made): the page says how a recurring control and a population of items are sampled.
     w["pages"]["Ref-Sampling"]["note"] = "A recurring control is sampled by frequency; a population of items is sampled by records. Use the row for what the control's frequency says."
@@ -4369,7 +4378,7 @@ def rework_t52(w: dict) -> None:
 
     The odd evidence/control pairings become D7 traps the learner can see: every file of EVP-REPO carries the record its request asks for (T5.1 step 1's
     answer), except seven planted ones in the pack's own words and the four the pack already scopes out. Two controls now have a gap. Check D7 shows the
-    request (Audit Requests (PBC), a T5.2 view), and BKB-POL-016 Section 7.1 says so. Step 3 is a colleague's index with two slips (registers.ts). Step 5
+    request (Audit Requests (PBC), a T5.2 view), and SITL-POL-016 Section 7.1 says so. Step 3 is a colleague's index with two slips (registers.ts). Step 5
     reads Request Evidence. J2 and J3 are rewritten and placed (lib/desk/inbox.ts); J3's five files are real: Import Log / Report and Upload Config File hold
     them, and EVP-EXTRA, EVP-IDX's second sheet, takes them at the hand-in. Logged in docs/GRC101_Content_Corrections.md (item 87).
     """
@@ -4396,7 +4405,7 @@ def rework_t52(w: dict) -> None:
     kept = traps | {r[0] for r in ds["r"] if r[3] != "In-scope system"}
     assert len(kept) == 11, kept
     lib = w["tp"]["evidence|Evidence Library"]["pl"]["r"]
-    regs_ts = (Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "registers.ts").read_text(encoding="utf8")
+    regs_ts = (Path(__file__).resolve().parent / "desk-sample-data" / "registers.ts").read_text(encoding="utf8")
     for rows in (ds["r"], t["panel"]["pl"]["r"], lib):
         assert len(rows) == 42
         for r in rows:
@@ -4418,12 +4427,12 @@ def rework_t52(w: dict) -> None:
         "note": "Nothing has arrived yet: the control owners send their files once your requests are out."}}
     # Step 2: D7 can be tested, and the screen says so.
     titled(2, "Decide for each row", "Check each file against the evidence checklist")
-    steps[1]["w"] = "For each file, decide Accept or Reject, and record the code of every check that fails. Rule R09 walks the checks; BKB-POL-016 Section 7.1 says what each one means."
+    steps[1]["w"] = "For each file, decide Accept or Reject, and record the code of every check that fails. Rule R09 walks the checks; SITL-POL-016 Section 7.1 says what each one means."
     helped(2, "Check D1 to D10 in order (Ref-Defect codes)", "Check D1 to D10 in order (Evidence › Defect Codes)")
     helped(2, "Walk the checklist beside the table for each file: the result fills Accept/Reject and Defect code.",
-           "Walk the checklist beside the table for each file: the result fills Accept/Reject and Defect code. Read D7 with care: BKB-POL-016 Section 7.1 says what in scope means for a file sent to a request.")
+           "Walk the checklist beside the table for each file: the result fills Accept/Reject and Defect code. Read D7 with care: SITL-POL-016 Section 7.1 says what in scope means for a file sent to a request.")
     assert steps[1]["refs"]["pages"] == ["Ref-Defect codes"] and steps[1]["refs"]["docs"] == [], steps[1]["refs"]
-    steps[1]["refs"]["pages"], steps[1]["refs"]["docs"] = [], [["BKB-POL-016", ["7.1"]]]
+    steps[1]["refs"]["pages"], steps[1]["refs"]["docs"] = [], [["SITL-POL-016", ["7.1"]]]
     # Step 3: a colleague's index to check, not a look-up to choose from.
     titled(3, "Decide for each row", "Check the request a colleague gave each accepted file")
     steps[2]["w"] = "EVP-IDX's PBC req. column arrives as a colleague's first pass. Read each accepted file's control against Evidence › Audit Requests (PBC), correct any request that differs, then click Check my answers."
@@ -4467,7 +4476,7 @@ def rework_t52(w: dict) -> None:
     assert j3["notice"].startswith('The folder "EVP-EXTRA" in 01_Inputs') and j3["sender"] == "Programme office", j3
     j2.update(notice="I have been reading C22 ahead of testing. EVP-GAP shows it with no gap, and it has enough accepted files. But the test needs its sample of 25 data-subject requests, and those files show only 23 of the 25. The other 2 are in no file we hold. What do we do with C22?",
               options=["Record C22 as failed: 2 of its 25 are missing", "Treat the 2 as a gap and ask the owner for them", "Leave it as No gap: R18 counts files, and C22 has enough"],
-              ref="Rule R18; BKB-POL-016 Section 6.2")
+              ref="Rule R18; SITL-POL-016 Section 6.2")
     j3.update(sender="Compliance Manager", notice="The follow-ups went out and the owners have sent five more files, all exported before the period closed. I have put them in the repository as E-043 to E-047, on a second sheet of your index, EVP-EXTRA, below your gap memo. Nothing in the first 42 changes: a rejected file stays on the index as rejected, and new evidence gets a new row. Evidence › Import Log / Report holds what each file says about itself, and Evidence › Upload Config File what arrived. Check them the way you checked the 42.",
               steps=["Read each file in Import Log / Report, and compare its SHA-256 with Upload Config File.", "On EVP-EXTRA, record Accept or the check that fails, and the request of an accepted file.", "Say whether the file's control has a gap now."],
               ref="Rules R09, R18")
@@ -4496,7 +4505,7 @@ def rework_t52(w: dict) -> None:
 def rework_t61(w: dict) -> None:
     """REWORK T6.1 (owner, 30 Oct 2026; decisions 1 Nov). Runs last, on the final text, after options_pass().
 
-    Step 4 reads each lead on the screen that listed it (Privilege Check, Terminated User Check, Reviewer Sign-off), not a 13-column copy. Step 6 cites BKB-POL-006
+    Step 4 reads each lead on the screen that listed it (Privilege Check, Terminated User Check, Reviewer Sign-off), not a 13-column copy. Step 6 cites SITL-POL-006
     Section 6.3 and its wrong options are real mistakes. Step 7 reads R19 on Control Testing › Record Result (the section opens in week 6 for it), severities on
     Ref-UAR codes and the memo's frame on Sentence frames; its note no longer hands over the severities. J1 and J3 are rewritten and placed (lib/desk/inbox.ts); J3's
     file is real: UAR-EXTRA, a fourth sheet of UAR-TEST, ten accounts of a second system in src/lib/desk/uar-t61.json, worked at the hand-in. Its rows give the types
@@ -4513,7 +4522,7 @@ def rework_t61(w: dict) -> None:
         assert steps[n - 1]["w"].startswith(old), steps[n - 1]["w"]
         steps[n - 1]["w"] = new
 
-    uar = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "uar-t61.json").read_text(encoding="utf8"))
+    uar = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "uar-t61.json").read_text(encoding="utf8"))
     second = uar["second"]
     assert len(second["rows"]) == 10
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
@@ -4528,14 +4537,14 @@ def rework_t61(w: dict) -> None:
     # Ref-UAR codes: two types can fit one account. Narrow on purpose: a wider rule ("the higher severity") would turn step 5's generic accounts into U2.
     assert "note" not in w["pages"]["Ref-UAR codes"]
     w["pages"]["Ref-UAR codes"]["note"] = "U6 is for a dormant account with nothing else wrong. If another type also fits, report that type."
-    # Step 6, D3: rule R20's action is on the step's own screen and the incident is in BKB-POL-006 Section 6.3, which it never cited: the answer could not be read.
+    # Step 6, D3: rule R20's action is on the step's own screen and the incident is in SITL-POL-006 Section 6.3, which it never cited: the answer could not be read.
     s = steps[5]
     old = ["Note it for the next quarterly review", "Disable within 1 working day and raise an incident", "Ask the leaver why"]
     assert s["opt"] == old, s["opt"]
     s["opt"] = ["Disable within 1 working day, with no incident: the memo already records the login", old[1], "Ask HR to confirm the termination date, then disable within 5 working days"]
     said(6, "DECIDE: A leaver's account", "A leaver's account is still active and was used after termination. What action goes in the memo?")
-    helped(6, "A leaver's account is still active and was used after termination. Access Reviews › Track Remediation gives the standard action for each type, and BKB-POL-006 Section 6.3 is the leaver procedure. When you click Check my answer you see the best option and why. Once it is checked, the platform copies rule R20's action, owner and due date for each of your exceptions into Sheet 3.")
-    s["refs"]["rules"], s["refs"]["pages"], s["refs"]["docs"] = [], [], [["BKB-POL-006", ["6.3"]]]
+    helped(6, "A leaver's account is still active and was used after termination. Access Reviews › Track Remediation gives the standard action for each type, and SITL-POL-006 Section 6.3 is the leaver procedure. When you click Check my answer you see the best option and why. Once it is checked, the platform copies rule R20's action, owner and due date for each of your exceptions into Sheet 3.")
+    s["refs"]["rules"], s["refs"]["pages"], s["refs"]["docs"] = [], [], [["SITL-POL-006", ["6.3"]]]
     # Step 7: R19 on its screen; the severities are looked up, not handed over. Its row list grows the memo frame's "items tested", a real base-rate choice.
     said(7, "DECIDE (for each item)", "Work out rule R19 for your test: how many exceptions Sheet 3 holds, the highest severity, their share of the population, the conclusion, and how many items the memo says were tested.")
     helped(7, "Rule R19 is on Control Testing › Record Result, the severities on Ref-UAR codes (Learn › Reference pages), and the memo's sentence on Learn & Grow › Sentence frames. " + CHECK)
@@ -4653,7 +4662,7 @@ def techlab_t82(w: dict) -> None:
         if d[0] == "T8.2":
             d[5] = d[5].replace(old_p, new_p)
     assert t["steps"][6]["refs"]["docs"] == []
-    t["steps"][6]["refs"]["docs"] = [["BKB-ADD-36", ["8"]]]  # the lab's last question reads Section 8.1, so the library shows the jump
+    t["steps"][6]["refs"]["docs"] = [["SITL-ADD-36", ["8"]]]  # the lab's last question reads Section 8.1, so the library shows the jump
     new_h = "Systems › NetShield opens at this step: the Information Security Auditor's check of the Amsterdam firewall. Its findings join CT-MEMO as the Network path check row, so do it before you submit. Press Submit: the platform seals the file"
     note = next(r for r in w["notes"]["T8.2"] if r[0] == 7)
     for holder, field in ((t["steps"][6], "help"), (note, 2)):
@@ -4727,7 +4736,7 @@ def techlab_t102(w: dict) -> None:
             d[5] = d[5].replace(old_p, new_p)
     s = t["steps"][6]
     assert s["n"] == 7 and s["refs"]["docs"] == [], s["refs"]
-    s["refs"]["docs"] = [["BKB-ADD-36", ["5", "8"]]]  # the lab's last question reads Sections 5 and 8.1, so the library shows the jump
+    s["refs"]["docs"] = [["SITL-ADD-36", ["5", "8"]]]  # the lab's last question reads Sections 5 and 8.1, so the library shows the jump
     new_h = "Systems › LogLens opens at this step: the DPO's check of the logs behind your plan, in LearnTech's security monitoring. Its findings join BRC-PLAN as the Log evidence check row, so do it before you submit. Press Submit: the platform seals the file"
     note = next(r for r in w["notes"]["T10.2"] if r[0] == 7)
     for holder, field in ((s, "help"), (note, 2)):
@@ -4738,7 +4747,7 @@ def techlab_t102(w: dict) -> None:
 def rework_t62(w: dict) -> None:
     """REWORK T6.2 (owner, 30 Oct 2026; decisions 1 Nov). Runs last, after rework_t61().
 
-    R21 stands, so BKB-POL-006 now says 1 hour too. A late disable carries an action: Ref-Actions gains LV. Step 3 is a colleague's SLA column with two slips (registers.ts).
+    R21 stands, so SITL-POL-006 now says 1 hour too. A late disable carries an action: Ref-Actions gains LV. Step 3 is a colleague's SLA column with two slips (registers.ts).
     Step 5's question is about an account closed late and still used, which T6.1's D3 does not ask; its part 2 is back as real work: LVR-REC Sheet 3, one row per exception
     with its last sign-in (lvr-t62.json), action chosen. J4 is at step 2, J1 at step 4, on a leaver outside the 29 (lib/desk/inbox.ts). Logged in corrections item 89.
     """
@@ -4781,13 +4790,13 @@ def rework_t62(w: dict) -> None:
     assert s["opt"][0].startswith("Nothing"), s["opt"]
     s["opt"] = ["Record it as a late disable: the account is closed and the KPI already counts it", "Raise an incident, although the account is closed", "Ask E0001's line manager first, and raise an incident only if nobody can explain the sign-in"]
     # The "Options:" and "Then:" markers are parsed and never shown (tool-modal.tsx, how-to.tsx thenOf).
-    said(5, "DECIDE: A leaver's account was used 2 days after termination.", "DECIDE: A leaver's account, closed late, was used 2 days after termination. Which action? Options: " + "  ".join(f"{x}) {y}" for x, y in zip("ABC", s["opt"])) + ". Then: On LVR-REC Sheet 3, choose each exception's action: its code from Access Reviews › Track Remediation, with an incident where BKB-POL-006 Section 6.3 calls for one.")
+    said(5, "DECIDE: A leaver's account was used 2 days after termination.", "DECIDE: A leaver's account, closed late, was used 2 days after termination. Which action? Options: " + "  ".join(f"{x}) {y}" for x, y in zip("ABC", s["opt"])) + ". Then: On LVR-REC Sheet 3, choose each exception's action: its code from Access Reviews › Track Remediation, with an incident where SITL-POL-006 Section 6.3 calls for one.")
     s["o"] = "Decision and each exception's action checked"
-    helped(5, "A scripted question first: what is done about a leaver's account closed late and used after termination. When you click Check my answer you see the best option and why. Then LVR-REC Sheet 3: the code for each exception is on Access Reviews › Track Remediation, the leaver procedure in BKB-POL-006 Section 6.3. " + CHECK)
-    s["refs"]["docs"] = [["BKB-POL-006", ["6.3"]]]
-    # BKB-POL-006 said "immediately" where R21 says 1 hour: decisions row, and the document itself is aligned.
+    helped(5, "A scripted question first: what is done about a leaver's account closed late and used after termination. When you click Check my answer you see the best option and why. Then LVR-REC Sheet 3: the code for each exception is on Access Reviews › Track Remediation, the leaver procedure in SITL-POL-006 Section 6.3. " + CHECK)
+    s["refs"]["docs"] = [["SITL-POL-006", ["6.3"]]]
+    # SITL-POL-006 said "immediately" where R21 says 1 hour: decisions row, and the document itself is aligned.
     swaps = [("Platform: Access Reviews › Terminated User Check, Track Remediation", "Platform: Access Reviews › Terminated User Check, Track Remediation; Policies › Policy Library; Learn & Grow › Rule tables"),
-             ("(4 hours; immediately when involuntary — BKB-POL-006 Section 3.1)", "(4 hours; 1 hour when involuntary — BKB-POL-006 Section 3.1)"),
+             ("(4 hours; immediately when involuntary — SITL-POL-006 Section 3.1)", "(4 hours; 1 hour when involuntary — SITL-POL-006 Section 3.1)"),
              ("Section 3.1 (4-hour / immediate revocation)", "Section 3.1 (4-hour / 1-hour revocation)")]
     card_s, cards_s = json.dumps(t["card"], ensure_ascii=False), json.dumps(w["cards"]["T6.2"], ensure_ascii=False)
     for old, new in swaps:
@@ -4842,7 +4851,7 @@ def rework_t71(w: dict) -> None:
         assert steps[n - 1]["w"].startswith(old), steps[n - 1]["w"]
         steps[n - 1]["w"] = new
 
-    rru = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "rru-t71.json").read_text(encoding="utf8"))
+    rru = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "rru-t71.json").read_text(encoding="utf8"))
     assert rru["types"] == {r[0]: r[1:5] for r in w["pages"]["Ref-Chain"]["r"]}, "Ref-Chain changed: rru-t71.json copies it"
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI3 = "[LI-03 — Asset–threat–vulnerability–control chain and control attributes] "
@@ -4870,7 +4879,7 @@ def rework_t71(w: dict) -> None:
     # Step 9: J3's sheet. Done when ("o") is parsed for the file names: it stays as it is.
     said(9, "Check RR-UPD (the register and its change log)", "Work event N4 on RR-UPD's Sheet N4, line by line. Then check RR-UPD (the register, its change log and Sheet N4) and RR-NOTE for empty cells, name RR-UPD and submit both.")
     assert steps[8]["help"].startswith("Press Submit"), steps[8]["help"]
-    helped(9, "The Cyber Risk Manager's message brings Sheet N4. Work N4 as you worked N1 to N3: rules R06, R07, R08, R36 and L12 (Learn › Rule tables), BKB-ERM-001 Sections 6.2 and 6.3 (Policies › Policy Library), the owner on Risk Register › Assign Owner. A wrong value is flagged at once, with where to read it. " + steps[8]["help"])
+    helped(9, "The Cyber Risk Manager's message brings Sheet N4. Work N4 as you worked N1 to N3: rules R06, R07, R08, R36 and L12 (Learn › Rule tables), SITL-ERM-001 Sections 6.2 and 6.3 (Policies › Policy Library), the owner on Risk Register › Assign Owner. A wrong value is flagged at once, with where to read it. " + steps[8]["help"])
     steps[8]["refs"]["rules"] = ["R06", "R07", "R08", "R36", "L12"]
     # Step 12: a colleague's column. Was a straight copy.
     titled(12, "Copy the Annex A control", "Check the Annex A control a colleague entered for each chain (Ref-Chain)")
@@ -4895,7 +4904,7 @@ def rework_t71(w: dict) -> None:
     assert j3["notice"].startswith('The file "RRU-EXTRA" in 01_Inputs') and j3["sender"] == "Programme office", j3
     j1.update(notice="One more change before the note goes. Cloud & Platform Operations tell me our main cloud provider will move the region that holds Manila's customer master data to another country on 1 December. R-16-HQ-21 is the register's cloud-region row. They call the provider's notice routine. What do you do first?",
               options=["Close R-16-HQ-21: the old region is going, so the row no longer applies", "Log it as a change event on the row it touches, and ask the DPO to check the transfer rules", "Leave the register alone: supplier notices have their own monthly review, so it will surface there"],
-              ref="Rule R22; BKB-POL-017 Section 3.1")
+              ref="Rule R22; SITL-POL-017 Section 3.1")
     j3.update(sender="Cyber Risk Manager", notice=f"One more event, after the register was cut for this update on {rru['plan']}. The access review of Diligent Entities you concluded in week 6 gives us N4. I have put it on its own sheet of your workbook, Sheet N4, below the note. Work it as you worked N1 to N3. It joins the register at the next update, so your 28 rows stay as they are.",
               steps=["Choose the best risk statement.", "Rate it and read its owner.", "Choose its decision, authority and option."],
               ref="Rules R06–R08, R36, L12")
@@ -4931,7 +4940,7 @@ def rework_t72(w: dict) -> None:
     t = w["tasks"]["T7.2"]
     steps = t["steps"]
     notes = {r[0]: r for r in w["notes"]["T7.2"]}
-    top = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "top-t72.json").read_text(encoding="utf8"))
+    top = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "top-t72.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI4 = "[LI-04 — Risk assessment method and risk criteria] "
     LIX = " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable."
@@ -4985,16 +4994,16 @@ def rework_t72(w: dict) -> None:
     options(4, "A) 1 November 2029  B) 1 May 2026  C) 1 November 2027", ["31 December 2027", "1 May 2027", "1 November 2027"])
     options(7, 'A) "Be compliant."  B) "Improve security."  C) "95 % of leavers disabled within 4 hours by June 2027."', ['"Reach full compliance with the leaver procedure by June 2027."', '"Disable leavers faster, and report progress to the board every quarter."', '"95 % of leavers disabled within 4 hours by June 2027."'])
     # Steps 7 to 9: LI-RAM arrives drafted; was a copy of the document, then of R36.
-    said(7, "Then: Copy into LI-RAM the names of the likelihood scale (BKB-ERM-001 Section 6.2) and of the impact scale (Section 6.3), from score 1 to score 5.",
-         "Then: A colleague filled LI-RAM's two scale rows from memory. Check them against BKB-ERM-001 Sections 6.2 and 6.3, and correct any name that differs.")
+    said(7, "Then: Copy into LI-RAM the names of the likelihood scale (SITL-ERM-001 Section 6.2) and of the impact scale (Section 6.3), from score 1 to score 5.",
+         "Then: A colleague filled LI-RAM's two scale rows from memory. Check them against SITL-ERM-001 Sections 6.2 and 6.3, and correct any name that differs.")
     steps[6]["o"] = "Decision T7.2-D6 checked; scale names in LI-RAM checked"
-    helped(7, "A scripted question: Which is a measurable ISMS objective? Read the three options and choose one. When you click Check my answer you see the best option and why. Then check the two scale rows of LI-RAM, the risk assessment method card, against BKB-ERM-001 (Policies › Policy Library). " + CHECK + LIX)
+    helped(7, "A scripted question: Which is a measurable ISMS objective? Read the three options and choose one. When you click Check my answer you see the best option and why. Then check the two scale rows of LI-RAM, the risk assessment method card, against SITL-ERM-001 (Policies › Policy Library). " + CHECK + LIX)
     titled(8, "Record the appetite", "Check the appetite and the treatment due days in LI-RAM")
-    steps[7]["w"] = LI4 + "A colleague filled these two rows from memory. Check the risk appetite of a LOW-criticality organisation against BKB-ERM-001 Section 4, and the due days of each residual rating against Section 7, and correct any value that differs. Rules R07 and R08, the method that uses them, are copied for you."
+    steps[7]["w"] = LI4 + "A colleague filled these two rows from memory. Check the risk appetite of a LOW-criticality organisation against SITL-ERM-001 Section 4, and the due days of each residual rating against Section 7, and correct any value that differs. Rules R07 and R08, the method that uses them, are copied for you."
     steps[7]["o"] = "Appetite and due days in LI-RAM checked"
-    helped(8, "BKB-ERM-001 (Policies › Policy Library): Section 4 gives each criticality band's appetite as a maximum score; GlobalConnect is a LOW-criticality organisation. Section 7 gives the due days. " + CHECK + LIX)
+    helped(8, "SITL-ERM-001 (Policies › Policy Library): Section 4 gives each criticality band's appetite as a maximum score; GlobalConnect is a LOW-criticality organisation. Section 7 gives the due days. " + CHECK + LIX)
     titled(9, "Record who accepts", "Check who accepts each residual rating (Charter Section 6.1)")
-    steps[8]["w"] = LI4 + "A colleague filled these four rows and nobody has checked them. Read each against the Charter's delegation table, Section 6.1, in the column for GlobalConnect's criticality band, and choose the authority it names where the row differs. The risk-owner rule is written for you from BKB-ERM-001 Sections 2 and 3."
+    steps[8]["w"] = LI4 + "A colleague filled these four rows and nobody has checked them. Read each against the Charter's delegation table, Section 6.1, in the column for GlobalConnect's criticality band, and choose the authority it names where the row differs. The risk-owner rule is written for you from SITL-ERM-001 Sections 2 and 3."
     helped(9, "The Charter (Policies › Policy Library), Section 6.1, has one column for each criticality band; GlobalConnect is a LOW-criticality organisation. " + CHECK + LIX)
     assert steps[8]["refs"]["rules"] == ["R36"], steps[8]["refs"]
     steps[8]["refs"]["rules"], steps[8]["refs"]["docs"] = [], [["Charter", ["6.1"]]]
@@ -5092,8 +5101,8 @@ def rework_t82(w: dict) -> None:
     assert w["tp"]["testing|Raise Finding"]["tool"] == "Control Testing › Raise Finding (5C frame)"
     w["tp"]["testing|Raise Finding"]["tool"] = "Control Testing › Raise Finding"
     # The pack's line is about another variant's control, and calls the findings major before step 10 grades this one.
-    why_old = "Changes implemented before approval and emergency changes without retrospective review are classic major findings (BKB-POL-009 Section 3.1)."
-    why_new = "A privileged account nobody has confirmed is among the first things an auditor asks about (BKB-POL-006 Section 4)."
+    why_old = "Changes implemented before approval and emergency changes without retrospective review are classic major findings (SITL-POL-009 Section 3.1)."
+    why_new = "A privileged account nobody has confirmed is among the first things an auditor asks about (SITL-POL-006 Section 4)."
     assert why_old in t["card"]["Why is this important"]
     t["card"]["Why is this important"] = t["card"]["Why is this important"].replace(why_old, why_new)
     # Messages (lib/desk/inbox.ts INJ_AT): J3 at step 3, J2 at step 6.
@@ -5139,7 +5148,7 @@ def rework_t81(w: dict) -> None:
     t = w["tasks"]["T8.1"]
     steps = t["steps"]
     notes = {r[0]: r for r in w["notes"]["T8.1"]}
-    vul = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "vul-t81.json").read_text(encoding="utf8"))
+    vul = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "vul-t81.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
     LI = "[LI-11 — Measurement specification for the SLA KPI] "
     LIX = " This is a Lead Implementer extension step: it adds to the task, with its own template and deliverable."
@@ -5193,7 +5202,7 @@ def rework_t81(w: dict) -> None:
         "Patch or isolate internet-facing criticals within 7 days",
         "Schedule the class 3 and 4 backlog first: it holds the most breaches",
         "Re-scan every unverified closure first: until then the other figures cannot be trusted"])
-    s7["refs"]["docs"] = [["BKB-POL-010", ["6.1", "10"]]]
+    s7["refs"]["docs"] = [["SITL-POL-010", ["6.1", "10"]]]
     helped(7, "A scripted question first: rule R25 (Learn › Rule tables) sets the order. When you click Check my answer you see the best option and why. Then VUL-MEMO's recommendations: the deviation types and their actions are Ref-Actions' V1 to V4 (Learn › Reference pages). " + CHECK)
     # Step 9: a colleague's card, checked against Ref-Measure card.
     titled(9, "Read the measure card against clause 9.1", "Check the measure card against Ref-Measure card")
@@ -5214,7 +5223,7 @@ def rework_t81(w: dict) -> None:
     assert v119[1] == "CRM platform" and v119[9:12] == ["2026-11-03", "2026-11-04", "Yes"], v119
     j2.update(notice="The CRM platform's system owner has read your draft memo and objects to V-0119 on its list of closures not verified. Their change ticket says the patch went in on 3 November, and they marked the finding closed that day. The scan of 4 November still finds it, and they say that must be a false positive. What do you record for V-0119?",
               options=["Leave it closed in SLA: the ticket is dated proof of the fix, and the scan can be queried later", "Not verified: reopen it and count it as a breach, since the fix did not hold", "Not verified: reopen it with its original due date"],
-              ref="BKB-POL-010 Sections 6.1 and 10")
+              ref="SITL-POL-010 Sections 6.1 and 10")
     j4.update(notice="Hello, I help run the scanning for the Amsterdam office. I hear you are checking re-scans by hand from an export. I can give you a read-only login to the live scanner, so you can see the real result for each closed finding. Shall I send it?",
               options=["Ask them to send it to the Vulnerability Management Governance Analyst instead, who can decide", 'Do not open it; click "Report"; continue with workspace files', "Accept: read-only cannot change anything, and use it only to confirm the closures"])
     # The card named a message that does not exist, and a claim about breaches that also stated D5's answer.
@@ -5248,15 +5257,15 @@ def rework_t81(w: dict) -> None:
 def rework_t91(w: dict) -> None:
     """REWORK T9.1 (owner, 30 Oct 2026; decisions 1 Nov). Runs after rework_t82().
 
-    Lumen is Critical, not the pack's High (Decisions Made): BKB-POL-013 Section 3.1 counts pseudonymised children's data at scale, so step 1's two data facts and step 2 change.
+    Lumen is Critical, not the pack's High (Decisions Made): SITL-POL-013 Section 3.1 counts pseudonymised children's data at scale, so step 1's two data facts and step 2 change.
     Three vendors from the pack's pool for LearnTech now reach steps 2 and 3, so R35 and R27 have more than one answer. A Critical vendor takes every clause, so step 4's part 2 reads
-    Lumen's own draft against BKB-POL-013 Section 6.3. Step 3 gains a part 2: what each tier sets, read on the bank and on Reassessment Reminder, which now agrees with Section 4.
+    Lumen's own draft against SITL-POL-013 Section 6.3. Step 3 gains a part 2: what each tier sets, read on the bank and on Reassessment Reminder, which now agrees with Section 4.
     D2 and D3's wrong options are real mistakes. J2 is at step 3 and J4 at step 4 (lib/desk/inbox.ts). Logged in corrections, REWORK T9.1.
     """
     t = w["tasks"]["T9.1"]
     steps = t["steps"]
     notes = {r[0]: r for r in w["notes"]["T9.1"]}
-    ven = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "ven-t91.json").read_text(encoding="utf8"))
+    ven = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "ven-t91.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
 
     def helped(n: int, new: str) -> None:
@@ -5276,13 +5285,13 @@ def rework_t91(w: dict) -> None:
     for holder in (t["panel"], w["tp"]["vendors|Vendor Intake"]):
         assert holder["pl"]["f"][0] == ["Vendor", "Lumen Learner Analytics"] and "wide" not in holder["pl"], holder
         holder["pl"]["wide"] = json.loads(json.dumps(ven["forms"]))
-    # Screen titles matched neither the toolbar nor each other. Reassessment Reminder said High every 12 months; BKB-POL-013 Section 4 and BKB-ADD-36 say every 2 years for a LOW organisation.
+    # Screen titles matched neither the toolbar nor each other. Reassessment Reminder said High every 12 months; SITL-POL-013 Section 4 and SITL-ADD-36 say every 2 years for a LOW organisation.
     bank, cl, re_ = w["tp"]["vendors|Send Questionnaire"], w["tp"]["vendors|Contract & DPA Check"], w["tp"]["vendors|Reassessment Reminder"]
     assert bank["tool"] == "Vendors › Questionnaire (question bank)" and cl["tool"] == "Vendors › Contract clauses by tier" and re_["tool"] == "Vendors › Reassessment", (bank, cl, re_)
     bank["tool"], cl["tool"], re_["tool"] = "Vendors › Send Questionnaire", "Vendors › Contract & DPA Check", "Vendors › Reassessment Reminder"
     assert re_["pl"]["f"] == [["Critical", "Every 12 months"], ["High", "Every 12 months"], ["Medium", "Every 24 months"], ["Low", "At renewal"]], re_
     re_["pl"]["f"][1][1] = "Every 24 months"
-    re_["pl"]["note"] = "For a LOW-criticality organisation such as LearnTech: BKB-POL-013 Section 4, with Medium and Low as the office's working schedule."
+    re_["pl"]["note"] = "For a LOW-criticality organisation such as LearnTech: SITL-POL-013 Section 4, with Medium and Low as the office's working schedule."
     # The bank stays readable from the toolbar once part 2 is open (T6.2's pattern: a task view keeps the screen, the register is worked in the step's modal).
     w["tp"]["vendors|Send Questionnaire#T9.1"] = json.loads(json.dumps(bank))
 
@@ -5292,9 +5301,9 @@ def rework_t91(w: dict) -> None:
     # Step 2: three vendors.
     titled(2, "Tier the vendor (R35)", "Tier the vendors in the queue (R35)")
     assert steps[1]["w"].startswith("Apply rule R35 to the facts step 1 checked"), steps[1]["w"]
-    steps[1]["w"] = "Three intake forms are waiting. Apply rule R35 to Lumen, from the facts step 1 checked, and to Quill and MathMind, from their forms in Vendors › Vendor Intake with BKB-POL-013 Section 3.1: read the tiers from Critical down and stop at the first that matches. Choose each vendor's tier in VEN-TIER."
+    steps[1]["w"] = "Three intake forms are waiting. Apply rule R35 to Lumen, from the facts step 1 checked, and to Quill and MathMind, from their forms in Vendors › Vendor Intake with SITL-POL-013 Section 3.1: read the tiers from Critical down and stop at the first that matches. Choose each vendor's tier in VEN-TIER."
     steps[1]["o"] = "Three vendor tiers checked in VEN-TIER"
-    steps[1]["refs"]["docs"] = [["BKB-POL-013", ["3.1"]]]
+    steps[1]["refs"]["docs"] = [["SITL-POL-013", ["3.1"]]]
     steps[1]["refs"]["ds"] = ["VEN-INTAKE"]
     helped(2, "Rule R35 is in the note above the table, with Lumen's facts as step 1 checked them. " + CHECK)
     # Step 3: D2 under a Critical vendor, and a part 2 that uses it. "Every question in the bank" would now be the same list as the best option.
@@ -5309,10 +5318,10 @@ def rework_t91(w: dict) -> None:
     options(4, "A) Marketing consent  B) Transfer mechanism  C) No extra clause", ["Parents' explicit consent to the transfer, as the addendum's Section 2.1 asks", "Transfer mechanism", "No extra clause: the data processing agreement already binds Lumen"])
     old4 = "Then: Mark each clause of VEN-CL Yes or No for the vendor's tier, with rule R27."
     assert old4 in steps[3]["w"], steps[3]["w"]
-    steps[3]["w"] = steps[3]["w"].replace(old4, "Then: Lumen has sent its own draft contract. Read each line against BKB-POL-013 Section 6.3, and record each clause as Covered, Falls short or Missing.")
+    steps[3]["w"] = steps[3]["w"].replace(old4, "Then: Lumen has sent its own draft contract. Read each line against SITL-POL-013 Section 6.3, and record each clause as Covered, Falls short or Missing.")
     steps[3]["o"] = "Decision T9.1-D3 checked; Lumen's draft read against VEN-CL and checked"
-    helped(4, "A scripted question first. When you click Check my answer you see the best option and why. Then VEN-CL: BKB-POL-013 (Policies › Policy Library) Section 6.3 says what each clause must say and what Covered, Falls short and Missing mean. " + CHECK)
-    steps[3]["refs"]["docs"] = [["BKB-POL-013", ["6.3"]]]
+    helped(4, "A scripted question first. When you click Check my answer you see the best option and why. Then VEN-CL: SITL-POL-013 (Policies › Policy Library) Section 6.3 says what each clause must say and what Covered, Falls short and Missing mean. " + CHECK)
+    steps[3]["refs"]["docs"] = [["SITL-POL-013", ["6.3"]]]
     # Messages (lib/desk/inbox.ts INJ_AT): J2 at step 3, J4 at step 4.
     j2, j4 = w["inj"]["T9.1-J2"], w["inj"]["T9.1-J4"]
     assert j2["notice"].startswith("The vendor will store Tier 3") and j2["sender"] == "Vendor / Third-Party Risk Analyst", j2
@@ -5353,7 +5362,7 @@ def rework_t92(w: dict) -> None:
     t = w["tasks"]["T9.2"]
     steps = t["steps"]
     notes = {r[0]: r for r in w["notes"]["T9.2"]}
-    soc = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "soc-t92.json").read_text(encoding="utf8"))
+    soc = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "soc-t92.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
 
     # R28: a qualified opinion is not an automatic reject. A practitioner reads what the qualification covers: a control we
@@ -5394,8 +5403,8 @@ def rework_t92(w: dict) -> None:
     # Step 5: SOC-EXTRA comes first. "Done when" is unchanged, so the file boxes stay.
     assert steps[4]["w"] == "Check SOC-REV and SOC-DEC for empty cells, name the two files and submit them.", steps[4]["w"]
     steps[4]["w"] = "SOC-EXTRA holds what Lumen sent after your decision: say what each item does, and check your answers. Then check SOC-REV and SOC-DEC for empty cells, name the two files and submit them."
-    helped(5, "Vendors › Flag Risk names the document each check needs; BKB-POL-013 (Policies › Policy Library), the paragraph under Section 7.1's table, says what a late document can do. " + CHECK + " " + steps[4]["help"])
-    steps[4]["refs"]["docs"] = [["BKB-POL-013", ["7.1"]]]
+    helped(5, "Vendors › Flag Risk names the document each check needs; SITL-POL-013 (Policies › Policy Library), the paragraph under Section 7.1's table, says what a late document can do. " + CHECK + " " + steps[4]["help"])
+    steps[4]["refs"]["docs"] = [["SITL-POL-013", ["7.1"]]]
     # The card stated step 4's answer (a qualified opinion, beside a report with one, is a Reject), and named one screen of several.
     tool_old = "Vendors (TPRM) › Vendors › SOC Report Review, Flag Risk"
     tool_new = "Vendors › SOC Report Review, Vendor Intake, Flag Risk; Policies › Policy Library; Learn & Grow › Reference pages, Rule tables"
@@ -5429,8 +5438,8 @@ def rework_t92(w: dict) -> None:
               options=["Nothing: it is a Type II report with a clean opinion, so it holds until the next annual report", "A bridge letter from the provider covering the months since 30 April", "A new SOC 2 report from the provider's auditor covering the months since 30 April"])
     j3.update(sender="Compliance Manager",
               notice="Lumen heard about your decision and sent four more items, and is pressing me to reopen it. They are in SOC-EXTRA, a new sheet of SOC-REV in Vendors › SOC Report Review. Please read them before the memo goes to the approver.",
-              steps=["Open this step's table: SOC-EXTRA is at the top.", "Read each item against Vendors › Flag Risk and BKB-POL-013 Section 7.1.", "Record what each does, and what happens to the decision."],
-              ref="BKB-POL-013 Section 7.1; rule R28")
+              steps=["Open this step's table: SOC-EXTRA is at the top.", "Read each item against Vendors › Flag Risk and SITL-POL-013 Section 7.1.", "Record what each does, and what happens to the decision."],
+              ref="SITL-POL-013 Section 7.1; rule R28")
     blob = json.dumps([t["card"], steps, w["notes"]["T9.2"], w["cards"]["T9.2"], w["ds"]["SOC2-SUMMARY"], j1, j3], ensure_ascii=False)
     for bad in ("None noted", "01_Inputs is the vendor", "Programme office", "is a Reject (R28)", "Vendors (TPRM)"):
         assert bad not in blob, f"T9.2 still says {bad!r}"
@@ -5441,7 +5450,7 @@ def rework_t101(w: dict) -> None:
 
     Proctored final exams enter the processing (ropa-t101.json): a fifth purpose, flows F7 and F8, and one DPIA trigger that is Yes. Step 2 is the client's
     stated lawful basis. Step 3 chooses each system, checked on the server with the shape, so no answer sits in the bundle. Step 4 names the safeguard, not
-    the chapter: BKB-ADD-36 Section 6.1. D1 is asked on who decides, with Joint controller for the old "Neither". R29 no longer names a dataset column that
+    the chapter: SITL-ADD-36 Section 6.1. D1 is asked on who decides, with Joint controller for the old "Neither". R29 no longer names a dataset column that
     was removed. J4 is at step 3 and J1 at step 6 (lib/desk/inbox.ts). Logged in corrections item 98.
     """
     t = w["tasks"]["T10.1"]
@@ -5466,30 +5475,30 @@ def rework_t101(w: dict) -> None:
     helped(1, notes[1][2].replace("ROPA then records the role from the contract register.", "ROPA then records your role."))
 
     titled(2, "Choose the lawful basis of each purpose", "Client's stated lawful basis")
-    steps[1]["w"] = "The RoPA records the lawful basis each client states for each purpose of the processing. Work out each purpose's basis in ROPA with BKB-POL-017 Section 3.1 (Policies › Policy Library)."
+    steps[1]["w"] = "The RoPA records the lawful basis each client states for each purpose of the processing. Work out each purpose's basis in ROPA with SITL-POL-017 Section 3.1 (Policies › Policy Library)."
     steps[1]["o"] = "Client's stated lawful basis of every purpose checked in ROPA"
 
     assert "copy the name of the system it happens in" in steps[2]["w"]
     steps[2]["w"] = steps[2]["w"].replace("copy the name of the system it happens in from", "choose the system it happens in from")
     steps[2]["o"] = "Shape and system of every flow checked"
-    helped(3, "The note above the table says what each shape means; BKB-POL-017 Section 3.1 (Policies › Policy Library) says what counts as a transfer. Each flow's system is the asset whose description fits it. " + CHECK)
+    helped(3, "The note above the table says what each shape means; SITL-POL-017 Section 3.1 (Policies › Policy Library) says what counts as a transfer. Each flow's system is the asset whose description fits it. " + CHECK)
 
     titled(4, "Copy each cross-border transfer mechanism", "Name each transfer's safeguard")
-    steps[3]["w"] = "For each flow step 3 found to be a transfer, name the safeguard it rests on. Start from the Cross-border transfer cell of BKB-ADD-36 Section 2, in the row of the office the data leaves (BKB-POL-017 Section 3.1). Where the cell names a chapter of a law, Section 6.1 of the addendum says how the safeguard is found."
+    steps[3]["w"] = "For each flow step 3 found to be a transfer, name the safeguard it rests on. Start from the Cross-border transfer cell of SITL-ADD-36 Section 2, in the row of the office the data leaves (SITL-POL-017 Section 3.1). Where the cell names a chapter of a law, Section 6.1 of the addendum says how the safeguard is found."
     steps[3]["o"] = "Safeguard of every transfer checked in DFM"
-    steps[3]["refs"]["docs"] = [["BKB-ADD-36", ["2", "6.1"]], ["BKB-POL-017", ["3.1"]]]
+    steps[3]["refs"]["docs"] = [["SITL-ADD-36", ["2", "6.1"]], ["SITL-POL-017", ["3.1"]]]
     helped(4, "Choose from the list; the evidence ref is written for you from where the safeguard is read. " + CHECK)
 
     assert steps[4]["help"].startswith("Rule R29 is in the note above the table;"), steps[4]["help"]
     helped(5, steps[4]["help"].replace("Rule R29 is in the note above the table;", "Rule R29 is in Learn › Rule tables;"))
 
     # Step 6 receives J1, whose Guidance line reads R29 and the policy's Section 3.1 and 6.2. Done when is unchanged.
-    steps[5]["refs"]["docs"] = [["BKB-POL-017", ["3.1", "6.2"]]]
+    steps[5]["refs"]["docs"] = [["SITL-POL-017", ["3.1", "6.2"]]]
     steps[5]["refs"]["rules"] = ["R29"]
 
     # R29 named a dataset column t101() removed because it stated D1's answer.
     old_r = 'Role = the value in the dataset column "Role (contract register)". '
-    new_r = "Role = decided by who decides why and how the personal data is processed (BKB-POL-017 Section 3.2). "
+    new_r = "Role = decided by who decides why and how the personal data is processed (SITL-POL-017 Section 3.2). "
     assert w["rules"]["R29"][1].startswith(old_r), w["rules"]["R29"]
     w["rules"]["R29"][1] = w["rules"]["R29"][1].replace(old_r, new_r)
     for table in (w["tp"]["learn|Rule tables"]["pl"]["r"], w["pages"]["Ref-Rules"]["r"]):
@@ -5529,7 +5538,7 @@ def rework_t101(w: dict) -> None:
               options=["Nothing new: the screening in the entry already says a DPIA is required, so that DPIA covers the tool too",
                        "Hold it for the RoPA's yearly review: the tool reads only data the LMS already holds",
                        "Screen the change before the tool starts, and update the entry"],
-              ref="Rule R29; BKB-POL-017 Section 3.1 and Section 6.2")
+              ref="Rule R29; SITL-POL-017 Section 3.1 and Section 6.2")
     j4.update(notice="Hi, I handle HR queries at a company on LearnTech's LMS. One of our employees has sent in a real data-subject request, with a scan of her passport. It shows how her data really moves between the systems, which should help with your map. Shall I send it?",
               options=['Do not open it; click "Report"; continue with workspace files',
                        "Take it, and pass it unopened to the Data Protection Officer so that the request is not missed",
@@ -5543,14 +5552,14 @@ def rework_t102(w: dict) -> None:
     """REWORK T10.2 (owner, 30 Oct 2026; decisions 1 Nov). Runs after rework_t101().
 
     The incident record (brc-t102.json) no longer states the discovery time, the office or the countries: step 1 finds the time on the
-    ticket's Amsterdam-time lines by BKB-POL-014 Section 6.3 step 6, and step 2 checks the Incident Response & Crisis Manager's first-call
+    ticket's Amsterdam-time lines by SITL-POL-014 Section 6.3 step 6, and step 2 checks the Incident Response & Crisis Manager's first-call
     draft against the record. NIS2 is a seventh regime, status Monitor (Section 6.3 step 8; Regulation Tracker, step 3). R30 gains GDPR
     Art.34(3)(a), a row of step 5. D4 and both messages are rewritten; J4 is at step 5 and J1 at step 6 (lib/desk/inbox.ts). Corrections item 100.
     """
     t = w["tasks"]["T10.2"]
     steps = t["steps"]
     notes = {r[0]: r for r in w["notes"]["T10.2"]}
-    brc = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "brc-t102.json").read_text(encoding="utf8"))
+    brc = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "brc-t102.json").read_text(encoding="utf8"))
     CHECK = "Check my answers then shows each row's answer and why, before you complete the step."
 
     def helped(n: int, new: str) -> None:
@@ -5568,25 +5577,25 @@ def rework_t102(w: dict) -> None:
 
     titled(1, "Copy the discovery time", "Find the discovery time (UTC)")
     assert steps[0]["w"].startswith("Every statutory clock counts from the moment the breach was discovered. Copy"), steps[0]
-    steps[0]["w"] = "Every statutory clock counts from the moment the breach was discovered. The incident record (Regulatory Watch › Breach Clock Calculator) has several times, in Amsterdam time. Find the one BKB-POL-014 Section 6.3, step 6 calls the discovery time, and record it in BRC-ASSESS's Facts sheet in UTC."
+    steps[0]["w"] = "Every statutory clock counts from the moment the breach was discovered. The incident record (Regulatory Watch › Breach Clock Calculator) has several times, in Amsterdam time. Find the one SITL-POL-014 Section 6.3, step 6 calls the discovery time, and record it in BRC-ASSESS's Facts sheet in UTC."
     steps[0]["o"] = "Discovery time checked in BRC-ASSESS"
     steps[0]["refs"]["ds"] = []
-    steps[0]["refs"]["docs"] = [["BKB-POL-014", ["6.3"]]]
+    steps[0]["refs"]["docs"] = [["SITL-POL-014", ["6.3"]]]
     helped(1, "Write it as date, time, UTC. Amsterdam time is one hour ahead of UTC in December. The evidence ref is written for you. " + CHECK)
 
     titled(2, "List the affected offices", "Check the affected office and the data-subject countries")
     assert steps[1]["w"].startswith("Rule R30 looks up the regimes from two lists:"), steps[1]
     steps[1]["w"] = "Rule R30 looks up the regimes from two lists: the offices whose systems are affected and the countries where the affected people live. The Incident Response & Crisis Manager filled both in during the first call. Check each against the incident record (Regulatory Watch › Breach Clock Calculator) and correct what the record does not support."
     steps[1]["refs"]["ds"] = []
-    steps[1]["refs"]["docs"] = [["BKB-ADD-36", ["2"]]]
-    helped(2, "Offices are written as BKB-ADD-36 Section 2 writes them, countries separated by \";\". The evidence ref is written for you. " + CHECK)
+    steps[1]["refs"]["docs"] = [["SITL-ADD-36", ["2"]]]
+    helped(2, "Offices are written as SITL-ADD-36 Section 2 writes them, countries separated by \";\". The evidence ref is written for you. " + CHECK)
 
     # Step 3: the seventh row and its status. Section 6.3 steps 3 and 8 and the tracker decide it.
     assert steps[2]["opt"] == ["Applies", "Applies if condition met", "Does not apply"], steps[2]
     steps[2]["opt"] = brc["applies"]
-    steps[2]["w"] = steps[2]["w"].replace("or does not apply, with BKB-POL-014 Section 6.3.", "does not apply, or is one to monitor, with BKB-POL-014 Section 6.3.")
+    steps[2]["w"] = steps[2]["w"].replace("or does not apply, with SITL-POL-014 Section 6.3.", "does not apply, or is one to monitor, with SITL-POL-014 Section 6.3.")
     assert "one to monitor" in steps[2]["w"], steps[2]["w"]
-    helped(3, "BKB-POL-014 Section 6.3 (Policies › Policy Library) says, step by step, which offices an incident engages and which of their regimes apply; the offices and countries are the ones you checked in step 2. Regulatory Watch › Regulation Tracker gives each law's status. " + CHECK)
+    helped(3, "SITL-POL-014 Section 6.3 (Policies › Policy Library) says, step by step, which offices an incident engages and which of their regimes apply; the offices and countries are the ones you checked in step 2. Regulatory Watch › Regulation Tracker gives each law's status. " + CHECK)
     w["tp"]["regwatch|Regulation Tracker#T10.2"] = {
         "tool": "Regulatory Watch › Regulation Tracker", "stamp": "LearnTech · 7 laws", "kind": "table",
         "pl": {"h": ["Law", "Status", "Office"], "r": [
@@ -5597,7 +5606,7 @@ def rework_t102(w: dict) -> None:
             ["SEC 8-K Item 1.05", "In force: registrants", "New York, United States"],
             ["DPDP Act 2023", "In force in phases: breach duty from ~May 2027", "Mumbai, India"],
             ["CERT-In Directions", "In force", "Mumbai, India"],
-        ], "note": "Status as last checked by the Group GRC Office. Which regimes apply to an incident is decided with BKB-POL-014 Section 6.3; legal interpretations go to the DPO."}}
+        ], "note": "Status as last checked by the Group GRC Office. Which regimes apply to an incident is decided with SITL-POL-014 Section 6.3; legal interpretations go to the DPO."}}
 
     # Step 5: R30's exception, a row the record's own lines decide. R30 is the only place it is written.
     old_r = "more than 1,000 people; otherwise No."
@@ -5620,7 +5629,7 @@ def rework_t102(w: dict) -> None:
     steps[5]["opt"] = brc["d4"]
     # Step 6 receives J1, whose Guidance line reads R30 and Section 6.2. Done when is unchanged.
     steps[5]["refs"]["rules"] = ["R30"]
-    steps[5]["refs"]["docs"] = [["BKB-POL-014", ["6.1", "6.2"]]]
+    steps[5]["refs"]["docs"] = [["SITL-POL-014", ["6.1", "6.2"]]]
 
     # Card, meta, deliverables: the screens the steps use. The card named an inject that does not exist.
     tool_old, tool_new = "Regulatory Watch › Breach Clock Calculator", "Regulatory Watch › Breach Clock Calculator, Regulation Tracker; Policies › Policy Library; Learn & Grow › Rule tables"
@@ -5647,7 +5656,7 @@ def rework_t102(w: dict) -> None:
               options=["Nothing further: encrypted data that is lost is no breach, so it needs no entry in the breach register",
                        "Tell the families: children's data and more than 1,000 people meet R30's conditions",
                        "Do not tell them, as R30's exception applies, and record the event and the reason in the breach register"],
-              ref="Rule R30; BKB-POL-014 Section 6.2")
+              ref="Rule R30; SITL-POL-014 Section 6.2")
     j4.update(notice="Hi, I watch breach forums for a living. A file of about 4,500 LearnTech student records is going round one, and I have a copy. You will want to see what is really in it for your assessment. Shall I send it?",
               options=['Do not open it; click "Report"; continue with workspace files',
                        "Take only the first few rows, to confirm the data categories in BRC-ASSESS, and delete them afterwards",
@@ -5700,20 +5709,20 @@ def rework_t111(w: dict) -> None:
     options(4, ["HR only", "HR, Legal and the works council", "IT"], ["HR and Legal", "HR, Legal and the works council", "HR, Legal and IT Security, who run the tool"])
     assert steps[3]["help"].startswith("A scripted question. Read the situation and the three options, and choose one; rule R31"), steps[3]["help"]
     helped(4, steps[3]["help"].replace("A scripted question. Read the situation and the three options, and choose one; rule R31", "A scripted question. The plan waiting for approval is on Awareness › Phishing Campaign Planner. Read the situation and the three options, and choose one; rule R31"))
-    steps[3]["refs"]["docs"].append(["BKB-POL-020", ["3.1"]])
+    steps[3]["refs"]["docs"].append(["SITL-POL-020", ["3.1"]])
     # Step 5. D3's C counted effort, which nobody argues for; part 2 now also works out last campaign's rates.
     options(5, ["Click rate on its own", "Report rate going up", "Number of e-mails sent"], ["Click rate on its own", "Report rate going up", "Lesson completion rate"])
     old5 = "Then: Write each metric's target in AWR-SIM, from the source that sets it."
     assert steps[4]["w"].endswith(old5), steps[4]["w"]
     steps[4]["w"] = steps[4]["w"].replace(old5, "Then: Write each metric's target in AWR-SIM, from the source that sets it, and work out last campaign's rate from Awareness › Campaign Results.")
     steps[4]["o"] = "Decision T11.1-D3 checked; metric targets and last campaign's rates checked in AWR-SIM"
-    helped(5, "A scripted question first: BKB-POL-020 Section 7.1 (Policies › Policy Library) says what learning looks like. When you click Check my answer you see the best option and why. Then write each metric's target: the click-rate target is the KRI of the office's phishing risk (Risk Register › Heat Map with KRIs), the report-rate target is in Section 7.1. Then work out last campaign's rate from the counts on Awareness › Campaign Results, with the formula in the row. " + CHECK)
+    helped(5, "A scripted question first: SITL-POL-020 Section 7.1 (Policies › Policy Library) says what learning looks like. When you click Check my answer you see the best option and why. Then write each metric's target: the click-rate target is the KRI of the office's phishing risk (Risk Register › Heat Map with KRIs), the report-rate target is in Section 7.1. Then work out last campaign's rate from the counts on Awareness › Campaign Results, with the formula in the row. " + CHECK)
     cr = w["tp"]["awareness|Campaign Results"]
     assert cr["pl"]["k"][1] == ["Report rate", "—", "target ≥ 60 %"], cr  # stated step 5's answer on the screen it is done in
     cr["stamp"] = "Last campaign · autumn 2025"
     cr["pl"]["k"] = [["Sent", "20", "Regional Compliance & Legal, Amsterdam"], ["Opened", "16", "of the messages sent"], ["Clicked", "1", "the simulated link"], ["Reported", "11", "with the Report button"]]
     # Step 6 receives J2, whose Guidance line reads Section 7.1. Done when is unchanged.
-    steps[5]["refs"]["docs"] = [["BKB-POL-020", ["7.1"]]]
+    steps[5]["refs"]["docs"] = [["SITL-POL-020", ["7.1"]]]
     # D4, D5: the wrong options a junior really proposes. Each is ruled out by Ref-Competence and Ref-Communications.
     options(8, ["A short training with an assessed exercise, and keep the record", "Tell them to read the policy", "Replace them"],
             ["A short training with an assessed exercise, and keep the record", "Send them the rating guide and ask them to confirm they have read it", "Have the Cyber Risk Manager re-rate their risks for them"])
@@ -5751,10 +5760,10 @@ def rework_t111(w: dict) -> None:
     assert j4["notice"].startswith("Someone offers you a real company logo") and j4["options"][1].startswith("Do not open it"), j4
     j2.update(notice="Before AWR-SIM goes in: the Regional HR Manager tells me two of the 20 people in Regional Compliance & Legal are on leave all through week 3, the simulation week. What do we do about them?",
               options=["Leave them out of this simulation and of its rates", "Send it to them anyway: the rates count the whole team, so the 20 stays", "Move the simulation a week, so that the whole team is in"],
-              ref="BKB-POL-020 Section 7.1; rule R31")
+              ref="SITL-POL-020 Section 7.1; rule R31")
     j4.update(notice='Hi, I build phishing simulations for other companies. Staff click what they recognise, so I can send you a real cloud provider\'s sign-in page and logo from a live campaign, "for realism". Shall I send it over?',
               options=["Forward it to the Security Awareness & Training Specialist to decide", j4["options"][1], "Take only the logo, and change the brand's name so that it looks fictional"],
-              ref="BKB-POL-024 Section 3.1; BKB-POL-020 Section 3.1")
+              ref="SITL-POL-024 Section 3.1; SITL-POL-020 Section 3.1")
     blob = json.dumps([t["card"], t["krs"], steps, w["notes"]["T11.1"], w["cards"]["T11.1"], cr, j2, j4], ensure_ascii=False)
     for bad in ("inject T11.1", "≥ 60", "An intern", "Replace them", "Number of e-mails", "family", "Accept it"):
         assert bad not in blob, f"T11.1 still says {bad!r}"
@@ -5763,7 +5772,7 @@ def rework_t111(w: dict) -> None:
 def rework_t112(w: dict) -> None:
     """REWORK T11.2 (owner, 30 Oct 2026; decisions 1 Nov). Runs after rework_t111().
 
-    R32 gains its late branch and names BKB-POL-016 Section 7.2. Step 3 and step 11 check a colleague's draft. Step 9 works out the brief's two dates on
+    R32 gains its late branch and names SITL-POL-016 Section 7.2. Step 3 and step 11 check a colleague's draft. Step 9 works out the brief's two dates on
     the Briefing Builder's own page. Step 13 raises the note on a system. D1, D2, D5 and J2's wrong options are a junior's real mistakes; letters and best are
     unchanged. J3 arrives at step 6 and J2, now a push-back on a checked line, at step 7 (lib/desk/inbox.ts). Logged in corrections item 102.
     """
@@ -5790,7 +5799,7 @@ def rework_t112(w: dict) -> None:
 
     # R32: nothing should be overdue on the day it is written (Decisions Made). In all three places it is printed.
     r32_old = "Copy the obligations from the official source (steps in T11.2). Applicability per office: rule R02. Affected policies: use the keyword table in Ref-Keywords. Action due date = publication date + 30 days."
-    r32_new = "Copy the obligations from the official source (steps in T11.2). Applicability per office: rule R02; for a change the addendum does not list yet, BKB-POL-016 Section 7.2. Affected policies: use the keyword table in Ref-Keywords. Action due date = publication date + 30 days. Where that date has already passed when the change is logged, the change was found late: action due date = date logged + 30 days, and the brief records that it was found late."
+    r32_new = "Copy the obligations from the official source (steps in T11.2). Applicability per office: rule R02; for a change the addendum does not list yet, SITL-POL-016 Section 7.2. Affected policies: use the keyword table in Ref-Keywords. Action due date = publication date + 30 days. Where that date has already passed when the change is logged, the change was found late: action due date = date logged + 30 days, and the brief records that it was found late."
     for row, i in ((w["rules"]["R32"], 1), (next(r for r in w["pages"]["Ref-Rules"]["r"] if r[0] == "R32"), 2), (next(r for r in w["tp"]["learn|Rule tables"]["pl"]["r"] if r[0] == "R32"), 2)):
         assert row[i] == r32_old, row
         row[i] = r32_new
@@ -5816,7 +5825,7 @@ def rework_t112(w: dict) -> None:
     assert h6 in steps[5]["help"], steps[5]["help"]
     helped(6, steps[5]["help"].replace(h6, "REG-EXTRA has come in from the Policy & Governance Analyst: see the Inbox. "))
     # Step 7 receives J2, whose Guidance line reads Section 7.2.
-    steps[6]["refs"]["docs"].append(["BKB-POL-016", ["7.2"]])
+    steps[6]["refs"]["docs"].append(["SITL-POL-016", ["7.2"]])
     # Step 9: the brief's own page (T-REG's lines), with its deadline by R32's two branches. Done when is unchanged.
     old9 = "Check REG-BRIEF's six sheets for empty cells, name the file and submit it."
     assert steps[8]["w"] == old9, steps[8]["w"]
@@ -5833,9 +5842,9 @@ def rework_t112(w: dict) -> None:
     assert steps[12]["w"].endswith(old13), steps[12]["w"]
     steps[12]["w"] = steps[12]["w"].replace(old13, "LI-CHG records the new-technology note Ref-Change types (Learn › Reference pages) lists for the topic type of step 10, and the affected system it is raised on. Choose both.")
     steps[12]["o"] = "New-technology note and its system checked in LI-CHG"
-    steps[12]["refs"]["docs"] = [["BKB-TECH-000", ["3"]]]
-    helped(13, "The note is in the topic type's row of Ref-Change types, its last column. Its system is the affected one on the layer that holds what the note is about: BKB-TECH-000 Section 3, What it holds. " + CHECK + LI)
-    # The card: exactly the screens the steps use; no message's code; no pointer to BKB-POL-022, whose text is not on the platform.
+    steps[12]["refs"]["docs"] = [["SITL-TECH-000", ["3"]]]
+    helped(13, "The note is in the topic type's row of Ref-Change types, its last column. Its system is the affected one on the layer that holds what the note is about: SITL-TECH-000 Section 3, What it holds. " + CHECK + LI)
+    # The card: exactly the screens the steps use; no message's code; no pointer to SITL-POL-022, whose text is not on the platform.
     tool_old = "Regulatory Watch › Regulation Tracker, Add Update, Briefing Builder, Impact Log"
     tool_new = tool_old + "; Policies › Policy Library; Learn & Grow › Rule tables, Reference pages"
     rows = {r[0]: r for r in w["cards"]["T11.2"]}
@@ -5848,9 +5857,9 @@ def rework_t112(w: dict) -> None:
         if d[0] == "T11.2":
             assert d[5] == tool_old, d
             d[5] = tool_new
-    l1_old, l1_new = "Find and cite the official sources of a change, with access dates — see Rule R32; BKB-POL-022 Section 7.1 — verify AI-generated facts", "Find and cite the official sources of a change, with access dates — see Rule R32"
-    l2_old, l2_new = "Decide applicability office by office, including thresholds — see Rule R02; inject T11.2-J2", "Decide applicability office by office, including thresholds — see BKB-POL-016 Section 7.2"
-    p22 = "BKB-POL-022 — Section 7.1 — verify AI-generated facts and citations"
+    l1_old, l1_new = "Find and cite the official sources of a change, with access dates — see Rule R32; SITL-POL-022 Section 7.1 — verify AI-generated facts", "Find and cite the official sources of a change, with access dates — see Rule R32"
+    l2_old, l2_new = "Decide applicability office by office, including thresholds — see Rule R02; inject T11.2-J2", "Decide applicability office by office, including thresholds — see SITL-POL-016 Section 7.2"
+    p22 = "SITL-POL-022 — Section 7.1 — verify AI-generated facts and citations"
     for learn in (t["card"]["What will I learn"], rows["What will I learn"][1]):
         assert learn[0] == l1_old and learn[1] == l2_old, learn
         learn[0], learn[1] = l1_new, l2_new
@@ -5875,7 +5884,7 @@ def rework_t121(w: dict) -> None:
     Step 6 reads the Re-test cell as well as the code (five requests, not four), with Sentence frames marked. Step 7 checks a colleague's draft counts
     (registers.ts ACT_MRI_DRAFT, two slips). Steps 8 and 11 read R33 and L23 (ROW_READS); D4, D5, D6's wrong options are a junior's real mistakes; letters
     and best are unchanged. Step 13's results are counts, worked out to a percentage. Clause 9.3 is held in the minutes, so it is Not present (decision, 1 Nov).
-    The card drops "CAPs ≤ 30 days", which BKB-POL-016 does not set. J3 arrives at step 1, J2 at step 10 (lib/desk/inbox.ts). Logged in corrections item 104.
+    The card drops "CAPs ≤ 30 days", which SITL-POL-016 does not set. J3 arrives at step 1, J2 at step 10 (lib/desk/inbox.ts). Logged in corrections item 104.
     """
     t = w["tasks"]["T12.1"]
     steps = t["steps"]
@@ -5933,12 +5942,12 @@ def rework_t121(w: dict) -> None:
     assert loc[3] == "ACT-MRI; LI-MR (review pack)", loc
     loc[3] = "Minutes of the management review"
     # The card: the limit Section 6.2 does not set (decision, 1 Nov); the outcome K-codes it misread (no date is K1, not K2); exactly the screens the steps use.
-    cap_old, cap_new = "BKB-POL-016 — Section 6.2 Procedure: External audit coordination (CAPs ≤ 30 days)", "BKB-POL-016 — Section 6.2 Procedure: External audit coordination"
+    cap_old, cap_new = "SITL-POL-016 — Section 6.2 Procedure: External audit coordination (CAPs ≤ 30 days)", "SITL-POL-016 — Section 6.2 Procedure: External audit coordination"
     for lst in (t["refs"], t["card"]["What to read or refer"], rows["What to read or refer"][1]):
         assert cap_old in lst, lst
         lst[lst.index(cap_old)] = cap_new
-    assert "BKB-POL-016 Section 6.2 (CAP due dates)" in t["inputs"], t["inputs"]
-    t["inputs"][t["inputs"].index("BKB-POL-016 Section 6.2 (CAP due dates)")] = "BKB-POL-016 Section 6.2 (corrective actions tracked to closure)"
+    assert "SITL-POL-016 Section 6.2 (CAP due dates)" in t["inputs"], t["inputs"]
+    t["inputs"][t["inputs"].index("SITL-POL-016 Section 6.2 (CAP due dates)")] = "SITL-POL-016 Section 6.2 (corrective actions tracked to closure)"
     why_old, why_new = "A screenshot without a date does not close an action (K2/K3);", "An owner's word does not close an action (K1–K4);"
     tool_old = "Risk Register › Mitigation Tracker (corrective actions)"
     tool_new = tool_old + "; Home › Waiting On; Learn & Grow › Rule tables, Reference pages, Sentence frames"
@@ -5974,7 +5983,7 @@ def t122_soa(w: dict) -> None:
     surveillance audit for its SoA, and the only one on the desk was LI-SOA (T3.2), built from LearnTech's TSA-36. SOA-GCS is a
     record the Group GRC Office keeps in the repository, not a hand-in: a row of Evidence › Evidence Library, its extract a data
     file of week 12 (read at step 1), and an option of step 5. Runs after rework_t122()."""
-    aud = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "aud-t122.json").read_text(encoding="utf8"))
+    aud = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "aud-t122.json").read_text(encoding="utf8"))
     (rec,) = aud["records"]
     t = w["tasks"]["T12.2"]
     ev = w["ds"]["EVIDENCE-INDEX"]
@@ -6034,7 +6043,7 @@ def rework_t122(w: dict) -> None:
             w[k] = swap(w[k], a, b)
 
     # What T12.2 carries from earlier tasks, re-checked on the final data.
-    aud = json.loads((Path(__file__).resolve().parent.parent / "src" / "lib" / "desk" / "aud-t122.json").read_text(encoding="utf8"))
+    aud = json.loads((Path(__file__).resolve().parent / "desk-sample-data" / "aud-t122.json").read_text(encoding="utf8"))
     names = {s["code"]: s["name"] for k in w["tasks"].values() for s in k["subs"]} | {l["sub"]["code"]: l["sub"]["name"] for l in w["li"].values() if l.get("sub")}
     # aud-t122.json already carries main()'s final rename (item 114); this check runs before it.
     assert all((names.get(r[0]) or "").replace("READ-ME-FIRST", "Onboarding record") == r[1] for r in aud["versions"]), "Version History no longer matches the deliverables"
@@ -6099,7 +6108,7 @@ def rework_t122(w: dict) -> None:
     help_old = "Press Submit: the platform seals the file"
     helped(8, help_old, "At work, the log and the response are what the Compliance Manager keeps of the audit. " + help_old)
     helped(12, help_old, "At work, this response is filed with the certification body beside the finding. " + help_old)
-    steps[7]["refs"]["docs"] = [["BKB-POL-016", ["6.2"]]]
+    steps[7]["refs"]["docs"] = [["SITL-POL-016", ["6.2"]]]
 
     # Screens. Period, then fieldwork (rule R16): the date AUD-LOG stamps.
     fw_old = " R-1 to R-8 came at the opening meeting;"
@@ -6142,7 +6151,7 @@ def rework_t122(w: dict) -> None:
     assert j2["options"] == ['"Yes, we pass"', '"I can provide evidence; the audit conclusion is yours to give"', '"No"'], j2
     assert j4["options"][1] == "Accept it — it will help the task" and j4["options"][2] == "Forward it to a colleague to decide", j4
     j2.update(options=['"Yes: NC-1 is one finding, and its corrective action is agreed"', j2["options"][1], '"Probably not, with NC-1 still open"'],
-              ref="ISO 19011 (Learn › Framework Quick Reference); BKB-POL-016 Section 6.2")
+              ref="ISO 19011 (Learn › Framework Quick Reference); SITL-POL-016 Section 6.2")
     j4.update(options=[j4["options"][0], "Take it, but read only the NC-1 lines, so that the owners are ready for the interviews", "Have it sent to the Compliance Manager, who runs the audit, to read and brief the team"])
     blob = json.dumps([t, w["notes"]["T12.2"], rows, j2, j4, w["li"]["LI-18"], w["licards"]["LI-18"]], ensure_ascii=False)
     for bad in ("Challenging", "price of the audit", "auditor's name", "Delete the finding", "Accept it —", "requirement clause and the appeal", "may request"):
@@ -6173,7 +6182,7 @@ def options_pass(w: dict) -> None:
     for tid, n, old, new in [
         ("F1.1", 3, "Any public chatbot, pasting the task text", "A public chatbot, with the company names taken out"),
         ("F1.1", 3, "A friend's paid AI account", "Your own paid AI account, with training switched off"),
-        ("F1.2", 5, '"Internet"', '"BKB-ADD-16, the GlobalConnect addendum"'),
+        ("F1.2", 5, '"Internet"', '"SITL-ADD-16, the GlobalConnect addendum"'),
         ("F1.2", 5, '"My notes"', '"Confirmed by the Compliance Manager, 6 Oct"'),
         ("F1.3", 4, "Yes, if it is a SaaS system", "Yes, if its owner says the office cannot run without it"),
         ("F1.3", 6, "Reduce the font to 8 pt", "Tighten the margins and line spacing until it fits"),
@@ -6200,16 +6209,16 @@ def options_pass(w: dict) -> None:
         w["inj"][i]["options"][n] = new
     # Step 7 of T3.1 meets a real difference, so its text says where one goes.
     s = w["tasks"]["T3.1"]["steps"][6]
-    old = "Then: Compare each notification clock with BKB-ERM-001 Annex A."
+    old = "Then: Compare each notification clock with SITL-ERM-001 Annex A."
     assert s["w"].endswith(old), s["w"]
     s["w"] += " Where a clock differs, record it on the row it differs on."
     s["o"] += "; any difference recorded on its row"
-    helped("T3.1", 7, "Compare each notification clock with BKB-ERM-001 Annex A.", "Compare each notification clock with BKB-ERM-001 Annex A, and record any difference on the row it differs on.")
+    helped("T3.1", 7, "Compare each notification clock with SITL-ERM-001 Annex A.", "Compare each notification clock with SITL-ERM-001 Annex A, and record any difference on the row it differs on.")
     # The rule text wins over a leaked answer: help names the rule and where to read it, it does not quote one that decides the question.
     s = w["tasks"]["F1.2"]["steps"][3]
     old = 'Rule R02: a standard applies to an office when the addendum Section 2 row of that office names it, or when Section 3 says "all offices".'
     helped("F1.2", 4, old, "Rule R02, in Learn & Grow › Rule tables, says when a standard applies to an office: read it before you choose.")
-    old = 'type in column E the office cities whose Section 2 row names that standard, separated by "; " — or "All offices" when BKB-ADD-16 Section 3 says so.'
+    old = 'type in column E the office cities whose Section 2 row names that standard, separated by "; " — or "All offices" when SITL-ADD-16 Section 3 says so.'
     assert old in s["w"], s["w"]
     s["w"] = s["w"].replace(old, 'type in column E the offices rule R02 gives, as city names separated by "; ", or "All offices".')
     r4 = w["rules"]["R11"][1]
@@ -6225,7 +6234,7 @@ def options_pass(w: dict) -> None:
     tr = w["tp"]["regwatch|Regulation Tracker"]["pl"]
     assert tr["h"] == ["Organisation", "Office", "Lead regulator"], tr["h"]
     tr["h"][2] = "Authority"
-    # F2.1: Banking & payment files hold cardholder data, which BKB-STD-001 Section 3 puts at Tier 4 and its decision tree asks about.
+    # F2.1: Banking & payment files hold cardholder data, which SITL-STD-001 Section 3 puts at Tier 4 and its decision tree asks about.
     r = next(x for x in w["tp"]["risk|Asset Register"]["pl"]["r"] if x[1] == "Banking & payment files")
     assert r[4] == "No", r
     r[4] = "Yes (cardholder data)"
@@ -6235,19 +6244,19 @@ def options_pass(w: dict) -> None:
     w["tasks"]["F2.2"]["krs"][1] = w["tasks"]["F2.2"]["krs"][1].replace(old, new)
     # T3.2: Map to Framework goes from key word to policy, Crosswalk View from policy to control: one column each.
     mf, xw = w["tp"]["policies|Map to Framework"]["pl"], w["tp"]["frameworks|Crosswalk View"]["pl"]
-    assert mf["h"] == xw["h"] == ["Key words", "BKB policy", "Annex A / clause"] and mf["r"] == xw["r"], mf["h"]
+    assert mf["h"] == xw["h"] == ["Key words", "SITL policy", "Annex A / clause"] and mf["r"] == xw["r"], mf["h"]
     assert len({r[1] for r in xw["r"]}) == len(xw["r"]), "Crosswalk View needs one row per policy"
     w["tp"]["policies|Map to Framework"]["pl"] = {**mf, "h": mf["h"][:2], "r": [r[:2] for r in mf["r"]]}
     w["tp"]["frameworks|Crosswalk View"]["pl"] = {**xw, "h": xw["h"][1:], "r": [r[1:] for r in xw["r"]]}
     w["tp"]["frameworks|Crosswalk View"]["tool"] = "Frameworks › Crosswalk View"
-    # T3.2 step 9: LearnTech's one exclusion. It builds and runs its software with its own engineers (BKB-ADD-36 Section 4,
+    # T3.2 step 9: LearnTech's one exclusion. It builds and runs its software with its own engineers (SITL-ADD-36 Section 4,
     # TSA-36): TSA-36 Control_Mapping lists no product for A.8.30 and no RA-36 risk treatment uses it.
     page = w["pages"]["Ref-SoA exclusions"]
-    assert page["h"] == ["Organisation", "Excluded controls"] and [r[1] for r in page["r"]] == ["None — all 93 Annex A controls are applicable (Group decision, BKB-POL-001)"] * 2, page
+    assert page["h"] == ["Organisation", "Excluded controls"] and [r[1] for r in page["r"]] == ["None — all 93 Annex A controls are applicable (Group decision, SITL-POL-001)"] * 2, page
     assert not any(r[0] == "A.8.30" for r in w["pages"]["TSA-36 Control_Mapping"]["r"])
     page["h"].append("Justification")
     page["r"][0].append("—")
-    page["r"][1][1] = "A.8.30 Outsourced development. The other 92 Annex A controls are applicable (Group decision, BKB-POL-001)"
+    page["r"][1][1] = "A.8.30 Outsourced development. The other 92 Annex A controls are applicable (Group decision, SITL-POL-001)"
     page["r"][1].append("All LearnTech software is developed in-house by its own engineers; no development is outsourced.")
     blob = json.dumps([w["tasks"], w["inj"], w["notes"]], ensure_ascii=False)
     for bad in ("8 pt", "biggest website", "You, the intern", "IT help desk", "Legal signs", "Needs work", "USB stick by post", "Delete the risk"):
@@ -6281,10 +6290,10 @@ def retro(w: dict) -> None:
         "A scripted question about rule R05 (Learn › Rule tables) first. Then record, for each of your rows, whether it holds personal data or credentials.")
     sub("F2.2", 4, 'A scripted question about a password shown in plain text (defect D9): never copy it, never mask it yourself — click "Report data issue" and reject the item. Then do that for any D9 item in your dataset.',
         "A scripted question about a password shown in plain text (defect D9) first. Then report any of your items whose Content note shows unmasked data or a password.")
-    sub("T3.1", 2, ' Rule R10 (One obligation per row): If a sentence has two actions (joined by "and" or ";"), make two rows. Owner role = the owner of the linked BKB policy in the BKB-POL-000 index.',
+    sub("T3.1", 2, ' Rule R10 (One obligation per row): If a sentence has two actions (joined by "and" or ";"), make two rows. Owner role = the owner of the linked SITL policy in the SITL-POL-000 index.',
         " Rule R10 is in Learn › Rule tables.")
     sub("T3.1", 4, ", one row each, as contract obligations.", ", one row each.")
-    sub("T3.1", 5, "(BKB-POL-000 index); its owner role is filled from the index by itself.", "(BKB-POL-000 index).")
+    sub("T3.1", 5, "(SITL-POL-000 index); its owner role is filled from the index by itself.", "(SITL-POL-000 index).")
     sub("T3.1", 7, ' If they differ, copy both values and write "Differs — addendum governs".', "")
 
     # Where the pack had no content, the platform writes it (owner, 28 Oct 2026). Listed in
@@ -6316,16 +6325,16 @@ def retro(w: dict) -> None:
     f22[2]["w"] += " Then copy that code's Fix from the same list."
     f22[2]["o"] = "Defect code and fix recorded for every rejected item"
     sub("F2.2", 3, "Ref-Defect codes gives no fix text yet, so the Fix column waits for it.", "Then copy that code's Fix from Evidence › Defect Codes into the row.")
-    # T3.1: BKB-ADD-16 §2.2 gives each obligation's article, deadline, process and evidence of compliance;
+    # T3.1: SITL-ADD-16 §2.2 gives each obligation's article, deadline, process and evidence of compliance;
     # §9.1 the integrations L03's interfaces are read from.
     t31s = w["tasks"]["T3.1"]["steps"]
     old5 = "Copy the deadline or frequency the obligation states."
-    new5 = "Copy its frequency or deadline, process and evidence of compliance from BKB-ADD-16 §2.2."
+    new5 = "Copy its frequency or deadline, process and evidence of compliance from SITL-ADD-16 §2.2."
     assert old5 in t31s[4]["w"], t31s[4]["w"]
     t31s[4]["w"] = t31s[4]["w"].replace(old5, new5)
     sub("T3.1", 5, "Copy the deadline or frequency the obligation states.", new5)
     for d in w["library"]["docs"]:
-        if d[0] == "BKB-ADD-16":
+        if d[0] == "SITL-ADD-16":
             secs = [s[0] for s in d[2]]
             d[2].insert(secs.index("2.1") + 1, ["2.2", "Obligation details"])
             secs = [s[0] for s in d[2]]
@@ -6471,8 +6480,8 @@ def gaps_pass(w: dict) -> None:
 
     # --- F1.3 -----------------------------------------------------------------------------------------------------
     # Step 5: Section 4 is headed "Stakeholder requirements"; the part headed "Interested parties" is 4.1, another list.
-    step("F1.3", 5, "w", "Copy the first five parties of BKB-ADD-16 Section 4, in the same order, each with the values given for it.",
-         'Copy the first five parties of the table under BKB-ADD-16 Section 4, Stakeholder requirements (not the lists of Section 4.1), in the same order, each with the values given for it. A party\'s requirements go in one cell, separated by "; ".')
+    step("F1.3", 5, "w", "Copy the first five parties of SITL-ADD-16 Section 4, in the same order, each with the values given for it.",
+         'Copy the first five parties of the table under SITL-ADD-16 Section 4, Stakeholder requirements (not the lists of Section 4.1), in the same order, each with the values given for it. A party\'s requirements go in one cell, separated by "; ".')
     step("F1.3", 5, "help", "copy the first five parties of the addendum Section 4, in the same order,",
          "copy the first five parties of the table under the addendum's Section 4 (not the lists of Section 4.1), in the same order,")
     everywhere("Copy the first five parties listed in addendum Section 4,", "Copy the first five parties listed in the table of addendum Section 4 (Stakeholder requirements),", 3)
@@ -6481,7 +6490,7 @@ def gaps_pass(w: dict) -> None:
     # Message J1: its guidance named R05 alone, and ruling out Tier 4 needs the standard's harm table.
     j = w["inj"]["F2.1-J1"]
     assert j["ref"] == "Rule R05", j["ref"]
-    j["ref"] = "Rule R05; BKB-STD-001 Section 3.1"
+    j["ref"] = "Rule R05; SITL-STD-001 Section 3.1"
 
     # --- F2.2 -----------------------------------------------------------------------------------------------------
     # Step 2's help listed nine things for ten checks, out of order.
@@ -6504,7 +6513,7 @@ def gaps_pass(w: dict) -> None:
     step("F1.2", 6, "w", "Save as <mentee ID>_F1.2_FAM-MAP_v1.xlsx in 02_Working.", "Name the file <mentee ID>_F1.2_FAM-MAP_v1.xlsx.")
     # F1.3: the services are in Section 1.1; Section 1 is the profile table.
     step("F1.3", 1, "help", "copied from the addendum Section 1. Put it next to Section 1 and check", "copied from the addendum Section 1.1. Put it next to Section 1.1 and check")
-    everywhere("Sections 1–3 match BKB-ADD-16 Section 1, Section 9", "Sections 1–3 match BKB-ADD-16 Section 1.1, Section 9")
+    everywhere("Sections 1–3 match SITL-ADD-16 Section 1, Section 9", "Sections 1–3 match SITL-ADD-16 Section 1.1, Section 9")
     # F2.1 step 3: the screen asks Yes or No on every row; the text spoke of checking a rule.
     step("F2.1", 3, "w", "Then: Check rule R05 for every row that holds personal data or credentials: never below Tier 3.",
          "Then: for each of your rows, record Yes or No in “Personal data or credentials? (R05)”. A row with a Yes is never below Tier 3.")
@@ -6532,12 +6541,12 @@ def gaps_pass(w: dict) -> None:
          "What moved since then is on Risk Register › Heat Map with KRIs: for this task it lists each change since the last report, as a table.")
     # LI-10's clauses are rated in step 6.
     everywhere("3 ISMS risks; LI-PLAN submitted · Activities 12–16", "3 ISMS risks; LI-PLAN submitted · Activities 6 and 12–16")
-    # Nine drill messages cite BKB-POL-024 Section 3.1, a document with no text on file: the rule they test is the
+    # Nine drill messages cite SITL-POL-024 Section 3.1, a document with no text on file: the rule they test is the
     # one the mentee signed in F1.1 step 3.
     n = 0
     for j in w["inj"].values():
-        if "BKB-POL-024 Section 3.1" in (j.get("ref") or ""):
-            j["ref"] = j["ref"].replace("BKB-POL-024 Section 3.1", "Your data rules (ADM-RULES, signed in F1.1 step 3)")
+        if "SITL-POL-024 Section 3.1" in (j.get("ref") or ""):
+            j["ref"] = j["ref"].replace("SITL-POL-024 Section 3.1", "Your data rules (ADM-RULES, signed in F1.1 step 3)")
             n += 1
     assert n == 9, n
 
@@ -6565,7 +6574,7 @@ def gaps_pass(w: dict) -> None:
     # R16: 30 days from a Friday lands on a Sunday (T5.1 step 5), and the key keeps it.
     everywhere("Fieldwork starts 30 days after the end of the audit period.",
                "Fieldwork starts 30 calendar days after the end of the audit period, whatever day of the week that is.", 3)
-    # R24: "KEV-listed or Critical on an internet-facing asset" read two ways; the key, and BKB-POL-010 Section 4, take the asset first.
+    # R24: "KEV-listed or Critical on an internet-facing asset" read two ways; the key, and SITL-POL-010 Section 4, take the asset first.
     everywhere("Class 1: KEV-listed or Critical on an internet-facing asset → 7 days. Class 2: Critical, or KEV on an internal asset → 14 days.",
                "Class 1: on an internet-facing asset, KEV-listed or Critical → 7 days. Class 2: on an internal asset, Critical or KEV-listed → 14 days.", 3)
     everywhere("LOW: KEV/internet-facing critical 7 d; critical internal 14 d;", "LOW: internet-facing KEV-listed or critical 7 d; internal critical or KEV-listed 14 d;")
@@ -6588,7 +6597,7 @@ def rows_pass(w: dict) -> None:
     step("T3.1", 8, "w", "fill the OBL-EXTRA rows on its second sheet, name the file and submit it.",
          "fill the OBL-EXTRA rows on its second sheet, name the file and submit it. On each OBL-EXTRA row, copy Evidence of "
          "compliance and Frequency / deadline from the row with the same Obligation in Organization_Profiles Section 3, and "
-         "choose the policy in BKB-POL-000 Section 3 whose title names the row's Process.")
+         "choose the policy in SITL-POL-000 Section 3 whose title names the row's Process.")
     # T3.1 step 4: "the first three Key Requirements" read two ways, the first three of the table or the first of each of
     # three groups (tester, 18 Nov 2026). The three are named by their group.
     for f in ("w", "help"):
@@ -6598,7 +6607,7 @@ def rows_pass(w: dict) -> None:
     # T3.2 step 7: "map requirement M9" named no column and no source; the hand-in view shows no note.
     step("T3.2", 7, "w", "map requirement M9 on its second sheet, name the file and submit it.",
          "map requirement M9 on its second sheet, name the file and submit it. Fill M9's row as you filled the others in "
-         "steps 1 to 6: its BKB policy (Policies › Map to Framework, then the title in BKB-POL-000 Section 3), its control "
+         "steps 1 to 6: its SITL policy (Policies › Map to Framework, then the title in SITL-POL-000 Section 3), its control "
          "(the policy's row in Frameworks › Crosswalk View), its procedure (the policy's Section 6), its coverage (rule R11), "
          "a gap sentence only if the coverage is Partial or None, and its Evidence ref (the policy, then the section you read).")
     # T5.1 step 7: the sheet-2 row's two cells had their sources only in a guide card.
@@ -6608,9 +6617,9 @@ def rows_pass(w: dict) -> None:
          "(Policies › Policy Library), the role marked R for the control's process.")
     # T4.2 step 6: the Records sheet is filled at the hand-in, whose view shows no note; where a keeper is read was only in the guide.
     step("T4.2", 6, "w", "Decide who keeps each record on SOP-DOC's Records sheet.",
-         "Decide who keeps each record on SOP-DOC's Records sheet: find the line of BKB-POL-021 Section 6.1 that produces "
+         "Decide who keeps each record on SOP-DOC's Records sheet: find the line of SITL-POL-021 Section 6.1 that produces "
          "the record, then read the note under that table, which says who keeps a record and when another role keeps it "
-         "instead. For the exception request, read BKB-POL-021 Section 8, then BKB-POL-000 Section 6.")
+         "instead. For the exception request, read SITL-POL-021 Section 8, then SITL-POL-000 Section 6.")
     # T5.2 step 6: "check the five late files" named no column and no source; the hand-in view shows no note.
     step("T5.2", 6, "w", "Check the five late files on EVP-IDX's second sheet, EVP-EXTRA.",
          "Check the five late files on EVP-IDX's second sheet, EVP-EXTRA. For each file: in Result (R09), choose Accept, or "
@@ -6618,6 +6627,302 @@ def rows_pass(w: dict) -> None:
          "request in Evidence › Audit Requests (PBC) and its SHA-256 in Evidence › Upload Config File. In PBC req., choose "
          "the request of an accepted file's control. In Gap now (R18), apply rule R18 to the row's Accepted at step 2 plus "
          "the late files of that control this sheet accepts.")
+
+
+# A document's outline in the library carries every heading its text on file has. The checks read the outline (T3.2:
+# "a Procedure: section of the row's policy"), the mentee reads the text: a section written on the platform and added to
+# the text alone (SITL-POL-013 Section 6.3, SITL-ADD-36 Section 6.1) was on screen and refused when typed (tester,
+# 25 Nov 2026). lib/desk/docs-outline.test.ts holds the two together.
+DOC_HEADING = re.compile(r"^(\d+)\\\.\s+(.+)$|^(\d+\.\d+)\s+(\D.+)$|^(Annex [A-Z]) — (.+)$")  # lib/desk/docs.ts HEADING
+
+
+def outline_from_docs(w: dict) -> None:
+    docs = Path(__file__).resolve().parent.parent / "public" / "desk" / "docs"
+    for d in w["library"]["docs"]:
+        f = docs / f"{d[0]}.md"
+        if not f.exists():
+            continue
+        at = 0  # where the next missing heading goes: after the last heading of the text the outline already has
+        for line in f.read_text(encoding="utf8").splitlines():
+            m = DOC_HEADING.match(line)
+            if not m:
+                continue
+            num, title = m[1] or m[3] or m[5], (m[2] or m[4] or m[6]).strip()
+            have = [s[0] for s in d[2]]
+            if num in have:
+                at = have.index(num) + 1
+            else:
+                d[2].insert(at, [num, title])
+                at += 1
+
+
+# Focus plan Phase 3 (owner, 24 Nov 2026): T3.2 turned round. Dataset MAP-8 is eight ISO/IEC 27001:2022 Annex A controls
+# (id, published title), plainest first; the pack's eight outside requirements are not used. registers.ts holds the same
+# eight rows and lib/desk/t32-focus.test.ts fails if the two drift.
+T32_ROWS = [
+    ("M1", "A.5.1", "Policies for information security"),
+    ("M2", "A.8.8", "Management of technical vulnerabilities"),
+    ("M3", "A.7.2", "Physical entry"),
+    ("M4", "A.5.26", "Response to information security incidents"),
+    ("M5", "A.5.18", "Access rights"),
+    ("M6", "A.8.25", "Secure development life cycle"),
+    ("M7", "A.8.5", "Secure authentication"),
+    ("M8", "A.5.22", "Monitoring, review and change management of supplier services"),
+]
+# The 19 SOC 2 criteria some row (or M9) offers as a candidate: the only ones Frameworks › Crosswalk View lists.
+T32_CRITERIA = ["CC2.3", "CC4.1", "CC5.1", "CC5.2", "CC5.3", "CC6.1", "CC6.3", "CC6.4", "CC6.5", "CC6.6", "CC6.7", "CC6.8",
+                "CC7.1", "CC7.2", "CC7.3", "CC7.4", "CC8.1", "CC9.1", "CC9.2"]
+
+
+def focus_t32(w: dict) -> None:
+    """FOCUS PLAN PHASE 3: T3.2 rebuilt as ISO/IEC 27001 → SOC 2 (docs/GRC101_FOCUS_PLAN.md). Runs on the final text.
+
+    A row starts from an Annex A control. Step 1 finds the SITL policy whose title covers it (SITL-POL-000 Section 3, one
+    document); step 2 introduces SOC 2 and maps the control to the criterion that asks for the same thing, from three
+    candidates read on Frameworks › Crosswalk View; steps 3 to 7 are as before. Policies › Map to Framework is no longer
+    read by the task. Every SOC 2 summary is read from lib/library/soc2.ts, never retyped, so a criterion reads the same
+    on the desk and in the Standards Library; no AICPA text is held. Steps 8 to 13 (LI-05) are untouched. The pack file
+    is not edited. All of this is platform-written: docs/GRC101_Content_Corrections.md, "Focus plan Phase 3".
+    """
+    t = w["tasks"]["T3.2"]
+    steps = t["steps"]
+    notes = {r[0]: r for r in w["notes"]["T3.2"]}
+
+    def put(n: int, field: str, old: str, new: str) -> None:
+        """The whole field, set; `old` is what it must hold now, so a change upstream (the pack, an earlier pass) is seen here."""
+        s = steps[n - 1]
+        assert s[field] == old, (n, field, s[field])
+        s[field] = new
+        if field == "help":
+            assert notes[n][2] == old, (n, notes[n][2])
+            notes[n][2] = new
+        if field == "t":
+            notes[n][1] = new
+
+    def everywhere(old: str, new: str, n: int) -> None:
+        """Every copy of a sentence in the sample (a title is on the task, its card and My plan; a link on both its tasks)."""
+        seen = 0
+
+        def walk(x):
+            nonlocal seen
+            for k, v in (x.items() if isinstance(x, dict) else enumerate(x)):
+                if isinstance(v, str):
+                    if old in v:
+                        seen += v.count(old)
+                        x[k] = v.replace(old, new)
+                elif isinstance(v, (dict, list)):
+                    walk(v)
+        walk(w)
+        assert seen == n, (old, seen)
+
+    # --- Steps 1 to 7 ---------------------------------------------------------------------------------------------
+    put(1, "t", "Choose the SITL policy that covers each requirement", "Choose the SITL policy that covers each control")
+    put(1, "w", "Your 8 requirements from dataset MAP-8 are already in MAP-XW. For each, choose the SITL policy that covers it: "
+        "Policies › Map to Framework gives the policy of common key words, and SITL-POL-000 (Policies › Policy Library) lists "
+        "every policy in Section 3 and the policy of each sector obligation in Section 8.",
+        "Your 8 controls from dataset MAP-8 are already in MAP-XW: each is an ISO/IEC 27001 Annex A control, with its title and "
+        "what it asks in plain terms. For each, choose the SITL policy that covers it: SITL-POL-000 Section 3 (Policies › "
+        "Policy Library) lists every policy by title.")
+    put(1, "o", "SITL policy chosen for the 8 requirements", "SITL policy chosen for the 8 controls")
+    assert steps[0]["help"] == notes[1][2] and "Start with SITL-POL-000 Section 8" in notes[1][2], notes[1][2]
+    steps[0]["help"] = notes[1][2] = (
+        "Read the control's title and its plain-terms line, then the policy titles in SITL-POL-000 Section 3. The policy whose "
+        "title is about the same subject covers the control. Where two titles seem close, take the one that names the "
+        "control's subject more exactly.")
+    assert steps[0]["refs"]["docs"] == [["SITL-POL-000", ["3", "8"]]], steps[0]["refs"]["docs"]
+    steps[0]["refs"]["docs"] = [["SITL-POL-000", ["3"]]]
+
+    put(2, "t", "Decide for each row: For each requirement, choose the Annex A control that implements it",
+        "Decide for each row: For each control, choose the SOC 2 criterion that asks for the same thing")
+    put(2, "w", "DECIDE (for each item): For each requirement, choose the matching Annex A control from the three candidates shown. "
+        "Options: A) Candidate 1  B) Candidate 2  C) Candidate 3. Guidance: Frameworks › Crosswalk View, for the policy you chose in step 1.",
+        "DECIDE (for each item): For each control, choose the SOC 2 criterion that asks for the same thing, from the three "
+        "candidates shown. Options: A) Candidate 1  B) Candidate 2  C) Candidate 3. Guidance: Frameworks › Crosswalk View, "
+        "which says what each criterion asks.")
+    put(2, "o", "Annex A control chosen for the 8 requirements", "SOC 2 criterion chosen for the 8 controls")
+    put(2, "help", "You decide one value for every row: for each requirement, choose the matching Annex A control from the three "
+        "candidates shown. Choose from the options shown — nothing is written from nothing. The platform scores each row "
+        "against the key when you click Check my answers.",
+        "You decide one value for every row: for each control, choose the SOC 2 criterion that asks for the same thing. Read "
+        "the row's three candidates in Frameworks › Crosswalk View and hold each against the control's plain-terms line. "
+        "Choose from the options shown — nothing is written from nothing. The platform scores each row against the key "
+        "when you click Check my answers.")
+
+    # The example was 6.1, now the answer on four rows; 6.4 is no policy's procedure.
+    put(3, "w", 'Open each row\'s SITL policy in Policies › Policy Library. If one of its "Procedure:" sections carries out the '
+        'requirement, type its number (e.g. 6.1); otherwise type "none".',
+        'Open each row\'s SITL policy in Policies › Policy Library. If one of its "Procedure:" sections carries out the '
+        'control, type its number (a number such as 6.4); otherwise type "none".')
+    put(3, "o", 'Procedure section or "none" recorded for the 8 requirements', 'Procedure section or "none" recorded for the 8 controls')
+    put(3, "help", "Open the row's policy from Policies › Policy Library: its Section 6 lists its procedures by name. Type the "
+        "number of the one that carries out the requirement, or \"none\" if no procedure does. R11 counts it in step 4.",
+        "Open the row's policy from Policies › Policy Library: its Section 6 lists its procedures by name. Type the "
+        "number of the one that carries out the control, or \"none\" if no procedure does. R11 counts it in step 4.")
+
+    put(4, "t", "Decide for each row: For each requirement, decide the coverage", "Decide for each row: For each control, decide the coverage")
+    put(4, "w", "DECIDE (for each item): For each requirement, decide the coverage. Options: A) Full  B) Partial  C) None. Guidance: rule R11.",
+        "DECIDE (for each item): For each control, decide the coverage. Options: A) Full  B) Partial  C) None. Guidance: rule R11.")
+    put(4, "o", "Coverage rated with R11 for the 8 requirements", "Coverage rated with R11 for the 8 controls")
+    put(4, "help", "You decide one value for every row: for each requirement, decide the coverage. Choose from the options shown — "
+        "nothing is written from nothing. The platform scores each row against the key when you click Check my answers. "
+        "Rule R11 is in Learn › Rule tables.",
+        "You decide one value for every row: for each control, decide the coverage. Choose from the options shown — "
+        "nothing is written from nothing. The platform scores each row against the key when you click Check my answers. "
+        "Rule R11 is in Learn › Rule tables.")
+
+    # Step 6's help still offered Section 9, which the Evidence ref rule (24 Nov 2026) no longer takes.
+    put(6, "help", "Name where a reader can check each row: its SITL policy and the section you read in it, such as its procedure "
+        "section or Section 9 Framework mapping.",
+        "Name where a reader can check each row: its SITL policy and the section you read in it in step 3. That is the row's "
+        "procedure section, or Section 6 where no procedure fits.")
+
+    put(7, "w", "Check that MAP-XW has no empty cell, map requirement M9 on its second sheet, name the file and submit it. Fill M9's "
+        "row as you filled the others in steps 1 to 6: its SITL policy (Policies › Map to Framework, then the title in "
+        "SITL-POL-000 Section 3), its control (the policy's row in Frameworks › Crosswalk View), its procedure (the policy's "
+        "Section 6), its coverage (rule R11), a gap sentence only if the coverage is Partial or None, and its Evidence ref "
+        "(the policy, then the section you read).",
+        "Check that MAP-XW has no empty cell, map control M9 on its second sheet, name the file and submit it. Fill M9's "
+        "row as you filled the others in steps 1 to 6: its SITL policy (the title in SITL-POL-000 Section 3), its SOC 2 "
+        "criterion (the row's three candidates in Frameworks › Crosswalk View), its procedure (the policy's Section 6), its "
+        "coverage (rule R11), a gap sentence only if the coverage is Partial or None, and its Evidence ref (the policy, then "
+        "the section you read).")
+
+    # --- The task's own text ----------------------------------------------------------------------------------------
+    everywhere("Control crosswalk: map eight requirements to ISO/IEC 27001 and SITL policy",
+               "Control crosswalk: map eight ISO/IEC 27001 controls to SOC 2 and SITL policy", 4)  # title, card twice, My plan
+    everywhere("Map eight requirements to ISO/IEC 27001 Annex A and SITL policy, and rate coverage (R11).",
+               "Map eight ISO/IEC 27001 Annex A controls to SOC 2 and to SITL policy, and rate coverage (R11).", 3)  # obj, card twice
+    what = ("Control crosswalk: map eight ISO/IEC 27001 controls to SOC 2 and SITL policy. Map eight Annex A controls to the SOC 2 "
+            "criterion that asks for the same thing and to the SITL policy that covers them, and rate coverage (R11). Includes "
+            "ISO/IEC 27001 Lead Implementer extension(s) LI-05.")
+    why = ("Organisations answer to more than one framework but run one set of controls. LearnTech holds its controls under "
+           "ISO/IEC 27001, and its customers have started to ask for a SOC 2 report. The "
+           "crosswalk shows which SOC 2 criterion each ISO/IEC 27001 control already answers, which SITL policy and procedure "
+           "carry it out, and where a gap remains. It is how \"comply once, report many times\" is achieved.")
+    learn = ["Find the policy that covers an Annex A control, and its procedures — see SITL-POL-000 Section 3; Section 6 of each policy",
+             "Map an Annex A control to a SOC 2 criterion and rate coverage Full / Partial / None — see Rules R11, R12; Frameworks › Crosswalk View"]
+    refs_old = ["SITL-POL-001…023 — Section 9 Framework mapping of each policy", "ISO/IEC 27001:2022 — Annex A (93 controls)",
+                "NIST CSF 2.0 — Functions GV/ID/PR/DE/RS/RC (for cross-reference)", "00_Task_Library_Index.xlsx — Template bank — method C.ii",
+                "LearnTech Educational Solutions Task Library — Requirements sheet of each mandatory standard"]
+    refs_new = ["SITL-POL-000 — Section 3 Library index", "ISO/IEC 27001:2022 — Annex A (93 controls, titles)",
+                "SOC 2 — Trust Services Criteria: the criteria your rows offer, by id (Frameworks › Crosswalk View)"]
+
+    def refs(lst: list) -> list:
+        assert lst[:5] == refs_old, lst[:5]
+        return refs_new + lst[5:]
+
+    # The card is held twice: a dict on the task, and rows of [heading, text] in `cards`.
+    rows = {r[0]: r for r in w["cards"]["T3.2"]}
+    for get, put_card in ((t["card"].get, t["card"].__setitem__), (lambda k: rows[k][1], lambda k, v: rows[k].__setitem__(1, v))):
+        assert get("What will I do").startswith("Control crosswalk: map eight ISO/IEC 27001 controls to SOC 2 and SITL policy. Map eight ISO/IEC 27001 Annex A controls"), get("What will I do")
+        put_card("What will I do", what)
+        assert "a requirement from GDPR, PCI DSS" in get("Why am I doing this"), get("Why am I doing this")
+        put_card("Why am I doing this", why)
+        assert len(get("What will I learn")) == 4 and "Section 9 framework-mapping table" in get("What will I learn")[0], get("What will I learn")
+        put_card("What will I learn", learn + get("What will I learn")[2:])
+        put_card("What to read or refer", refs(get("What to read or refer")))
+    t["refs"] = refs(t["refs"])
+    w["library"]["cited_by_task"]["T3.2"] = refs(w["library"]["cited_by_task"]["T3.2"])
+    everywhere("Policies › Map to Framework, Policy Library; Learn › Rule tables, Sentence frames, Reference pages",
+               "Policies › Policy Library; Learn › Rule tables, Sentence frames, Reference pages", 5)  # card, meta.tool, cards, deliverables twice
+    everywhere('a "None" missed means a requirement nobody owns', 'a "None" missed means a control nobody owns', 2)
+
+    assert t["krs"][0] == "KR1 — Correct Annex A control for ≥ 6 of 8 requirements · Activities 1–2", t["krs"][0]
+    # KR1 is shown beside steps 1 and 2 ("Activities 1–2"): it names what each of the two decides.
+    t["krs"][0] = "KR1 — Correct SITL policy and SOC 2 criterion for ≥ 6 of 8 controls · Activities 1–2"
+    assert t["krs"][1] == "KR2 — Policy procedure section recorded for all 8 requirements · Activity 3", t["krs"][1]
+    t["krs"][1] = "KR2 — Policy procedure section recorded for all 8 controls · Activity 3"
+    assert t["inputs"][0].startswith("Dataset MAP-8: eight requirements") and t["inputs"][3].startswith("The rule tables R01–R36"), t["inputs"][:4]
+    t["inputs"][:4] = ["Dataset MAP-8: eight ISO/IEC 27001:2022 Annex A controls (control, title)",
+                       "SITL-POL-000 Section 3, and Section 6 of the policy each row names",
+                       "SOC 2 criteria, by id, with our summary of each (Frameworks › Crosswalk View)",
+                       "The rule tables R01–R36 (Ref-Rules)"]
+
+    # Week 3.
+    wk = w["weeks"][2]
+    assert wk["obj"].endswith("and look up how requirements map to ISO/IEC 27001 controls and SITL policy."), wk["obj"]
+    wk["obj"] = "Copy obligations from the addendum into the register template, and map eight ISO/IEC 27001 controls to SOC 2 and SITL policy."
+    assert wk["crit"][1] == "T3.2: Correct Annex A control for ≥ 6 of 8 requirements · Activities 1–2", wk["crit"][1]
+    wk["crit"][1] = "T3.2: Correct SITL policy and SOC 2 criterion for ≥ 6 of 8 controls · Activities 1–2"
+
+    # What the task builds on and feeds: the two sentences that described the old rows (the second was not true of them either).
+    everywhere("The non-ISO mandatory standards are the source of the eight requirements you map.",
+               "FAM-MAP names the frameworks that bind LearnTech; this crosswalk joins two of them, ISO/IEC 27001 and SOC 2.", 3)
+    everywhere("The controls you test (backup, change, privileged access) are Annex A controls mapped here (A.8.13, A.8.32, A.8.2).",
+               "The access controls you test in T8.2 belong to SITL-POL-006, the policy of your A.5.18 and A.8.5 rows.", 3)
+    # T3.2 → T4.1 said "Policy clauses found in the Section 9 mapping tables are the clauses you test for coverage"; the
+    # task no longer reads Section 9. What it hands on is the policy itself.
+    everywhere("Policy clauses found in the Section 9 mapping tables are the clauses you test for coverage.",
+               "SITL-POL-006 is the policy of your A.5.18 and A.8.5 rows; T4.1 checks that policy clause by clause, for currency and for coverage.", 3)
+    everywhere("Eight requirement rows; control, clause, procedure, coverage (R11), gap sentence (R12)",
+               "Eight control rows; SOC 2 criterion, policy, procedure, coverage (R11), gap sentence (R12)", 2)  # tpls, Ref-Templates
+    everywhere("Control crosswalk: eight requirements mapped to ISO/IEC 27001 controls and SITL policies",
+               "Control crosswalk: eight ISO/IEC 27001 controls mapped to SOC 2 criteria and SITL policies", 1)  # Ref-Capability map
+
+    # --- Dataset MAP-8 and Frameworks › Map Control -------------------------------------------------------------------
+    ds = w["ds"]["MAP-8"]
+    assert ds["h"] == ["Row", "Standard", "Req. ID", "Requirement", "Library task (context)"] and ds["n"] == 8, ds["h"]
+    ds.update(h=["Row", "Standard", "Control", "Title"], cols=4, r=[[m, "ISO/IEC 27001:2022", c, title] for m, c, title in T32_ROWS])
+    for panel in (t["panel"], w["tp"]["frameworks|Map Control"]):
+        assert panel["stamp"] == "8 requirements" and panel["tool"] == "Frameworks › Map Control (MAP-8)", panel
+        panel["stamp"] = "8 controls"
+        panel["pl"] = {**panel["pl"], "h": ["Row", "Control", "Title", "SOC 2 criterion", "SITL policy", "Coverage (R11)"],
+                       "r": [[m, c, title, "◆ Decide", "◆ Decide", "◆ Decide"] for m, c, title in T32_ROWS]}
+
+    # --- Frameworks › Crosswalk View: the one place the desk says what a SOC 2 criterion asks ---------------------------
+    # It listed SITL policy → Annex A controls, read only by T3.2 steps 2 and 7. The summaries are lib/library/soc2.ts's.
+    soc2 = (Path(__file__).resolve().parent.parent / "src" / "lib" / "library" / "soc2.ts").read_text(encoding="utf8")
+    crit, series = {}, ""
+    for m in re.finditer(r'name: "(CC\d [^"]+)"|item\("(CC\d\.\d)", "[^"]*", "([^"]*)"\)', soc2):
+        if m[1]:
+            series = m[1]
+        else:
+            crit[m[2]] = [m[2], series, m[3]]
+    xw = w["tp"]["frameworks|Crosswalk View"]
+    assert xw["pl"]["h"] == ["SITL policy", "Annex A / clause"], xw["pl"]["h"]
+    xw["pl"] = {
+        # The series titles are the AICPA's own published ones; only the summaries are ours, and each heading says which.
+        "h": ["SOC 2 criterion", "Series (the AICPA's title)", "In plain terms (our summary, not AICPA's text)"],
+        "r": [crit[c] for c in T32_CRITERIA],
+        "note": ("SOC 2's criteria are the AICPA's 2017 Trust Services Criteria. The ids, such as CC6.1, and the series titles are the "
+                 f"AICPA's; every summary is ours, not a quotation. These are the {len(T32_CRITERIA)} criteria your rows offer, of 33 common "
+                 "criteria; all of them are in the Standards Library. A crosswalk records the closest criterion: one control can "
+                 "touch more than one."),
+    }
+    # The Frameworks menu names each screen by what it now shows (the lines said "Requirement → Annex A + SITL clause" and
+    # "Keyword → policy → Annex A").
+    menu = {x["n"]: x for x in w["sections"]["frameworks"]["tools"]}
+    assert menu["Map Control"]["d"] == "Requirement → Annex A + SITL clause" and menu["Crosswalk View"]["d"] == "Keyword → policy → Annex A", menu
+    menu["Map Control"]["d"] = "Annex A control → SOC 2 + SITL policy"
+    menu["Crosswalk View"]["d"] = "What each SOC 2 criterion asks"
+
+    # --- Inbox ------------------------------------------------------------------------------------------------------
+    j1, j3 = w["inj"]["T3.2-J1"], w["inj"]["T3.2-J3"]
+    assert "FERPA 99.37" in j1["notice"] and j1["options"] == ["None", "Full", "Partial"], j1
+    # A colleague's row, for a control that is not one of the mentee's eight: step 3 leaves the procedure of each of their own
+    # rows to them, so a message that said what one of those rows holds could contradict the table in front of them (tester,
+    # 25 Nov 2026: 6.1 typed on the A.8.5 row, confirmed Full at step 4, then told "no procedure carries it out yet").
+    # SITL-POL-008's one procedure is visitor management, so the message agrees with the document if the mentee opens it.
+    j1["notice"] = ("A second opinion before a colleague's crosswalk goes to the assessor. It has a row that is not one of your "
+                    "eight: A.7.7, Clear desk and clear screen. SITL-POL-008 covers it, but the policy's only procedure is about "
+                    "visitors, so no procedure carries the control out and the Procedure section says none. Regional Compliance "
+                    "& Legal in Amsterdam say the policy is signed and desks are already cleared every evening, so they want the "
+                    "row shown as Full. I have to defend every rating. What goes in the Coverage column?")
+    assert "Art.33" in j3["notice"] and j3["sender"] == "Data Protection Officer", j3
+    j3.update(sender="Compliance Manager",
+              notice=("One more for your crosswalk before it goes in. The first thing a SOC 2 auditor will ask LearnTech is how it "
+                      "checks a supplier before using one, and your eight rows only cover a supplier already in use. I have put "
+                      "A.5.19 on a second sheet of MAP-XW as control M9, outside the 8 dataset rows. Map it as you mapped the "
+                      "others, and only give it a gap sentence if rule R11 leaves a gap."),
+              steps=["Read M9 on MAP-XW's second sheet (Frameworks › Map Control).", "Choose its SITL policy and its SOC 2 criterion, as in steps 1 and 2.",
+                     "Record its procedure section and its coverage, as in steps 3 and 4.", "Add a gap sentence if R11 leaves a gap, and its evidence ref."])
+
+    # Nothing of the old direction is left in what steps 1 to 7 show. LI-05's own lines (steps 8 to 13) keep theirs.
+    li05 = "LearnTech Educational Solutions Task Library — M_ISO_IEC_27001_2022.xlsx — Requirements sheet"
+    blob = json.dumps([steps[:7], {k: v for k, v in t.items() if k != "steps"}, w["notes"]["T3.2"][:7], w["cards"]["T3.2"], j1, j3, ds, wk],
+                      ensure_ascii=False).replace(li05, "")
+    for bad in ("requirement", "Map to Framework", "29151", "FERPA", "COPPA", "KVKK", "Art.33", "Section 8", "NIST CSF"):
+        assert bad not in blob, f"T3.2 still says {bad!r}: …{blob[max(0, blob.find(bad) - 100):blob.find(bad) + 40]}…"
 
 
 if __name__ == "__main__":

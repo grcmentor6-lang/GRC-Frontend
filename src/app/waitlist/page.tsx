@@ -29,12 +29,12 @@ const COPY: Record<Audience, { eyebrow: string; title: string; body: string }> =
   student: {
     eyebrow: "Early access",
     title: "Enrol now with grcmentor",
-    body: "Hands-on GRC engagements, AI-graded, that compile into a CV, badges and a verifiable certificate. We're onboarding in batches — leave your details and we'll be in touch.",
+    body: "Hands-on GRC engagements, checked automatically against answer keys, that compile into a CV, badges and a verifiable certificate. We're onboarding in batches — leave your details and we'll be in touch.",
   },
   university: {
     eyebrow: "University partnership programme",
     title: "Give your students the edge of real-world GRC experience.",
-    body: "Hands-on governance, risk and compliance mentorship on simulated enterprise engagements — mentor-graded, Human attested, standards-aligned, and mapped straight to the roles your graduates want.",
+    body: "Hands-on governance, risk and compliance practice on a simulated enterprise engagement — checked automatically against answer keys, with no human review to wait for, standards-aligned, and mapped straight to the roles your graduates want.",
   },
 };
 

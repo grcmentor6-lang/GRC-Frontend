@@ -5,8 +5,10 @@
  * keys moved: nothing here serialises the document or waits for the network. Saves go one at a time, as deltas.
  * See the note at the top of progress.ts.
  */
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+import { readOldNames } from "./old-names";
 import type { Progress } from "./progress";
+import { resetOldWork, SAVE_VERSION } from "./li-reset";
 
 const PATH = "/me/desk/progress";
 /** Pause after the last change before saving, and the longest a change waits while the learner keeps typing. */
@@ -55,7 +57,19 @@ function take(pending: Map<string, unknown>, limit: number, atLeastOne: boolean)
   return out;
 }
 
-function encode(entries: Map<string, unknown>, savedAt: number | undefined) {
+/** What the server refuses for good, whatever is retried: a malformed or too large save (api/desk.py parse_delta). */
+const PERMANENT = new Set([400, 413, 422]);
+
+/** A NUL or a lone surrogate (pasted from a PDF or a terminal): the database cannot hold either, and it once got the whole save refused. */
+const UNSAVABLE = /\u0000|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+export function clean<T>(v: T): T {
+  if (typeof v === "string") return v.replace(UNSAVABLE, "") as T;
+  if (Array.isArray(v)) return v.map(clean) as T;
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k.replace(UNSAVABLE, ""), clean(x)])) as T;
+  return v;
+}
+
+export function encode(entries: Map<string, unknown>, savedAt: number | undefined) {
   const set: Record<string, unknown> = {};
   const del: Record<string, string[]> = {};
   for (const [id, v] of entries) {
@@ -66,7 +80,10 @@ function encode(entries: Map<string, unknown>, savedAt: number | undefined) {
     else if (v === DROP) (del[s] ??= []).push(k);
     else ((set[s] ??= {}) as Record<string, unknown>)[k] = v;
   }
-  return JSON.stringify({ set, del, savedAt });
+  // v: the rebuilt desk's version; the server drops rebuilt-task keys from a save without it (li-reset.ts).
+  const out = JSON.stringify({ set, del, savedAt, v: SAVE_VERSION });
+  // JSON.stringify writes both as escapes, so a clean save is known from its text and only a dirty one is walked.
+  return /\\u0000|\\ud[89a-f]/i.test(out) ? JSON.stringify({ set: clean(set), del: clean(del), savedAt, v: SAVE_VERSION }) : out;
 }
 
 /**
@@ -100,6 +117,8 @@ export class ProgressStore {
   progress: Progress = EMPTY;
   status: LoadStatus = "loading";
   saveState: SaveState = "saved";
+  /** Keys the server refused for good and the queue gave up on ("section\0key"), told to the learner once (useDroppedSaves). */
+  dropped: string[] = [];
 
   private loading = false;
   private listeners = new Set<() => void>();
@@ -145,11 +164,14 @@ export class ProgressStore {
         this.progress = empty;
       } else {
         const r = await api.get<{ data?: string | null }>(PATH);
-        const server = r?.data ? ({ ...EMPTY, ...JSON.parse(r.data) } as Progress) : null;
+        // Work saved under the group's old name is read as the new one, here and nowhere else (old-names.ts).
+        const server = r?.data ? ({ ...EMPTY, ...readOldNames(JSON.parse(r.data)) } as Progress) : null;
         this.progress = await this.moveUp(server);
       }
       this.status = "ready";
-      const fixed = resetStaleRowChecks(this.progress);
+      // Work saved on the old content of F1.2 … T12.2 is put aside, and the work is marked as the rebuilt programme's
+      // (li-reset.ts); the change goes up as an ordinary save.
+      const fixed = resetOldWork(resetStaleRowChecks(this.progress));
       if (fixed !== this.progress) this.update(() => fixed);
     } catch {
       this.status = "failed"; // the desk shows Try again: nothing is ever saved over a copy we could not read
@@ -166,7 +188,7 @@ export class ProgressStore {
     let local: Progress | null = null;
     try {
       const raw = localStorage.getItem(localKey(this.who));
-      if (raw) local = { ...EMPTY, ...JSON.parse(raw) } as Progress;
+      if (raw) local = { ...EMPTY, ...readOldNames(JSON.parse(raw)) } as Progress;
     } catch {
       /* blocked storage or a broken copy: nothing to move */
     }
@@ -225,10 +247,15 @@ export class ProgressStore {
     try {
       await api.patch(PATH, { data }, { init: { keepalive } });
       this.failures = 0;
-    } catch {
-      for (const [id, v] of entries) if (!this.pending.has(id)) this.pending.set(id, v); // a newer value stays
-      this.failures++;
-      this.setSaveState("unsaved");
+    } catch (e) {
+      // A refusal no retry can change would be sent again for ever, with every later save bundled behind it: find the keys
+      // it is about and set those aside, and the rest go on. Anything else (offline, 5xx, 429) is retried as before.
+      const transient = e instanceof ApiError && PERMANENT.has(e.status) ? await this.isolate(entries) : true;
+      if (transient) {
+        for (const [id, v] of entries) if (!this.pending.has(id)) this.pending.set(id, v); // a newer value stays
+        this.failures++;
+        this.setSaveState("unsaved");
+      } else this.failures = 0;
     }
     if (!closing) this.sending = false;
     if (!this.pending.size) {
@@ -239,6 +266,31 @@ export class ProgressStore {
       this.schedule(SAVE_AFTER_MS);
     }
   }
+
+  /** Each key of a refused save on its own: a key refused again is dropped and named, the rest are saved. True if one failed for another reason (it is put back). */
+  private async isolate(entries: Map<string, unknown>) {
+    let transient = false;
+    for (const [id, v] of entries) {
+      try {
+        if (entries.size === 1) throw new ApiError(422, "refused");
+        await api.patch(PATH, { data: encode(new Map([[id, v]]), this.progress.savedAt) });
+      } catch (e) {
+        if (e instanceof ApiError && PERMANENT.has(e.status)) {
+          if (!this.dropped.includes(id)) this.dropped = [...this.dropped, id];
+          this.emit();
+        } else {
+          transient = true;
+          if (!this.pending.has(id)) this.pending.set(id, v);
+        }
+      }
+    }
+    return transient;
+  }
+
+  dismissDropped = () => {
+    this.dropped = [];
+    this.emit();
+  };
 
   /** The tab is hiding or closing, the connection is back, or the learner is signing out: send now. */
   flush(closing: boolean) {

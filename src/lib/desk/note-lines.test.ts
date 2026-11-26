@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { readFileSync } from "node:fs";
 import { noteLines } from "../../components/desk/step-text";
 
-const r08 = 'Rule R08 (Learn › Rule tables): LOW-criticality appetite = 11. Residual score ≤ 11 → Decision "Accept and monitor". Residual score > 11 → Decision "Treat"; due days from BKB-ERM-001 Section 7: Critical 30, High 90, Medium 180. The plan is dated 2026-11-19: count calendar days from it. The owner is the risk\'s owner in RR-UPD.';
+const r08 = 'Rule R08 (Learn › Rule tables): LOW-criticality appetite = 11. Residual score ≤ 11 → Decision "Accept and monitor". Residual score > 11 → Decision "Treat"; due days from SITL-ERM-001 Section 7: Critical 30, High 90, Medium 180. The plan is dated 2026-11-19: count calendar days from it. The owner is the risk\'s owner in RR-UPD.';
 const n = noteLines(r08);
 assert.strictEqual(n.rule, "R08");
 assert.strictEqual(n.lines.length, 6, JSON.stringify(n.lines));

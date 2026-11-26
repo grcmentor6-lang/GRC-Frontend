@@ -42,12 +42,12 @@ const data: { ladder: CareerLadderRung[]; programs: CareerProgram[] } = {
       "code": "GRC 101",
       "title": "Foundations of Governance, Risk & Compliance",
       "status": "active",
-      "tagline": "Execute structured, mentor-graded assessment work and build the practitioner fundamentals of a GRC career.",
+      "tagline": "Execute structured assessment work, checked automatically against the key, and build the practitioner fundamentals of a GRC career.",
       "level": {
         "rung": 0,
         "label": "Analyst",
         "sub": "Individual contributor",
-        "desc": "Entry-level GRC contributor executing structured assessment tasks under mentor review."
+        "desc": "Entry-level GRC contributor executing structured assessment tasks, checked automatically."
       },
       "skillsMode": "acquired",
       "skills": [

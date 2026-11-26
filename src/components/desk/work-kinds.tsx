@@ -1,17 +1,17 @@
 "use client";
 
-import { INJ_AT } from "@/lib/desk/inbox";
-import { LABS } from "@/lib/desk/labs";
-import { Fragment, useEffect, useState, useSyncExternalStore } from "react";
+import { holdStep } from "@/lib/desk/inbox";
+import { LABS, labDone, labOpen } from "@/lib/desk/labs";
+import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { isDecideCell, isFillCell, type Desk, type Step, type Task } from "@/lib/desk/model";
 import { stepKey, type Progress, type RowsFeedback } from "@/lib/desk/progress";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { gridKey, gridStatus, submitWhy } from "@/lib/desk/work";
 import { Toned } from "./ui";
 import { tierTone } from "@/lib/desk/cell-tone";
-import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, srcKind, givenLines, ladderSteps, addRow, isSeeded, seedRows, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
+import { BRIEFS, LADDER, REGISTERS, STUDY, briefOf, checkedAnswer, handedIn, regOf, compareOffices, joints, splitRow, splitRows, derivedAt, exposedRows, reportDone, reportKey, briefFlags, briefSrcOk, srcKind, givenLines, ladderSteps, addRow, isSeeded, seedRows, type Brief, type Register, addedBy, briefKey, briefStatus, cellOk, cellValue, liveRow, regEmpty, regKey, regRows, regStatus, removeRow, treeQuestions, withCols, type Ladder, type RowCheckSpec, type StudyPrompt, type ChecklistSpec } from "@/lib/desk/registers";
 import { useDoc, useDocs } from "./doc-text";
 import { WalkCard, WalkStep } from "./walk-card";
 import { NoteList } from "./step-text";
@@ -136,7 +136,7 @@ export function CopyWork({ task, s, readOnly }: { task: Task; s: Step; readOnly:
       </label>
       <label className="grid gap-1.5">
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">Evidence ref — where it came from</span>
-        <input readOnly={readOnly} value={progress.answers[`${key}#ref`] ?? ""} onChange={(e) => set(`${key}#ref`, e.target.value)} placeholder="Document and section, e.g. BKB-ADD-16 Section 2" className={field} />
+        <input readOnly={readOnly} value={progress.answers[`${key}#ref`] ?? ""} onChange={(e) => set(`${key}#ref`, e.target.value)} placeholder="Document and section, e.g. SITL-ADD-16 Section 2" className={field} />
       </label>
     </div>
   );
@@ -287,10 +287,6 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
   // A message placed at the hand-in is answered first; a register handed in here (F1.2 FAM-MAP) goes in with no
   // empty cell in the columns it hands in; each file is named. The line beside Submit names the next of these.
   const why = submitWhy(desk, progress, task, s);
-  // A Tech Lab whose findings join this hand-in, not marked complete yet: said beside Submit, where the learner looks
-  // last (tester, 4 Nov: T10.1's DataSentry answered in full, Mark complete missed, the findings never joined ROPA).
-  const lab = LABS.find((l) => l.task === task.id && l.after === stepKey(task.id, s.n - 1));
-  const labLeft = !!lab && !progress.labs?.[lab.id]?.done;
   const submit = async () => {
     const list = files.map((c) => name(c).trim());
     const hash = await receiptHash(desk, progress, task, list);
@@ -380,15 +376,6 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
             {at ? "Submit again" : "Submit"}
           </button>
           {why && <span data-guide="submit-why" className="text-[12.5px] text-[#5B6474]">{why}</span>}
-          {!at && labLeft && (
-            <span data-lab-left role="note" className="flex basis-full items-start gap-1.5 rounded border border-[#FDE68A] bg-[#FFFBEB] px-2.5 py-1.5 text-[12.5px] leading-snug text-[#78350F]">
-              <Icon name="info" size={14} className="mt-px shrink-0" />
-              <span>
-                The Tech Lab <strong className="font-semibold">{lab!.tool.split("|")[1]}</strong> is not marked complete. Its findings join your file only if you press{" "}
-                <strong className="font-semibold">Mark complete</strong> at the end of the lab before you submit.
-              </span>
-            </span>
-          )}
         </div>
       )}
     </div>
@@ -401,17 +388,17 @@ export function SubmitWork({ task, s, readOnly }: { task: Task; s: Step; readOnl
  * them in order"). The guide reads `data-job` / `data-state` to pick up at the next job.
  */
 function HandInJobs({ task, s }: { task: Task; s: Step }) {
-  const { desk, progress } = useDesk();
+  const { desk, progress, openTool } = useDesk();
   const key = stepKey(task.id, s.n);
-  const inj = task.inj.filter((id) => INJ_AT[id] === s.n);
+  const inj = task.inj.filter((id) => holdStep(desk, id) === s.n);
   const sheets = handedIn(task.id, s.n).filter((r) => r.steps[s.n]?.length);
-  const lab = LABS.find((l) => l.task === task.id && l.after === stepKey(task.id, s.n - 1));
+  const labs = s.n === task.steps.length ? LABS.filter((l) => l.task === task.id && labOpen(l, progress)) : []; // the final hand-in only
   const files = submitCodes(task, s).filter((c) => fileExts(task, c).length).length;
   const sent = !!progress.logs?.[key];
-  const jobs: { id: string; text: string; done: boolean; skipped?: boolean }[] = [
+  const jobs: { id: string; text: string; done: boolean; skipped?: boolean; lab?: (typeof LABS)[number] }[] = [
     ...(inj.length ? [{ id: "msg", text: `Reply to the ${desk.inj[inj[0]].sender}'s message: Open Inbox, below.`, done: inj.every((id) => !!progress.msgs[id]) }] : []),
     ...sheets.map((r) => ({ id: "sheet", text: r.job ?? `Fill ${r.code}.`, done: !regEmpty(desk, progress, task, s.n, r).length })),
-    ...(lab ? [{ id: "lab", text: `Tech Lab: ${desk.sections[lab.tool.split("|")[0]]?.t ?? "Systems"} › ${lab.tool.split("|")[1]} on the toolbar (orange dot). Submit does not wait for it, but its findings join your file only if you finish it before you submit.`, done: !!progress.labs?.[lab.id]?.done, skipped: sent && !progress.labs?.[lab.id]?.done }] : []),
+    ...labs.map((lab) => ({ id: "lab", lab, text: `Tech Lab ${lab.tool.split("|")[1].replace(" (business SaaS)", "")} (required, ${labDone(lab, progress) ? "complete" : "not done yet"}): Systems › ${lab.tool.split("|")[1]} on the toolbar. This hand-in waits until you have marked it complete.`, done: labDone(lab, progress) })),
     { id: "files", text: files > 1 ? `Name the ${files} files, then Submit.` : files ? "Name the file, then Submit." : "Submit.", done: sent },
     { id: "complete", text: "Mark step complete.", done: !!progress.done[key] },
   ];
@@ -422,12 +409,15 @@ function HandInJobs({ task, s }: { task: Task; s: Step }) {
       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">This step, in order</p>
       <ol className="mt-1.5 grid gap-1.5">
         {jobs.map((j, i) => (
-          <li key={j.id} data-job={j.id} data-state={j.done ? "done" : j === now ? "now" : j.skipped ? "skipped" : "todo"} className={`grid grid-cols-[18px_1fr] items-baseline gap-x-2 text-[12.5px] leading-snug ${j === now ? "font-semibold text-[#111827]" : j.done ? "text-[#15803D]" : "text-[#5B6474]"}`}>
+          <li key={`${j.id}-${i}`} data-job={j.id} data-state={j.done ? "done" : j === now ? "now" : j.skipped ? "skipped" : "todo"} className={`grid grid-cols-[18px_1fr] items-baseline gap-x-2 text-[12.5px] leading-snug ${j === now ? "font-semibold text-[#111827]" : j.done ? "text-[#15803D]" : "text-[#5B6474]"}`}>
             <span className="text-right font-mono text-[11px]">{j.done ? <Icon name="check" size={12} className="inline" /> : i + 1}</span>
             <span>
               {j === now && <span className="mr-1 rounded-[3px] bg-[#EEF0FF] px-1 py-px text-[11px] font-semibold text-[#3730A3]">Next</span>}
               {j.text}
               {j.skipped && " Not done before Submit."}
+              {j.lab && !j.done && (
+                <button type="button" onClick={() => openTool(j.lab!.tool, "view")} className="ml-2 inline-flex h-6 items-center rounded border border-[#C9CED8] bg-white px-2 text-[12px] font-semibold text-[#3F4757] focus-ring">Open the lab</button>
+              )}
             </span>
           </li>
         ))}
@@ -604,7 +594,8 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
   // A ladder step reads the same worked rows; nothing is clicked, its row is lit.
   const study = s && !readOnly ? (STUDY[task.id]?.[s.n] ?? (ladder ? [] : undefined)) : undefined;
   // A template with no worked rows (T3.2 LI-SOA): a finding step reads the template's own rows.
-  const studyAll = !!study && workedCount === 0;
+  // A sprint's tracker (T3.2 step 3, registers.ts `studyAll`): the step locates the learner's own rows too.
+  const studyAll = !!study && (workedCount === 0 || !!reg.studyAll?.includes(s!.n));
   const ladderDone = !!ladder && (progress.acks[s ? stepKey(task.id, s.n) : ""] ?? []).includes("done");
   const sk = s ? stepKey(task.id, s.n) : "";
   const found = study ? (progress.acks[sk] ?? []) : [];
@@ -722,7 +713,7 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
         <thead className="bg-[#F8F9FB] font-sans text-[10.5px] uppercase tracking-[0.08em] text-[#6B7280]">
           <tr>
             {/* In a finding step column A is the same organisation on every row: named above instead. */}
-            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={c.wrap ? { whiteSpace: "normal", minWidth: c.w ?? 110 } : c.w ? { minWidth: c.w } : undefined} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${out(ci) ? "!bg-[#F1F2FF] text-[#4338CA]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""} ${c.what ? "align-top" : ""}`}>{c.h}{ci === drafted && <span data-guide="draft-tag" className="mt-1 block w-fit rounded border border-dashed border-[#B45309] bg-[#FFFBEB] px-1.5 py-px font-sans text-[10.5px] font-semibold normal-case tracking-normal text-[#92400E]">Colleague&rsquo;s draft · review and correct</span>}{c.what && <span className="mt-1 block max-w-[30ch] font-sans text-[11.5px] font-normal normal-case leading-snug tracking-normal text-[#6B7280]">{c.what}</span>}</th>)}
+            {reg.cols.map((c, ci) => (study && studyHide(ci)) || !shown(ci) ? null : <th key={c.h} style={((w) => (c.wrap ? { whiteSpace: "normal", minWidth: w ?? 110 } : w ? { minWidth: w } : undefined))(phone && (working || checking || study) && ci === stick && c.w ? Math.min(c.w, 132) : c.w)} title={working && derivedHere(ci) ? "Filled by itself from the columns you fill" : tree && open.has(ci) ? "Written by the walk beside the table" : undefined} className={`${th} ${(working || checking || study) && ci === stick ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${out(ci) ? "!bg-[#F1F2FF] text-[#4338CA]" : ""} ${c.auto ? "sticky left-0 z-[1] bg-[#F8F9FB] shadow-[1px_0_0_#E3E5EA]" : ""} ${c.pin && !phone && open.has(ci) ? "sticky right-0 z-[1] shadow-[-1px_0_0_#DDE1E8]" : ""} ${c.what ? "align-top" : ""}`}>{c.h}{ci === drafted && <span data-guide="draft-tag" className="mt-1 block w-fit rounded border border-dashed border-[#B45309] bg-[#FFFBEB] px-1.5 py-px font-sans text-[10.5px] font-semibold normal-case tracking-normal text-[#92400E]">Colleague&rsquo;s draft · review and correct</span>}{c.what && <span className="mt-1 block max-w-[30ch] font-sans text-[11.5px] font-normal normal-case leading-snug tracking-normal text-[#6B7280]">{c.what}</span>}</th>)}
             {cuts && <th className={th}><span className="sr-only">Remove</span></th>}
           </tr>
         </thead>
@@ -846,9 +837,10 @@ export function RegisterWork({ task, s, readOnly, of }: { task: Task; s?: Step; 
                   // A value the platform writes on this row (F2.2: an accepted item's defect code "none").
                   if (mine && open.has(ci) && derivedAt(reg, progress, task.id, ri, ci) !== null)
                     return <td key={ci} className={`${td} ${c.wrap ? "" : "whitespace-nowrap"} bg-[#FBFBFF] px-3.5 py-3`} title="Recorded by itself"><Toned v={v} h={c.h} /></td>;
-                  if (mine && !r[ci] && !c.auto && open.has(ci) && (!adding || by === s!.n)) {
+                  // A column judged with the decided one (`with`) locks with it once checked (F1.3 step 2's source).
+                  if (mine && !r[ci] && !c.auto && open.has(ci) && (!adding || by === s!.n) && !(rowsChecked && !!rc && withCols(rc).includes(ci))) {
                     const base = `block min-h-[38px] w-full min-w-[150px] px-3 py-2 text-[13px] outline-none focus:shadow-[inset_0_0_0_2px_#4338CA] ${v.trim() ? "bg-white text-[#111827]" : "bg-[#EEF0FF]/70"}`;
-                    const opts = c.opts === "step" ? s?.opt : typeof c.opts === "function" ? c.opts(desk, liveRow(reg, progress, task.id, ri), by) : c.opts;
+                    const opts = c.opts === "step" ? s?.opt : typeof c.opts === "function" ? c.opts(desk, liveRow(reg, progress, task.id, ri), by, progress) : c.opts;
                     const rule = reg.cells?.[ci];
                     const dated = typeof c.date === "function" ? c.date(liveRow(reg, progress, task.id, ri)) : c.date;
                     const off = !!rule && !!v.trim() && rule.fix(v, liveRow(reg, progress, task.id, ri), desk, ri, by) === null;
@@ -1187,7 +1179,7 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
   }, [!!draft, cur]);
   const given = b.sections.find((x) => x.given);
   useDoc(given?.given?.[0] ?? addendumOf(desk));
-  // A section copied from a Group document (F2.1: BKB-STD-001 Section 6) is compared with it too.
+  // A section copied from a Group document (F2.1: SITL-STD-001 Section 6) is compared with it too.
   useDoc(b.sections.map((x) => x.src?.(desk).split(" ")[0]).find((d) => d && d !== addendumOf(desk)) ?? addendumOf(desk));
   // A finding step: the prompts' answers are lines of the worked section.
   const sk = s ? stepKey(task.id, s.n) : "";
@@ -1328,10 +1320,10 @@ export function BriefWork({ task, s, readOnly, handIn }: { task: Task; s?: Step;
                           <input data-guide="brief-source" value={v[`${i},src`] ?? ""} onChange={(e) => set(`${i},src`, e.target.value)} aria-label={`Source of section ${sec.h}`} aria-invalid={srcOff} placeholder={{ section: "document and section", document: "the document it came from", rule: "the rule it came from", page: "the reference page it came from" }[srcKind(sec.src!(desk))]} className={input} />
                           {/* The format, never the line itself (owner, 24 Nov 2026): "Rule + rule number", with an example from another rule. */}
                           {srcOff && flag({
-                            section: "Not quite. The format is: document code + the word Section + section number, and nothing else. For example: " + (/BKB-POL-006 Section 4/.test(sec.src!(desk)) ? "BKB-STD-001 Section 3." : "BKB-POL-006 Section 4."),
-                            document: "Not quite. The format is: document code. For example: " + (/BKB-POL-006/.test(sec.src!(desk)) ? "BKB-STD-001." : "BKB-POL-006."),
+                            section: "Not quite. The format is: document code + the word Section + section number, and nothing else. For example: " + (/SITL-POL-006 Section 4/.test(sec.src!(desk)) ? "SITL-STD-001 Section 3." : "SITL-POL-006 Section 4."),
+                            document: "Not quite. The format is: document code. For example: " + (/SITL-POL-006/.test(sec.src!(desk)) ? "SITL-STD-001." : "SITL-POL-006."),
                             rule: "Not quite. The format is: Rule + rule number. For example: " + (/R07/.test(sec.src!(desk)) ? "Rule R12." : "Rule R07."),
-                            page: "Not quite. The format is: the reference page's name, as Learn › Reference pages lists it. For example: " + (/Ref-Sampling/.test(sec.src!(desk)) ? "Ref-Keywords." : "Ref-Sampling."),
+                            page: "Not quite. The format is: the reference page's name, as Learn › Reference pages lists it. For example: " + (/Ref-Maturity Model/.test(sec.src!(desk)) ? "Ref-ISMS processes." : "Ref-Maturity Model."),
                           }[srcKind(sec.src!(desk))])}
                         </span>
                       </label>
@@ -1605,8 +1597,10 @@ export function StudyWork({ task, s, prompts }: { task: Task; s: Step; prompts: 
   };
   return (
     <div data-guide="study" className="mt-3 grid gap-2">
+      {/* A finding step whose register shows its note (`studyNote`, T8.1 step 1: the tabletop's scenario) says it first. */}
+      {reg?.studyNote?.includes(s.n) && reg.note?.[s.n] && <NoteList text={reg.note[s.n](desk, progress)} guide="step-note" className="rounded border-l-[3px] border-[#4338CA] bg-[#F7F8FF] px-3 py-2.5" />}
       <p className="text-[13.5px] leading-snug text-[#111827]">
-        {worked ? "Your sections must be copied the same way. Check section 1 against its source and click the line each question asks for." : !Object.keys(reg.steps).length ? "Answer each question by clicking the cell that answers it." : reg.rows.every((r) => reg.mine(r, desk)) ? `Check ${reg.code} against the standard before you fill it. Click the cell each question asks for.` : "Your rows must end up like these. Find each answer in the worked rows and click its cell."}
+        {worked ? "Your sections must be copied the same way. Check section 1 against its source and click the line each question asks for." : !Object.keys(reg.steps).length || reg.studyNote?.includes(s.n) ? "Answer each question by clicking the cell that answers it." : reg.rows.every((r) => reg.mine(r, desk)) ? `Check ${reg.code} against the standard before you fill it. Click the cell each question asks for.` : "Your rows must end up like these. Find each answer in the worked rows and click its cell."}
       </p>
       <ol className="grid gap-2">
         {prompts.map((q, i) => {
@@ -1809,7 +1803,7 @@ function treeRow(reg: Register, desk: Desk, p: Progress, taskId: string, n: numb
 }
 
 /**
- * Beside a register whose rows are classified with a decision tree (F2.1 step 2, BKB-STD-001 Section 5): the
+ * Beside a register whose rows are classified with a decision tree (F2.1 step 2, SITL-STD-001 Section 5): the
  * tree's own questions for one row at a time, in order. The first yes gives the outcome; the walk
  * writes the path (each question and its answer) and the tier into the row. The tier is the mentee's
  * decision, answered from the row's facts; once every row is walked, Check my answers (`checkRows`)
@@ -1860,7 +1854,7 @@ export function TreeWork({ task, s, tree }: { task: Task; s: Step; tree: { doc: 
         <WalkCard title="Decision tree" guide="tree-row">
           <p className={walkLabel}>{cellValue(reg, progress, task.id, ri, tree.path) ? "Walking again" : "Now walking"} · highlighted in the table</p>
           <p className="mt-1 text-[16px] font-bold text-[#111827]"><span className="text-[#4338CA]">{reg.rows[ri][0]}</span> · {reg.rows[ri][1]}</p>
-          <p className="mt-0.5 text-[12.5px] text-[#6B7280]">Answer from the row&apos;s facts. The questions of {tree.doc} Section {tree.sec}, in order: stop at the first yes.</p>
+          <p className="mt-0.5 text-[12.5px] text-[#6B7280]">Answer from the row&apos;s facts. The questions of <span className="whitespace-nowrap">{tree.doc}</span> Section {tree.sec}, in order: stop at the first yes.</p>
           {!qs ? (
             <div className="mt-3 h-20 animate-pulse rounded bg-[#EEF0FF]" aria-busy="true" />
           ) : (
@@ -2129,14 +2123,14 @@ export function SplitWork({ task, s }: { task: Task; s: Step }) {
 
 /**
  * Beside the register on a compare step (T3.1 step 7): for each office of the rows copied from Section 2, its
- * clock there, and the mentee's call against the second source for its country (BKB-ERM-001 Annex A),
+ * clock there, and the mentee's call against the second source for its country (SITL-ERM-001 Annex A),
  * same or different. A wrong call says what the second source reads.
  */
 export function CompareWork({ task, s }: { task: Task; s: Step }) {
   const { desk, progress, update } = useDesk();
   const reg = regOf(task.id, s.n)!;
   const gk = regKey(task.id, reg.code);
-  useDocs(["BKB-ERM-001", addendumOf(desk)]);
+  useDocs(["SITL-ERM-001", addendumOf(desk)]);
   const offices = compareOffices(reg, desk, progress, task.id);
   const set = (city: string, v: string) => update((p) => ({ ...p, grids: { ...p.grids, [gk]: { ...(p.grids?.[gk] ?? {}), [`cmp:${city}`]: v } } }));
   // Only the row that really differs gets the note: a wrong click writes nothing to undo.
@@ -2146,7 +2140,7 @@ export function CompareWork({ task, s }: { task: Task; s: Step }) {
   return (
     <div data-guide="compare" className="mt-3 grid gap-2">
       <p className="text-[13.5px] leading-snug text-[#111827]">
-        For each office, find its country in BKB-ERM-001 Annex A and compare the breach-notification clock there with the one in your register.
+        For each office, find its country in SITL-ERM-001 Annex A and compare the breach-notification clock there with the one in your register.
       </p>
       {offices.map((o) => {
         const wrong = !!o.got && o.got !== (o.differs ? "differs" : "same");
@@ -2202,7 +2196,9 @@ function RowCheck({ task, s, chk }: { task: Task; s: Step; chk: RowCheckSpec }) 
   const id = `${task.id}-${s.n}`;
   const fb = progress.rowChecks?.[id];
   const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState(false);
+  // The checks that failed in a row, and why: after two the learner may record the picks without the check (below).
+  const [failed, setFailed] = useState<{ n: number; why: string } | null>(null);
+  const sent = useRef<{ picks: { label: string; pick: string }[]; shown: string[] }>({ picks: [], shown: [] });
   const ready = regStatus(desk, progress, task, s.n).ok;
   // A drafted column nobody has changed: asked once before the rows lock (tester, 23 Nov 2026).
   const draft = reg.draft?.[s.n]?.(desk, progress);
@@ -2211,7 +2207,6 @@ function RowCheck({ task, s, chk }: { task: Task; s: Step; chk: RowCheckSpec }) 
   const check = async () => {
     setAsked(false);
     setBusy(true);
-    setFailed(false);
     // Sent and returned as lists: the API client case-converts object keys, which would mangle labels.
     const picks: { label: string; pick: string }[] = [];
     // The rows this step decides: a step that works on some rows only (`only`, or the rows it added)
@@ -2219,11 +2214,12 @@ function RowCheck({ task, s, chk }: { task: Task; s: Step; chk: RowCheckSpec }) 
     const own = (r: string[], ri: number) => reg.mine(r, desk) && (!reg.only?.[s.n] || reg.only[s.n](r, progress)) && (reg.grow?.adds[s.n] === undefined || addedBy(reg, progress, task.id, ri) === s.n);
     regRows(reg, progress, task.id).forEach((r, ri) => {
       // A value the platform wrote itself (derived) is not the learner's answer, so it is not checked.
-      if (own(r, ri) && derivedAt(reg, progress, task.id, ri, chk.col) === null) picks.push({ label: cellValue(reg, progress, task.id, ri, chk.ask ?? chk.label), pick: cellValue(reg, progress, task.id, ri, chk.col) + (chk.with === undefined ? "" : ` · ${cellValue(reg, progress, task.id, ri, chk.with)}`) });
+      if (own(r, ri) && derivedAt(reg, progress, task.id, ri, chk.col) === null) picks.push({ label: cellValue(reg, progress, task.id, ri, chk.ask ?? chk.label), pick: [chk.col, ...withCols(chk)].map((ci) => cellValue(reg, progress, task.id, ri, ci)).join(" · ") });
     });
     // Looked up by another column (`ask`, T3.1 step 5: the policy of the row's Process): the answers come
     // back in the order sent, each stored under the row's own label.
     const shown = regRows(reg, progress, task.id).flatMap((r, ri) => (own(r, ri) && derivedAt(reg, progress, task.id, ri, chk.col) === null ? [cellValue(reg, progress, task.id, ri, chk.label)] : []));
+    sent.current = { picks, shown };
     // The answer follows from the learner's own row by the step's rule: checked here, no key needed.
     if (chk.rule) {
       const rows: RowsFeedback["rows"] = {};
@@ -2244,16 +2240,32 @@ function RowCheck({ task, s, chk }: { task: Task; s: Step; chk: RowCheckSpec }) 
       const byOrder = chk.ask !== undefined && r.rows.length === picks.length;
       const fb: RowsFeedback = { rows: Object.fromEntries(r.rows.map(({ label, ...x }, i) => [byOrder ? shown[i] : label, x])), note: r.note, at: new Date().toISOString() };
       update((p) => ({ ...p, rowChecks: { ...(p.rowChecks ?? {}), [id]: fb } }));
-    } catch {
-      setFailed(true);
+      setFailed(null);
+    } catch (e) {
+      // The server's own words for a refusal (429: "Rate limit exceeded: ..."), else a plain failure.
+      setFailed((f) => ({ n: (f?.n ?? 0) + 1, why: e instanceof ApiError && e.status === 429 ? `${e.message}. Wait a little, then try again.` : "Could not check. Try again." }));
     } finally {
       setBusy(false);
     }
+  };
+  // The service would not answer twice: the picks are kept as they stand, as "not scored" rows (neither right nor wrong), so the
+  // step can be completed. The record leaves them out of the score (backend desk_record.task_scores).
+  const recordUnchecked = () => {
+    const rows = Object.fromEntries(sent.current.picks.map((p, i) => [sent.current.shown[i] ?? p.label, { pick: p.pick, best: "", correct: null, why: "" }]));
+    update((q) => ({ ...q, rowChecks: { ...(q.rowChecks ?? {}), [id]: { rows, note: "Not checked: the checking service did not answer, so these rows are recorded as not scored.", at: new Date().toISOString() } } }));
+    setFailed(null);
   };
   if (fb) {
     const all = Object.values(fb.rows);
     const right = all.filter((x) => x.correct === true).length;
     const scored = all.filter((x) => x.correct !== null).length;
+    if (scored === 0 && all.length && !chk.rule)
+      return (
+        <div data-guide="row-result" data-row-check="unchecked" className="rounded border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2.5 text-[13px] text-[#78350F]">
+          <p className="font-semibold">Recorded without the check · {all.length} row{all.length > 1 ? "s" : ""} not scored</p>
+          <p className="mt-0.5 text-[12.5px]">{fb.note}</p>
+        </div>
+      );
     return (
       <div data-guide="row-result" className="rounded border border-[#DDE1E8] bg-[#F7F8FA] px-3 py-2.5 text-[13px] text-[#111827]">
         <p className="font-semibold">{right} of {scored} right{scored < all.length ? ` · ${all.length - scored} not scored` : ""}</p>
@@ -2287,7 +2299,10 @@ function RowCheck({ task, s, chk }: { task: Task; s: Step; chk: RowCheckSpec }) 
       >
         {busy ? "Checking…" : "Check my answers"}
       </button>
-      <span className="text-[12px] text-[#5B6474]">{failed ? "Could not check. Try again." : ready ? "Each row then shows the answer and why, and your rows lock." : "Opens once every row has a value."}</span>
+      <span role={failed ? "alert" : undefined} className={`text-[12px] ${failed ? "text-[#B42318]" : "text-[#5B6474]"}`}>{failed ? failed.why : ready ? "Each row then shows the answer and why, and your rows lock." : "Opens once every row has a value."}</span>
+      {failed && failed.n >= 2 && !busy && (
+        <button type="button" data-guide="record-unchecked" onClick={recordUnchecked} className="h-9 rounded border border-[#D1D5DB] bg-white px-4 text-[13px] font-semibold text-[#111827] hover:bg-[#F7F8FA] focus-ring">Record without the check</button>
+      )}
     </div>
   );
 }

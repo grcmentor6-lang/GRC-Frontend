@@ -11,6 +11,9 @@ import { camelToSnake, snakeToCamel } from "./case";
 import { getAccessToken } from "./token";
 import { deepMap, toCanon, toLearner } from "./desk/names";
 
+/** A desk check (row, decision, message, lab, knowledge check) that has not answered in this long is given up on, so a stalled
+ *  connection ends in a message and a way forward instead of a button that says "Checking…" for ever. */
+export const DESK_TIMEOUT_MS = 15_000;
 const DESK_CHECKS = /^\/me\/desk\/(decision|rows|message|lab|kc\/[A-Z0-9-]+(?:\/(?:start|picks))?)(\?|$)/;
 
 const BASE_URL =
@@ -82,6 +85,9 @@ function extractErrorMessage(parsed: unknown, res: Response): string {
   if (detail && typeof detail === "object" && "msg" in detail) return String((detail as { msg: unknown }).msg);
   const message = (parsed as { message?: unknown }).message;
   if (typeof message === "string") return message;
+  // The rate limiter's own body: {"error": "Rate limit exceeded: 120 per 1 hour"}.
+  const error = (parsed as { error?: unknown }).error;
+  if (typeof error === "string") return error;
   return fallback;
 }
 
@@ -137,6 +143,20 @@ async function request<T>(
   // (lib/desk/names.ts). Only the checking endpoints carry names: picks out in canonical, feedback back in theirs.
   const named = DESK_CHECKS.test(path);
   if (named) body = deepMap(body, toCanon);
+  const timeout = named && !opts.init?.signal ? new AbortController() : null;
+  const timer = timeout ? setTimeout(() => timeout.abort(), DESK_TIMEOUT_MS) : null;
+  if (timeout) opts = { ...opts, init: { ...opts.init, signal: timeout.signal } };
+  try {
+    return await send<T>(method, path, body, opts, named);
+  } catch (e) {
+    if (timeout?.signal.aborted) throw new ApiError(0, `The service did not answer within ${DESK_TIMEOUT_MS / 1000} seconds.`);
+    throw e;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function send<T>(method: string, path: string, body: unknown, opts: RequestOptions, named: boolean): Promise<T> {
   let res = await rawRequest(method, path, body, opts);
 
   // FastAPI's HTTPBearer returns 403 when the header is missing and 401 when a token is
@@ -148,7 +168,13 @@ async function request<T>(
   }
 
   const text = await res.text();
-  const parsed = text ? snakeToCamel(JSON.parse(text)) : undefined;
+  // A proxy's HTML error page is not JSON: a failed status still says what it was.
+  let parsed: unknown;
+  try {
+    parsed = text ? snakeToCamel(JSON.parse(text)) : undefined;
+  } catch (e) {
+    if (res.ok) throw e;
+  }
 
   if (!res.ok) {
     throw new ApiError(res.status, extractErrorMessage(parsed, res), parsed);

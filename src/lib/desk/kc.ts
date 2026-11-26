@@ -22,6 +22,8 @@ export function opensAfter(desk: Desk, id: string): string[] {
 
 /** Null when open; otherwise why not, e.g. "Opens once you submit F1.1–F1.3." (services/desk_kc.why_closed). */
 export function whyClosed(desk: Desk, p: Progress, id: string): string | null {
+  // A check already taken stays open and keeps its result, whatever happens to a task before it (locks.ts).
+  if (((p.kc ?? {})[id]?.attempts ?? []).length) return null;
   const all = opensAfter(desk, id);
   const missing = all.filter((t) => !p.submitted[t]);
   if (!missing.length) return null;

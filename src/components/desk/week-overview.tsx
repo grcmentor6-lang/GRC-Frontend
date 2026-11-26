@@ -146,7 +146,7 @@ export function WeekOverview({ week }: { week: number }) {
                   <KcChip id={w.kc.split(" ")[0]} />
                 </li>
               )}
-              {w.hc && <li>Assessor checkpoint {w.hc}</li>}
+              {w.hc && <li>Checkpoint {w.hc}</li>}
             </ul>
           </section>
         )}

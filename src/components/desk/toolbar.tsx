@@ -10,6 +10,8 @@ import { stepKey } from "@/lib/desk/progress";
 import { useAuth } from "@/components/auth/auth-provider";
 import { tourDue } from "@/components/app/guided-tour";
 import { STEP_GUIDES, autoGuide } from "./step-guides";
+import { menuLeft } from "@/lib/desk/clear-spot";
+import { appZoom } from "@/lib/zoom";
 
 const SEC_ICON: Record<string, IconName> = {
   home: "home", evidence: "paperclip", frameworks: "layers", access: "users", risk: "alertTriangle", vendors: "handshake",
@@ -89,7 +91,15 @@ export function Toolbar({ modal, hold }: { /** The step's tool open as the modal
     // The menu sits over its own cell, kept inside the dock's width.
     const nav = dock.current;
     const x = el.offsetLeft - (nav?.scrollLeft ?? 0);
-    setLeft(Math.max(0, Math.min(x, (nav?.clientWidth ?? MENU_W) - MENU_W)));
+    const want = Math.max(0, Math.min(x, (nav?.clientWidth ?? MENU_W) - MENU_W));
+    // On a laptop the step panel sits at the modal's right: the menu goes beside it, not across its buttons.
+    // Phones keep the old placement (the menu is the screen's width there).
+    const panel = document.querySelector('aside[aria-label^="Your work"]')?.getBoundingClientRect();
+    if (nav && panel && panel.width > 0 && window.innerWidth >= 768) {
+      const z = appZoom(), o = nav.getBoundingClientRect().left / z, vw = window.innerWidth / z;
+      const w = Math.min(MENU_W, vw - 24);
+      setLeft(menuLeft(want + o, w, 12, vw - 12 - w, { l: panel.left / z, t: panel.top / z, r: panel.right / z, b: panel.bottom / z }) - o);
+    } else setLeft(want);
     setPop(k);
   };
   const toggle = (k: string, el: HTMLButtonElement) => (pop === k ? setPop(null) : show(k, el));

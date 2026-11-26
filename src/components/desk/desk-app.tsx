@@ -23,7 +23,7 @@ import { press } from "./ui";
 import { thenOf } from "./how-to";
 import { ATTEST } from "@/lib/desk/forms";
 import { currentWeek, loadDesk, startOf, weekOpen, type Desk } from "@/lib/desk/model";
-import { decisionChecked, stepKey, taskStatus, useProgress, useSaveState, type Progress } from "@/lib/desk/progress";
+import { decisionChecked, stepKey, taskStatus, useDroppedSaves, useProgress, useSaveState, type Progress } from "@/lib/desk/progress";
 
 /** Midnight of the mentee's start date. They may start any day; until they choose, today. */
 
@@ -101,7 +101,18 @@ export function DeskApp() {
 /** Quiet while saves land; a save that cannot leave must not be invisible, now the browser keeps no copy. */
 function SaveNote({ who }: { who: string }) {
   const state = useSaveState(who);
+  const { dropped, dismiss } = useDroppedSaves(who);
   // Above any open window: the work is usually in a modal that covers this header.
+  if (dropped.length)
+    return createPortal(
+      <div role="alert" data-save="dropped" className="fixed left-1/2 top-2 z-[100] flex max-w-[min(560px,92vw)] -translate-x-1/2 items-start gap-3 rounded-md border border-[#FDE68A] bg-[#FFFBEB] px-3 py-2 text-[12.5px] text-[#78350F] shadow-sm">
+        <p>
+          {dropped.length === 1 ? "One entry" : `${dropped.length} entries`} could not be saved and {dropped.length === 1 ? "was" : "were"} set aside ({dropped.map((d) => d.replace("\0", " · ").slice(0, 48)).join("; ")}). The rest of your work is saved. If you pasted text, try typing it again.
+        </p>
+        <button type="button" onClick={dismiss} className="shrink-0 font-semibold underline">OK</button>
+      </div>,
+      document.body,
+    );
   if (state === "unsaved")
     return createPortal(
       <span role="alert" data-save={state} className="pointer-events-none fixed left-1/2 top-2 z-[100] -translate-x-1/2 whitespace-nowrap rounded-md border border-[#DDE1E8] bg-white px-2.5 py-1 text-[12px] font-medium text-[#B42318] shadow-sm">

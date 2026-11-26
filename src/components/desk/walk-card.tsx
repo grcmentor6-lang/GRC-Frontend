@@ -55,7 +55,7 @@ export function WalkStep({ q, mark, label, text, tag, guide, check, action, chil
   );
 }
 
-/** A decision tree to read, not walk (BKB-STD-001 Section 5, rule R01): its questions in order, each with the outcome
+/** A decision tree to read, not walk (SITL-STD-001 Section 5, rule R01): its questions in order, each with the outcome
  *  of a yes, then "Otherwise". */
 export function TreeCard({ title, steps }: { title: string; steps: TreeStep[] }) {
   return (

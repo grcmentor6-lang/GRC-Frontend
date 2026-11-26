@@ -7,6 +7,8 @@ import { Icon } from "@/components/ui/icon";
 import { LibraryProvenance, OverviewPoster, TaskContext } from "@/components/app/library";
 import { LIBRARY_BY_ID, itemHref, partsOf, slugOf, summaryOf, taskCovers } from "@/lib/library";
 import { STANDARD_BY_ID } from "@/lib/standards";
+import { isFocus } from "@/lib/focus";
+import { LATER_BOX, LATER_INK, LaterLegend } from "@/components/app/later";
 
 export default function LibraryStandardPage({ params, searchParams }: {
   params: Promise<{ standardId: string }>;
@@ -17,6 +19,7 @@ export default function LibraryStandardPage({ params, searchParams }: {
   const standard = LIBRARY_BY_ID[standardId];
   if (!standard) notFound();
   const meta = STANDARD_BY_ID[standardId];
+  const later = !isFocus(standardId);
 
   return (
     <div className="page-shell space-y-4">
@@ -24,7 +27,8 @@ export default function LibraryStandardPage({ params, searchParams }: {
         <Icon name="arrowLeft" size={13} /> Standards library
       </Link>
       {task && <TaskContext task={task} />}
-      <header>
+      {later && <LaterLegend />}
+      <header className={later ? `${LATER_BOX} ${LATER_INK}` : ""}>
         <span className="font-mono text-[10.5px] tracking-[0.08em] text-[#1f3564]">{meta?.fullName}</span>
         <h1 className="mt-0.5 text-[22px] font-semibold tracking-tight text-slate-900">{meta?.code}</h1>
         <p className="mt-1 text-[13px] text-slate-500 tracking-tight max-w-[72ch]" style={{ textWrap: "pretty" }}>{meta?.description}</p>
@@ -38,7 +42,7 @@ export default function LibraryStandardPage({ params, searchParams }: {
       ))}
 
       {standard.groups.map((group) => (
-        <section key={group.name}>
+        <section key={group.name} className={later ? `${LATER_BOX} ${LATER_INK}` : ""}>
           <div className="flex items-center gap-2 mb-2">
             <h2 className="text-[13px] font-semibold text-slate-800 tracking-tight">{group.name}</h2>
             <span className="font-mono text-[10.5px] text-slate-400">{group.items.length} {group.unit}</span>

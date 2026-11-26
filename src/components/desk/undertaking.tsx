@@ -43,7 +43,7 @@ export function UndertakingCard({ task, a, readOnly, waiting }: {
         </span>
         <span className="min-w-[12rem] flex-1">
           <span className="block text-[14px] font-semibold text-[#111827]">Mentee Undertaking</span>
-          <span className="block font-mono text-[12px] text-[#5B6474]">{a.code} · from the BKB Group GRC Office</span>
+          <span className="block font-mono text-[12px] text-[#5B6474]">{a.code} · from the SITL Group GRC Office</span>
           {waiting && !signed && <span className="mt-0.5 block text-[12px] text-[#5B6474]">{waiting}</span>}
         </span>
         {signed ? (
@@ -114,7 +114,7 @@ function UndertakingSheet({ task, a, readOnly, onClose }: { task: Task; a: Attes
         {/* Letterhead */}
         <header className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#111827] pb-3 pr-8 sm:pr-0">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5B6474]">BKB Group</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5B6474]">SITL Group</p>
             <p className="text-[15px] font-semibold">Group GRC Office</p>
           </div>
           <dl className="grid grid-cols-[auto_auto] gap-x-3 font-mono text-[11.5px] text-[#3F4757]">
@@ -141,7 +141,7 @@ function UndertakingSheet({ task, a, readOnly, onClose }: { task: Task; a: Attes
 
         <h2 className="mt-5 font-[family-name:var(--font-cormorant)] text-[34px] font-semibold leading-tight">Mentee Undertaking</h2>
         <p className="mt-1 text-[14px] leading-relaxed text-[#3F4757]">
-          On joining the Group GRC Office as a GRC 101 mentee, under BKB-POL-024 Section 3.1, I undertake that:
+          On joining the Group GRC Office as a GRC 101 mentee, under SITL-POL-024 Section 3.1, I undertake that:
         </p>
 
         <ol className="mt-5 grid gap-3">
@@ -154,8 +154,8 @@ function UndertakingSheet({ task, a, readOnly, onClose }: { task: Task; a: Attes
         </ol>
 
         <section aria-label="Why you sign" className="mt-6 border-l-2 border-[#C7CBF5] pl-4 text-[13.5px] leading-relaxed text-[#3F4757]">
-          <p>Without a signed undertaking your account is not opened for data (BKB-POL-024 Section 6.1 step 3).</p>
-          <p className="mt-1">A confirmed conduct breach later is an automatic fail (BKB-MEN-101 Section 13.2).</p>
+          <p>Without a signed undertaking your account is not opened for data (SITL-POL-024 Section 6.1 step 3).</p>
+          <p className="mt-1">A confirmed conduct breach later is an automatic fail (SITL-MEN-101 Section 13.2).</p>
         </section>
 
         {/* Signature block */}

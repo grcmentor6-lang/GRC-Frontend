@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { clearBelow, pickSpot, type R } from "@/lib/desk/clear-spot";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { Icon } from "@/components/ui/icon";
@@ -60,6 +61,33 @@ export function FloatWindow({
   const ref = useRef<HTMLElement>(null);
   // Where the window has been dragged to, in the page's own (zoomed) pixels; null until moved.
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+
+  // On a laptop, a window opened beside a step must not land on that step's own controls (its inputs, Check,
+  // Mark complete): once, on opening, take the spot that covers fewest of them. After that the learner's drag wins.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const panel = document.querySelector('aside[aria-label^="Your work"]');
+    if (!el || !panel || window.innerWidth < 768) return;
+    const zoom = el.getBoundingClientRect().width / el.offsetWidth || 1;
+    const rect = (r: DOMRect): R => ({ l: r.left / zoom, t: r.top / zoom, r: r.right / zoom, b: r.bottom / zoom });
+    const p = rect(panel.getBoundingClientRect());
+    const CTRL = "button:not([disabled]), input, select, textarea";
+    const controls = [...panel.querySelectorAll(CTRL)].map((c) => rect(c.getBoundingClientRect()));
+    // The rest of the step's window (a table's dropdowns, a sheet's cells) counts too, at a lower weight: a window that
+    // only kept off the panel moved onto the Owner column of F2.1 step 5.
+    const host = panel.closest('[role="dialog"]') ?? panel.parentElement;
+    // Its table cells too: a window must not hide the names of the rows the step is about (F2.1 step 5, the Process column).
+    const others = host ? [...host.querySelectorAll(`${CTRL}, td, th`)].filter((c) => !panel.contains(c)).map((c) => rect(c.getBoundingClientRect())) : [];
+    const w = el.offsetWidth, h = el.offsetHeight, y = el.offsetTop, vw = window.innerWidth / zoom;
+    const here = { x: el.offsetLeft, y };
+    const vh = window.innerHeight / zoom;
+    const spots = [here, { x: p.l - w - 12, y }, { x: 12 + index * 28, y }, { x: vw - w - 12, y }].filter((c) => c.x >= 0 && c.x + w <= vw);
+    // Each also pushed down under the panel's top controls, so a window over the panel's text is a choice.
+    const low = spots.flatMap((c) => { const t = clearBelow(c.x, c.y, w, h, controls, vh); return t !== null && t !== c.y ? [{ x: c.x, y: t }] : []; });
+    const spot = pickSpot([...spots, ...low], w, h, controls, others);
+    if (spot && (spot.x !== here.x || spot.y !== here.y)) setPos(spot);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- placement on opening only; a drag or later layout never moves it back
+  }, []);
 
   const startDrag = (e: ReactPointerEvent<HTMLElement>) => {
     const el = ref.current;

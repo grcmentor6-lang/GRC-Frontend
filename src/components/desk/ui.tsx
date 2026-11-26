@@ -6,12 +6,13 @@ import type { Table } from "@/lib/desk/model";
 import { cellTone } from "@/lib/desk/cell-tone";
 import { ladderCell } from "@/lib/desk/tree-text";
 import { TreeCard } from "./walk-card";
+import { LATER_BOX, LATER_INK } from "@/components/app/later";
 
 /** Press feedback shared by every clickable on the desk. */
 export const press = "transition-transform duration-150 ease-out active:scale-[0.97] focus-ring";
 
 /** A data table in the desk's grid language. `flush` drops the outer frame for a full-bleed table. */
-export function TableView({ t, max, flush }: { t: Partial<Table>; max?: number; flush?: boolean }) {
+export function TableView({ t, max, flush, grey }: { t: Partial<Table>; max?: number; flush?: boolean; /** Rows to grey, by their first cell (a list of standards: lib/focus.ts). */ grey?: (first: string) => boolean }) {
   const rows = (t.r ?? []).slice(0, max);
   if (!t.h?.length) return null;
   return (
@@ -34,7 +35,7 @@ export function TableView({ t, max, flush }: { t: Partial<Table>; max?: number; 
             const card = lad && <TreeCard title={t.h?.[0] === "Rule" ? `Rule ${r[0]}` : "Decision tree"} steps={lad.steps} />;
             return (
               <Fragment key={i}>
-                <tr className="hover:[&>td]:bg-[#FAFAFC]">
+                <tr data-later={grey?.(String(r[0])) || undefined} className={`hover:[&>td]:bg-[#FAFAFC] ${grey?.(String(r[0])) ? `${LATER_BOX} ${LATER_INK}` : ""}`}>
                   {r.map((c, j) => (
                     <td key={j} className={`border-b border-[#EEF0F3] px-3.5 py-3 align-top first:font-semibold first:text-[#111827] ${lad ? "@max-xl:border-b-0" : ""}`}>
                       {j === lj && lad ? (

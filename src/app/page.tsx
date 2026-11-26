@@ -29,18 +29,18 @@ const INDUSTRIES: { label: string; icon: IconName; tone: string; image: string; 
   { label: "Energy & Utilities", icon: "bolt", tone: "rose", image: UNSPLASH("photo-1466611653911-95081537e5b7") },
 ];
 
-// Every line here is a claim about the product as it ships: the Working Desk, 25 tasks / 255 steps over
-// 12 weeks, scored against the answer key (backend/app/services/desk_record.py). Keep it that way.
+// Every line here is a claim about the product as it ships: the Working Desk, 25 tasks over
+// 12 weeks, checked automatically against the answer key (no human mentor review) (backend/app/services/desk_record.py). Keep it that way.
 const PROGRAM: { title: string; icon: IconName; tone: string; body: string }[] = [
-  { title: "Real-world task experience", icon: "desk", tone: "indigo", body: "Join a Group GRC Office and work real tasks for two client organisations — real files, inboxes, registers and policies, not slides." },
+  { title: "Real-world task experience", icon: "desk", tone: "indigo", body: "Join a Group GRC Office and work real tasks for GlobalConnect Customer Solutions, a call-centre operator in Manila — real files, inboxes, registers and policies, not slides." },
   { title: "A 12-week working rhythm", icon: "calendar", tone: "violet", body: "Pick your start date and your plan sets a due date for every task, week by week, like a real engagement." },
-  { title: "Decisions with no clean answer", icon: "target", tone: "emerald", body: "Make 120 practitioner calls on access, privacy, risk and evidence — and see which option a professional would back, and why." },
-  { title: "Feedback on every step", icon: "history", tone: "amber", body: "Each check tells you what you got right and what you missed, and every submitted task is scored against a reviewed answer key." },
+  { title: "Decisions with no clean answer", icon: "target", tone: "emerald", body: "Make 113 practitioner calls on access, privacy, risk and evidence — and see which option a professional would back, and why." },
+  { title: "Feedback on every step", icon: "history", tone: "amber", body: "Each check tells you what you got right and what you missed, and every step is checked automatically against an answer key held on the server. No person grades your work." },
   { title: "Real, measurable impact", icon: "chart", tone: "rose", body: "Completed work compiles into a CV, credential badges and a verifiable certificate that proves capability." },
 ];
 
 const TRACKS = [
-  { code: "GRC 101", title: "Foundations", years: "GRC Analyst · 0–2 years", price: FOUNDATION_PRICE, prep: "Prepares you for ISO/IEC 27001 Lead Implementer", body: "Maps control frameworks (e.g. NIST, ISO 27001) to business processes, conducts risk and compliance assessments, and helps prepare audit evidence." },
+  { code: "GRC 101", title: "Foundations", years: "GRC Analyst · 0–2 years", price: FOUNDATION_PRICE, prep: "Prepares you for ISO/IEC 27001 Lead Implementer", body: "Works an ISO/IEC 27001 management system end to end: scope, gap analysis, risk, controls, internal audit and certification readiness." },
   { code: "GRC 301", title: "Advanced", years: "GRC Specialist · 2–4 years", price: null, prep: null, body: "Leads risk assessments and assurance engagements across frameworks, manages third-party risk, and drives remediation to closure." },
   { code: "GRC 501", title: "Leadership", years: "GRC Leader · 5+ years", price: null, prep: null, body: "Sets GRC strategy, designs the operating model, and reports risk posture to the board and executive leadership." },
 ];
@@ -48,8 +48,8 @@ const TRACKS = [
 const FAQS: FaqEntry[] = [
   { q: "Who is the GRC mentorship programme for?", a: "Anyone starting or growing a career in governance, risk and compliance — students, career-changers and early-career analysts who want hands-on, job-ready experience." },
   { q: "Do I need prior experience?", a: "No. GRC 101 starts from the foundations and assumes no background; the advanced tracks build on the work you complete." },
-  { q: "How does the programme actually work?", a: "You join the Group GRC Office of a simulated company and work for two client organisations. Each task is a short set of steps — check a file, make a decision, fill in a register, answer an inbox message — and every step gives you feedback. Submitted tasks are scored against a reviewed answer key." },
-  { q: "Which standards and frameworks will I learn?", a: "ISO/IEC 27001:2022, SOC 2 and GDPR most of all, with NIS2, PCI DSS and HIPAA where a client's business brings them in — applied across hands-on tasks." },
+  { q: "How does the programme actually work?", a: "You join the Group GRC Office of a simulated company and work on one engagement, ISO/IEC 27001 certification readiness at GlobalConnect Customer Solutions in Manila, over 12 weeks and 25 tasks, with worked examples from a second organisation, LearnTech. Each task is a short set of steps — check a file, make a decision, fill in a register, answer an inbox message — and every step gives you feedback. Everything is checked automatically against answer keys held on the server, and there is no human mentor review: six checkpoints (HC1 to HC6) are where a fortnight's work is checked, also automatically." },
+  { q: "Which standards and frameworks will I learn?", a: "GRC 101 is built on ISO/IEC 27001:2022 alone, worked through every task of the engagement. Other standards and frameworks, such as SOC 2, GDPR, NIS2, PCI DSS and HIPAA, come in GRC 301 and GRC 501." },
   { q: "Will this help me get hired?", a: "Yes. Your completed work compiles into a CV, credential badges and a verifiable certificate, and the Career page shows how much of each typical entry-level GRC role your work already covers, with a live search for openings." },
   { q: "How long does each track take?", a: "GRC 101 runs on a 12-week plan that starts on the date you choose." },
 ];
@@ -74,7 +74,7 @@ function Hero() {
           Become a job-ready <span className="text-indigo-600">GRC professional</span> through real work.
         </h1>
         <p className="mt-5 text-[16px] md:text-[17px] text-slate-500 leading-relaxed tracking-tight max-w-xl" style={{ textWrap: "pretty" }}>
-          Work real tasks for two simulated client organisations — scored against a reviewed answer key, aligned to the standards employers ask for, and mapped straight to the roles you want.
+          Work real tasks for a simulated call-centre operator in Manila — checked automatically against an answer key, aligned to the standards employers ask for, and mapped straight to the roles you want.
         </p>
         <div className="mt-7 flex items-center gap-3 flex-wrap">
           <Link href={CTA_HREF} className="focus-ring inline-flex items-center gap-2 h-11 px-5 rounded-xl bg-indigo-600 text-white text-[14px] font-semibold tracking-tight no-underline hover:bg-indigo-700 transition-colors shadow-[0_8px_24px_-8px_rgba(79,70,229,0.7)]">
@@ -111,8 +111,8 @@ function Hero() {
 }
 
 function Frameworks() {
-  // The standards GRC 101's tasks actually cite, most-cited first (public/desk/sample.json).
-  const items = ["ISO/IEC 27001", "SOC 2", "GDPR", "NIS2", "PCI DSS", "HIPAA"];
+  // GRC 101 is ISO/IEC 27001 only; the others come in GRC 301 and 501.
+  const items = ["ISO/IEC 27001 (GRC 101)", "More standards in GRC 301 / 501"];
   return (
     <section className="bg-[#FAFAF7]">
       <div className="max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 pt-4 pb-10">
@@ -144,7 +144,7 @@ function Industries() {
       <div className="pointer-events-none absolute -top-24 left-1/4 w-[460px] h-[460px] rounded-full blur-3xl" style={{ background: "radial-gradient(circle, rgba(99,102,241,0.22), transparent 70%)" }} />
       <div className="pointer-events-none absolute -bottom-28 right-1/4 w-[420px] h-[420px] rounded-full blur-3xl" style={{ background: "radial-gradient(circle, rgba(124,58,237,0.18), transparent 70%)" }} />
       <div className="relative max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-20">
-        <SectionHead dark eyebrow="Where you'll work" icon="grid" sub="GRC 101 puts you inside two of them — a customer-operations BPO and an EdTech platform holding student data. The rest are where the same skills take you.">
+        <SectionHead dark eyebrow="Where you'll work" icon="grid" sub="GRC 101 puts you inside one of them — a customer-operations BPO — with worked examples from an EdTech platform holding student data. The rest are where the same skills take you.">
           Industries that hire <span className="text-indigo-400">GRC</span> talent
         </SectionHead>
         <div className="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
@@ -207,7 +207,7 @@ function Tracks() {
   return (
     <section id="tracks" className="bg-white">
       <div className="max-w-[1140px] 2xl:max-w-[1500px] 3xl:max-w-[1760px] mx-auto px-6 py-20">
-        <SectionHead eyebrow="Career tracks" icon="rocket" sub="A progression from practitioner to leader — start where you are and build a portfolio of graded work.">
+        <SectionHead eyebrow="Career tracks" icon="rocket" sub="A progression from practitioner to leader — start where you are and build a portfolio of checked work.">
           Choose your <span className="text-indigo-600">track</span>
         </SectionHead>
         <Stagger className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">

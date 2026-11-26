@@ -7,6 +7,7 @@ import { ALL_WEEKS_OPEN } from "@/lib/flags";
 import { loadDesk, startOf, weekOpen, type Desk } from "@/lib/desk/model";
 import { stepKey, useProgress, type Progress } from "@/lib/desk/progress";
 import type { Scores } from "@/lib/desk/badges";
+import { LI_MARK } from "./desk/li-reset";
 
 /**
  * The learner's record as My Submissions and Reports read it: the desk catalogue plus this account's
@@ -77,6 +78,6 @@ export function recordCounts(desk: Desk, p: Progress) {
 
 /** True when the account has saved nothing at all on the desk: the honest empty record. */
 export const recordEmpty = (p: Progress) =>
-  !Object.keys(p.done).length && !Object.keys(p.submitted).length && !Object.keys(p.answers).length && !Object.keys(p.picks).length && !Object.keys(p.grids ?? {}).length;
+  !Object.keys(p.done).length && !Object.keys(p.submitted).length && !Object.keys(p.answers).some((k) => k !== LI_MARK) && !Object.keys(p.picks).length && !Object.keys(p.grids ?? {}).length;
 
 export const fmtWhen = (iso: string) => new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });

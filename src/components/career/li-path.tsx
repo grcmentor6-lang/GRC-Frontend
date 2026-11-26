@@ -6,12 +6,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { loadDesk, type Desk } from "@/lib/desk/model";
 import { useProgress, type Progress } from "@/lib/desk/progress";
-import { itemDone, itemHref, itemProgress, loadLi, standing, workIn, type LiMap, type Standing } from "@/lib/desk/li";
+import { itemHref, itemProgress, liMap, standing, workIn, type LiMap, type Standing } from "@/lib/desk/li";
 
 /**
- * The mentee's path to ISO/IEC 27001 Lead Implementer, on the Certification page, from the LI sheets of
- * the Programme Workbook (scripts/build-li-map.py). Summary first, then the four views of the same
- * work: the skills, clauses 4–10, Annex A and the extensions that add an implementer's deliverable.
+ * The mentee's path to ISO/IEC 27001 Lead Implementer, on the Certification page, from his workbook (lib/desk/li.ts:
+ * the Weeks sheet and the ISO coverage sheet). Summary first (the twelve weeks), then clauses 4–10 and Annex A.
  * Every row is marked from the mentee's own progress; a chip opens that work on the Working Desk and
  * a clause or control opens its Standards Library page.
  *
@@ -20,10 +19,8 @@ import { itemDone, itemHref, itemProgress, loadLi, standing, workIn, type LiMap,
  */
 const TABS = [
   { k: "summary", l: "Summary" },
-  { k: "skills", l: "Skills" },
   { k: "clauses", l: "Clauses 4–10" },
   { k: "annex", l: "Annex A controls" },
-  { k: "ext", l: "Extensions" },
 ] as const;
 type TabKey = (typeof TABS)[number]["k"];
 
@@ -32,11 +29,11 @@ const FROM = "from=certification";
 
 export function LeadImplementerPath({ who, onProgress }: { who: string; /** Share of all desk steps done, 0–100. */ onProgress?: (pct: number) => void }) {
   const [desk, setDesk] = useState<Desk | null>(null);
-  const [li, setLi] = useState<LiMap | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
-    Promise.all([loadDesk(), loadLi()]).then(([d, m]) => (setDesk(d), setLi(m)), () => setFailed(true));
+    loadDesk().then(setDesk, () => setFailed(true));
   }, []);
+  const li = desk && liMap(desk);
   // Until the server copy of the desk is read, progress is the empty record: marking every skill
   // "not done" from it would misreport a mentee who has real work.
   const { status, retry } = useProgress(who);
@@ -81,8 +78,8 @@ function Path({ desk, li, who, onProgress }: { desk: Desk; li: LiMap; who: strin
           <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#4338CA]">GRC 101 prepares you for</p>
           <h2 id="li-path" className="text-[18px] font-bold tracking-[-0.01em] text-[#111827]">ISO/IEC 27001 Lead Implementer</h2>
           <p className="mt-0.5 max-w-3xl text-[13px] leading-relaxed text-[#5B6474]">
-            A Lead Implementer builds and runs an organisation&apos;s information security management system to ISO/IEC 27001. GRC 101 has you practise every
-            skill of that role on your two organisations. This shows which work practises each one, and how far you are.
+            A Lead Implementer builds and runs an organisation&apos;s information security management system to ISO/IEC 27001. GRC 101 has you implement one, week
+            by week: every clause 4–10 requirement and all 93 Annex A controls. This shows which task implements each one, and how far you are.
           </p>
         </div>
       </header>
@@ -108,10 +105,8 @@ function Path({ desk, li, who, onProgress }: { desk: Desk; li: LiMap; who: strin
 
       <div role="tabpanel">
         {tab === "summary" && <Summary {...ctx} />}
-        {tab === "skills" && <Skills {...ctx} />}
         {tab === "clauses" && <Clauses {...ctx} />}
         {tab === "annex" && <Annex {...ctx} />}
-        {tab === "ext" && <Extensions {...ctx} />}
       </div>
     </section>
   );
@@ -156,7 +151,7 @@ function Work({ cell, desk, p }: { cell: string; desk: Desk; p: Progress }) {
               href={href}
               title={`${id}: ${g.done} of ${g.total} steps done — open on the Working Desk`}
               className={`inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-0.5 font-mono text-[11.5px] font-semibold no-underline focus-ring ${
-                done ? "border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]" : id.startsWith("LI-") ? "border-[#C7CBF5] bg-[#EEF0FF] text-[#3730A3] hover:bg-[#E0E3FF]" : "border-[#DDE1E8] bg-white text-[#111827] hover:bg-[#F7F8FA]"
+                done ? "border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]" : "border-[#DDE1E8] bg-white text-[#111827] hover:bg-[#F7F8FA]"
               }`}
             >
               {done && <Icon name="check" size={11} strokeWidth={3} />}
@@ -166,14 +161,6 @@ function Work({ cell, desk, p }: { cell: string; desk: Desk; p: Progress }) {
           </span>
         );
       })}
-    </span>
-  );
-}
-
-function Level({ from, to }: { from: string; to: string }) {
-  return (
-    <span className="whitespace-nowrap text-[12.5px]">
-      <span className="text-[#8A91A3]">{from || "—"}</span> <span className="text-[#C9CED8]">→</span> <span className="font-semibold text-[#111827]">{to || "—"}</span>
     </span>
   );
 }
@@ -226,7 +213,7 @@ function Pills<T extends string | number>({ items, on, pick, label }: { items: {
 }
 
 /** The week a piece of work falls in, for "where you practise it". */
-const weekOf = (desk: Desk, id: string) => (id.startsWith("LI-") ? desk.li[id]?.week : desk.tasks[id]?.week);
+const weekOf = (desk: Desk, id: string) => desk.tasks[id]?.week;
 
 /** The desk work a row names, as chips with their week: green once done, each opening that work. */
 function Where({ cells, desk, p }: { cells: string[]; desk: Desk; p: Progress }) {
@@ -262,21 +249,14 @@ function RefLink({ href, children }: { href: string; children: ReactNode }) {
 function Summary({ desk, li, p, view }: Ctx) {
   const done = (cells: string[]) => standing(desk, p, cells).state === "done";
   const kpis: [string, number, number, TabKey][] = [
-    ["Skills practised", li.statements.filter((s) => done([s.before, s.added])).length, li.statements.length, "skills"],
-    ["Clauses 4–10 covered", li.clauses.filter((c) => done([c.before, c.added])).length, li.clauses.length, "clauses"],
-    ["Annex A controls covered", li.controls.filter((c) => done([c.tasks, c.soa])).length, li.controls.length, "annex"],
-    ["Extensions completed", li.extensions.filter((e) => itemDone(desk, p, e.id)).length, li.extensions.length, "ext"],
+    ["Clauses 4–10 covered", li.clauses.filter((c) => done([c.tasks])).length, li.clauses.length, "clauses"],
+    ["Annex A controls covered", li.controls.filter((c) => done([c.tasks])).length, li.controls.length, "annex"],
   ];
   return (
     <div>
-      <dl className="grid grid-cols-2 border-b border-[#DDE1E8] lg:grid-cols-4">
-        {kpis.map(([k, n, of, tab], i) => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => view({ li: tab })}
-            className={`grid gap-1.5 border-[#DDE1E8] px-4 py-3 text-left hover:bg-[#FAFAFC] focus-ring ${i % 2 === 0 ? "border-r" : "lg:border-r"} ${i < 2 ? "max-lg:border-b" : ""} last:border-r-0`}
-          >
+      <dl className="grid grid-cols-2 border-b border-[#DDE1E8]">
+        {kpis.map(([k, n, of, tab]) => (
+          <button key={k} type="button" onClick={() => view({ li: tab })} className="grid gap-1.5 border-r border-[#DDE1E8] px-4 py-3 text-left last:border-r-0 hover:bg-[#FAFAFC] focus-ring">
             <dt className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">
               {k} <Icon name="chevronRight" size={13} className="text-[#8A91A3]" />
             </dt>
@@ -284,23 +264,17 @@ function Summary({ desk, li, p, view }: Ctx) {
           </button>
         ))}
       </dl>
-      <Table head={["Competency area", "Skills", "New to you in GRC 101", "Your progress", ""]}>
-        {li.domains.map((d) => {
-          const rows = li.statements.filter((s) => s.d === d.n);
+      <Table head={["Week", "Theme", "Tasks", "Checkpoint", "Your progress"]}>
+        {desk.weeks.map((w) => {
+          const ids = desk.order.filter((t) => desk.tasks[t].week === w.n);
+          const g = standing(desk, p, ids);
           return (
-            <tr key={d.n} className="hover:[&>td]:bg-[#FAFAFC]">
-              <td className={`${td} font-medium text-[#111827]`}>
-                <span className="mr-2 font-mono text-[12px] text-[#4338CA]">{d.n}</span>
-                {d.title}
-              </td>
-              <td className={`${td} font-mono tabular-nums`}>{rows.length}</td>
-              <td className={`${td} font-mono tabular-nums`}>{rows.filter((s) => s.change === "Gap closed").length}</td>
-              <td className={`${td} w-[220px]`}><Bar n={rows.filter((s) => done([s.before, s.added])).length} of={rows.length} /></td>
-              <td className={`${td} w-[1%] p-0`}>
-                <button type="button" onClick={() => view({ li: "skills", area: d.n })} className="flex min-h-[38px] w-full items-center gap-1 whitespace-nowrap px-3 text-[12.5px] font-semibold text-[#3730A3] hover:bg-[#EEF0FF] focus-ring">
-                  See skills <Icon name="chevronRight" size={13} />
-                </button>
-              </td>
+            <tr key={w.n} className="hover:[&>td]:bg-[#FAFAFC]">
+              <td className={`${td} font-mono text-[12px] text-[#4338CA]`}>{w.n}</td>
+              <td className={`${td} min-w-[260px] text-[#111827]`}>{w.th}</td>
+              <td className={td}><Work cell={ids.join(", ")} desk={desk} p={p} /></td>
+              <td className={`${td} whitespace-nowrap text-[12.5px] text-[#3F4757]`}>{w.hc || "—"}</td>
+              <td className={`${td} w-[180px]`}><Bar n={g.done} of={g.total} /></td>
             </tr>
           );
         })}
@@ -313,44 +287,19 @@ function Summary({ desk, li, p, view }: Ctx) {
   );
 }
 
-// ── Skills ──
-
-function Skills({ desk, li, p, params, view }: Ctx) {
-  const area = Number(params.get("area")) || 1;
-  const d = li.domains.find((x) => x.n === area) ?? li.domains[0];
-  return (
-    <div>
-      <Pills label="Competency area" on={d.n} pick={(n) => view({ area: n })} items={li.domains.map((x) => ({ k: x.n, title: x.title, l: <><span className="font-mono">{x.n}</span> <span className="hidden sm:inline">{x.title}</span></> }))} />
-      <Table head={["Skill", "Where you practise it", "Level you reach", "Status"]} min={820}>
-        {li.statements.filter((s) => s.d === d.n).map((s) => (
-          <tr key={s.ref}>
-            <td className={`${td} min-w-[260px]`}>
-              <span className="text-[#111827]">{s.text}</span>
-              <span className="block text-[11.5px] text-[#8A91A3]">{s.type}</span>
-            </td>
-            <td className={td}><Where cells={[s.before, s.added]} desk={desk} p={p} /></td>
-            <td className={td}><Level from={s.lvlBefore} to={s.lvlAfter} /></td>
-            <td className={td}><State s={standing(desk, p, [s.before, s.added])} /></td>
-          </tr>
-        ))}
-      </Table>
-    </div>
-  );
-}
-
 // ── Clauses 4–10 ──
 
 function Clauses({ desk, li, p }: Ctx) {
   return (
-    <Table head={["Clause", "Title", "Where you practise it", "Level you reach", "Documented information it requires", "Status"]} min={980}>
+    <Table head={["Clause", "Title", "Where you implement it", "Depth", "Documented information it requires", "Status"]} min={980}>
       {li.clauses.map((c) => (
         <tr key={c.ref}>
           <td className={td}><RefLink href={clauseHref(c.ref)}>{c.ref}</RefLink></td>
           <td className={`${td} min-w-[180px] text-[#111827]`}>{c.title}</td>
-          <td className={td}><Where cells={[c.before, c.added]} desk={desk} p={p} /></td>
-          <td className={td}><Level from={c.lvlBefore} to={c.lvlAfter} /></td>
+          <td className={td}><Where cells={[c.tasks]} desk={desk} p={p} /></td>
+          <td className={`${td} text-[12.5px] text-[#3F4757]`}>{c.depth}</td>
           <td className={`${td} text-[12.5px] text-[#3F4757]`}>{c.docs}</td>
-          <td className={td}><State s={standing(desk, p, [c.before, c.added])} /></td>
+          <td className={td}><State s={standing(desk, p, [c.tasks])} /></td>
         </tr>
       ))}
     </Table>
@@ -365,59 +314,18 @@ function Annex({ desk, li, p, params, view }: Ctx) {
   return (
     <div>
       <Pills label="Theme" on={theme} pick={(t) => view({ theme: t })} items={themes.map((t) => ({ k: t, l: <>{t} <span className="font-mono opacity-70">{li.controls.filter((c) => c.theme === t).length}</span></> }))} />
-      <Table head={["Control", "Title", "Where you practise it", "Technology Lab", "Depth you reach", "Status"]} min={980}>
+      <Table head={["Control", "Title", "Where you implement it", "Depth", "Status"]} min={900}>
         {li.controls.filter((c) => c.theme === theme).map((c) => (
           <tr key={c.ref}>
             <td className={td}><RefLink href={controlHref(c.ref)}>{c.ref}</RefLink></td>
             <td className={`${td} min-w-[200px] text-[#111827]`}>{c.title}</td>
-            <td className={td}><Where cells={[c.tasks, c.soa]} desk={desk} p={p} /></td>
-            <td className={`${td} text-[12.5px] text-[#5B6474]`}>{c.labs}</td>
+            <td className={td}><Where cells={[c.tasks]} desk={desk} p={p} /></td>
             <td className={`${td} text-[12.5px] text-[#3F4757]`}>{c.depth}</td>
-            <td className={td}><State s={standing(desk, p, [c.tasks, c.soa])} /></td>
+            <td className={td}><State s={standing(desk, p, [c.tasks])} /></td>
           </tr>
         ))}
       </Table>
-      <p className="px-5 py-3 text-[12px] text-[#5B6474]">Every control is also recorded in your Statement of Applicability, extension LI-05.</p>
-    </div>
-  );
-}
-
-// ── Extensions ──
-
-function Extensions({ desk, li, p }: Ctx) {
-  return (
-    <div>
-      <p className="border-b border-[#DDE1E8] px-5 py-3 text-[13px] text-[#3F4757]">
-        An extension is a set of extra steps inside one of your tasks that produces a deliverable a Lead Implementer produces. They sit at the end of their task on the Working Desk.
-      </p>
-      <Table head={["Extension", "Inside task", "What you produce", "ISO/IEC 27001", "Your steps", ""]} min={980}>
-        {li.extensions.map((e) => {
-          const g = itemProgress(desk, p, e.id);
-          const href = itemHref(desk, e.id);
-          return (
-            <tr key={e.id}>
-              <td className={`${td} whitespace-nowrap font-mono text-[12px] font-semibold text-[#3730A3]`}>{e.id}</td>
-              <td className={td}>
-                <Work cell={e.task} desk={desk} p={p} />
-                <span className="mt-0.5 block text-[11.5px] text-[#8A91A3]">week {e.week}</span>
-              </td>
-              <td className={`${td} min-w-[260px]`}>
-                <span className="block font-medium text-[#111827]">{e.title}</span>
-                <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[#5B6474]">{e.objective}</span>
-              </td>
-              <td className={`${td} text-[12.5px] text-[#3F4757]`}>{e.iso}</td>
-              <td className={`${td} w-[150px]`}><Bar n={g.done} of={g.total} /></td>
-              <td className={`${td} w-[1%] p-0`}>
-                {href && (
-                  <Link href={href} className="flex min-h-[38px] items-center gap-1 whitespace-nowrap px-3 text-[12.5px] font-semibold text-[#3730A3] no-underline hover:bg-[#EEF0FF] focus-ring">
-                    Open <Icon name="arrowUpRight" size={13} />
-                  </Link>
-                )}
-              </td>
-            </tr>
-          );
-        })}
-      </Table>
+      <p className="px-5 py-3 text-[12px] text-[#5B6474]">Every control is also recorded in your Statement of Applicability, LI-SOA (T5.2).</p>
     </div>
   );
 }
@@ -428,10 +336,10 @@ function Extensions({ desk, li, p }: Ctx) {
  */
 export function LeadImplementerPanel({ itemRef, who }: { itemRef: string; who: string }) {
   const [desk, setDesk] = useState<Desk | null>(null);
-  const [li, setLi] = useState<LiMap | null>(null);
   useEffect(() => {
-    Promise.all([loadDesk(), loadLi()]).then(([d, m]) => (setDesk(d), setLi(m)), () => {});
+    loadDesk().then(setDesk, () => {});
   }, []);
+  const li = desk && liMap(desk);
   // Hidden until the real progress is read (or if it fails): an empty record would mark everything not done.
   const { status } = useProgress(who);
   if (!desk || !li || status !== "ready") return null;
@@ -447,11 +355,10 @@ function Panel({ desk, li, who, itemRef }: { desk: Desk; li: LiMap; who: string;
         .filter((c) => c.ref === clause || c.ref.startsWith(`${clause}.`))
         .map((c) => ({
           ref: c.ref,
-          work: [c.before, c.added],
+          work: [c.tasks],
           cells: [
-            ["Level after GRC 101", <Level key="l" from={c.lvlBefore} to={c.lvlAfter} />],
-            ["GRC 101 work", <Work key="w" cell={c.before} desk={desk} p={p} />],
-            ["Lead Implementer extension", <Work key="a" cell={c.added} desk={desk} p={p} />],
+            ["Depth in GRC 101", c.depth],
+            ["GRC 101 work", <Work key="w" cell={c.tasks} desk={desk} p={p} />],
             ["Mandatory documented information", c.docs],
           ],
         }))
@@ -459,12 +366,11 @@ function Panel({ desk, li, who, itemRef }: { desk: Desk; li: LiMap; who: string;
         .filter((c) => c.ref === `A.${control}`)
         .map((c) => ({
           ref: c.ref,
-          work: [c.tasks, c.soa],
+          work: [c.tasks],
           cells: [
-            ["Depth after GRC 101", c.depth],
-            ["Core tasks / extensions", <Work key="w" cell={c.tasks} desk={desk} p={p} />],
-            ["Statement of Applicability", <Work key="s" cell={c.soa} desk={desk} p={p} />],
-            ["Technology Lab", c.labs],
+            ["Depth in GRC 101", c.depth],
+            ["GRC 101 work", <Work key="w" cell={c.tasks} desk={desk} p={p} />],
+            ["Week", String(c.week)],
           ],
         }));
   if (!rows.length) return null;

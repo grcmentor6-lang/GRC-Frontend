@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
+import { PhyPlan } from "./phy-plan";
 import { useDesk, type ViewItem } from "./desk-context";
 import { TableView, Label, press } from "./ui";
 import type { ToolMock } from "@/lib/desk/model";
@@ -9,6 +10,15 @@ import { DOC_TEXT } from "@/lib/desk/docs";
 import { DocCitation } from "./doc-text";
 import { PreparedFor } from "./prepared-for";
 import { NoteList } from "./step-text";
+import { isLater } from "@/lib/focus";
+import { LATER_BOX, LATER_INK, LaterLegend } from "@/components/app/later";
+
+/** The pack screens that list standards side by side. Read-only reference: the ones outside GRC 101's focus are
+ *  greyed (lib/focus.ts). Never a screen a step answers in. */
+export const LISTS_STANDARDS = new Set(["frameworks|Framework Library", "learn|Framework Quick Reference"]);
+// Tasks that grade the mentee on entries those screens grey: while one is in hand the screens show no grey and no legend.
+// Empty since GRC 101 was rebuilt to the Lead Implementer workbook (docs/li101): the old F1.2 and T3.1 were the two.
+const GRADED_ON_GREYED = new Set<string>();
 
 /** "<b>Frame:</b> Please send…" → bold label + text, without dangerouslySetInnerHTML. */
 function Rich({ s }: { s: string }) {
@@ -20,12 +30,16 @@ function Rich({ s }: { s: string }) {
 }
 
 /** The platform tool screens are mock-ups in v1.8.8: one renderer per payload kind. */
-export function ToolScreen({ mock, flush }: { mock: Pick<ToolMock, "kind" | "pl" | "stamp">; flush?: boolean }) {
+export function ToolScreen({ mock, flush, standards: listsStandards }: { mock: Pick<ToolMock, "kind" | "pl" | "stamp">; flush?: boolean; /** A list of standards: grey the ones outside the focus. */ standards?: boolean }) {
+  const { here } = useDesk();
+  const standards = listsStandards && !GRADED_ON_GREYED.has(here?.task ?? "");
   const pl = mock.pl as Record<string, unknown>;
   const rows = (k: string) => (pl[k] as unknown[][] | undefined) ?? [];
-  const table = Array.isArray(pl.h) ? <TableView t={{ h: pl.h as string[], r: rows("r") as string[][] }} flush={flush} /> : null;
+  const table = Array.isArray(pl.h) ? <TableView t={{ h: pl.h as string[], r: rows("r") as string[][] }} flush={flush} grey={standards ? isLater : undefined} /> : null;
   return (
     <div className={flush ? "grid" : "grid gap-3"}>
+      {/* Not pinned: the table's own heading row is pinned to the same edge, and a pinned legend covered it. */}
+      {standards && <LaterLegend className={`bg-white ${flush ? "border-b border-[#E9ECF1] px-3.5 py-2.5" : "rounded border border-[#E9ECF1] px-3 py-2"}`} />}
       {flush && table}
       <div className={flush ? "grid gap-3 p-4 empty:hidden" : "contents"}>
       {rows("kpis").length > 0 && (
@@ -74,7 +88,7 @@ export function ToolScreen({ mock, flush }: { mock: Pick<ToolMock, "kind" | "pl"
             {(pl.p as string[]).map((p) => {
               const [, name, text] = p.match(/^<b>([^<]+)<\/b>\s*([\s\S]*)$/)!;
               return (
-                <div key={name} data-term={name} className="grid gap-x-4 gap-y-0.5 px-4 py-2.5 @[560px]:grid-cols-[minmax(0,180px)_1fr]">
+                <div key={name} data-term={name} data-later={(standards && isLater(name)) || undefined} className={`grid gap-x-4 gap-y-0.5 px-4 py-2.5 @[560px]:grid-cols-[minmax(0,180px)_1fr] ${standards && isLater(name) ? `${LATER_BOX} ${LATER_INK}` : ""}`}>
                   <dt className="font-semibold text-[#111827]">{name}</dt>
                   <dd className="text-slate-700"><Rich s={text} /></dd>
                 </div>
@@ -151,9 +165,9 @@ function Body({ item }: { item: ViewItem }): { eyebrow: string; title: string; b
       };
     }
     case "ds":
-      return { eyebrow: "Your data file", title: item.id, body: desk.ds[item.id] ? <TableView t={desk.ds[item.id]} max={40} /> : <p>Released with its week.</p> };
+      return { eyebrow: "Your data file", title: item.id, body: desk.ds[item.id] ? <>{item.id === "PHY" && <PhyPlan />}<TableView t={desk.ds[item.id]} max={100} /></> : <p>Released with its week.</p> };
     case "doc": {
-      // "BKB-ADD-16#7": the document, and the sections the step cites.
+      // "SITL-ADD-16#7": the document, and the sections the step cites.
       const [doc, secs] = item.id.split("#");
       const cites = secs ? secs.split(",") : [];
       const lib = desk.library.docs.find(([code, title]) => code === doc || title === desk.docs[doc]);
@@ -175,7 +189,7 @@ function Body({ item }: { item: ViewItem }): { eyebrow: string; title: string; b
       return { eyebrow: "ISO/IEC 27001:2022", title: `Clause ${item.id}`, body: <p className="text-[14px] text-slate-700">{desk.iso[item.id] ?? "Clause title not listed."}</p> };
     case "tool": {
       const m = desk.tp[item.id];
-      return { eyebrow: `Platform tool · ${m?.stamp ?? ""}`, title: m?.tool ?? item.id.replace("|", " › "), body: m ? <ToolScreen mock={m} /> : <p>This tool opens in a later release.</p> };
+      return { eyebrow: `Platform tool · ${m?.stamp ?? ""}`, title: m?.tool ?? item.id.replace("|", " › "), body: m ? <ToolScreen mock={m} standards={LISTS_STANDARDS.has(item.id)} /> : <p>This tool opens in a later release.</p> };
     }
     case "panel": {
       const p = desk.tasks[item.id].panel;

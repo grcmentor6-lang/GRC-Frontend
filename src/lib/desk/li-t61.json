@@ -1,0 +1,51 @@
+{
+  "_": "T6.1 (LI101, docs/li101): dataset COMP-10 (his new item: ten role holders at GlobalConnect Manila with their ISMS role, qualifications and training records), the competence each role needs (from the learner's LI-RACI, T3.2), the two LearnTech worked rows of sheet Competence (template T-LI-COMM), the actions offered per role holder, the Group ISMS communication plan (Learn › Reference pages, Ref-Communications) and the five messages of sheet Communication. registers.ts builds LI-COMM's two sheets from it; build-li101.py builds dataset COMP-10 and the Ref-Communications page from it. No answer key here: keys are in backend/scripts/li101_written_T6.1.json. Platform-written, logged in docs/GRC101_Content_Corrections.md (T6.1).",
+  "statuses": ["Competent — evidence held", "Gap — action needed", "Competent, but no documented evidence"],
+  "noAction": "No action: evidence held",
+  "worked": [
+    ["Sanne Bakker", "Compliance Manager", "R for corrective action in the RACI: tracks nonconformities and corrective actions to closure (Clause 10.2); root-cause analysis training.", "Root-cause analysis course, completed 2025; six years in quality assurance (CV)", "Nothing on file: Amsterdam HR holds no copy of the course certificate.", "Competent, but no documented evidence", "Obtain a copy of her root-cause analysis certificate and file it"],
+    ["Daan Visser", "Security Awareness & Training Specialist", "R for competence and awareness in the RACI: plans awareness campaigns and keeps competence records (SITL-POL-020); training or experience in running awareness programmes.", "Moved from HR into the role in May 2026; has not run an awareness programme and has had no training for it (CV)", "Induction security session only (attendance sheet).", "Gap — action needed", "Enrol him on awareness-programme training, then review his first campaign with him"]
+  ],
+  "holders": [
+    ["Maria Santos", "Chief Information Security Officer (CISO)", "R for context and scope review and for the management review in your LI-RACI: plans, runs and reports on the ISMS; ISO/IEC 27001 Lead Implementer certificate, or equivalent.", "ISO/IEC 27001 Lead Implementer certificate, 2023; twelve years in information security (CV)", "Lead Implementer certificate on file, copy checked by Manila HR in 2023."],
+    ["Jose Reyes", "Cyber Risk Manager", "R for risk assessment and treatment in your LI-RACI: assesses and treats risks by the Group method (SITL-ERM-001); ISO/IEC 27005 risk management training, or equivalent.", "ISO/IEC 27005 Risk Manager certificate, 2022; seven years running risk assessments at two BPO firms (CV)", "Nothing on file: Manila HR holds no copy of the certificate."],
+    ["Ana Cruz", "Policy & Governance Analyst", "R for policy management and document control in your LI-RACI: writes, reviews and controls documents (SITL-POL-000 Section 7); document-control and policy-writing training.", "Four years as a policy analyst in a bank (CV)", "Group document-control course, June 2025: certificate and passed assessment on file."],
+    ["Paolo Garcia", "Security Awareness & Training Specialist", "R for competence and awareness in your LI-RACI: plans awareness campaigns and keeps competence records (SITL-POL-020); training or experience in running awareness programmes.", "Ran the awareness programme of a Cebu contact centre, 2019–2024; SANS Security Awareness Professional (SSAP) credential, 2022 (CV)", "Nothing on file: no copy of the credential and no reference from the Cebu employer."],
+    ["Liza Mendoza", "Incident Response & Crisis Manager (GRC)", "R for incident management in your LI-RACI: leads incident response and post-incident reviews (SITL-POL-014); incident-handling certificate, or equivalent experience.", "GIAC Certified Incident Handler (GCIH), 2025; led the response to fourteen incidents (CV)", "GCIH certificate on file, valid to 2029; record of the Group tabletop exercise she ran in March 2026."],
+    ["Mark Villanueva", "Vendor / Third-Party Risk Analyst", "R for supplier security in your LI-RACI: assesses suppliers and checks their contracts (SITL-POL-013); third-party risk training.", "Moved from the finance team into the role in August 2026; no third-party risk training or experience (CV)", "Induction security session only (attendance sheet)."],
+    ["Grace Torres", "Information Security Auditor", "A and R for internal audit in your LI-RACI: plans and conducts ISMS audits, objectively (Clause 9.2); ISO/IEC 27001 Lead Auditor or internal auditor certificate.", "ISO/IEC 27001 Lead Auditor certificate, 2021; fifteen internal audits led (CV)", "Nothing on file: Manila HR holds no copy of the certificate and no log of her audits."],
+    ["Ramon Aquino", "Compliance Manager", "R for corrective action in your LI-RACI: tracks nonconformities and corrective actions to closure (Clause 10.2); root-cause analysis training.", "Call-floor team leader until he moved into the role in September 2026; no root-cause analysis or corrective-action training (CV)", "Induction security session only (attendance sheet)."],
+    ["Antonio Lim", "Org CEO", "A for context and scope review and for the management review in your LI-RACI: chairs the management review and answers for the ISMS; an ISMS briefing for top management.", "Chief executive of GlobalConnect since 2021 (CV)", "ISMS briefing for top management by the Group CISO, February 2026: attendance and signed briefing record on file."],
+    ["Kevin Ramos", "Information Security Auditor", "A and R for internal audit in your LI-RACI: plans and conducts ISMS audits, objectively (Clause 9.2); ISO/IEC 27001 Lead Auditor or internal auditor certificate.", "Joined as a junior auditor in July 2026; no audit certificate yet; has observed two audits (CV)", "Nothing on file yet: an internal auditor course is booked for January 2027."]
+  ],
+  "actions": {
+    "Jose Reyes": ["Obtain a copy of his ISO/IEC 27005 certificate and file it", "Enrol him on ISO/IEC 27005 training, then review his first risk assessment", "Enrol him on ISO/IEC 27005 training, with the attendance sheet as the evidence"],
+    "Paolo Garcia": ["Obtain a copy of his SSAP credential and a reference for the Cebu programme, and file them", "Enrol him on awareness-programme training, then review his first campaign with him", "Enrol him on awareness-programme training, with the attendance sheet as the evidence"],
+    "Mark Villanueva": ["Obtain a copy of his third-party risk certificate and file it", "Enrol him on the Group third-party risk course, then review his first supplier assessment", "Enrol him on the Group third-party risk course, with the attendance sheet as the evidence"],
+    "Grace Torres": ["Obtain a copy of her Lead Auditor certificate and her audit log, and file them", "Enrol her on Lead Auditor training, then observe her next audit", "Enrol her on Lead Auditor training, with the attendance sheet as the evidence"],
+    "Ramon Aquino": ["Obtain a copy of his root-cause analysis certificate and file it", "Enrol him on root-cause analysis training, then review his first corrective actions", "Enrol him on root-cause analysis training, with the attendance sheet as the evidence"],
+    "Kevin Ramos": ["Obtain a copy of his internal auditor certificate and file it", "Have him complete the internal auditor course, then lead an audit under supervision", "Have him complete the internal auditor course, with the attendance sheet as the evidence"]
+  },
+  "plan": {
+    "note": "The Group ISMS communication plan (Clause 7.4), which every SITL office follows: for each kind of message, when it is sent, to whom, how, and who sends it. An office's own plan lists its messages and takes each one's when, with whom and how from the row for its kind. Reviewed each year.",
+    "h": ["Kind of message", "When", "With whom", "How", "Who communicates"],
+    "r": [
+      ["Information security policy issued or re-issued", "On approval, and at each yearly re-issue", "All staff", "All-staff e-mail and intranet, with an acknowledgement from each person", "Org CEO with the Org CISO (SITL-POL-020 Section 5)"],
+      ["Risk acceptance decision", "Within 5 working days of the signed decision", "The risk owner and the Cyber Risk Manager", "The signed decision, recorded in the risk register", "Cyber Risk Manager (SITL-POL-002 Section 6.2)"],
+      ["Incident lesson", "Within 5 working days of the post-incident review report", "The affected teams; all staff after a SEV1 incident", "Team briefing, and the next monthly security bulletin", "Incident Response & Crisis Manager (SITL-POL-014 Section 6.1)"],
+      ["Awareness campaign and phishing simulation results", "In the campaign's last week", "All staff, results by team, never by name", "Team results in the monthly security bulletin, and line managers brief their teams", "Security Awareness & Training Specialist (SITL-POL-020 Section 6.1)"],
+      ["Internal audit results", "At the closing meeting, and the report within 10 working days", "The auditees, control owners and top management", "Closing meeting and audit report", "Information Security Auditor"],
+      ["Management review outcomes", "Within 10 working days of each review", "Control owners and the GRC team", "Minutes and action list", "Org CISO"],
+      ["Client security update", "Each quarter", "Clients under contract", "Quarterly client update", "Account managers with the Org CISO"],
+      ["Monthly security bulletin", "Each month", "All staff", "Intranet bulletin and e-mail", "Security Awareness & Training Specialist"]
+    ]
+  },
+  "whom": ["All staff", "All staff, results by team, never by name", "The affected teams", "The risk owner and the Cyber Risk Manager", "The auditees, control owners and top management", "Control owners and the GRC team", "Clients under contract"],
+  "messages": [
+    "SITL-POL-020 Security Awareness, Training and Culture Policy, version 1.0, in force from 1 October 2026",
+    "The decision on the risk retained in your RSK-ACC (T5.1)",
+    "Lessons from the post-incident review of a SEV2 incident on the Manila call floor",
+    "Results of Manila's first awareness campaign and phishing simulation (your AWR-PLAN)",
+    "Outcomes of the 2026 management review"
+  ]
+}

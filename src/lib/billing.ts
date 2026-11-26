@@ -31,8 +31,8 @@ export const CURRENT_PLAN: BillingPlanContent = {
   icon: "shield",
   status: "current",
   features: [
-    "Complete GRC 101 engagement (35 tasks)",
-    "AI mentor grading on every activity",
+    "Complete GRC 101 engagement (25 tasks, 12 weeks)",
+    "Automated checking against answer keys on every step",
     "Auto-compiled CV, badges & certificate",
     "Job matching from your executed work",
   ],

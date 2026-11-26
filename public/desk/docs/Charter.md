@@ -1,20 +1,20 @@
 Group Governance, Risk & Compliance Charter
 
-BKB-GRC-CHR-001 | Group Governance, Risk & Compliance Charter
+SITL-GRC-CHR-001 | Group Governance, Risk & Compliance Charter
 
-BKB Holding Company
+SITL Holding Company
 
 Group Governance, Risk & Compliance Charter
 
-Charter of the BKB Group GRC Function — applicable to all 42 portfolio organisations, their head offices and regional offices
+Charter of the SITL Group GRC Function — applicable to all 42 portfolio organisations, their head offices and regional offices
 
 |  |  |
 | :-: | :-: |
-| Document ID | BKB-GRC-CHR-001 |
+| Document ID | SITL-GRC-CHR-001 |
 | Version | 1.0 |
 | Status | Approved for adoption — draft for Board ratification |
 | Document owner | Group Chief Information Security Officer (CISO) |
-| Approved by | BKB Board of Directors (on recommendation of the Board Risk & Audit Committee) |
+| Approved by | SITL Board of Directors (on recommendation of the Board Risk & Audit Committee) |
 | Effective date | 2026-10-01 |
 | Next review | 2027-09-30 |
 | Classification | Internal |
@@ -27,15 +27,15 @@ Contents
 
 1\. Purpose and authority
 
-This Charter establishes the Governance, Risk and Compliance (GRC) function of BKB Holding Company ("BKB" or "the Group"). It defines the mandate, scope, authority, structure, roles, operating model, reporting lines and performance expectations of the Group GRC function and of the GRC functions within each of the Group's portfolio organisations.
+This Charter establishes the Governance, Risk and Compliance (GRC) function of SITL Holding Company ("SITL" or "the Group"). It defines the mandate, scope, authority, structure, roles, operating model, reporting lines and performance expectations of the Group GRC function and of the GRC functions within each of the Group's portfolio organisations.
 
-The Charter is issued under the authority of the BKB Board of Directors. It is binding on every organisation in which BKB holds a controlling interest and on every office of those organisations. Where local law imposes a stricter requirement than this Charter, local law prevails and the stricter requirement is recorded in the organisation addendum (see the Group Policy Library, BKB-POL-000).
+The Charter is issued under the authority of the SITL Board of Directors. It is binding on every organisation in which SITL holds a controlling interest and on every office of those organisations. Where local law imposes a stricter requirement than this Charter, local law prevails and the stricter requirement is recorded in the organisation addendum (see the Group Policy Library, SITL-POL-000).
 
-Mission. The Group GRC function exists to (1) protect the confidentiality, integrity and availability of information and services across the portfolio, (2) keep every organisation lawful in every jurisdiction in which it operates, (3) make risk visible and decisions defensible at Board level, and (4) serve as the real-world practice environment for the BKB GRC Mentorship Programmes (GRC 101, 301 and 501).
+Mission. The Group GRC function exists to (1) protect the confidentiality, integrity and availability of information and services across the portfolio, (2) keep every organisation lawful in every jurisdiction in which it operates, (3) make risk visible and decisions defensible at Board level, and (4) serve as the real-world practice environment for the SITL GRC Mentorship Programmes (GRC 101, 301 and 501).
 
 2\. Scope
 
-This Charter applies to all 42 organisations in the BKB portfolio, operating across 12 industries, 168 offices (42 head offices and 126 regional offices) in 51 countries on six continents. It covers all people (employees, contractors, AI agents acting on behalf of the Group), processes, information assets (7,663 registered assets), technology (IT, OT, cloud, AI) and third parties that create, process, store or transmit Group information.
+This Charter applies to all 42 organisations in the SITL portfolio, operating across 12 industries, 168 offices (42 head offices and 126 regional offices) in 51 countries on six continents. It covers all people (employees, contractors, AI agents acting on behalf of the Group), processes, information assets (7,663 registered assets), technology (IT, OT, cloud, AI) and third parties that create, process, store or transmit Group information.
 
 2.1 Portfolio at a glance
 
@@ -44,7 +44,7 @@ This Charter applies to all 42 organisations in the BKB portfolio, operating acr
 | Portfolio organisations | 42 |
 | Industries | 12 |
 | Offices (HQ + regional) | 168 (42 + 126) |
-| Countries with a BKB office | 51 |
+| Countries with a SITL office | 51 |
 | Criticality bands | HIGH 13 · MEDIUM 21 · LOW 8 |
 | Standard / regulation assignments | 400 (233 mandatory, 167 optional); 251 distinct standards |
 | Registered information assets | 7,663 |
@@ -119,7 +119,7 @@ Organisation-level criticality governs (it overrides the industry default). Crit
 
 2.4 Exclusions
 
-Entities in which BKB holds a non-controlling minority stake are out of scope, but are subject to third-party risk management where they share data or services with Group organisations.
+Entities in which SITL holds a non-controlling minority stake are out of scope, but are subject to third-party risk management where they share data or services with Group organisations.
 
 Personal devices are in scope only to the extent they access Group information (see Acceptable Use and BYOD policies).
 
@@ -175,7 +175,7 @@ Learning organisation — every activity is designed so that it can be used as a
 
 5.1 Federated hub-and-spoke model
 
-BKB operates a federated GRC model. The Group GRC Office (hub) sets direction, standards and methods, and provides shared services. Each portfolio organisation (spoke) owns and operates its GRC programme through its Governance, Risk & Compliance department (owner: Chief Risk & Compliance Officer) and Information Security (CISO Office). Each regional office operates a Regional Compliance & Legal function and a Regional IT & Security Operations function that execute locally and report to the organisation head office.
+SITL operates a federated GRC model. The Group GRC Office (hub) sets direction, standards and methods, and provides shared services. Each portfolio organisation (spoke) owns and operates its GRC programme through its Governance, Risk & Compliance department (owner: Chief Risk & Compliance Officer) and Information Security (CISO Office). Each regional office operates a Regional Compliance & Legal function and a Regional IT & Security Operations function that execute locally and report to the organisation head office.
 
 | Layer | Who | Accountabilities |
 | :-: | :-: | :-: |
@@ -186,7 +186,7 @@ BKB operates a federated GRC model. The Group GRC Office (hub) sets direction, s
 
 5.2 Three Lines Model
 
-| Line | Role | BKB implementation |
+| Line | Role | SITL implementation |
 | :-: | :-: | :-: |
 | First line | Own and manage risk | Business and department owners, IT/OT operations, regional management |
 | Second line | Oversee, challenge, set frameworks | Group GRC Office and org GRC / CISO / DPO functions |
@@ -197,7 +197,7 @@ BKB operates a federated GRC model. The Group GRC Office (hub) sets direction, s
 
 | Body | Chair | Members | Frequency | Key decisions |
 | :-: | :-: | :-: | :-: | :-: |
-| BKB Board of Directors | Board Chair | Directors | Quarterly | Approves Charter, risk appetite, strategy; receives Group risk & compliance report |
+| SITL Board of Directors | Board Chair | Directors | Quarterly | Approves Charter, risk appetite, strategy; receives Group risk & compliance report |
 | Board Risk & Audit Committee (BRAC) | Independent Non-Executive Director | NEDs; Group CFO; Group Head of Internal Audit (attends); Group CISO (attends) | Quarterly + ad hoc | Oversees ERM; approves audit plan; reviews HIGH risks & major incidents |
 | Group GRC Steering Committee | Group CISO | Group CRO, Group DPO, Group GC, Cybersecurity Program Manager, 12 industry cluster leads | Monthly | Approves policies/standards, exceptions \> MEDIUM, GRC roadmap and budget |
 | Industry Cluster Councils (12) | Cluster lead (most senior org CISO in the industry) | CISOs/CRCOs of orgs in the industry | Bi-monthly | Sector threat & regulatory horizon; shared controls; peer benchmarking |
@@ -297,7 +297,7 @@ Mandatory standards/regulations must be fully implemented, certified or attested
 
 Optional standards are adopted as good practice; they are implemented at least to "Defined" level and may be certified when commercially justified.
 
-Every requirement (clause, control or domain) is decomposed into operational GRC activities using the 17 execution methods (A–Q) defined in the Group context; see the GRC Operational Task Libraries (BKB-GRC-TSK series).
+Every requirement (clause, control or domain) is decomposed into operational GRC activities using the 17 execution methods (A–Q) defined in the Group context; see the GRC Operational Task Libraries (SITL-GRC-TSK series).
 
 Regulatory change is monitored monthly per country by the Policy & Governance Analyst and the Regional Compliance Officers.
 
@@ -320,7 +320,7 @@ The full per-organisation list of mandatory and optional standards and the lead 
 
 10\. Mentorship programme integration
 
-The GRC function doubles as the practical environment for BKB's mentorship programmes. Mentees are assessed both by AI agents and by human industry professionals.
+The GRC function doubles as the practical environment for SITL's mentorship programmes. Mentees are assessed both by AI agents and by human industry professionals.
 
 | Programme | Level | Experience | Organisations (criticality band) | Status |
 | :-: | :-: | :-: | :-: | :-: |
@@ -355,7 +355,7 @@ Exceptions to any policy require a documented risk assessment, compensating cont
 
 12\. Risk management
 
-Enterprise risk is managed under the BKB Enterprise Risk Management Framework (BKB-ERM-001), aligned to ISO 31000:2018 and COSO ERM 2017, with information-security risk assessed under ISO/IEC 27005:2022. Risk assessments are performed for every office (168 in total) and consolidated to organisation, industry cluster and Group level.
+Enterprise risk is managed under the SITL Enterprise Risk Management Framework (SITL-ERM-001), aligned to ISO 31000:2018 and COSO ERM 2017, with information-security risk assessed under ISO/IEC 27005:2022. Risk assessments are performed for every office (168 in total) and consolidated to organisation, industry cluster and Group level.
 
 | Criticality band | Risk-assessment frequency | Board reporting | Assurance depth |
 | :-: | :-: | :-: | :-: |
@@ -446,7 +446,7 @@ This Charter is reviewed annually by the Group GRC Steering Committee and re-app
 
 | Version | Date | Change | Approved by |
 | :-: | :-: | :-: | :-: |
-| 1.0 | 2026-10-01 | Initial issue covering all 42 organisations and 168 offices | BKB Board (pending ratification) |
+| 1.0 | 2026-10-01 | Initial issue covering all 42 organisations and 168 offices | SITL Board (pending ratification) |
 
 Appendix A — Office register
 
@@ -719,7 +719,7 @@ Appendix D — Source data observations
 
 The following inconsistencies were found in the source workbooks while preparing this Charter. They do not change the Charter but should be corrected in the master data:
 
-Departments\_by\_Region.xlsx is titled "AURIANA Portfolio"; the context document names the holding company "BKB". This Charter uses BKB.
+Departments\_by\_Region.xlsx is titled "AURIANA Portfolio"; the context document names the holding company "SITL". This Charter uses SITL.
 
 United Telecommunications Systems: the Nairobi (Kenya) regional office is tagged "Asia-Pacific" in Organization\_Profiles.xlsx; it has been treated as Africa.
 

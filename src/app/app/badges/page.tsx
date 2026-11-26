@@ -6,6 +6,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Icon } from "@/components/ui/icon";
 import { ExtendAccessCard } from "@/components/app/extend-access-card";
 import { MethodMedal } from "@/components/badges/method-medal";
+import { replayBadge } from "@/components/badges/badge-reveal";
 import { loadDesk, type Desk } from "@/lib/desk/model";
 import { useProgress, type Progress } from "@/lib/desk/progress";
 import { useTaskScores } from "@/lib/desk-record";
@@ -127,7 +128,7 @@ function BadgesBody({ desk, p, scores }: { desk: Desk; p: Progress; scores: Scor
         </span>
       </p>
 
-      {/* The capstone: the ten method badges in one strip, each lit as it is earned. */}
+      {/* The capstone: the method badges in one strip, each lit as it is earned. */}
       <section aria-labelledby="cap" className="flex flex-wrap items-center gap-x-6 gap-y-4 rounded-md border border-[#DDE1E8] bg-white px-5 py-4">
         <MethodMedal badge={CAPSTONE} state={cap.state} size={84} />
         <div className="min-w-[240px] flex-1">
@@ -189,7 +190,14 @@ function BadgeCard({ b, g, desk, p, scores }: { b: MethodBadge; g: BadgeStanding
   return (
     <article id={b.code} className="flex scroll-mt-4 gap-4 rounded-md border border-[#DDE1E8] bg-white p-4">
       <div className="shrink-0">
-        <MethodMedal badge={b} state={g.state} size={88} />
+        {/* A medal you hold plays its reveal again. */}
+        {g.state === "earned" || g.state === "distinction" ? (
+          <button type="button" onClick={() => replayBadge(b.code)} title="Play the badge reveal again" className="block rounded-md transition-transform duration-150 ease-out active:scale-[0.97] focus-ring">
+            <MethodMedal badge={b} state={g.state} size={88} />
+          </button>
+        ) : (
+          <MethodMedal badge={b} state={g.state} size={88} />
+        )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -206,12 +214,6 @@ function BadgeCard({ b, g, desk, p, scores }: { b: MethodBadge; g: BadgeStanding
             <span className="w-[108px] shrink-0 font-semibold text-[#3F4757]">Earned by</span>
             {b.earn.map((t) => <TaskChip key={t} id={t} desk={desk} p={p} score={scores[t] ?? undefined} />)}
           </div>
-          {b.support.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="w-[108px] shrink-0 text-[#5B6474]">Also practised in</span>
-              {b.support.map((t) => <TaskChip key={t} id={t} desk={desk} p={p} muted />)}
-            </div>
-          )}
         </div>
         <p className="mt-auto border-t border-[#E9ECF1] pt-2 text-[12px] text-[#5B6474]">
           <span className="font-semibold text-[#3F4757]">{where(g)}.</span> {criteriaText(b)}

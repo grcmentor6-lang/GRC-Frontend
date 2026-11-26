@@ -65,7 +65,8 @@ export const reached = (desk: Desk, p: Progress, here: Here | null | undefined, 
 export function toolOpen(desk: Desk, isOpen: (w: number) => boolean, key: string, p?: Progress, here?: Here | null): boolean {
   const sec = key.split("|")[0];
   const lab = labOf(key);
-  if (lab) return labOpen(lab, p);
+  // A lab's dock entry waits for its task's week (the unlock week build-li101.py derives), then for the step it follows.
+  if (lab) return isOpen(weekOf(desk, key)) && labOpen(lab, p);
   if (UTILITIES.has(sec)) return true;
   if (!isOpen(weekOf(desk, key))) return false;
   const use = firstUses(desk).get(key);
@@ -84,13 +85,10 @@ export function sectionOpen(desk: Desk, isOpen: (w: number) => boolean, sec: str
  * the step's guide sends them to (step-guides.ts), as the Policies or Learn source a step reads before
  * it writes. Checked against the guides by tools.test.ts. "<task>-<step>", by section.
  */
+// GRC 101 was rebuilt to the Lead Implementer workbook (docs/li101): the old steps' lines went with them; Phase 2 adds the new.
 const FIRST_MENU: Record<string, string> = {
-  learn: "F1.2-3 T3.1-9 T3.1-10 T3.1-11 T3.1-12 T3.1-13 T3.1-17 T3.1-18 T3.2-5 T3.2-8 T3.2-9 T3.2-10 T3.2-11 T3.2-12 T4.1-3 T4.1-4 T4.1-8 T4.2-9 T5.1-7 T5.1-8 T5.1-9 T5.1-10 T5.1-11 T5.1-12 T6.1-4 T6.1-5 T6.1-8 T6.2-3 T7.1-5 T7.1-7 T7.1-10 T7.1-12 T7.1-13 T7.1-16 T7.2-1 T7.2-3 T7.2-4 T7.2-10 T7.2-14 T8.1-7 T8.1-9 T8.1-10 T8.2-4 T8.2-10 T11.1-1 T11.1-3 T11.2-7 T11.2-9 T11.2-10 T11.2-11 T11.2-12 T11.2-13 T12.1-8 T12.1-11 T12.1-12",
-  policies: "T8.1-4 F1.2-4 F1.3-1 F1.3-2 F1.3-3 F1.3-4 F1.3-5 F2.1-2 F2.1-4 F2.1-5 T3.1-1 T3.1-3 T3.1-4 T3.1-5 T3.1-7 T3.1-8 T3.1-15 T3.2-1 T3.2-3 T3.2-6 T3.2-7 T4.1-2 T5.1-1 T5.1-4 T5.2-5 T6.2-5 T6.2-6 T7.1-3 T7.1-8 T7.2-7 T7.2-8 T7.2-9 T8.1-5 T8.1-6 T8.2-9 T9.1-4 T9.1-7 T10.1-1 T10.1-2 T10.1-4 T10.2-3 T10.2-4 T10.2-6 T10.2-9 T11.2-1 T11.2-3 T11.2-5 T11.2-6 T11.2-8 T12.2-5 T12.2-6",
-  home: "T7.2-6 T7.2-12 T7.2-13 T11.1-9 T12.1-14",
-  risk: "T10.1-3 T11.1-5",
-  testing: "T6.1-7",
-  awareness: "T11.1-4",
+  learn: "T10.2-1 T10.2-4 T10.2-6 T10.2-7 T10.2-8 T10.2-10 T10.1-2 T10.1-3 T10.1-5 T10.1-6 T10.1-7 T10.1-8 T10.1-9 T10.1-10 T8.1-5 T8.1-7 T8.1-8 T8.1-9 T8.1-10 T9.2-1 T9.2-2 T9.2-3 T9.2-5 T9.2-6 T9.2-7 T9.2-9 T8.2-2 T8.2-4 T8.2-6 T8.2-7 T8.2-8 T8.2-9 T7.2-3 T7.2-5 T7.2-6 T7.2-7 T7.2-8 T9.1-2 T9.1-3 T9.1-5 T9.1-7 T9.1-8 T9.1-9 T11.2-2 T11.2-3 T4.1-2 T4.1-3 T4.1-4 T4.1-6 T4.1-7 T4.1-8 T4.1-9 F1.2-5 F1.3-4 F1.3-5 F1.3-6 F2.1-2 F2.1-4 F2.1-5 F2.2-1 F2.2-3 F2.2-4 F2.2-5 T3.1-4 T3.1-5 T3.1-6 T3.2-1 T3.2-2 T3.2-3 T3.2-5 T3.2-6 T3.2-7 T3.2-8 T11.1-2 T11.1-3 T11.1-5 T5.1-3 T5.1-4 T5.1-5 T12.1-2 T12.1-3 T12.1-4 T12.2-1 T12.2-2 T5.2-4 T5.2-5 T5.2-6 T5.2-8 T5.2-9 T5.2-10 T6.1-3 T6.1-4 T6.1-5 T6.1-6 T6.1-8 T6.1-9 T6.2-1 T6.2-2 T6.2-3 T6.2-5 T6.2-6 T6.2-7 T6.2-8 T4.2-4 T4.2-6 T4.2-8 T4.2-9 T4.2-10 T7.1-2 T7.1-4 T7.1-5 T7.1-6 T7.1-8",
+  policies: "T10.2-2 T10.2-9 T8.1-2 T8.1-3 T8.1-4 T9.2-8 T8.2-3 T7.2-1 T7.2-2 T7.2-9 T9.1-4 T3.1-3 T5.1-2 T5.1-6 T4.1-10 T4.2-2 T4.2-3 T7.1-1 T7.1-7",
 };
 const firstMenu = new Map(Object.entries(FIRST_MENU).flatMap(([sec, ids]) => ids.split(" ").map((id) => [id, sec] as const)));
 

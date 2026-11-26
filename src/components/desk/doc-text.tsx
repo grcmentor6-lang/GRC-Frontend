@@ -7,10 +7,12 @@ import { TreeCard } from "./walk-card";
 
 /** Sections of a source document, drawn as the pack writes them: paragraphs and tables. */
 export function DocText({ sections }: { sections: DocSection[] }) {
+  // grid-cols-1, here and below: one column no wider than the window. A wide table then scrolls in its own box (the
+  // Charter's RACI) instead of stretching every paragraph past the window's edge.
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-1 gap-5">
       {sections.map((s) => (
-        <section key={s.num} data-sec={s.num} className="grid scroll-mt-12 gap-2">
+        <section key={s.num} data-sec={s.num} className="grid scroll-mt-12 grid-cols-1 gap-2">
           <h3 className="text-[14.5px] font-bold text-[#111827]">
             <span className="mr-2 font-mono text-[12.5px] text-[#4338CA]">{/^\d/.test(s.num) ? `Section ${s.num}` : s.num}</span>
             {s.title}
@@ -27,7 +29,7 @@ function Body({ md, tree }: { md: string; tree?: boolean }) {
   const parts = blocks(md);
   const run = tree ? treeRun(parts.map((b) => (b.t === "p" ? clean(b.text) : ""))) : null;
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       {parts.map((b, i) =>
         run && i >= run.start && i < run.end ? (
           i === run.start && <div key={i} className="my-1"><TreeCard title="Decision tree" steps={run.steps} /></div>

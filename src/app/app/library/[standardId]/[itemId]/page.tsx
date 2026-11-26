@@ -9,6 +9,8 @@ import { ItemPoster, LibraryProvenance, TaskContext } from "@/components/app/lib
 import { LIBRARY_BY_ID, entriesOf, findEntry, itemHref, nameOf, summaryOf } from "@/lib/library";
 import { useAuth } from "@/components/auth/auth-provider";
 import { LeadImplementerPanel } from "@/components/career/li-path";
+import { isFocus } from "@/lib/focus";
+import { LATER_BOX, LaterLegend } from "@/components/app/later";
 
 export default function LibraryItemPage({ params, searchParams }: {
   params: Promise<{ standardId: string; itemId: string }>;
@@ -43,11 +45,14 @@ export default function LibraryItemPage({ params, searchParams }: {
         <Icon name="arrowLeft" size={13} /> {nameOf(standard)}
       </Link>
       {task && <TaskContext task={task} />}
+      {!isFocus(standard.id) && <LaterLegend />}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-start">
         <div className="space-y-4 min-w-0">
           {standard.publishedTitles ? (
-            <Plaque standard={nameOf(standard)} reference={item.ref} quotation={item.title} explanation={summaryOf(item)} domain={group.name} />
+            <div className={isFocus(standard.id) ? "" : LATER_BOX}>
+              <Plaque standard={nameOf(standard)} reference={item.ref} quotation={item.title} explanation={summaryOf(item)} domain={group.name} />
+            </div>
           ) : (
             // SOC 2: the title is our label, so it may not sit in the plaque, which promises the
             // standard's own words. A study card — steel, borderless — carries the programme's.

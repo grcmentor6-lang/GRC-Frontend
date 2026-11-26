@@ -1,0 +1,437 @@
+{
+ "_": "T11.1 (LI101): the tracker roll-up (which controls each of CIT-S1 to CIT-S13 holds; no levels: a level is a sprint's answer, so the Control list reads the learner's own trackers), the Control Maturity Matrix extract (dataset CMM-L4), the baseline data (dataset KPI-BASE), the LI-OBJ objective each measure serves, and the choices of LI-KPI and KPI-DASH. No answer key here: keys are in backend/scripts/li101_written.json (T11.1-4, T11.1-6). Platform-written, logged in docs/GRC101_Content_Corrections.md (T11.1).",
+ "titles": {
+  "A.5.1": "Policies for information security",
+  "A.5.2": "Information security roles and responsibilities",
+  "A.5.3": "Segregation of duties",
+  "A.5.4": "Management responsibilities",
+  "A.5.9": "Inventory of information and other associated assets",
+  "A.5.10": "Acceptable use of information and other associated assets",
+  "A.5.11": "Return of assets",
+  "A.5.12": "Classification of information",
+  "A.5.13": "Labelling of information",
+  "A.5.14": "Information transfer",
+  "A.5.6": "Contact with special interest groups",
+  "A.5.7": "Threat intelligence",
+  "A.5.8": "Information security in project management",
+  "A.6.3": "Information security awareness, education and training",
+  "A.5.37": "Documented operating procedures",
+  "A.6.1": "Screening",
+  "A.6.2": "Terms and conditions of employment",
+  "A.6.4": "Disciplinary process",
+  "A.6.5": "Responsibilities after termination or change of employment",
+  "A.6.6": "Confidentiality or non-disclosure agreements",
+  "A.6.7": "Remote working",
+  "A.5.15": "Access control",
+  "A.5.16": "Identity management",
+  "A.5.17": "Authentication information",
+  "A.5.18": "Access rights",
+  "A.5.19": "Information security in supplier relationships",
+  "A.5.20": "Addressing information security within supplier agreements",
+  "A.5.21": "Managing information security in the ICT supply chain",
+  "A.5.22": "Monitoring, review and change management of supplier services",
+  "A.5.23": "Information security for use of cloud services",
+  "A.5.5": "Contact with authorities",
+  "A.5.24": "Information security incident management planning and preparation",
+  "A.5.25": "Assessment and decision on information security events",
+  "A.5.26": "Response to information security incidents",
+  "A.5.27": "Learning from information security incidents",
+  "A.5.28": "Collection of evidence",
+  "A.6.8": "Information security event reporting",
+  "A.5.29": "Information security during disruption",
+  "A.5.30": "ICT readiness for business continuity",
+  "A.5.31": "Legal, statutory, regulatory and contractual requirements",
+  "A.5.32": "Intellectual property rights",
+  "A.5.33": "Protection of records",
+  "A.5.34": "Privacy and protection of PII",
+  "A.5.35": "Independent review of information security",
+  "A.5.36": "Compliance with policies, rules and standards for information security",
+  "A.7.1": "Physical security perimeters",
+  "A.7.2": "Physical entry",
+  "A.7.3": "Securing offices, rooms and facilities",
+  "A.7.4": "Physical security monitoring",
+  "A.7.5": "Protecting against physical and environmental threats",
+  "A.7.6": "Working in secure areas",
+  "A.7.7": "Clear desk and clear screen",
+  "A.7.8": "Equipment siting and protection",
+  "A.7.9": "Security of assets off-premises",
+  "A.7.10": "Storage media",
+  "A.7.11": "Supporting utilities",
+  "A.7.12": "Cabling security",
+  "A.7.13": "Equipment maintenance",
+  "A.7.14": "Secure disposal or re-use of equipment",
+  "A.8.1": "User endpoint devices",
+  "A.8.2": "Privileged access rights",
+  "A.8.3": "Information access restriction",
+  "A.8.4": "Access to source code",
+  "A.8.5": "Secure authentication",
+  "A.8.6": "Capacity management",
+  "A.8.7": "Protection against malware",
+  "A.8.8": "Management of technical vulnerabilities",
+  "A.8.13": "Information backup",
+  "A.8.14": "Redundancy of information processing facilities",
+  "A.8.15": "Logging",
+  "A.8.16": "Monitoring activities",
+  "A.8.17": "Clock synchronization",
+  "A.8.9": "Configuration management",
+  "A.8.10": "Information deletion",
+  "A.8.11": "Data masking",
+  "A.8.12": "Data leakage prevention",
+  "A.8.18": "Use of privileged utility programs",
+  "A.8.19": "Installation of software on operational systems",
+  "A.8.20": "Networks security",
+  "A.8.21": "Security of network services",
+  "A.8.22": "Segregation of networks",
+  "A.8.23": "Web filtering",
+  "A.8.24": "Use of cryptography",
+  "A.8.25": "Secure development life cycle",
+  "A.8.26": "Application security requirements",
+  "A.8.27": "Secure system architecture and engineering principles",
+  "A.8.28": "Secure coding",
+  "A.8.29": "Security testing in development and acceptance",
+  "A.8.31": "Separation of development, test and production environments",
+  "A.8.32": "Change management",
+  "A.8.33": "Test information",
+  "A.8.34": "Protection of information systems during audit testing"
+ },
+ "rollup": [
+  [
+   "CIT-S1",
+   [
+    "A.5.1",
+    "A.5.2",
+    "A.5.3",
+    "A.5.4"
+   ]
+  ],
+  [
+   "CIT-S2",
+   [
+    "A.5.9",
+    "A.5.10",
+    "A.5.11",
+    "A.5.12",
+    "A.5.13",
+    "A.5.14"
+   ]
+  ],
+  [
+   "CIT-S3",
+   [
+    "A.5.6",
+    "A.5.7"
+   ]
+  ],
+  [
+   "T5.2",
+   [
+    "A.5.8"
+   ]
+  ],
+  [
+   "CIT-S4",
+   [
+    "A.6.3"
+   ]
+  ],
+  [
+   "CIT-S5",
+   [
+    "A.5.37",
+    "A.6.1",
+    "A.6.2",
+    "A.6.4",
+    "A.6.5",
+    "A.6.6",
+    "A.6.7"
+   ]
+  ],
+  [
+   "CIT-S6",
+   [
+    "A.5.15",
+    "A.5.16",
+    "A.5.17",
+    "A.5.18"
+   ]
+  ],
+  [
+   "CIT-S7",
+   [
+    "A.5.19",
+    "A.5.20",
+    "A.5.21",
+    "A.5.22",
+    "A.5.23"
+   ]
+  ],
+  [
+   "CIT-S8",
+   [
+    "A.5.5",
+    "A.5.24",
+    "A.5.25",
+    "A.5.26",
+    "A.5.27",
+    "A.5.28",
+    "A.6.8"
+   ]
+  ],
+  [
+   "CIT-S9",
+   [
+    "A.5.29",
+    "A.5.30",
+    "A.5.31",
+    "A.5.32",
+    "A.5.33",
+    "A.5.34",
+    "A.5.35",
+    "A.5.36"
+   ]
+  ],
+  [
+   "CIT-S10",
+   [
+    "A.7.1",
+    "A.7.2",
+    "A.7.3",
+    "A.7.4",
+    "A.7.5",
+    "A.7.6",
+    "A.7.7",
+    "A.7.8",
+    "A.7.9",
+    "A.7.10",
+    "A.7.11",
+    "A.7.12",
+    "A.7.13",
+    "A.7.14"
+   ]
+  ],
+  [
+   "CIT-S11",
+   [
+    "A.8.1",
+    "A.8.2",
+    "A.8.3",
+    "A.8.4",
+    "A.8.5",
+    "A.8.6",
+    "A.8.7",
+    "A.8.8",
+    "A.8.13",
+    "A.8.14",
+    "A.8.15",
+    "A.8.16",
+    "A.8.17"
+   ]
+  ],
+  [
+   "CIT-S12",
+   [
+    "A.8.9",
+    "A.8.10",
+    "A.8.11",
+    "A.8.12",
+    "A.8.18",
+    "A.8.19",
+    "A.8.20",
+    "A.8.21",
+    "A.8.22",
+    "A.8.23",
+    "A.8.24"
+   ]
+  ],
+  [
+   "CIT-S13",
+   [
+    "A.8.25",
+    "A.8.26",
+    "A.8.27",
+    "A.8.28",
+    "A.8.29",
+    "A.8.31",
+    "A.8.32",
+    "A.8.33",
+    "A.8.34"
+   ]
+  ]
+ ],
+ "names": {
+  "1": "Initial",
+  "2": "Managed",
+  "3": "Defined"
+ },
+ "matrix": [
+  [
+   "A.5.1",
+   "Policies within their review date",
+   "Policies in force at Manila within their yearly review ÷ all policies in force at Manila × 100",
+   "Manila's list of the policies in force (CIT-S1)",
+   "Each quarter",
+   "Policy & Governance Analyst",
+   "Group catalogue: 100% (no SITL policy sets a target for it)"
+  ],
+  [
+   "A.5.2",
+   "ISMS roles held and accepted",
+   "ISMS roles with a named holder at Manila who has signed the role's responsibilities ÷ all ISMS roles in LI-RACI × 100",
+   "LI-RACI and the Manila HR file",
+   "Each quarter",
+   "Org CISO",
+   "Group catalogue: 100% (no SITL policy sets a target for it)"
+  ],
+  [
+   "A.5.3",
+   "Conflicting duties dealt with",
+   "Conflicting duties on the A.5.3 list that are separated or under an approved compensating control ÷ all conflicting duties on the list × 100",
+   "The A.5.3 list of conflicting duties (CIT-S1)",
+   "Each quarter",
+   "Compliance Manager",
+   "Group catalogue: 100% (no SITL policy sets a target for it)"
+  ],
+  [
+   "A.5.4",
+   "Starters briefed before access",
+   "Starters briefed on their security duties before their access was granted ÷ all starters × 100",
+   "Team leaders' briefing records and the access requests",
+   "Each month",
+   "HR, for the Org CEO",
+   "Group catalogue: 100% (no SITL policy sets a target for it)"
+  ],
+  [
+   "A.5.18",
+   "Leavers disabled within the SLA",
+   "Leavers whose accounts were all disabled within the SLA (4 hours; 1 hour if involuntary) ÷ all leavers × 100",
+   "HR leaver records and the IAM disable log",
+   "Each month",
+   "IAM team",
+   "SITL-POL-006 Section 10"
+  ],
+  [
+   "A.5.22",
+   "Critical and High suppliers reassessed on time",
+   "Critical and High suppliers reassessed by their due date ÷ Critical and High suppliers whose reassessment fell due × 100",
+   "The Manila vendor register",
+   "Each quarter",
+   "Vendor / Third-Party Risk Analyst",
+   "SITL-POL-013 Section 10"
+  ],
+  [
+   "A.5.26",
+   "Post-incident reviews within 10 days",
+   "Incidents closed with a post-incident review within 10 days ÷ all incidents closed × 100",
+   "The incident register",
+   "Each month",
+   "Incident Response & Crisis Manager (GRC)",
+   "SITL-POL-014 Section 10"
+  ],
+  [
+   "A.5.34",
+   "Processing activities with a current RoPA entry",
+   "Processing activities with a current RoPA entry ÷ all processing activities × 100",
+   "The RoPA",
+   "Each quarter",
+   "Privacy Compliance Analyst",
+   "SITL-POL-017 Section 10"
+  ],
+  [
+   "A.6.3",
+   "Workforce trained in the last 12 months",
+   "Staff who completed security awareness training in the last 12 months ÷ all staff × 100",
+   "Training records",
+   "Each month",
+   "Security Awareness & Training Specialist",
+   "SITL-POL-020 Section 10"
+  ],
+  [
+   "A.8.8",
+   "Remediation SLA compliance, classes 1–2",
+   "Class 1–2 findings within SLA ÷ all class 1–2 findings × 100, to one decimal",
+   "VUL-TEST (T9.2)",
+   "Each month",
+   "Vulnerability Management Governance Analyst",
+   "SITL-POL-010 Section 10"
+  ]
+ ],
+ "base": {
+  "A.5.2": "LI-RACI names 10 ISMS roles, one for each ISMS process. A holder is named at Manila for 7 of them, and 4 of those 7 have signed the role's responsibilities (Manila HR file).",
+  "A.5.3": "The A.5.3 list holds 2 conflicting duties (CIT-S1). Since 12 October 2026 the procurement team creates suppliers, so the finance clerk only approves their payments. Since 2 November 2026 a second network administrator approves each firewall change.",
+  "A.5.18": "Leavers from 1 September to 30 November 2026: 18, of them 6 involuntary. All 12 voluntary leavers were disabled within 4 hours. 5 of the 6 involuntary leavers were disabled within 1 hour; the sixth after 3 hours (IAM disable log).",
+  "A.5.22": "The Manila vendor register tiers 7 suppliers Critical or High. Reassessments due in the 12 months to 30 November 2026: 6 (one High supplier is not yet due). Done by their due date: 4. Overdue: the outside payroll provider and a telecom carrier.",
+  "A.8.8": "VUL-TEST (T9.2), measured on 30 November 2026 as SITL-POL-010 Section 10 sets out. Class 1: 6 findings, 4 within SLA. Class 2: 18 findings, 13 within SLA. Class 3: 10 findings, 9 within SLA. Class 4: 6 findings, 6 within SLA."
+ },
+ "values": {
+  "A.5.2": [
+   "30.0%",
+   "40.0%",
+   "57.1%",
+   "70.0%"
+  ],
+  "A.5.3": [
+   "0.0%",
+   "50.0%",
+   "66.7%",
+   "100.0%"
+  ],
+  "A.5.18": [
+   "66.7%",
+   "83.3%",
+   "94.4%",
+   "100.0%"
+  ],
+  "A.5.22": [
+   "57.1%",
+   "66.7%",
+   "85.7%",
+   "100.0%"
+  ],
+  "A.8.8": [
+   "66.7%",
+   "70.8%",
+   "72.2%",
+   "80.0%"
+  ]
+ },
+ "actions": {
+  "A.5.2": [
+   "Count the roles with a named holder instead, so the value reads 70.0% and the measure is out of the red.",
+   "Have every ISMS role holder named and signed by 31 March 2027, owner the Org CISO, and report the gap to the next management review.",
+   "Wait a quarter: the roles were only set in week 3, so the measure has not had time to move."
+  ],
+  "A.5.3": [
+   "Raise a corrective action at the next management review: the control is still at Level 1.",
+   "Stop measuring: both conflicts are dealt with, so the target is met for good.",
+   "Keep measuring each quarter, and write down how conflicts are found and kept apart, so the result holds as people change."
+  ],
+  "A.5.18": [
+   "Ask the IAM team lead why one involuntary leaver took 3 hours, fix the cause, and measure again next month.",
+   "Take it to the management review as a nonconformity now: the target is 100%.",
+   "No action: 94.4% is close enough to the target."
+  ],
+  "A.5.22": [
+   "Re-tier the payroll provider and the carrier to Medium, so their reassessments are not due yet.",
+   "Measure again next quarter: the two reassessments may be done by then.",
+   "Have the two overdue reassessments done by 31 January 2027, owner the Vendor / Third-Party Risk Analyst, with the Org CISO reporting progress to the management review."
+  ],
+  "A.8.8": [
+   "Lower the target to 80%: the office cannot reach 90% this year.",
+   "Ask the Org CISO to approve a remediation plan for the overdue class 1–2 findings, owner the Vulnerability Management Governance Analyst, and report it to the management review.",
+   "Count classes 3–4 in as well, so the value reads 80.0% and the measure is out of the red."
+  ]
+ },
+ "objectives": {
+  "A.8.8": "OBJ-01 Close class 1–2 vulnerabilities on time: remediation SLA compliance 90% or more by 30 June 2027",
+  "A.5.18": "OBJ-02 Remove leavers' access on time: every leaver disabled within the SLA by 31 March 2027",
+  "A.5.2": "OBJ-03 Run the ISMS through named roles: every ISMS role held and accepted by 31 March 2027",
+  "A.5.22": "OBJ-04 Keep suppliers assured: every Critical and High supplier reassessed on time by 30 June 2027",
+  "A.5.3": "None set in LI-OBJ"
+ },
+ "targets": [
+  "Target 100%, threshold below 90%",
+  "Target 95%, threshold below 85%",
+  "Target 90%, threshold below 80%",
+  "Target 80%, threshold below 70%"
+ ]
+}

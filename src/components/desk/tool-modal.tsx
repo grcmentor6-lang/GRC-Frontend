@@ -10,7 +10,7 @@ import { BriefProgress, BriefWork, CopyWork, GridProgress, GridWork, LogWork, Re
 import { DECIDE_FROM, LADDER, STUDY, briefOf, deliverableFor, handedIn, regOf, rowDocs, stepSources } from "@/lib/desk/registers";
 import { gridKey, lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { Inbox, MessageNotice } from "./chat";
-import { ToolScreen } from "./viewer";
+import { LISTS_STANDARDS, ToolScreen } from "./viewer";
 import { Marked, NoteList, PathChip, StepInstruction } from "./step-text";
 import { FloatWindow } from "./float-window";
 import { PreparedFor } from "./prepared-for";
@@ -19,14 +19,15 @@ import { DocCitation } from "./doc-text";
 import { DOC_TEXT } from "@/lib/desk/docs";
 import { OrgDetails, type OrgFull } from "./org-drawer";
 import { ORG_TONE, OrgMark, OrgName } from "@/lib/desk/org-tone";
-import { dmy, dueDate, fmtDay, rmfTable, screenOf, testDue, workKind, type Desk, type Step, type Task } from "@/lib/desk/model";
+import { checkpoints, dmy, dueDate, fmtDay, rmfTable, screenOf, testDue, workKind, type Desk, type Step, type Task } from "@/lib/desk/model";
 import { RMF, folders, submitCodes } from "@/lib/desk/forms";
-import { decisionChecked, stepKey, type Progress } from "@/lib/desk/progress";
+import { decisionChecked, stepKey } from "@/lib/desk/progress";
 import { appZoom } from "@/lib/zoom";
 import { useAuth } from "@/components/auth/auth-provider";
 import { GuidedTour, markTourSeen, useTourOnce } from "@/components/app/guided-tour";
 import { autoGuide, guideFor } from "./step-guides";
 import { LabWindow } from "./lab-console";
+import { PhyPlan } from "./phy-plan";
 import { allCaptures, labOf } from "@/lib/desk/labs";
 
 /**
@@ -55,6 +56,8 @@ export function ToolModal({ toolKey, onClose, viewOnly = false }: { toolKey: str
 
 /** Section numbers in reading order: "2" before "2.1" before "3" before "10". */
 const bySec = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
+/** "Section 2", but an annex by its own name ("Annex B", F1.3 step 4), as doc-text.tsx heads it. */
+const secName = (x: string) => (/^\d/.test(x) ? `Section ${x}` : x);
 
 /** The bar over a step's work that says where its values are read: one sentence, amber, the places as chips. */
 const READ_BAR = "flex shrink-0 items-start gap-2.5 border-b border-[#F5E3B0] bg-[#FFFAEB] px-4 py-3 text-[13.5px] leading-relaxed text-[#78350F] sm:px-5";
@@ -99,7 +102,7 @@ function DocWindow({ id, index, onClose, beside }: { id: string; index: number; 
               }}
               className="focus-ring rounded border border-[#C7CBF5] bg-[#F7F8FF] px-2 py-0.5 font-mono text-[12px] font-semibold text-[#4338CA] hover:bg-[#EEF0FF] active:scale-[0.97]"
             >
-              Section {c}
+              {secName(c)}
             </button>
           ))}
         </nav>
@@ -119,7 +122,7 @@ function DocWindow({ id, index, onClose, beside }: { id: string; index: number; 
 }
 
 type ToolWindowProps = { toolKey: string; index: number; onClose: () => void; beside?: boolean; plain?: boolean };
-/** A window opened from the toolbar: a document from the Policy Library ("doc|BKB-ADD-16"), or a tool's screen. */
+/** A window opened from the toolbar: a document from the Policy Library ("doc|SITL-ADD-16"), or a tool's screen. */
 export function ToolWindow(props: ToolWindowProps) {
   const lab = labOf(props.toolKey);
   if (lab) return <LabWindow lab={lab} index={props.index} onClose={props.onClose} />;
@@ -176,7 +179,7 @@ function ScreenWindow({ toolKey, index, onClose, beside, plain }: {
   return (
     <FloatWindow
       title={deliverable && here && ownView(desk.tasks[here.task], mock?.tool) ? desk.tasks[here.task].panel.tool : (mock?.tool ?? toolKey.replace("|", " › "))}
-      eyebrow={`${desk.sections[sec]?.t ?? sec}${toolKey === "policies|Policy Library" ? ` · ${libraryDocs(desk, progress).length} documents` : deliverable && here && ownView(desk.tasks[here.task], mock?.tool) ? ` · ${desk.tasks[here.task].panel.stamp}` : mock?.stamp ? ` · ${mock.stamp}` : ""}`}
+      eyebrow={`${desk.sections[sec]?.t ?? sec}${toolKey === "policies|Policy Library" ? ` · ${libraryDocs(desk).length} documents` : deliverable && here && ownView(desk.tasks[here.task], mock?.tool) ? ` · ${desk.tasks[here.task].panel.stamp}` : mock?.stamp ? ` · ${mock.stamp}` : ""}`}
       leading={<span className="grid h-7 w-7 place-items-center rounded bg-[#111827] text-white"><Icon name="grid" size={14} /></span>}
       onClose={onClose}
       index={index}
@@ -332,7 +335,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
               {(handIn || regHandIn || briefHandIn) && task ? `File${briefHandIn || new Set(regsIn.map((r) => r.title.split(" · ")[0])).size > 1 ? "s" : ""} · ${task.id} · 02_Working` : rmf !== null && task ? `File · ${task.id} · 01_Inputs` : `${section?.t ?? sec}${stamp ? ` · ${stamp}` : ""}`}
             </p>
             {/* A tool's path reads as a breadcrumb: its separators recede, the names carry the line. */}
-            <h2 className="mt-[3px] truncate text-[17px] font-bold leading-tight tracking-[-0.015em] text-[#111827] sm:text-[20px]">
+            <h2 className="mt-[3px] break-words text-[17px] font-bold leading-tight tracking-[-0.015em] text-[#111827] sm:truncate sm:text-[20px]">
               {heading.split(" › ").map((p, i) => <Fragment key={i}>{i > 0 && <span className="font-normal text-[#C4C8D0]"> › </span>}{p}</Fragment>)}
             </h2>
           </div>
@@ -376,7 +379,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
                   {sources.map(([id, secs], i) => (
                     <Fragment key={id}>
                       {i > 0 && " and "}
-                      <DocTag>{`${id}${secs.length ? ` Section ${[...secs].sort(bySec).join(", Section ")}` : ""}`}</DocTag>
+                      <DocTag>{`${id}${secs.length ? ` ${[...secs].sort(bySec).map(secName).join(", ")}` : ""}`}</DocTag>
                     </Fragment>
                   ))}
                   : open {sources.length > 1 ? "them" : "it"} from <PathChip path="Policies › Policy Library" />
@@ -385,7 +388,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
                     const secs = [...new Set(sources.filter(([id]) => DOC_TEXT.has(id)).flatMap(([, x]) => x))].sort(bySec);
                     return secs.length > 0 ? (
                       <span data-guide="jump-hint">
-                        , then click {secs.map((x) => `Section ${x}`).join(secs.length > 2 ? ", " : " or ").replace(/, (?=[^,]*$)/, " or ")} at the top to jump to {secs.length > 1 ? "each" : "it"}
+                        , then click {secs.map(secName).join(secs.length > 2 ? ", " : " or ").replace(/, (?=[^,]*$)/, " or ")} at the top to jump to {secs.length > 1 ? "each" : "it"}
                       </span>
                     ) : null;
                   })()}
@@ -412,6 +415,8 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
                     <CompareWork task={task} s={s} />
                   </div>
                 )}
+                {/* A drawing the step reads above its table (T9.1: dataset PHY's floor plan). */}
+                {s && regOf(task.id, s.n)?.figure?.[s.n] === "phy" && <PhyPlan />}
                 {regHandIn && regsIn.length > 1 ? (
                   // T6.1's Sheet 4 first: the work, then the files it is handed in with. T3.2's and T5.1's Sheet 2 stay below.
                   [...regsIn].sort((a, b) => +!!b.first - +!!a.first).map((r) => (
@@ -512,6 +517,9 @@ function Screen({ toolKey }: { toolKey: string }) {
   if (toolKey === "policies|Policy Library") return <PolicyLibrary />;
   if (toolKey === "learn|Reference pages") return <ReferencePages />;
   if (toolKey === "home|My plan") return <Plan />;
+  // The checkpoints and their task pairs are the Weeks sheet's (week.hc); the pack's old list named other tasks.
+  if (toolKey === "home|Checkpoints" && mock)
+    return <ToolScreen flush mock={{ ...mock, pl: { ...(mock.pl as object), i: checkpoints(desk.weeks).map((c) => [`${c.hc} checkpoint`, `The work of ${c.tasks.join(" and ")} is checked automatically against the server keys at checkpoint ${c.hc}, at the end of its week. No person reads it.`, `Week ${c.week}`]) } }} />;
   if (toolKey === "learn|Knowledge Checks") return <Tests />;
   if (toolKey === "evidence|Capture Screenshot" && mock)
     return <ToolScreen mock={{ ...mock, pl: { ...(mock.pl as object), h: ["Evidence ref", "View", "Filter", "Rows", "UTC", "SHA-256"], r: allCaptures(progress).map((c) => [c.ref, c.viewTitle, c.filter, String(c.ids.length), c.utc, c.sha]) } }} flush />;
@@ -579,7 +587,7 @@ function Screen({ toolKey }: { toolKey: string }) {
         />
       </>
     );
-  return <ToolScreen mock={mock} flush />;
+  return <ToolScreen mock={mock} flush standards={LISTS_STANDARDS.has(toolKey)} />;
 }
 
 /** A reading step's work: confirm the screen has been read. */
@@ -661,8 +669,10 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
               const repeats = !w || w === s.t || w.startsWith(stem);
               // A per-row decision: the question and its guidance; the options are the drop-downs themselves.
               if (s.kind === "each") {
-                const [head, rest = ""] = s.w.replace(LI_TAG, "").replace(/^decide \(for each item\):\s*/i, "").split(/\s*Options:/);
-                const guidance = rest.split(/(?<=\.)\s+(?=Guidance:)/)[1] ?? "";
+                // GRC 101's rebuild (docs/li101) takes the options out: the question then runs straight into its Guidance.
+                const w = s.w.replace(LI_TAG, "").replace(/^decide \(for each item\):\s*/i, "");
+                const head = w.split(/\s*(?:Options:|Guidance:|Scored\b)/)[0];
+                const guidance = w.match(/Guidance:[^]*?(?=\s*Scored\b|$)/)?.[0] ?? "";
                 return (
                   <>
                     <h3 className="text-[17px] font-bold leading-[1.35] tracking-[-0.01em] text-[#111827] [text-wrap:balance]">{head}</h3>
@@ -671,7 +681,8 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
                 );
               }
               if (s.kind === "pick") {
-                const question = s.w.split(/\s*Options:/)[0].replace(LI_TAG, "").replace(/^decide:\s*/i, "").trim();
+                // Ends at its options, or at "Then:" where the rebuild took the options out (docs/li101): part 2 is said below.
+                const question = s.w.split(/\s*(?:Options|Then):/)[0].replace(LI_TAG, "").replace(/^decide:\s*/i, "").trim();
                 return <h3 className="text-[17px] font-bold leading-[1.35] tracking-[-0.01em] text-[#111827] [text-wrap:balance]">{question}</h3>;
               }
               return repeats ? (
@@ -748,7 +759,7 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
           <p className="flex items-center gap-2 border-b border-[#C8ECD5] bg-[#EFFBF3] px-4 py-3.5 text-[13.5px] text-[#166534] sm:px-5">
             <Icon name="checkCircle" size={16} className="shrink-0 text-[#16A34A]" />
             <span>
-              <strong className="font-semibold">Done when</strong> {LADDER[task.id]?.[n] ? `you reach rule ${LADDER[task.id][n].rule}'s first yes for the lit row` : STUDY[task.id]?.[n] ? `you have found all ${STUDY[task.id][n].length} in ${STUDY[task.id][n][0]?.col === -1 ? "the worked section" : regOf(task.id, n)?.rows.every((r) => !regOf(task.id, n)!.mine(r, desk)) ? regOf(task.id, n)!.code : regOf(task.id, n)?.rows.some((r) => !regOf(task.id, n)!.mine(r, desk)) ? "the worked rows" : "the template"}` : reading ? "you have read the screen and confirmed it" : s.o}
+              <strong className="font-semibold">Done when</strong> {LADDER[task.id]?.[n] ? `you reach rule ${LADDER[task.id][n].rule}'s first yes for the lit row` : STUDY[task.id]?.[n] ? `you have found all ${STUDY[task.id][n].length} in ${STUDY[task.id][n][0]?.col === -1 ? "the worked section" : regOf(task.id, n)?.studyAll?.includes(n) || regOf(task.id, n)?.rows.every((r) => !regOf(task.id, n)!.mine(r, desk)) ? regOf(task.id, n)!.code : regOf(task.id, n)?.rows.some((r) => !regOf(task.id, n)!.mine(r, desk)) ? "the worked rows" : "the template"}` : reading ? "you have read the screen and confirmed it" : s.o}
             </span>
           </p>
         </motion.div>
@@ -929,7 +940,7 @@ function Tests() {
 }
 
 /**
- * The first item the step in hand tags, scrolled into view when a list opens: BKB-POL-016 sits some twenty rows
+ * The first item the step in hand tags, scrolled into view when a list opens: SITL-POL-016 sits some twenty rows
  * down the library, and the owner had to scroll to find it (T5.1 step 1).
  */
 function useCitedInView() {
@@ -941,18 +952,15 @@ function useCitedInView() {
 }
 
 /** The Policy Library's documents: the group's, and the addenda of the mentee's own two organisations. */
-function libraryDocs(desk: Desk, p: Progress) {
+function libraryDocs(desk: Desk) {
   const own = new Set(Object.values(desk.orgs).map((o) => (o as { addendum?: string }).addendum));
-  // A saved copy of an official source is filed once the learner has sorted the monitoring results (T11.2 step 2): listed
-  // earlier, the two copies would say which results are official. ponytail: the one task with saved sources, by name.
-  const saved = !!p.done[stepKey("T11.2", 2)] || !!p.submitted["T11.2"];
-  return desk.library.docs.filter(([code]) => (!code.startsWith("BKB-ADD-") || own.has(code)) && (saved || !code.startsWith("SRC-")));
+  return desk.library.docs.filter(([code]) => !code.startsWith("SITL-ADD-") || own.has(code));
 }
 
 /**
  * Policies › Policy Library: the group's documents and the addenda of the mentee's two organisations,
  * each opening in its own window. The pack's mock-up listed codes only, with nothing behind them, so
- * a step that said "open BKB-ADD-16 Section 2" had no way in from the toolbar. A document the step in hand
+ * a step that said "open SITL-ADD-16 Section 2" had no way in from the toolbar. A document the step in hand
  * cites carries the step's tag, as a tool does in its menu.
  */
 function PolicyLibrary() {
@@ -961,11 +969,11 @@ function PolicyLibrary() {
   const task = here ? desk.tasks[here.task] : undefined;
   // A step whose rows each name their own policy (T3.2 steps 3 and 6) tags those.
   const cited = new Set([...(task && step ? stepSources(task, step.n, step.refs.docs) : []).map(([id]) => id), ...(task && step ? rowDocs(task.id, step.n, progress) : [])]);
-  const docs = libraryDocs(desk, progress);
+  const docs = libraryDocs(desk);
   const box = useCitedInView();
   const groups: [string, typeof docs][] = [
-    ["Your organisations' addenda", docs.filter(([c]) => c.startsWith("BKB-ADD-"))],
-    ["Group documents", docs.filter(([c]) => !c.startsWith("BKB-ADD-") && !c.startsWith("SRC-"))],
+    ["Your organisations' addenda", docs.filter(([c]) => c.startsWith("SITL-ADD-"))],
+    ["Group documents", docs.filter(([c]) => !c.startsWith("SITL-ADD-") && !c.startsWith("SRC-"))],
     // Copies of official sources saved for a regulatory brief (T11.2): kept with the brief, as evidence of the text as read.
     ["Saved regulatory sources", docs.filter(([c]) => c.startsWith("SRC-"))],
   ];
@@ -998,7 +1006,7 @@ function PolicyLibrary() {
 }
 
 /**
- * Learn › Reference pages: the pack's reference sheets ("Ref-27000 family", "Ref-ISMS processes" …), each
+ * Learn › Reference pages: the reference sheets the programme cites ("Ref-ISMS processes", "Ref-Maturity Model" …), each
  * opening in its own window. The pages the step in hand cites carry its tag, as a cited document does in
  * the Policy Library.
  */

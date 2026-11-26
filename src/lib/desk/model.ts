@@ -52,6 +52,9 @@ export interface Task {
   hc: string;
   weight: number;
   ndec: number;
+  /** His Tasks sheet: "GRC method practised" ("C.ii Map controls to compliance frameworks") and "Responsibility". */
+  method: string;
+  resp: string;
 }
 
 export interface Week {
@@ -61,6 +64,7 @@ export interface Week {
   support: [string, string][];
   crit: string[];
   hc?: string; gate?: string; kc?: string;
+  tasks?: string[];
 }
 export interface Inject {
   task: string; id: string; type: string; sim_notice: string; notice: string; options: string[];
@@ -114,7 +118,30 @@ export interface Desk {
   gates: string[];
   domains: Record<string, string>;
   programme: { title: string; weeks: number; hours_per_week: string; model: string };
+  /** The Lead Implementer workbook's ISO coverage: requirement, type, week, task(s), implementation depth (scripts/build-li101.py). */
+  isocov?: [string, string, number, string, string][];
 }
+
+/**
+ * The areas of responsibility a task practises, from his "Responsibility" column: the head before the dash, without
+ * notes in brackets, split on ";". "Regulatory research; framework mapping" → both. The record's domain lines (Reports,
+ * Career, CV) read this; backend/scripts/build_desk_catalog.py `_areas` does the same for the server.
+ */
+export const areasOf = (resp: string): string[] =>
+  (resp ?? "")
+    .replace(/\s*\([^)]*\)/g, "")
+    .split(/\s+[—–]\s+/)[0]
+    .split(/;\s*/)
+    .map((a) => a.trim())
+    .filter(Boolean)
+    .map((a) => a[0].toUpperCase() + a.slice(1));
+
+/** The human checkpoints as his Weeks sheet sets them: week 4's "HC2 (T3.2 + T4.2)" → { hc: "HC2", week: 4, tasks }. */
+export const checkpoints = (weeks: Pick<Week, "n" | "hc">[]) =>
+  weeks.flatMap((w) => {
+    const m = w.hc?.match(/^(HC\d+) \((.+)\)$/);
+    return m ? [{ hc: m[1], week: w.n, tasks: m[2].match(/[FT]\d+\.\d+/g) ?? [] }] : [];
+  });
 
 let cached: Promise<Desk> | null = null;
 // The desk in the learner's names (lib/desk/names.ts), copied once per identity; the canonical one is the file itself.
@@ -268,7 +295,7 @@ export function stepRefs(s: Step): { kind: RefKind; id: string }[] {
     ...r.pages.map((id) => ({ kind: "page" as const, id })),
     ...r.tpls.map((id) => ({ kind: "tpl" as const, id })),
     ...r.ds.map((id) => ({ kind: "ds" as const, id })),
-    // A document citation carries its sections: "BKB-ADD-16#7", "BKB-ERM-001#6.2–6.4".
+    // A document citation carries its sections: "SITL-ADD-16#7", "SITL-ERM-001#6.2–6.4".
     ...r.docs.map(([id, secs]) => ({ kind: "doc" as const, id: secs.length ? `${id}#${secs.join(",")}` : id })),
     ...r.clauses.map((id) => ({ kind: "clause" as const, id })),
   ];

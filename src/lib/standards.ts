@@ -52,12 +52,12 @@ const STANDARD_ENRICHMENT: StandardEnrichment[] = [
   },
   {
     id: "nistcsf", code: "NIST CSF 2.0", short: "NIST", domain: "Risk-Based Cybersecurity", crossCutting: true,
-    description: "Six functions — Govern, Identify, Protect, Detect, Respond, Recover — that organise risk-based cybersecurity outcomes for any organisation, and map across every other framework in this programme.",
+    description: "Six functions — Govern, Identify, Protect, Detect, Respond, Recover — that organise risk-based cybersecurity outcomes for any organisation, and map across to other frameworks.",
     tagline: "Cross-cuts every standard you'll touch.",
   },
   {
     id: "cisv8", code: "CIS Controls v8", short: "CIS", domain: "Prioritised Security Controls",
-    description: "Eighteen Critical Security Controls grouped into Implementation Groups (IG1–IG3). The mentee starts at IG1 — the cyber-hygiene baseline every organisation should meet.",
+    description: "Eighteen Critical Security Controls grouped into Implementation Groups (IG1–IG3). IG1 is the cyber-hygiene baseline every organisation should meet.",
     tagline: "Tactical, prioritised, measurable.",
   },
   {
@@ -67,7 +67,7 @@ const STANDARD_ENRICHMENT: StandardEnrichment[] = [
   },
   {
     id: "gdpr", code: "GDPR", short: "GDPR", domain: "Data Protection & Privacy",
-    description: "EU 2016/679 — lawful basis, data-subject rights, Records of Processing Activities (Article 30), and DPIA screening (Article 35). The mentee maps a real personal-data flow end-to-end.",
+    description: "EU 2016/679 — lawful basis, data-subject rights, Records of Processing Activities (Article 30), and DPIA screening (Article 35).",
     tagline: "Map the data; document the basis.",
   },
 ];

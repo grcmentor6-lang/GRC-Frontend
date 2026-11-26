@@ -2,15 +2,14 @@ import type { Desk } from "./model";
 import type { Progress } from "./progress";
 
 /**
- * GRC 101 method badges (pack v1.9.0: GRC101_Engine/p_badges.py, Badges/GRC101_Badges.html).
+ * GRC 101 method badges. The families are the pack's (GRC work-method catalogue A–Q, colours and icons from
+ * GRC101_Badges.html); which task earns which is his Tasks sheet's "GRC method practised" (docs/li101/LI101_source.xlsx):
+ * a task earns towards the badge of its method's family. Every task except F1.1 earns towards exactly one badge, and no
+ * task names M, so the pack's Privacy & Data Protection badge is not offered (see NO_BADGE).
  *
- * Each badge stands for one family of the GRC work-method catalogue (A–Q) that GRC 101 practises
- * through a task's primary method. Every task except F1.1 earns towards exactly one badge; other
- * tasks that practise the family as a supporting method are shown, not required.
- *
- * Award rule (BKB-MEN-101 Section 13a): earned when every earning task is submitted with a released task
+ * Award rule (SITL-MEN-101 Section 13a): earned when every earning task is submitted with a released task
  * score ≥ 65; with distinction when their average is ≥ 85 and none is below 75. The capstone is
- * awarded when all ten method badges are earned.
+ * awarded when every method badge is earned.
  */
 export const PASS = 65;
 export const DIST_AVG = 85;
@@ -22,27 +21,25 @@ export interface MethodBadge {
   label: string;
   name: string;
   family: string;
-  /** The catalogue methods counted, as the pack names them. */
+  /** The catalogue methods his tasks practise for this family, as he names them, joined by " · ". */
   methods: string;
   /** What the holder can do. */
   can: string;
   colour: string;
   icon: keyof typeof ICONS;
   earn: string[];
-  support: string[];
 }
 
 export const BADGES: MethodBadge[] = [
-  { code: "BDG-A", label: "A", name: "Assessment & Analysis", family: "Assessment and Analysis", methods: "A.iv Identify and discover risks, threats, and assets · A.ii Assess and audit systems, processes, and policies", can: "Reads an organisation's context, assets and policies against a rule and records what is there and what is missing, with a source for every value.", colour: "1F6FB2", icon: "search", earn: ["F1.3", "F2.1", "T4.1"], support: ["T6.1", "T6.2", "T8.1", "T8.2"] },
-  { code: "BDG-B", label: "B", name: "Governance & Risk", family: "Governance and Risk Management", methods: "B.vi Develop risk registers and tracking mechanisms · B.vii Establish board-level cybersecurity reporting", can: "Keeps a risk register current with the rating rules and turns it into a Top-5 summary and an acceptance request for the board.", colour: "B23A48", icon: "shield", earn: ["T7.1", "T7.2"], support: ["T12.1"] },
-  { code: "BDG-C1", label: "C1", name: "Regulatory Requirements", family: "Compliance and Regulatory Management", methods: "C.i Assess regulatory compliance requirements · C.vi Manage regulatory reporting and documentation · C.vii Monitor regulatory changes and updates", can: "Identifies what binds an organisation — laws, standards and contracts — builds an obligations register, works breach-notification deadlines and briefs on regulatory change.", colour: "7A4FB0", icon: "scales", earn: ["F1.2", "T3.1", "T10.2", "T11.2"], support: ["F1.3", "T10.1"] },
-  { code: "BDG-C2", label: "C2", name: "Compliance Mapping & Audit", family: "Compliance and Regulatory Management", methods: "C.ii Map controls to compliance frameworks · C.v Perform compliance audits and assessments", can: "Maps requirements to ISO/IEC 27001 controls and policy, rates coverage, prepares audit evidence requests and supports an external audit.", colour: "5B3E96", icon: "clipboard", earn: ["T3.2", "T5.1", "T12.2"], support: ["T10.1", "T12.1"] },
-  { code: "BDG-D", label: "D", name: "Process Documentation", family: "Design and Development", methods: "D.ii Develop and create security tools, processes, and documentation", can: "Turns a policy statement into a standard operating procedure that another person can follow step by step.", colour: "2E8B57", icon: "doc", earn: ["T4.2"], support: [] },
-  { code: "BDG-G", label: "G", name: "Control Testing", family: "Testing and Validation", methods: "G.v Execute security control testing · G.viii Validate security configurations · G.i Test and validate security controls and processes", can: "Runs a fixed control-test script on a sample, matches records against logs, calculates SLA status and records each exception with its evidence.", colour: "C76A12", icon: "flask", earn: ["T5.2", "T6.1", "T6.2", "T8.1", "T8.2"], support: ["T5.1"] },
-  { code: "BDG-I", label: "I", name: "Security Communication", family: "Communication and Advisory", methods: "I.vi Create cybersecurity awareness campaigns", can: "Assembles an awareness campaign from approved content for a named audience, with timing, channels and measures.", colour: "D04F8A", icon: "megaphone", earn: ["T11.1"], support: ["F1.3", "T5.2", "T7.2", "T10.2"] },
-  { code: "BDG-L", label: "L", name: "Third-Party Risk", family: "Third-Party Risk Management", methods: "L.iii Create third-party risk assessment frameworks · L.i Assess vendor security postures", can: "Tiers a vendor, builds its security questionnaire from the question bank and reviews its assurance report before onboarding.", colour: "0E8A8A", icon: "link", earn: ["T9.1", "T9.2"], support: [] },
-  { code: "BDG-M", label: "M", name: "Privacy & Data Protection", family: "Legal and Regulatory Coordination", methods: "M.iii Establish data protection protocols", can: "Records a processing activity with its legal basis, data flow and transfers, as required by data-protection law.", colour: "3D5A80", icon: "lock", earn: ["T10.1"], support: ["T10.2"] },
-  { code: "BDG-O", label: "O", name: "Quality Assurance", family: "Quality Assurance", methods: "O.ii Review deliverables for compliance", can: "Checks evidence and deliverables against a fixed checklist, rejects what fails with a defect code, and verifies that corrective actions are really closed.", colour: "4A6B1F", icon: "check", earn: ["F2.2", "T12.1"], support: ["T4.1", "T5.1", "T5.2", "T12.2"] },
+  { code: "BDG-A", label: "A", name: "Assessment & Analysis", family: "Assessment and Analysis", methods: "A.iv Identify and discover risks, threats, and assets · A.ii Assess and audit systems, processes, and policies", can: "Assesses an ISMS and its setting against ISO/IEC 27001: the organisation's context, the baseline gap and maturity of clauses 4–10, the information security policy, the asset inventory and a physical walkthrough, with a source for every finding.", colour: "1F6FB2", icon: "search", earn: ["F1.3", "F2.2", "T3.1", "T4.1", "T9.1"] },
+  { code: "BDG-B", label: "B", name: "Governance & Risk", family: "Governance and Risk Management", methods: "B.vi Develop risk registers and tracking mechanisms · B.vii Establish board-level cybersecurity reporting", can: "Keeps the risk register current: asset–threat–control chains, the risk treatment plan and an acceptance request, and the measures that report ISMS performance to management.", colour: "B23A48", icon: "shield", earn: ["T4.2", "T5.1", "T11.1"] },
+  { code: "BDG-C1", label: "C1", name: "Regulatory Requirements", family: "Compliance and Regulatory Management", methods: "C.i Assess regulatory compliance requirements", can: "Identifies what an ISMS must meet: the ISO/IEC 27000 family of standards, and an office's legal, privacy and continuity obligations, recorded in an obligations register and a record of processing.", colour: "7A4FB0", icon: "scales", earn: ["F1.2", "T8.2"] },
+  { code: "BDG-C2", label: "C2", name: "Compliance Mapping & Audit", family: "Compliance and Regulatory Management", methods: "C.ii Map controls to compliance frameworks · C.v Perform compliance audits and assessments", can: "Maps risks to the 93 ISO/IEC 27001 Annex A controls in a Statement of Applicability, plans an internal audit programme and raises nonconformities, and answers a certification body's requests and findings.", colour: "5B3E96", icon: "clipboard", earn: ["T5.2", "T11.2", "T12.2"] },
+  { code: "BDG-D", label: "D", name: "Process Documentation", family: "Design and Development", methods: "D.ii Develop and create security tools, processes, and documentation", can: "Writes the ISMS documents others work from: the scope statement and process list, the RACI of ISMS roles, and the document-control block and mandatory-documents register.", colour: "2E8B57", icon: "doc", earn: ["F2.1", "T3.2", "T6.2"] },
+  { code: "BDG-G", label: "G", name: "Control Testing", family: "Testing and Validation", methods: "G.viii Validate security configurations · G.i Test and validate security controls and processes · G.v Execute security control testing", can: "Tests controls and records each exception with its evidence: access rules, an incident tabletop, vulnerability-remediation SLAs, configuration baselines and a sample of changes.", colour: "C76A12", icon: "flask", earn: ["T7.1", "T8.1", "T9.2", "T10.1", "T10.2"] },
+  { code: "BDG-I", label: "I", name: "Security Communication", family: "Communication and Advisory", methods: "I.vi Create cybersecurity awareness campaigns", can: "Sets out the competence the ISMS needs, plans its communication and builds an awareness campaign for a named audience, with timing, channels and measures.", colour: "D04F8A", icon: "megaphone", earn: ["T6.1"] },
+  { code: "BDG-L", label: "L", name: "Third-Party Risk", family: "Third-Party Risk Management", methods: "L.iii Create third-party risk assessment frameworks", can: "Tiers suppliers, checks their contracts against a clause checklist and sets out who is responsible for what in cloud and supply-chain services.", colour: "0E8A8A", icon: "link", earn: ["T7.2"] },
+  { code: "BDG-O", label: "O", name: "Quality Assurance", family: "Quality Assurance", methods: "O.ii Review deliverables for compliance", can: "Verifies that corrective actions are really closed, prepares the management-review pack and sets the roadmap to the next maturity level.", colour: "4A6B1F", icon: "check", earn: ["T12.1"] },
 ];
 
 export const CAPSTONE: MethodBadge = {
@@ -51,21 +48,17 @@ export const CAPSTONE: MethodBadge = {
   name: "GRC 101 Method Portfolio",
   family: "All GRC 101 method families",
   methods: "",
-  can: "Holds every GRC 101 method badge: has practised assessment, risk, regulatory and audit work, documentation, testing, communication, third-party risk, privacy and quality assurance on graded deliverables.",
+  can: "Holds every GRC 101 method badge: has practised assessment, risk, regulatory and audit work, documentation, control testing, communication, third-party risk and quality assurance on graded deliverables of an ISO/IEC 27001 implementation.",
   colour: "1F3864",
   icon: "star",
   earn: [],
-  support: [],
 };
 
-/** Method families with no badge in GRC 101, and why (p_badges.BADGE_NOTES). */
+/** Method families with no badge in GRC 101, and why. */
 export const NO_BADGE: [string, string][] = [
-  ["N — Project Execution", "F1.1 (onboarding) is the only task whose primary method is Project Execution. It is the prerequisite for every task, so it earns no badge."],
-  ["H — Monitoring and Management", "Practised as a supporting method inside T6.2 and T8.1, which earn the Control Testing badge."],
-  ["J — Response and Recovery", "Practised as a supporting method inside T10.2, which earns the Regulatory Requirements badge."],
-  ["Q — Knowledge Transfer", "Practised as a supporting method inside T4.2 and T11.1, which earn the Process Documentation and Security Communication badges."],
-  ["P — Track and resolve defects", "Counted with O on the Quality Assurance badge (F2.2 defect codes; T4.1 policy alignment)."],
-  ["E, F, K", "Strategic planning and architecture, implementation, and business continuity are not practised in GRC 101."],
+  ["N — Project Execution", "F1.1 (onboarding) is the only task whose method is Project Execution. It is the prerequisite for every task, so it earns no badge."],
+  ["M — Legal and Regulatory Coordination", "No task's method is M. The record of processing is worked in T8.2, whose method is C.i, so it counts towards Regulatory Requirements."],
+  ["E, F, H, J, K, P, Q", "Not the method of any GRC 101 task."],
 ];
 
 /** The badge a task earns towards (none for F1.1). */
@@ -155,12 +148,14 @@ export function shade(hex: string, f = 0.72) {
     .toUpperCase();
 }
 
-/** Tasks that count towards badges, for checks: every task but F1.1, each in exactly one badge. */
+/** Tasks that count towards badges, for checks: every task but F1.1, each in exactly one badge, the one whose
+ *  methods name the task's own "GRC method practised". */
 export function checkMapping(desk: Desk): string[] {
   const problems: string[] = [];
   for (const id of desk.order) {
-    const n = BADGES.filter((b) => b.earn.includes(id)).length;
-    if (id === "F1.1" ? n !== 0 : n !== 1) problems.push(`${id} earns towards ${n} badges`);
+    const bs = BADGES.filter((b) => b.earn.includes(id));
+    if (id === "F1.1" ? bs.length !== 0 : bs.length !== 1) problems.push(`${id} earns towards ${bs.length} badges`);
+    else if (bs[0] && !bs[0].methods.split(" · ").includes(desk.tasks[id].method)) problems.push(`${id} practises ${desk.tasks[id].method}, not ${bs[0].code}`);
   }
   return problems;
 }

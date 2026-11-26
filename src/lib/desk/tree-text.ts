@@ -8,7 +8,7 @@ const Q_LINE = /^(.+\?)\s*→\s*(.+?)\.?$/;
 const ELSE_LINE = /^Otherwise\s*→\s*(.+?)\.?$/;
 
 /**
- * A document section's paragraphs (BKB-STD-001 Section 5): the first run of "question? → outcome" lines
+ * A document section's paragraphs (SITL-STD-001 Section 5): the first run of "question? → outcome" lines
  * that ends in "Otherwise → outcome", as [start, end) of `paras` and its steps; null when there is none.
  */
 export function treeRun(paras: string[]): { start: number; end: number; steps: TreeStep[] } | null {

@@ -189,7 +189,7 @@ export function DeskDemo() {
               <div className="flex h-[38px] items-center justify-between gap-3 border-b border-[#DDE1E8] px-3">
                 <span className="flex min-w-0 items-center gap-2">
                   <span className="rounded-[3px] bg-[#111827] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">F1.1</span>
-                  <span className="truncate text-[13px] font-bold tracking-tight text-[#111827]">Onboarding to the Group GRC Office</span>
+                  <span className="truncate text-[13px] font-bold tracking-tight text-[#111827]">Onboarding to the ISMS implementation programme</span>
                 </span>
                 <span className="shrink-0 font-mono text-[9.5px] text-[#5B6474]">Week 1 of 12</span>
               </div>
@@ -264,7 +264,7 @@ export function DeskDemo() {
                       })}
                     </div>
                     {checked2 ? (
-                      <p className="mt-1 text-[8.5px] leading-snug text-[#3F4757]"><b className="font-semibold text-[#111827]">The rule:</b> Accounts are personal. Sharing breaks the undertaking and makes the work not yours (BKB-POL-024 Section 3.1).</p>
+                      <p className="mt-1 text-[8.5px] leading-snug text-[#3F4757]"><b className="font-semibold text-[#111827]">The rule:</b> Accounts are personal. Sharing breaks the undertaking and makes the work not yours (SITL-POL-024 Section 3.1).</p>
                     ) : (
                       <div className="mt-1.5 flex items-center gap-2">
                         <span data-t="check2" className={`rounded-[3px] px-2 py-1 text-[9.5px] font-semibold ${picked ? "bg-[#111827] text-white" : "bg-[#EEF0F4] text-[#8A91A3]"}`}>Check my answer</span>
@@ -434,11 +434,11 @@ export function DeskDemo() {
               <div style={{ ...fade(menu, "translateY(6px) scale(0.97)"), transformOrigin: "bottom left" }} className="absolute bottom-[58px] left-[60px] z-40 w-[230px] overflow-hidden rounded-[4px] border border-[#C9CED8] bg-white shadow-[0_12px_32px_rgba(17,24,39,0.2)]">
                 <div className="border-b border-[#DDE1E8] bg-[#F7F8FA] px-2.5 py-1.5">
                   <p className="font-mono text-[8px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">Home</p>
-                  <p className="text-[9px] text-[#5B6474]">Your week and your two organisations</p>
+                  <p className="text-[9px] text-[#5B6474]">Your week and your organisation</p>
                 </div>
-                <MenuRow n="Calendar" d="Weeks, tests and checkpoints" />
-                <MenuRow n="My Organisation" d="Org A and Org B profiles" target />
-                <MenuRow n="My Scores" d="My scores and gates" />
+                <MenuRow n="Calendar" d="Weeks, exams and checkpoints" />
+                <MenuRow n="My Organisation" d="GlobalConnect and LearnTech profiles" target />
+                <MenuRow n="My Scores" d="My scores and what the certificate needs" />
               </div>
 
               {/* The toolbar */}

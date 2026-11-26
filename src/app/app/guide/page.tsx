@@ -282,20 +282,21 @@ export default function GuidePage() {
             </div>
           </Sec>
 
-          <Sec id="lab" title="Tech Lab" icon="bolt" lead="From week 6, five steps open a Tech Lab: a practice console of a simulated system, where you query the system yourself and record what you find.">
+          <Sec id="lab" title="Tech Lab" icon="bolt" lead="Five tasks carry a Tech Lab: a practice console of a simulated system, where you query the system yourself and record what you find. Each lab is a required part of its task.">
             <Cards
               items={[
-                { t: "AppAdmin", d: "Admin and SSO review of a legal-matters system. Week 6, task T6.1." },
-                { t: "NetShield", d: "Remote-admin exposure on a firewall. Week 8, task T8.2." },
-                { t: "LedgerSim", d: "Vendor set-up and payments in finance. Week 9, task T9.2." },
-                { t: "DataSentry", d: "Label and data-map coverage. Week 10, task T10.1." },
-                { t: "LogLens", d: "Log-source coverage before a breach plan. Week 10, task T10.2." },
+                { t: "LedgerSim", d: "Who can set up a supplier and pay it, in the finance system. Week 3, task T3.2." },
+                { t: "AppAdmin", d: "Administrators, sign-in and shared accounts in the CRM. Week 7, task T7.1." },
+                { t: "LogLens", d: "Which systems send logs to the SIEM, and for how long. Week 9, task T9.2." },
+                { t: "NetShield", d: "Admin traffic through the core firewall. Week 10, task T10.1." },
+                { t: "DataSentry", d: "Personal data in test copies and the channels no DLP rule watches. Week 10, task T10.1." },
               ]}
             />
             <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-3">
-              Each lab has parts to work through, findings to record and evidence captures (E1, E2 …) you can
-              see under Evidence. Finish a lab before you submit its task and its findings go into that
-              task&apos;s file. A lab does not stop you submitting.
+              A lab opens on the toolbar, under Systems, once you have done the step it follows; the task&apos;s step
+              list then shows it as a required item. It has parts to work through, findings to record and evidence
+              captures (E1, E2 …) you can see under Evidence. Press Mark complete at the end. Until every lab of a
+              task is complete its Submit stays closed, and the certificate needs all five.
             </p>
           </Sec>
 
@@ -310,7 +311,7 @@ export default function GuidePage() {
             />
           </Sec>
 
-          <Sec id="example" title="Your first task, step by step" icon="play" lead="Week 1 opens with F1.1, “Onboarding to the Group GRC Office”. Here is what it asks, so you know what the work feels like before you start.">
+          <Sec id="example" title="Your first task, step by step" icon="play" lead="Week 1 opens with F1.1, “Onboarding to the ISMS implementation programme”. Here is what it asks, so you know what the work feels like before you start.">
             <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               <Step n={1} title="Check the Assignment table of Onboarding record">
                 <p>The programme office has filled in six values: each organisation&apos;s name and your office in it, the owner of task F1.2, and your start date. Check each against Home › My Organisation, correct any that differ, then press Check my answers.</p>

@@ -10,6 +10,7 @@ g.localStorage = { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: stri
 g.location = { href: "http://x/app/desk" };
 let serverDoc: string | null = null;
 let down = false;
+let refuseWhen = "";
 const patches: string[] = [];
 let inFlight = 0;
 let most = 0;
@@ -23,6 +24,7 @@ g.fetch = async (url: string, init: RequestInit) => {
   await new Promise((r) => setTimeout(r, 20));
   inFlight--;
   if (down) throw new Error("down");
+  if (init.method === "PATCH" && refuseWhen && (init.body as string).includes(refuseWhen)) return new Response(JSON.stringify({ detail: "refused" }), { status: 422 });
   if (init.method === "PATCH") patches.push(JSON.parse(init.body as string).data);
   else serverDoc = JSON.parse(init.body as string).data;
   return new Response("{}");
@@ -30,7 +32,7 @@ g.fetch = async (url: string, init: RequestInit) => {
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
-  const { ProgressStore } = await import("./progress-sync");
+  const { ProgressStore, clean, encode } = await import("./progress-sync");
 
   // A failed read leaves nothing to save over, and a retry recovers.
   down = true;
@@ -40,7 +42,8 @@ async function main() {
   a.update((p) => ({ ...p, done: { x: true } }));
   assert.equal(a.progress.done.x, undefined);
   down = false;
-  serverDoc = JSON.stringify({ done: { old: true }, grids: { G: { "0,0": "a" } } });
+  // Marked as read by the desk since GRC 101 was rebuilt (li-reset.ts): an unmarked copy is marked on load, which is a save of its own.
+  serverDoc = JSON.stringify({ done: { old: true }, grids: { G: { "0,0": "a" } }, answers: { "GRC101#v": "li1" } });
   await a.load();
   assert.equal(a.status, "ready");
   assert.equal(a.progress.done.old, true);
@@ -54,6 +57,8 @@ async function main() {
   const first = JSON.parse(patches[0]);
   assert.deepEqual(first.set, { answers: { k: "v4" } });
   assert.deepEqual(first.del, { done: ["old"] });
+  // Every save carries the rebuilt desk's version: without it the server drops the keys of F1.2 … T12.2 (li-reset.ts).
+  assert.equal(first.v, "li1");
   assert.equal(a.saveState, "saved");
 
   // A failure keeps the value, a newer one wins the retry, and only one request is ever out.
@@ -78,6 +83,32 @@ async function main() {
   assert.equal(JSON.parse(patches[patches.length - 1]).set.answers.big, undefined);
   await wait(1200);
   assert.equal(JSON.parse(patches[patches.length - 1]).set.answers.big.length, 70_000);
+
+  // A pasted NUL or lone surrogate is taken out of the save (the server cannot store either); a real pair and ordinary text stay.
+  const dirty = new Map<string, unknown>([["answers" + String.fromCharCode(0) + "k", "a" + String.fromCharCode(0) + "b" + String.fromCharCode(0xd800) + "c" + String.fromCharCode(0xd83d, 0xde00)]]);
+  assert.deepEqual(JSON.parse(encode(dirty, 1)).set, { answers: { k: "abc" + String.fromCharCode(0xd83d, 0xde00) } });
+  assert.deepEqual(clean({ ["x" + String.fromCharCode(0)]: ["y" + String.fromCharCode(0xdc00)] }), { x: ["y"] });
+  assert.equal(JSON.parse(encode(new Map([["answers" + String.fromCharCode(0) + "k", "plain " + String.fromCharCode(92) + "u0000 text"]]), 1)).set.answers.k, "plain " + String.fromCharCode(92) + "u0000 text", "typed backslash text is kept");
+
+  // A save the server refuses for good (422) is not retried for ever: its offending key is dropped and named once, and the
+  // keys bundled with it are saved, and later saves go through.
+  const e = new ProgressStore("e");
+  serverDoc = JSON.stringify({ answers: { "GRC101#v": "li1" } });
+  await e.load();
+  patches.length = 0;
+  refuseWhen = "POISON";
+  e.update((p) => ({ ...p, answers: { ...p.answers, good: "fine", bad: "POISON" } }));
+  await wait(1300);
+  assert.equal(e.saveState, "saved", "not stuck on unsaved");
+  assert.deepEqual(e.dropped, ["answers" + String.fromCharCode(0) + "bad"]);
+  assert.ok(patches.some((x) => JSON.parse(x).set.answers.good === "fine"), "the good key was saved");
+  assert.ok(!patches.some((x) => x.includes("POISON")));
+  e.update((p) => ({ ...p, answers: { ...p.answers, later: "ok" } }));
+  await wait(1300);
+  assert.ok(patches.some((x) => JSON.parse(x).set.answers.later === "ok"), "later saves still go");
+  e.dismissDropped();
+  assert.equal(e.dropped.length, 0);
+  refuseWhen = "";
 
   // One-time move: a newer browser copy goes up and the key goes; an older one is dropped.
   mem.set("grc101.desk.v7.b", JSON.stringify({ done: { mine: true }, savedAt: 9 }));

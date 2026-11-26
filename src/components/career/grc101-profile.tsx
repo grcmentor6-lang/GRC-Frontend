@@ -4,14 +4,14 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Card } from "@/components/ui/primitives";
-import { loadDesk, type Desk } from "@/lib/desk/model";
+import { areasOf, loadDesk, type Desk } from "@/lib/desk/model";
 import { useProgress, type Progress } from "@/lib/desk/progress";
-import { itemDone, itemHref, itemProgress, workIn } from "@/lib/desk/li";
+import { itemHref, itemProgress } from "@/lib/desk/li";
 
 /**
- * What GRC 101 develops, from the programme itself rather than the old mockup copy: its competency
- * domains (D1–D10; D11 is the Lead Implementer path on the Certification page), its six work threads, the standards that
- * bind the mentee's organisations, the pass rules, and the roles that assign the work. Everything is
+ * What GRC 101 develops, from the programme itself: the areas of responsibility its tasks practise (his Tasks sheet's
+ * "Responsibility"), its twelve weeks, the standards that bind the mentee's organisations, the pass rules, and the roles
+ * that assign the work. Everything is
  * the desk content (public/desk/sample.json) marked from the mentee's desk progress.
  */
 export function Grc101Profile({ who, onProgress }: { who: string; /** Share of all desk steps done, 0–100. */ onProgress?: (pct: number) => void }) {
@@ -29,9 +29,8 @@ const STATE: Record<State, { l: string; icon: IconName; cls: string }> = {
   developing: { l: "Developing", icon: "play", cls: "bg-indigo-50 text-indigo-600 ring-indigo-100" },
   upcoming: { l: "Upcoming", icon: "minus", cls: "bg-slate-50 text-slate-300 ring-slate-200" },
 };
-/** A task counts once submitted (the definition every record page shares); a Lead Implementer extension,
- *  which has no submit, once all its steps are done. */
-const counted = (desk: Desk, p: Progress, id: string) => (id.startsWith("LI-") ? itemDone(desk, p, id) : !!p.submitted[id]);
+/** A task counts once submitted (the definition every record page shares). */
+const counted = (_desk: Desk, p: Progress, id: string) => !!p.submitted[id];
 
 /** Where a set of desk work stands: acquired when all of it is submitted, developing once any step is done. */
 function stateOf(desk: Desk, p: Progress, ids: string[]): { s: State; done: number; total: number } {
@@ -58,7 +57,7 @@ function Chips({ ids, desk, p }: { ids: string[]; desk: Desk; p: Progress }) {
       {ids.map((id) => {
         const href = itemHref(desk, id);
         const done = counted(desk, p, id);
-        const cls = `rounded-[3px] border px-1.5 py-px font-mono text-[10.5px] font-semibold no-underline ${done ? "border-emerald-200 bg-emerald-50 text-emerald-700" : id.startsWith("LI-") ? "border-indigo-100 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-600"}`;
+        const cls = `rounded-[3px] border px-1.5 py-px font-mono text-[10.5px] font-semibold no-underline ${done ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-600"}`;
         return href ? <Link key={id} href={href} className={`${cls} hover:border-slate-300 focus-ring`}>{id}</Link> : <span key={id} className={cls}>{id}</span>;
       })}
     </span>
@@ -73,15 +72,12 @@ function Profile({ desk, who, onProgress }: { desk: Desk; who: string; onProgres
   }, [desk, p, onProgress]);
   const tasks = desk.order.map((id) => desk.tasks[id]);
 
-  // Competency domains D1–D10, from the tasks each one tags.
-  const domains = Object.entries(desk.domains)
-    .filter(([k]) => k !== "D11")
-    .map(([k, name]) => ({ k, name, ids: tasks.filter((t) => t.meta.domains.some((d) => d.startsWith(`${k} `))).map((t) => t.id) }))
-    .filter((d) => d.ids.length);
+  // Areas of responsibility, in programme order, each with the tasks that practise it.
+  const domains = [...new Set(tasks.flatMap((t) => areasOf(t.resp)))].map((name) => ({ k: name, name, ids: tasks.filter((t) => areasOf(t.resp).includes(name)).map((t) => t.id) }));
   const acquired = domains.filter((d) => stateOf(desk, p, d.ids).s === "acquired").length;
 
-  // The six threads that run through the programme, each a chain of tasks and extensions.
-  const threads = desk.connections.threads.map(([code, name, desc, chain]) => ({ code, name, desc, ids: workIn(chain) }));
+  // The twelve weeks, as his Weeks sheet sets them: the theme, what the week achieves and its tasks.
+  const threads = desk.weeks.map((w) => ({ code: `W${w.n}`, name: `Week ${w.n} · ${w.th}`, desc: w.obj, ids: desk.order.filter((t) => desk.tasks[t].week === w.n) }));
 
   // The standards that bind the two organisations, as the Framework Library lists them.
   const fw = (desk.tp["frameworks|Framework Library"]?.pl as { r?: string[][] } | undefined)?.r ?? [];
@@ -96,7 +92,7 @@ function Profile({ desk, who, onProgress }: { desk: Desk; who: string; onProgres
       <div className="space-y-5 xl:col-span-2">
         <Card>
           <Head icon="bolt" action={<span className="text-[11px] font-medium text-slate-400">{acquired} of {domains.length} acquired</span>}>Skills acquired</Head>
-          <p className="-mt-1.5 mb-3 text-[12px] text-slate-500">The GRC 101 competency domains. A domain is acquired when every task that practises it is submitted.</p>
+          <p className="-mt-1.5 mb-3 text-[12px] text-slate-500">The areas of responsibility GRC 101 practises. An area is acquired when every task that practises it is submitted.</p>
           <div className="divide-y divide-slate-100">
             {domains.map((d) => {
               const g = stateOf(desk, p, d.ids);
@@ -106,7 +102,6 @@ function Profile({ desk, who, onProgress }: { desk: Desk; who: string; onProgres
                   <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg ring-1 ${x.cls}`}><Icon name={x.icon} size={13} /></span>
                   <div className="min-w-0 flex-1">
                     <div className={`text-[13px] font-semibold tracking-tight ${g.s === "upcoming" ? "text-slate-500" : "text-slate-900"}`}>
-                      <span className="mr-1.5 font-mono text-[11px] text-indigo-600">{d.k}</span>
                       {d.name}
                     </div>
                     <Chips ids={d.ids} desk={desk} p={p} />
@@ -123,7 +118,7 @@ function Profile({ desk, who, onProgress }: { desk: Desk; who: string; onProgres
 
         <Card>
           <Head icon="layers">Expertise developed</Head>
-          <p className="-mt-1.5 mb-3 text-[12px] text-slate-500">Six threads run through the programme; each task builds on the one before it in its thread.</p>
+          <p className="-mt-1.5 mb-3 text-[12px] text-slate-500">Twelve weeks of one ISO/IEC 27001 implementation; each week builds on the one before it.</p>
           <div className="space-y-2.5">
             {threads.map((t) => {
               const g = stateOf(desk, p, t.ids);
@@ -166,7 +161,7 @@ function Profile({ desk, who, onProgress }: { desk: Desk; who: string; onProgres
                 <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-slate-100 text-[10.5px] font-semibold tabular-nums text-slate-600">{i + 1}</span>
                 <span className="text-[12px] leading-relaxed tracking-tight text-slate-600" style={{ textWrap: "pretty" }}>
                   {g}
-                  {/^At least \d+ of \d+ tasks submitted/.test(g) && (
+                  {/^All \d+ tasks submitted/.test(g) && (
                     <span className="mt-1 block font-mono text-[11px] font-semibold text-indigo-600">You: {submitted} of {tasks.length} submitted</span>
                   )}
                 </span>

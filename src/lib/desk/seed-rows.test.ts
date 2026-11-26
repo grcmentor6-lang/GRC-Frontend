@@ -1,13 +1,13 @@
 // seedRows: a step's rows are in place when it opens. Nobody adds a row (owner, 12 Nov 2026: T3.1 step 1 let a
 // learner add 17 empty rows where its source holds 2, and the step could then never complete).
 import assert from "node:assert/strict";
-import { REGISTERS, addRow, isSeeded, removeRow, seedRows, splitRow } from "./registers";
+import { addRow, isSeeded, removeRow, seedRows, splitRow } from "./registers";
 
 const by = (c: Record<string, string>, n: number) => Array.from({ length: Number(c["#rows"] ?? 0) }, (_, ri) => ri).filter((ri) => c[`${ri},by`] === String(n));
 
 // A fresh learner: the rows are there without any add, stamped with the step, in order.
-const adds = REGISTERS["T3.1"].grow!.adds;
-assert.deepEqual(adds, { 1: 2, 3: 10, 4: 3 }, "T3.1's sources: 2 offices, 6 + 4 lines, 3 key requirements");
+// The shape the old T3.1 register had (2 offices, 6 + 4 lines, 3 key requirements): the mechanism outlived it (docs/li101).
+const adds: Record<number, number> = { 1: 2, 3: 10, 4: 3 };
 let c = seedRows({}, 1, adds[1]);
 assert.equal(c["#rows"], "2");
 assert.deepEqual(by(c, 1), [0, 1]);

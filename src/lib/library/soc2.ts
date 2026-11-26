@@ -50,11 +50,11 @@ export const SOC2: LibStandard = {
       ],
     },
     {
-      name: "CC6 Logical and Physical Access", part: COMMON, unit: "criteria", items: [
-        item("CC6.1", "Logical access security", "Protect information assets with access software, infrastructure and architecture."),
+      name: "CC6 Logical and Physical Access Controls", part: COMMON, unit: "criteria", items: [
+        item("CC6.1", "Logical access security", "Control logical access to information assets: identify and authenticate users, and restrict what they can reach."),
         item("CC6.2", "Registering users", "Register and authorise users before giving them credentials."),
         item("CC6.3", "Role-based access", "Grant, change and remove access by role, least privilege and separation of duties."),
-        item("CC6.4", "Physical access", "Restrict physical access to facilities and protected assets."),
+        item("CC6.4", "Physical access", "Let only authorised people into the buildings, rooms and other places where protected assets are kept."),
         item("CC6.5", "Asset disposal", "Remove data from assets before their protections are withdrawn."),
         item("CC6.6", "Boundary protection", "Defend against threats from outside the system's boundary."),
         item("CC6.7", "Data movement", "Restrict how information moves, and protect it on the way."),
@@ -72,13 +72,13 @@ export const SOC2: LibStandard = {
     },
     {
       name: "CC8 Change Management", part: COMMON, unit: "criteria", items: [
-        item("CC8.1", "Controlled change", "Authorise, design, test, approve and implement changes in a controlled way."),
+        item("CC8.1", "Controlled change", "Let no change into systems or software, bought or built in-house, until it has been approved, built and tested."),
       ],
     },
     {
       name: "CC9 Risk Mitigation", part: COMMON, unit: "criteria", items: [
         item("CC9.1", "Business disruption", "Plan how to reduce the risk of business disruption."),
-        item("CC9.2", "Vendors and partners", "Assess and manage the risk that comes with vendors and business partners."),
+        item("CC9.2", "Vendors and partners", "Check the suppliers and partners you depend on, and keep the risks they bring under control."),
       ],
     },
     {
