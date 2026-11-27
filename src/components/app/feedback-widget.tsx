@@ -25,14 +25,12 @@ async function shrink(file: File): Promise<string> {
 }
 
 /**
- * Beta feedback button — fixed bottom-right of every signed-in page.
- *
- * A note, optionally a screenshot (picked or pasted — Win+Shift+S then Ctrl+V is how people
+ * Report a problem: a note, optionally a screenshot (picked or pasted — Win+Shift+S then Ctrl+V is how people
  * actually do this), and the page they were on. Lands in the admin panel's Issues section.
+ *
+ * It lives inside the AI mentor panel (study-assistant.tsx), so learners meet one button, not two (owner, 27 Nov 2026).
  */
-/** `placement` moves it off whatever a page docks in the corner (the desk toolbar). */
-export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?: string } = {}) {
-  const [open, setOpen] = useState(false);
+export function ReportProblem() {
   const [note, setNote] = useState("");
   const [shot, setShot] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -49,14 +47,7 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
   const at = where ? `${where.task}${where.step ? ` step ${where.step}` : ""}` : "";
   const [mine, setMine] = useState<MyReport[]>([]);
   const loadMine = () => api.get<MyReport[]>("/me/feedback").then(setMine).catch(() => {});
-  useEffect(() => { if (open) void loadMine(); }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+  useEffect(() => { void loadMine(); }, []);
 
   const attach = async (file: File | null | undefined) => {
     if (!file) return;
@@ -80,10 +71,7 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
       void loadMine();
       setNote("");
       setShot(null);
-      setTimeout(() => {
-        setSent(false);
-        setOpen(false);
-      }, 1600);
+      setTimeout(() => setSent(false), 4000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't send that — try again.");
     } finally {
@@ -92,30 +80,14 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
   };
 
   return (
-    <div className={`fixed ${placement} z-50 flex flex-col items-end gap-3 print:hidden`}>
-      {open && (
-        <div
-          onPaste={(e) => attach(Array.from(e.clipboardData.files)[0])}
-          className="w-[330px] rounded-2xl bg-white ring-1 ring-slate-200 shadow-[0_18px_50px_-16px_rgba(15,23,42,0.28)] overflow-hidden"
-        >
-          <div className="flex items-center justify-between px-4 h-11 border-b border-slate-200">
-            <span className="text-[13px] font-semibold tracking-tight text-slate-900">Report a problem</span>
-            <button
-              onClick={() => setOpen(false)}
-              aria-label="Close"
-              className="focus-ring w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-            >
-              <Icon name="x" size={15} />
-            </button>
-          </div>
-
+    <div onPaste={(e) => attach(Array.from(e.clipboardData.files)[0])} data-report>
           {sent ? (
-            <div className="px-4 py-6 flex items-center gap-2.5 text-[13px] text-slate-700">
+            <div className="py-6 flex items-center gap-2.5 text-[13px] text-slate-700">
               <Icon name="checkCircle" size={17} className="text-emerald-500" />
               {sentStuck ? "Sent. The programme office replies to your sign-in email within 24 hours." : "Thanks. The programme office reads every report."}
             </div>
           ) : (
-            <div className="p-4 flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
               <textarea
                 autoFocus
                 value={note}
@@ -191,18 +163,6 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
               )}
             </div>
           )}
-        </div>
-      )}
-
-      <button
-        onClick={() => setOpen((v) => !v)}
-        // The pack's name for it: steps send the mentee to "Report a problem".
-        aria-label="Report a problem"
-        title="Report a problem"
-        className="focus-ring w-12 h-12 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-[0_10px_30px_-8px_rgba(79,70,229,0.7)] flex items-center justify-center transition-colors"
-      >
-        <Icon name={open ? "x" : "messageSquare"} size={19} />
-      </button>
     </div>
   );
 }

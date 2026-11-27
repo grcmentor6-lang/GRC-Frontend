@@ -313,7 +313,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
   }, [away]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center p-3 pb-[88px] max-sm:pb-[132px] sm:p-6 sm:pb-[92px]" role="dialog" aria-modal="true" aria-label={heading}>
+    <div className="fixed inset-0 z-[60] flex items-start justify-center p-3 pb-[88px] max-sm:pb-[132px] sm:p-6 sm:pb-[92px] lg:right-[var(--ask-w,0px)]" role="dialog" aria-modal="true" aria-label={heading}>
       <motion.button
         type="button"
         aria-label="Close"

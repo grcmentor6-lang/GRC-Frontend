@@ -8,7 +8,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { DASH_NAV, initialsOf } from "./nav";
 import { WelcomeTour, startWelcomeTour } from "./welcome-tour";
 import { UpNext } from "./up-next";
-import { FeedbackWidget } from "./feedback-widget";
+import { StudyAssistant } from "./study-assistant";
 import { BadgeRevealWatcher } from "@/components/badges/badge-reveal";
 import { OrgInfoButton } from "@/components/desk/org-drawer";
 import { useDeskIdentity } from "@/lib/desk/identity";
@@ -465,7 +465,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [mobileOpen]);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-[#FAFAF7] print:h-auto print:overflow-visible print:block">
+    <div className="h-screen flex overflow-hidden bg-[#FAFAF7] lg:pr-[var(--ask-w,0px)] print:h-auto print:overflow-visible print:block">
       {/* Mobile drawer backdrop. */}
       {mobileOpen && (
         <div
@@ -486,7 +486,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       {/* On the desk the corner belongs to its toolbar, so the button sits above it. */}
       <BadgeRevealWatcher />
-      <FeedbackWidget placement={pathname.startsWith("/app/desk") ? "bottom-[22px] right-5 max-lg:bottom-[84px] max-lg:right-4 max-sm:!bottom-[148px] max-sm:!right-0 max-sm:[&>button]:h-10 max-sm:[&>button]:w-10 max-sm:[&>button]:translate-x-[58%] max-sm:[&>button]:rounded-r-none max-sm:[&>button:focus-visible]:translate-x-0 max-sm:[&>button:active]:translate-x-0 max-sm:[&>div]:mr-3" : undefined} />
+      {/* One corner button: the AI mentor, with Report a problem inside it (owner, 27 Nov 2026). Open, it docks on the
+          right and the page makes room (--ask-w above, and on the desk's step window). */}
+      <StudyAssistant placement={pathname.startsWith("/app/desk") ? "bottom-[22px] right-5 max-lg:bottom-[84px] max-lg:right-4 max-sm:!bottom-[148px] max-sm:!right-0 max-sm:[&>button]:h-10 max-sm:[&>button]:translate-x-[52%] max-sm:[&>button]:rounded-r-none max-sm:[&>button]:px-3 max-sm:[&>button:focus-visible]:translate-x-0 max-sm:[&>button:active]:translate-x-0" : "bottom-5 right-5"} />
       <div className="print:hidden"><WelcomeTour openNav={() => setMobileOpen(true)} /></div>
     </div>
   );

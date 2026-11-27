@@ -150,7 +150,7 @@ const nameAndSubmit = (ext: string, steps: string): TourStep[] => [
       { lead: "Check the receipt", text: "It shows a hash (a fingerprint of the file) and a UTC time." },
     ],
     tips: [
-      { kind: "unsure", text: "If the hash or the time is missing, use **Report a problem** at the bottom right." },
+      { kind: "unsure", text: "If the hash or the time is missing, use **Report a problem** in Ask your mentor, bottom right." },
     ],
     getEl: () => $('[data-guide="submit"]'),
   },

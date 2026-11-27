@@ -34,7 +34,7 @@ export const SCORES_SHOWN = true;
 
 /** The support model, stated as it is (owner, 26 Nov 2026: no mentor review; 27 Nov: a 24-hour email reply when stuck). */
 export const SUPPORT_LINES = {
-  live: "There is no live chat and no mentor or person reviewing your work. Every brief, note and message is pre-written, and your work is checked automatically.",
+  live: "No person chats with you or reviews your work. Every brief, note and message is pre-written, your work is checked automatically, and the AI mentor (bottom right) is software.",
   help: "Help with this step (the ? on a step) gives the note and references for it.",
 };
 
@@ -100,7 +100,7 @@ export function examOpensAfter(desk: Desk, e: ExamFact): string {
 /** The desk's Help screen: the pack's entries, with the two that made claims the product cannot keep corrected. */
 export function helpEntries(desk: Desk): [string, string][] {
   return desk.help.map(([t, d]) => {
-    if (t === "Report a problem") return [t, `Broken file, missing value, outside data offered: use the Report a problem button at the bottom right. ${REPORT_SENDS}`];
+    if (t === "Report a problem") return [t, `Broken file, missing value, outside data offered: open Ask your mentor (bottom right) and choose Report a problem. ${REPORT_SENDS}`];
     if (t === "Glossary") return [t, GLOSSARY_LINE];
     return [t, d];
   });

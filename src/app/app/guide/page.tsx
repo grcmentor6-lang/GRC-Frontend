@@ -518,7 +518,7 @@ export default function GuidePage() {
                 "Before a decision, find the policy or rule it rests on. The feedback will cite it.",
                 "Watch your due dates on the week panel or the Calendar. The task you are on shows in red once its date has passed; that costs no marks (see Deadlines and late work).",
                 "Work a task in one or two sittings. Your work is saved, but a register half done means re-reading its sources.",
-                "Stuck? Use Show me how, then Help with this step. Still stuck? Report it with the button at the bottom right, naming the step (for example F1.1-4).",
+                "Stuck? Use Show me how, then Help with this step. Still stuck? Open Ask your mentor (bottom right): ask about the step, or choose Report a problem.",
               ]}
             />
           </Sec>

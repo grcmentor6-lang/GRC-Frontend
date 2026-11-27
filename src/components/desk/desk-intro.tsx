@@ -45,7 +45,7 @@ const STEPS: TourStep[] = [
   {
     title: "Help on every step",
     icon: "help",
-    body: "Each step has a **?** in its row. It gives what to do, why it matters at work, **three hints** (a nudge, where to look, how to reason it out; never the answer) and the references. On a step you will also see a card headed **Read first** or **Sources for this step**: it names where the step's facts and rules are and opens them beside your work. **Report a problem**, bottom right, sends your note with the task and step you have open.",
+    body: "Each step has a **?** in its row. It gives what to do, why it matters at work, **three hints** (a nudge, where to look, how to reason it out; never the answer) and the references. On a step you will also see a card headed **Read first** or **Sources for this step**: it names where the step's facts and rules are and opens them beside your work. **Ask your mentor**, bottom right, answers questions about the work, and its **Report a problem** sends your note with the task and step you have open.",
     getEl: () => null,
   },
   {

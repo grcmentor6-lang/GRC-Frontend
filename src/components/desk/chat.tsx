@@ -190,7 +190,7 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
               </button>
             )}
             {m.type === "DRILL" && (
-              <p className="mt-1 text-[12px] text-slate-500">This is an answer to the drill, like A, B and C: it reports the message in the scenario. To tell the programme about a fault on the desk, use Report a problem, bottom right.</p>
+              <p className="mt-1 text-[12px] text-slate-500">This is an answer to the drill, like A, B and C: it reports the message in the scenario. To tell the programme about a fault on the desk, use Report a problem inside Ask your mentor, bottom right.</p>
             )}
           </div>
         )}
