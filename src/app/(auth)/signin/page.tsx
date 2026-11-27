@@ -41,7 +41,7 @@ export default function SignInPage() {
       <p className="text-[13px] text-slate-500 mt-1">Sign in to continue your GRC 101 work.</p>
 
       {error && (
-        <div className="mt-4 text-[12.5px] text-rose-700 bg-rose-50 ring-1 ring-rose-100 rounded-lg px-3 py-2">
+        <div role="alert" className="mt-4 text-[12.5px] text-rose-700 bg-rose-50 ring-1 ring-rose-100 rounded-lg px-3 py-2">
           {error}
         </div>
       )}
@@ -53,7 +53,7 @@ export default function SignInPage() {
         <Field label="Password" hint={<Link href="/forgot-password" className="text-indigo-600 hover:text-indigo-700">Forgot?</Link>}>
           <div className="relative">
             <TextInput icon="lock" type={show ? "text" : "password"} autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" />
-            <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <button type="button" aria-label={show ? "Hide password" : "Show password"} aria-pressed={show} onClick={() => setShow((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
               <Icon name="eye" size={16} />
             </button>
           </div>

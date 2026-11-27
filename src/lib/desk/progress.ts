@@ -37,13 +37,15 @@ export interface Progress {
   decisions: Record<string, DecisionFeedback>;
   /** "<task>-<step>" → a per-row decision's feedback, once its rows were checked (POST /me/desk/rows). */
   rowChecks?: Record<string, RowsFeedback>;
+  /** "T5.1-3" → how many of the step's three hints the learner opened (1-3). Recorded only: no score effect. */
+  hints?: Record<string, number>;
   /** Tech Lab id → its parts' results (POST /me/desk/lab), findings and completion. */
   labs?: Record<string, import("./labs").LabState>;
   /** Every Capture evidence, in order: E1, E2 …, shown on Evidence › Capture Screenshot. */
   labCaptures?: import("./labs").LabCapture[];
   /** Knowledge-check id ("KC-01") → its graded attempts. Written only by the server (POST /me/desk/kc/{id}); the desk's
    *  saves never send it (progress-sync OBJECT_SECTIONS), so a local copy after a submission is display only. */
-  kc?: Record<string, { attempts?: import("./kc").KcAttemptStored[] }>;
+  kc?: Record<string, { attempts?: import("./kc").KcAttemptStored[]; live?: boolean }>;
   /** When this copy last changed (ms): the newer of the browser's and the server's copy wins. */
   savedAt?: number;
 }

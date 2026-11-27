@@ -78,7 +78,7 @@ def refs_of(text: str, d: dict) -> dict:
 STEPS = {
     "F1.2": {
         1: {"tool": "Frameworks › Framework Library",
-            "w": "Open template T-LI-FAM: it opens in Frameworks › Framework Library (columns A Document · B Type · C What it is for · D Who uses it · E Where this programme uses it). Read the two LearnTech Educational Solutions worked rows and find the three things every finished row has: a type from rule L01, a one-line purpose and a user."},
+            "w": "Open template T-LI-FAM: it opens in Frameworks › Framework Library (columns A Document · B Type · C What it is for · D Who uses it · E Where this programme uses it). Read the two worked rows at the top (ISO/IEC 27000 and ISO/IEC 27002:2022, general facts of the standards, not one organisation's) and find the three things every finished row has: a type from rule L01, a one-line purpose and a user."},
         2: {"tool": "Frameworks › Framework Library",
             "w": "For each of the ten documents, decide its type in column B from what it is for and who uses it. Guidance: rule L01."},
         4: {"tool": "Frameworks › Framework Library",
@@ -222,8 +222,8 @@ PAGES = {
         ["Warsaw, Poland", "Delivery", "Production delivery platform", "SaaS"],
         ["Warsaw, Poland", "Data", "Client transaction data store", "Cloud (multi-region)"],
     ]},
-    "Ref-ISMS processes": {"note": "The ten processes of the ISMS (Clause 4.4), the clauses or controls each serves, and where its owner is read. The GRC Charter, SITL-POL-000 and SITL-POL-001 are in Policies › Policy Library.", "h": ["ISMS process", "ISO/IEC 27001:2022", "Where its owner is read"], "r": [
-        ["Context and scope review", "Clauses 4.1–4.3", "SITL-POL-001 Section 5: the organisation's role that builds the policy into the ISMS and the organisation addendum, where the scope is recorded"],
+    "Ref-ISMS processes": {"note": "The ten processes of the ISMS (Clause 4.4), the clauses or controls each serves, and where its owner is read. Top management of the organisation is the Org CEO (SITL-POL-001 Sections 5 and 6.1). The GRC Charter, SITL-POL-000 and SITL-POL-001 are in Policies › Policy Library.", "h": ["ISMS process", "ISO/IEC 27001:2022", "Where its owner is read"], "r": [
+        ["Context and scope review", "Clauses 4.1–4.3", "SITL-POL-001 Section 5: the organisation's role that builds the policy into the ISMS and the organisation addendum, where the scope is recorded; Section 5 also says who ensures the policy is implemented and resourced"],
         ["Risk assessment and treatment", "Clauses 6.1.2, 6.1.3, 8.2, 8.3", "GRC Charter Section 16, rows Enterprise risk assessment and Risk register & treatment: the role marked R"],
         ["Policy management", "Clause 5.2; Annex A 5.1", "GRC Charter Section 16, row Policy lifecycle: the role marked R"],
         ["Document control", "Clause 7.5", "GRC Charter Section 16, row Policy lifecycle: the role marked R (SITL-POL-000 Section 7 runs documents through that lifecycle)"],
@@ -231,8 +231,8 @@ PAGES = {
         ["Incident management", "Annex A 5.24–5.28", "GRC Charter Section 16, row Incident & breach response: the role marked R (two roles are; the DPO's part is personal-data breaches)"],
         ["Supplier security", "Annex A 5.19–5.22", "GRC Charter Section 16, row Third-party risk: the role marked R"],
         ["Internal audit", "Clause 9.2", "GRC Charter Section 16, row Internal audit: the role marked R"],
-        ["Management review", "Clause 9.3", "SITL-POL-001 Section 6.1: the role that holds the review and records its decisions"],
-        ["Corrective action", "Clause 10.2", "SITL-POL-001 Section 6.1 and GRC Charter Section 13: the role that tracks each decision and finding to closure"],
+        ["Management review", "Clause 9.3", "SITL-POL-001 Section 6.1: the role that holds the review and records its decisions; Section 6.1 also says who chairs it"],
+        ["Corrective action", "Clause 10.2", "SITL-POL-001 Section 6.1 and GRC Charter Section 13: the role that tracks each decision and finding to closure; for who answers for it, read GRC Charter Section 16, row Control framework & testing"],
     ]},
     # F2.2 and every later rating (the sprints' column E, T11.2, T12.1): his "Maturity Model, Levels 1–4 (Learn › Review
     # module)", which the platform did not hold. Written from the GRC Charter Section 3.3 (its CMMI-style scale: Level 3 Defined,
@@ -669,7 +669,7 @@ PAGES["RV-Q fixed questions"] = {"note": "The eight questions a reviewer asks of
     ["RV-Q3", "Is it the Group's standard way, done the same in every office?", "The card's scenario: \"the Group's\", \"every office\", or the office's own way. Its own → Level 2."],
     ["RV-Q4", "Is it reviewed at least once a year?", "The card's scenario. Never reviewed → Level 2."],
     ["RV-Q5", "Is it measured against targets, with the results acted on?", "The card's scenario. Not measured → Level 3; measured → Level 4."],
-    ["RV-Q6", "Which clause of ISO/IEC 27001:2022, or which Annex A control, does it answer to?", "Ref-Review references (Learn › Reference pages): what each clause and control you can choose requires."],
+    ["RV-Q6", "Which clause of ISO/IEC 27001:2022, or which Annex A control, does it answer to?", "Ref-Review references (Learn › Reference pages): what each clause and control you can choose requires. Where two fit, choose by the subject: the content and review of policies is A.5.1; the control of documents in general is Clause 7.5; what people know is Clause 7.3; proven skill is Clause 7.2."],
     ["RV-Q7", "In the period or the sample, was it never done, or did more than half fail?", "The card's numbers, against rule L17 (Learn › Rule tables): yes → Major; any other failure → Minor."],
     ["RV-Q8", "What is missing, and what is the next action that takes it a level up?", "The first question the card answers No; the next action is what would turn it to Yes, with its owner."],
 ]}
@@ -709,7 +709,7 @@ STEPS["T6.1"] = {
     8: {"tool": "Frameworks › Map Control", "pages": ["Ref-Maturity Model"],
         "w": "For the sprint control, decide in column E its current maturity level. Guidance: the Maturity Model (Ref-Maturity Model, in Learn › Reference pages): documented? approved? applied organisation-wide? records? reviewed?"},
     9: {"tool": "Evidence › Link to Control", "ds": ["SPR-04"], "pages": ["LI-A.6.3"],
-        "w": "Complete every sub-task of LI-A.6.3 in the Lead Implementer task library (Learn › Reference pages): the evidence pack opens in Evidence › Link to Control. For each sub-task, record the file in 02_Working that holds its evidence item for the Manila office: a file you hand in, or the item's own new file, prepared from dataset SPR-04. For anything you cannot evidence, choose None and write the gap and the next action. The refs fill T-LI-CIT column F, the gaps column G."},
+        "w": "Complete every sub-task of LI-A.6.3 in the Lead Implementer task library (Learn › Reference pages): the evidence pack opens in Evidence › Link to Control. For each sub-task, record the file in 02_Working that holds its evidence item for the Manila office: a file you hand in, or the item's own new file, prepared from dataset SPR-04. The files you hand in are those of earlier tasks and this task's own two, LI-COMM and AWR-PLAN, the awareness campaign plan (template T-AWR) you submit in step 10. For anything you cannot evidence, choose None and write the gap and the next action. The refs fill T-LI-CIT column F, the gaps column G."},
 }
 PANELS["T6.1"] = {"tool": "Policies › New from Template (LI-COMM)", "stamp": "Template", "kind": "table", "pl": {}}
 # The pack's T-LI-COMM and T-AWR were the old T11.1's (LI-15): his T6.1 hands both in.
@@ -770,6 +770,21 @@ QUICK_REF[_c74:_c74] = [
     "<b>ISO/IEC 27001 Clause 7.5</b> Documented information. 7.5.1: the ISMS includes the documented information the standard requires, and what the organisation itself decides it needs for the ISMS to be effective. The ISO management-system standards use two terms for it: documented information to maintain, a document, which says what is to be done or how things stand and is kept current; and documented information to retain, a record, which is evidence of what was done or achieved and is kept unchanged. Where a clause asks for something to be available as documented information, or to be produced, it is a document; where it asks for documented information to be retained, or to be available as evidence of results, it is a record. 7.5.2: when documented information is created or updated, the organisation makes sure of a) its identification and description (for example a title, date, author or reference number); b) its format (for example language, software version, graphics) and media (for example paper, electronic); and c) its review and approval for suitability and adequacy. 7.5.3: it is controlled so that it is available and suitable for use where and when it is needed, and adequately protected (against loss of confidentiality, improper use or loss of integrity): its distribution, access, retrieval and use, storage and preservation (legibility included), control of changes (version control), and retention and disposition. Documented information of external origin that the ISMS needs is identified and controlled too.",
 ]
 
+# UX101 W4 (C-04): the clauses the Quick Reference had skipped (6.1.1, 6.3, 7.1 and all of Clause 8), so every clause from
+# 4 to 10 has an entry and F1.2 step 4 can read what each asks. Our own words; logged in docs/GRC101_Content_Corrections.md.
+def _qr_before(prefix: str, *entries: str) -> None:
+    i = next(i for i, p in enumerate(QUICK_REF) if p.startswith(f"<b>ISO/IEC 27001 {prefix}</b>"))
+    QUICK_REF[i:i] = entries
+
+
+_qr_before("Clause 6.1.2",
+    "<b>ISO/IEC 27001 Clause 6.1.1</b> Actions to address risks and opportunities: general. When planning the ISMS, the organisation takes the issues of Clause 4.1 and the requirements of Clause 4.2 and determines the risks and opportunities that need to be addressed, so that the ISMS can achieve its intended outcomes, prevent or reduce undesired effects and achieve continual improvement. It plans actions to address them, how to build those actions into the ISMS processes, and how to evaluate whether they worked.")
+_qr_before("Clause 7.2",
+    "<b>ISO/IEC 27001 Clause 6.3</b> Planning of changes. When the organisation determines that the ISMS needs to change, the change is carried out in a planned manner. The 2022 edition added this clause. In practice a change to the ISMS (a new scope, a new tool, a reorganisation) is written down with its purpose, its consequences, the resources it needs and who is responsible, before it is made.",
+    "<b>ISO/IEC 27001 Clause 7.1</b> Resources. The organisation determines and provides the resources needed to establish, implement, maintain and continually improve the ISMS: people, budget, tools and time. Clause 7 as a whole is what the ISMS needs in order to work: resources (7.1), competence (7.2), awareness (7.3), communication (7.4) and documented information (7.5).")
+_qr_before("Clause 9.1",
+    "<b>ISO/IEC 27001 Clause 8</b> Operation. Clause 8 is where what Clause 6 set out is carried out. 8.1 Operational planning and control: the organisation plans, implements and controls the processes needed to meet the requirements and to carry out the actions determined in Clause 6, sets criteria for those processes and controls them to the criteria, keeps documented information showing they were carried out as planned, controls planned changes and reviews the consequences of unintended ones, and controls externally provided processes, products and services relevant to the ISMS. 8.2 Information security risk assessment: risk assessments are performed at planned intervals and when significant changes are proposed or occur, by the method of Clause 6.1.2, and the results are retained. 8.3 Information security risk treatment: the risk treatment plan of Clause 6.1.3 is implemented, and the results are retained.")
+
 # ---- T10.2, secure development and change management, control sprint 13 (A.8.25–A.8.34). CHG-TEST (template T-CT, script
 # pre-filled: sheet Sample, then the test of the 25 sampled changes) in Control Testing › Test Plan, which held the old
 # programme's privileged-account records; SDLC-MAP (his new item T-LI-SDLC) in Policies › New from Template; the tracker and the
@@ -804,7 +819,7 @@ STEPS["T10.2"] = {
         "opt": ["Level 1 Initial", "Level 2 Managed", "Level 3 Defined", "Not applicable (excluded in LI-SOA)"],
         "w": "For each sprint control, decide in column E its current maturity level. Guidance: the Maturity Model (Ref-Maturity Model, in Learn › Reference pages): documented? approved? applied organisation-wide? records? reviewed? A control your LI-SOA excludes is not rated."},
     7: {"tool": "Evidence › Link to Control", "ds": ["SPR-13", "SDLC"], "pages": ["LI-A.8.28", "LI-A.8.32"],
-        "w": "Complete every sub-task of LI-A.8.28 and LI-A.8.32 in the Lead Implementer task library (Learn › Reference pages): the evidence packs open in Evidence › Link to Control. For each sub-task, record the file in 02_Working that holds its evidence item for the Manila office: a deliverable you already handed in, or the item's own new file, prepared from datasets SPR-13 and SDLC. For anything you cannot evidence, choose None and write the gap and the next action. The refs fill T-LI-CIT column F, and the gaps column G."},
+        "w": "Complete every sub-task of LI-A.8.28 and LI-A.8.32 in the Lead Implementer task library (Learn › Reference pages): the evidence packs open in Evidence › Link to Control. For each sub-task, record the file in 02_Working that holds its evidence item for the Manila office: a deliverable you already handed in, or the item's own new file, prepared from datasets SPR-13 and SDLC. Rule: where the office holds records of the kind the item names, prepare the item from them, even if they show a gap (a waiver with no reason, a developer untrained); choose None only where no such record exists. For anything you cannot evidence, choose None and write the gap and the next action. The refs fill T-LI-CIT column F, and the gaps column G."},
     8: {"tool": "Frameworks › Map Control", "pages": [f"LI-{c}" for c in _T102_CTRL if c not in ("A.8.28", "A.8.32")] + ["LI-Q fixed questions", "Ref-Maturity Model"],
         "w": "For A.8.25, A.8.26, A.8.27, A.8.29, A.8.30, A.8.31, A.8.33 and A.8.34: record the file of sub-task 01 of each LI task (its first evidence item) in T-LI-CIT column F. In column G choose the next action that would take the control to Level 3 (or, where it is at Level 3 already, close its gap or keep it there), and the Level 4 measure you would track (fixed question LI-Q2 and the Maturity Model)."},
     9: {"w": "An emergency change was applied to the customer portal at 02:00 without approval. What does change management expect? Guidance: SITL-POL-009 Section 6.1."},
@@ -861,7 +876,7 @@ STEPS["T10.1"] = {
         "w": "The guest Wi-Fi can reach the internal file server. Which control has the gap?"},
     9: {"ds": ["CFG"], "pages": ["LI-A.8.24"],
         "w": "The database encryption keys are stored in plain text on the same server as the encrypted database. What do you record?"},
-    10: {"ds": ["SPR-12"], "pages": ["LI-A.8.11"],
+    10: {"ds": ["SPR-12"], "pages": ["LI-A.8.11", "LI-A.8.33"],
          "w": "Production customer data is copied to the test system without masking. Which controls apply?"},
 }
 PANELS["T10.1"] = {"tool": "Control Testing › Configuration Check (CFG-BASE and CRY-REG)", "stamp": "Template", "kind": "table", "pl": {}}
@@ -1005,7 +1020,7 @@ STEPS["T7.2"] = {
     6: {"tool": "Evidence › Link to Control", "ds": ["SPR-07"], "pages": ["LI-A.5.19", "LI-A.5.23"],
         "w": "Complete every sub-task of LI-A.5.19 and LI-A.5.23 in the Lead Implementer task library (Learn › Reference pages): the evidence packs open in Evidence › Link to Control. For each sub-task, record the file in 02_Working that holds its evidence item for the Manila office: a deliverable you already handed in, or the item's own new file, prepared from dataset SPR-07. For anything you cannot evidence, choose None and write the gap and the next action. The refs fill T-LI-CIT column F, and the gaps column G."},
     7: {"tool": "Frameworks › Map Control", "pages": ["LI-A.5.20", "LI-A.5.21", "LI-A.5.22", "LI-Q fixed questions", "Ref-Maturity Model"],
-        "w": "For A.5.20, A.5.21 and A.5.22: record the file of sub-task 01 of each LI task (its first evidence item) in T-LI-CIT column F. In column G choose the next action that would take the control to Level 3, and the Level 4 measure you would track (fixed question LI-Q2 and the Maturity Model)."},
+        "w": "For A.5.20, A.5.21 and A.5.22: record the file of sub-task 01 of each LI task (its first evidence item) in T-LI-CIT column F. Where the item is the cloud supplier's answers to the fixed questions, your LI-CLD holds them (its sheet Questions, step 8); for A.5.22, the review frequency by tier is in SITL-POL-013 Section 4. In column G choose the next action that would take the control to Level 3, and the Level 4 measure you would track (fixed question LI-Q2 and the Maturity Model)."},
     8: {"tool": "Policies › New from Template", "pages": ["Ref-Cloud"],
         "w": "Who patches the application of Deskline Cloud, the SaaS ticketing tool? Then: fill the shared-responsibility matrix in LI-CLD, the cloud & supply-chain addendum (template T-LI-CLD), which opens in Policies › New from Template: the service model from the intake form, then who secures each part, from Ref-Cloud (rule L19)."},
     9: {"w": "Which clauses are essential in the agreement with a supplier that holds Manila customer data? Guidance: SITL-POL-013 Section 6.3."},
@@ -1041,7 +1056,7 @@ STEPS["T8.2"] = {
     2: {"pages": ["LI-A.5.30"],
         "w": "The last DR test recovered the CRM in 9 hours; its RTO is 4 hours. What do you record for A.5.30?"},
     3: {"tool": "Regulatory Watch › Obligations Register", "pages": ["Ref-Policy portal"],
-        "w": "Open template T-OBL: it opens in Regulatory Watch › Obligations Register. Record ten obligations for Manila from SITL-ADD-16 Section 2, Section 2.1 and Section 6, splitting compound duties (R10), each with its type and the SITL policy whose owner owns it. Then, on the same sheet, fill the RoPA entry (template T-ROPA) for the customer-support processing activity described on Regulatory Watch › RoPA & Data Flows: its role, its lawful basis (SITL-POL-017 Section 3.1) and its DPIA screening (R29)."},
+        "w": "Open template T-OBL: it opens in Regulatory Watch › Obligations Register. Record ten obligations for Manila from SITL-ADD-16 Section 2, Section 2.1 and Section 6, splitting compound duties (R10), each with its type and the SITL policy whose owner owns it. Link each duty to the policy whose \"What it covers\" on Ref-Policy portal names that duty's own topic, not the Process column of the whole row. Then, on the same sheet, fill the RoPA entry (template T-ROPA) for the customer-support processing activity described on Regulatory Watch › RoPA & Data Flows: its role, its lawful basis (SITL-POL-017 Section 3.1) and its DPIA screening (R29)."},
     4: {"tool": "Frameworks › Map Control", "ds": ["SPR-09"], "pages": [f"LI-{c}" for c in _T82_CTRL] + ["LI-Q fixed questions"],
         "w": "Open your control implementation tracker, template T-LI-CIT: it opens in Frameworks › Map Control (columns A Control · B Title · C Owner role · D Status · E Maturity level · F Evidence ref · G Gap / next action). This sprint's controls are A.5.29 to A.5.36, below the earlier sprints' rows; its first row is a LearnTech Educational Solutions worked example. For each control, open its Lead Implementer task, LI-A.5.29 to LI-A.5.36 in Learn › Reference pages, and read what it requires and its evidence focus. The fixed questions LI-Q1 to LI-Q8 are on LI-Q fixed questions, for whenever you are unsure. Dataset SPR-09, what was observed at the Manila office for each control, is the tracker's Observed column."},
     5: {"tool": "Frameworks › Map Control", "ds": ["SPR-09"], "pages": [f"LI-{c}" for c in _T82_CTRL],
@@ -1591,9 +1606,10 @@ def prune_old_programme(d: dict, wb) -> None:
     fl["r"] = [r for r in fl["r"] if r[0] != "SOC 2"]
     fl["h"] = ["Standard", "Kind", "Applies to", "Flag"]
     fl["note"] = "Kind: law / regulation, certifiable standard, attestation framework, code of practice or voluntary framework. Confirm each row against addendum Section 3."
-    gl = d["tp"]["learn|Glossary"]["pl"]
-    gl["i"] = [t for t in gl["i"] if t[0] not in ("PBC", "Orphan account")]
-    d["tp"]["learn|Glossary"]["stamp"] = f"{len(gl['i'])} terms"
+    # The screen is components/desk/glossary-page.tsx over lib/desk/glossary.json (UX101 W5); the pack's short list is
+    # not shown anywhere, so it is not shipped. model.ts sets the stamp to the real entry count.
+    d["tp"]["learn|Glossary"]["pl"]["i"] = []
+    d["tp"]["learn|Glossary"]["stamp"] = "Every code and term"
     d["tp"]["evidence|Defect Codes"] = {"tool": "Evidence › Defect Codes", "stamp": "Not used in GRC 101", "kind": "doc", "pl": {"p": [
         "<b>Defect codes</b> A list of ways an evidence file can be unfit to rely on. GRC 101 does not use it: evidence here is judged by the rules of the step you are on (rule L01, L17, R15, R19 and the others in Learn › Rule tables) and by what the file shows."]}}
 
@@ -1617,14 +1633,64 @@ def prune_old_programme(d: dict, wb) -> None:
             blob = json.dumps(d[k], ensure_ascii=False)
             d[k] = json.loads(blob.replace(old, new))
 
-    # ---- the old schedule of human checkpoints (not rendered; kept truthful for anything that reads it)
-    hcs = [w for w in d["weeks"] if w["hc"]]
-    d["tests"]["human"] = [[w["hc"].replace(" (", f" — Week {w['n']} (", 1), pts] for w, (_, pts) in zip(hcs, d["tests"]["human"])]
+    # ---- the pack's human checkpoints (HC1-HC6) are gone: nothing runs at them and no person reviews work (owner, 27 Nov 2026)
+    d["tests"].pop("human", None)
+    d["tests"].pop("hc", None)
     # ---- Home › My plan data: the rebuilt tasks (the rendered plan reads the tasks; this stays in step with them)
     mp = d["tp"]["home|My plan"]["pl"]
     mp["r"] = [[str(d["tasks"][t]["week"]), t, d["tasks"][t]["org"].replace("AB", "A+B"), d["tasks"][t]["title"], d["tasks"][t].get("due", ""), str(d["tasks"][t]["hrs"]), d["tasks"][t]["rev"]] for t in d["order"]]
     d["library"]["cited_by_task"] = cited_by_task(d)
     release_fixes(d)
+    teach_first(d)
+
+
+# Every decision step names, before its options, what it tests (UX101 W3, C-01/C-06): web/src/components/desk/read-first.tsx
+# draws step.refs. Most steps got refs from their text; these had none, and F1.1's three cite documents whose text is now on file.
+READ_FIRST_REFS = {
+    ("F1.1", 2): {"docs": [["SITL-POL-024", ["3.1"]]]},
+    ("F1.1", 3): {"docs": [["SITL-POL-022", ["7.1"]], ["SITL-POL-024", ["3.1"]]]},
+    ("F1.1", 4): {"docs": [["SITL-POL-024", ["3.1"]], ["SITL-STD-001", ["6"]]]},
+    ("F1.2", 5): {"clauses": ["6.1.3"]}, ("F1.2", 6): {"clauses": ["4.1", "4.2"]},
+    ("F1.3", 4): {"clauses": ["4.1"]}, ("F2.1", 2): {"clauses": ["4.3"]}, ("F2.1", 4): {"clauses": ["4.3"]},
+    ("F2.2", 5): {"clauses": ["10.2"]}, ("T3.1", 4): {"clauses": ["5.2"]},
+    ("T5.1", 4): {"clauses": ["6.1.3"]}, ("T5.1", 5): {"clauses": ["6.1.3"]},
+    ("T5.2", 3): {"clauses": ["6.1.3"]}, ("T5.2", 4): {"clauses": ["6.1.3"]}, ("T5.2", 5): {"clauses": ["6.1.3"]},
+    ("T5.2", 10): {"clauses": ["6.2"]}, ("T11.2", 2): {"clauses": ["9.2"]},
+}
+
+
+def teach_first(d: dict) -> None:
+    for (t, n), add in READ_FIRST_REFS.items():
+        st = d["tasks"][t]["steps"][n - 1]
+        assert st["kind"] in ("pick", "each"), (t, n)
+        for k, v in add.items():
+            have = st["refs"].setdefault(k, [])
+            for x in v:
+                if x not in have:
+                    have.append(x)
+    # S-08: the step-level hand-in is "Save to 02_Working"; "Submit task" (the task footer) is the one that seals.
+    for t in d["order"]:
+        for st in d["tasks"][t]["steps"]:
+            if st["t"].startswith("Submit "):
+                st["t"] = "Save " + st["t"][7:] + " to 02_Working"
+            st["w"] = st["w"].replace('Click "Submit"', 'Click "Save to 02_Working"')
+            st["help"] = (st.get("help") or "").replace("then Submit.", "then Save to 02_Working.")
+    # U-01: the hand-in text gives the convention's parts, not the finished file name (the box lists the four parts).
+    for t in d["order"]:
+        for st in d["tasks"][t]["steps"]:
+            for k in ("t", "w", "help"):
+                v = st.get(k) or ""
+                v = re.sub(r" as <mentee ID>_\S+?\.(?:docx|xlsx)(?:,? and <mentee ID>_\S+?\.(?:docx|xlsx))*", " by the naming convention", v)
+                v = re.sub(r"Name the file <mentee ID>_\S+?\.(?:docx|xlsx), with your own mentee ID\.", "Name the file by the naming convention: your mentee ID, the task, the file's code and the version.", v)
+                st[k] = v.replace(", named by the naming convention", " by the naming convention")
+    # SITL-MEN-101 is cited as the home of the conduct and naming rules but is not on the platform: cite what is.
+    blob = json.dumps({k: v for k, v in d.items() if k != "orgs"}, ensure_ascii=False)
+    for a, b in (("(SITL-MEN-101 Section 13.2 gates)", "(SITL-POL-024 Section 8)"),
+                 ("see Capture standard — SITL-MEN-101 Section 9", "see the naming convention in step 6 and SITL-POL-024 Section 6.1")):
+        blob = blob.replace(a, b)
+    blob = blob.replace(", named by the naming convention", " by the naming convention")
+    blob = re.sub(r" as <mentee ID>_[^\s\"]+?\.(?:docx|xlsx)", " by the naming convention", blob)
+    d.update(json.loads(blob))
 
 
 def release_fixes(d: dict) -> None:
@@ -1635,7 +1701,9 @@ def release_fixes(d: dict) -> None:
     d["gates"] = d["tests"]["gates"] = [
         f"All {n_tasks} tasks submitted, every step complete (each step is checked against its key before it can be marked complete).",
         f"All {n_labs} Tech Labs completed.",
-        "Foundation Gate Exam passed at 70 % or more (one resit on a new form within 5 working days).",
+        # attempts and the further attempt: backend services/desk_kc.py (RETAKE_DAYS) and _seed/grc101_kc_keys.json;
+        # web/src/lib/programme.test.ts holds this line to those numbers
+        "Foundation Gate Exam passed at 70 % or more (2 attempts, each on a new form; if both fail, one more opens 7 days after the last).",
         "Final Exam passed at 60 % or more (including the practical station).",
         "No confirmed integrity breach (use of live/real data, copying another mentee's work, impersonation, or use of any AI tool for task work: the platform has no chat assistant; all help is scripted).",
     ]
@@ -1644,22 +1712,39 @@ def release_fixes(d: dict) -> None:
         ["Foundation Gate Exam", "≥ 70 %", "Week 2"], ["Final Exam", "≥ 60 %", "Week 12"]],
         "note": "The certificate needs every task submitted, every Tech Lab completed and both exams passed. With distinction: both exams at 85 % or more on the first attempt. Work is checked automatically against the key."}
     d["tp"]["home|Waiting On"]["pl"]["i"] = [
-        ["Automated check", "Returned within 24 hours of each submission.", "≤ 24 h"],
-        ["Checkpoints HC1–HC6", "Where the work of the week's tasks is checked, at the end of the week.", "Every 2 weeks"],
-        ["Task message answers", "Each message must be answered within 2 working days.", "2 days"]]
-    d["tp"]["home|Calendar"]["pl"]["h"][4] = "Checkpoint"
-    # Home > Assessor Notes becomes Home > Checkpoints (no assessor: every checkpoint is checked automatically against the keys)
-    d["sections"]["home"]["tools"][2]["d"] = "Automated checks and answers coming back"
-    d["sections"]["home"]["tools"][6]["d"] = "My scores and what the certificate needs"
-    d["sections"]["home"]["tools"][3].update(n="Checkpoints", d="The six checkpoints, checked automatically")
-    old = d["tp"].pop("home|Assessor Notes", None)
-    if old is not None:
-        d["tp"]["home|Checkpoints"] = old
-    cp = d["tp"]["home|Checkpoints"]
-    cp.update(tool="Home › Checkpoints", stamp="Checkpoints", kind=cp["kind"])
-    cp["pl"]["note"] = "Every checkpoint is checked automatically against the server keys; no person reviews the work. Written cells are format-checked and kept with your hand-in."
-    cp["pl"]["i"] = [[f"{m.group(1)} checkpoint", f"The work of {' and '.join(re.findall(r'[FT]\d+\.\d+', m.group(2)))} is checked automatically against the server keys at checkpoint {m.group(1)}, at the end of its week. No person reads it.", f"Week {w['n']}"]
-                     for w in d["weeks"] if w["hc"] for m in [re.match(r"^(HC\d+) \((.+)\)$", w["hc"])] if m]
+        ["Automated check", "Your task's score is released when you submit it. Nobody marks it, so there is nothing to wait for.", "At submit"],
+        ["Task message answers", "A message waits at the step it belongs to until you answer it. There is no time limit and a late answer loses no marks.", "No limit"]]
+    # ---- the pack's deadline rules (a late penalty, a grace period, reply times, a resit, a timed practical) are not what
+    # the platform does: no score reads a due date (web/src/lib/desk-plan.ts LATE_RULE). Stated as it is, wherever it is kept.
+    d["capture"]["late"] = [
+        "Due dates are a plan counted from your start date; they keep you on pace.",
+        "Handing in late loses no marks and blocks no badge or certificate. The one fixed date is the end of your access.",
+        "Task messages wait at their step until you answer; there is no time limit.",
+    ]
+    # tests.items stays the pack's: backend/scripts/build_kc_keys.py reads the checks' sizes and attempts from it.
+    d["tests"]["acrit"] = [r for r in d["tests"]["acrit"] if r[1] != "Timeliness"]
+    d["tests"]["inject_rubric"] = [[a, b.replace("Answered late (after 2 working days) or DATA incomplete.", "DATA incomplete.")] for a, b in d["tests"]["inject_rubric"]]
+    d["sections"]["inbox"]["tools"][1]["d"] = "No time limit"
+    for k, v in d["tp"].items():
+        if k.startswith("alerts|"):
+            v["pl"]["i"] = [["Automated review returned", "When you submit", "Now"], ["Task message", "Waits at its step; no time limit", "Open"],
+                            ["Deadline", "A plan date; late work loses no marks", "Due"]]
+    cal = d["tp"]["home|Calendar"]["pl"]  # the pack's Checkpoint column (index 4) is dropped
+    if len(cal["h"]) == 5:
+        del cal["h"][4]
+        for row in cal["r"]:
+            del row[4]
+    # A week starts on its date; it opens when the tasks before it are handed in (UX101 W1: the week overview says "Starts").
+    d["tp"]["home|Calendar"]["pl"]["h"][1] = "Starts"
+    # Home > Assessor Notes and the checkpoints are gone: no assessor, and nothing runs at a checkpoint (owner, 27 Nov 2026)
+    # (by name: the list lost the checkpoints entry on the first run)
+    for t in d["sections"]["home"]["tools"]:
+        t["d"] = {"Waiting On": "Automated checks and answers coming back", "My Scores": "My scores and what the certificate needs", "Calendar": "Weeks and tests"}.get(t["n"], t["d"])
+    for w in d["weeks"]:
+        w.pop("hc", None)
+    d["tp"].pop("home|Assessor Notes", None)
+    d["tp"].pop("home|Checkpoints", None)
+    d["sections"]["home"]["tools"] = [t for t in d["sections"]["home"]["tools"] if t["n"] not in ("Assessor Notes", "Checkpoints")]
     d["guard"].update({
         "testing": "Every result links to evidence. Your results are checked against the key.",
         "frameworks": "Copy values from the named source only. New mappings stay \"Proposed\" until they are checked.",
@@ -1672,12 +1757,12 @@ def release_fixes(d: dict) -> None:
     # per-task review line and the unrendered policy text that described a human review
     for t in d["order"]:
         tk = d["tasks"][t]
-        tk["rev"] = "Checked automatically within 24 h" + (f"; work checked at checkpoint {tk['hc']}" if tk.get("hc") else "")
+        tk["rev"] = "Checked automatically when you submit"
+        tk.pop("hc", None)
     for row, t in zip(d["tp"]["home|My plan"]["pl"]["r"], d["order"]):
         row[6] = d["tasks"][t]["rev"]
     d["rulebook"]["principles"][8][2] = "Reviews check decisions and evidence: the automatic check scores decision accuracy against the key, correct rule application, evidence for every row, and data handling."
     d["capture"]["folders"][5][1] = "Automated review record (read-only to mentee)"
-    d["capture"]["late"] = [x for x in d["capture"]["late"] if not x.startswith(("Moderation", "Re-checks"))]
     d["people"]["human"] = [x for x in d["people"]["human"] if x[0] == "Programme Quality Lead"]
     # ---- retired rule numbers and the old rule-table ranges
     blob = json.dumps({k: v for k, v in d.items() if k not in ("orgs",)}, ensure_ascii=False)
@@ -1746,13 +1831,7 @@ def main() -> None:
     rebuilt = [t for t in d["order"] if t not in KEPT]
     gone = set(rebuilt)
     role_code = {v: k for k, v in d["roles"].items()}
-    hc_of = {}  # task -> "HC1"
     weeks = {r[0]: r for r in wb["Weeks"].iter_rows(min_row=2, values_only=True) if isinstance(r[0], int)}
-    for r in weeks.values():
-        if r[12]:
-            m = re.match(r"(HC\d+) \((.+)\)", r[12])
-            for t in re.findall(r"[FT]\d+\.\d+", m[2]):
-                hc_of[t] = m[1]
 
     # ---- tasks
     for tid in rebuilt:
@@ -1790,7 +1869,7 @@ def main() -> None:
             "meta": {"stage": "", "thread": "", "domains": [], "builds": [], "feeds": [], "sec": "", "tool": "", "template": "", "record": ""},
             "panel": {"tool": "", "stamp": "", "kind": "", "pl": {}},
             "steps": steps, "li": [], "inj": [], "ds": [], "builds": [], "feeds": [],
-            "hc": hc_of.get(tid, ""), "human": "", "resp": clean(resp), "weight": hrs, "ndec": ndec,
+            "human": "", "resp": clean(resp), "weight": hrs, "ndec": ndec,
         }
 
     # ---- weeks: his, whole (week 1 holds F1.1 too; its task is untouched)
@@ -1802,7 +1881,7 @@ def main() -> None:
             "ph": clean(r[1]), "th": clean(r[2]), "obj": clean(r[3]), "tasks": [x.strip() for x in str(r[4]).split(",")],
             "resp": [["●", x] for x in lines(r[6])], "lead": clean(r[7]).replace(" (task owner for the week)", ""),
             "lp": "task owner for the week", "support": support,
-            "deliver": clean(r[9]), "crit": lines(r[10]), "kc": kc, "hc": clean(r[12]),
+            "deliver": clean(r[9]), "crit": lines(r[10]), "kc": kc,
             "gate": (re.search(r"\((.+)\)", kc) or [None, ""])[1] if kc.startswith(("FGE", "FEX")) else "",
             "inj": [j for j in wk.get("inj", []) if TASK.match(j)[1] not in gone],
         })
@@ -1812,7 +1891,6 @@ def main() -> None:
             + (f"{n} message{'s arrive' if n > 1 else ' arrives'} in your inbox during your working hours. " if n else "")
             + "Every step has a help note (?) from the task owner — all briefs, notes and messages are pre-written; there is no live chat. "
             "Each submission is reviewed automatically within 24 hours."
-            + (f" Checkpoint {wk['hc']} is checked at the end of this week." if wk["hc"] else "")
         )
 
     # ---- old task content for the rebuilt tasks: dropped, found by task code
@@ -1874,6 +1952,13 @@ def main() -> None:
 
     prune_old_programme(d, wb)
     unlock_weeks(d)
+    # Nothing checks on a learner who goes quiet for 7 days, so the pack's "No activity" line is not shown (UX101, G-09).
+    for rows in (d["tp"]["learn|Working time"]["pl"]["f"], d["capture"]["schedule"]):
+        rows[:] = [r for r in rows if r[0] != "No activity"]
+        # Nothing sends reminders either: only scripted task messages reach the Inbox (UX101, G-09).
+        for r in rows:
+            if r[0] == "Messages":
+                r[1] = r[1].replace("Reminders and scripted task messages arrive", "Scripted task messages arrive")
 
     blob = json.dumps(d, ensure_ascii=False, separators=(",", ":"))
     assert "§" not in blob, "a section sign is left in the sample"

@@ -33,7 +33,7 @@ import type { LearningOrg } from "@/lib/learnings";
 
 const MAX_VISIBLE = 8;
 
-type Row = { org: LearningOrg; done: number; total: number; locked: boolean; complete: boolean; hint: string };
+type Row = { org: LearningOrg; done: number; total: number; steps: number; stepsTotal: number; locked: boolean; complete: boolean; hint: string };
 
 const status = (r: Row) =>
   r.locked ? "Locked" : r.complete ? "Completed" : r.done > 0 ? "In progress" : "Not started";
@@ -80,6 +80,8 @@ export function OrgDock() {
       org,
       done,
       total: tasks.length,
+      steps: tasks.reduce((n, t) => n + t.done, 0),
+      stepsTotal: tasks.reduce((n, t) => n + t.total, 0),
       locked: org.status === "locked" || org.status === "upcoming",
       complete: tasks.length > 0 && done === tasks.length,
       hint: i > 0 ? `Finish ${orgs[i - 1].name} to unlock` : "Locked",
@@ -219,7 +221,7 @@ function DockItem({ row, current, href, onBrief, onList, onTip, onTipEnd }: {
   onTipEnd: () => void;
 }) {
   const { org } = row;
-  const label = `${org.name}, ${row.done} of ${row.total} tasks, ${status(row)}`;
+  const label = `${org.name}, ${row.done} of ${row.total} tasks complete, ${row.steps} of ${row.stepsTotal} steps done, ${status(row)}`;
 
   const face = (
     <>
@@ -232,7 +234,7 @@ function DockItem({ row, current, href, onBrief, onList, onTip, onTipEnd }: {
         }`}
       >
         <b className="block max-w-full truncate text-[13px] font-semibold leading-[1.1] text-slate-900">{org.name}</b>
-        <small className="text-[11px] leading-[1.2] tabular-nums text-slate-400">{row.done} of {row.total} tasks</small>
+        <small title="The ring shows steps done; this counts tasks with every step done" className="text-[11px] leading-[1.2] tabular-nums text-slate-500">{row.done} of {row.total} tasks</small>
       </span>
     </>
   );
@@ -315,7 +317,8 @@ function DockItem({ row, current, href, onBrief, onList, onTip, onTipEnd }: {
  *  past the box instead of being cut by it. */
 function Ring({ row }: { row: Row }) {
   const C = 2 * Math.PI * 14.5;
-  const f = row.total ? row.done / row.total : 0;
+  // The ring is steps done, so a task at 6 of 6 fills its share before it is handed in; the text says tasks completed.
+  const f = row.stepsTotal ? row.steps / row.stepsTotal : 0;
   return (
     <span className="relative h-8 w-8 shrink-0">
       <svg className="absolute inset-0 overflow-visible" width="32" height="32" viewBox="0 0 32 32" aria-hidden>

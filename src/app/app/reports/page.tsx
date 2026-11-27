@@ -8,7 +8,8 @@ import { Card, Bar } from "@/components/ui/primitives";
 import { SkeletonCardGrid } from "@/components/ui/skeleton";
 import { areasOf, type Desk, type Task } from "@/lib/desk/model";
 import { stepKey, taskStatus, type Progress, type TaskStatus } from "@/lib/desk/progress";
-import { NOT_SCORED, fmtWhen, recordCounts, recordEmpty, useDeskRecord, useTaskScores } from "@/lib/desk-record";
+import { ScoreBreakdown } from "@/components/app/score-breakdown";
+import { NOT_SCORED, fmtWhen, recordCounts, recordEmpty, useDeskRecord, useScoreBreakdowns, useTaskScores, type ScoreBreakdown as Breakdown } from "@/lib/desk-record";
 import type { Scores } from "@/lib/desk/badges";
 import { OrgName } from "@/lib/desk/org-tone";
 
@@ -76,7 +77,7 @@ function Kpis({ desk, p }: { desk: Desk; p: Progress }) {
 const TH = "px-3 py-2.5";
 const HEAD = "bg-slate-50/80 text-[10px] font-semibold tracking-[0.1em] uppercase text-slate-500";
 
-function ReportTask({ row, desk, p, defaultOpen }: { row: Row; desk: Desk; p: Progress; defaultOpen?: boolean }) {
+function ReportTask({ row, desk, p, defaultOpen, breakdown }: { row: Row; desk: Desk; p: Progress; defaultOpen?: boolean; breakdown?: Breakdown }) {
   const [open, setOpen] = useState(!!defaultOpen);
   const [view, setView] = useState<"steps" | "deliverables" | "clauses">("steps");
   const t = row.task;
@@ -161,6 +162,7 @@ function ReportTask({ row, desk, p, defaultOpen }: { row: Row; desk: Desk; p: Pr
               <p className="px-3 py-3 text-[12px] text-slate-500">This task&apos;s steps cite no ISO/IEC 27001 clause.</p>
             )}
           </div>
+          {breakdown && <div className="overflow-hidden rounded-xl ring-1 ring-slate-200 [&>details]:border-t-0"><ScoreBreakdown b={breakdown} /></div>}
         </div>
       )}
     </Card>
@@ -170,6 +172,7 @@ function ReportTask({ row, desk, p, defaultOpen }: { row: Row; desk: Desk; p: Pr
 export default function ReportsPage() {
   const { state, desk, progress, weeks, retry } = useDeskRecord();
   const scores = useTaskScores();
+  const breakdowns = useScoreBreakdowns();
   const [q, setQ] = useState("");
   const [domain, setDomain] = useState("All domains");
 
@@ -251,7 +254,7 @@ export default function ReportsPage() {
                 <div className="text-[12px] text-slate-500 mt-0.5">Try a different search or domain.</div>
               </Card>
             ) : rows.map((r) => (
-              <ReportTask key={r.task.id} row={r} desk={desk} p={progress} defaultOpen={r.status === "started" || q !== "" || domain !== "All domains"} />
+              <ReportTask key={r.task.id} row={r} desk={desk} p={progress} breakdown={breakdowns?.[r.task.id]} defaultOpen={r.status === "started" || q !== "" || domain !== "All domains"} />
             ))}
           </div>
         </>

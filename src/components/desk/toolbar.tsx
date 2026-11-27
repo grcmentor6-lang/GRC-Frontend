@@ -5,11 +5,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { stepReads, stepSources } from "@/lib/desk/registers";
 import { useUnread } from "./chat";
-import { UTILITIES, sectionOpen, stepMenu, toolOpen, unlockHint } from "@/lib/desk/tools";
-import { stepKey } from "@/lib/desk/progress";
-import { useAuth } from "@/components/auth/auth-provider";
-import { tourDue } from "@/components/app/guided-tour";
-import { STEP_GUIDES, autoGuide } from "./step-guides";
+import { UTILITIES, sectionOpen, toolOpen, unlockHint } from "@/lib/desk/tools";
 import { menuLeft } from "@/lib/desk/clear-spot";
 import { appZoom } from "@/lib/zoom";
 
@@ -29,7 +25,7 @@ const MENU_W = 400;
  * open for reading after (lib/desk/tools.ts). The section the step in hand is done in carries an
  * amber dot, and its tool is the amber row of the menu.
  */
-export function Toolbar({ modal, hold }: { /** The step's tool open as the modal. */ modal: string | null; /** Another walk-through is on screen (the desk's first-visit guide). */ hold: boolean }) {
+export function Toolbar() {
   const { desk, isOpen, here, openTool, progress } = useDesk();
   const unread = useUnread();
   const unreadHere = useUnread(here?.task ?? "-");
@@ -48,7 +44,12 @@ export function Toolbar({ modal, hold }: { /** The step's tool open as the modal
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setPop(null);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPop(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      // A menu that was open takes this Escape alone: the modal and windows under it check defaultPrevented.
+      if (document.querySelector("[data-guide-menu]")) e.preventDefault();
+      setPop(null);
+    };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -110,22 +111,8 @@ export function Toolbar({ modal, hold }: { /** The step's tool open as the modal
     return () => window.removeEventListener("desk:guide-start", shut);
   }, []);
 
-  // The step's tool opening as the modal opens the menu its learner goes to first (owner, 3 Nov), and so does
-  // the next step taken in the same modal; opening a task or a step row opens none. Only the menu: the tool
-  // in it stays their click. Not for a finished step, a submitted task or a closed week, and not on a phone,
-  // where the menu would cover half the screen and the step under it.
-  const t = here ? desk.tasks[here.task] : undefined;
-  // …and not under a guide: on a step whose guide starts by itself (an Activity, the first time), the menu waits until the guide has been
-  // through (owner, 12 Nov 2026: with both up "the focus gets unclear"); nor while any guide is on screen.
-  const { user } = useAuth();
-  const gk = here ? `${here.task}-${here.n}` : "";
-  const guideFirst = !!STEP_GUIDES[gk] && autoGuide(desk, gk) && tourDue(`grc101.guide.${gk}`, user?.email);
-  const menu = t && step && !hold && !guideFirst && isOpen(t.week) && !progress.submitted[t.id] && !progress.done[stepKey(t.id, step.n)] ? stepMenu(t, step.n) : null;
-  const auto = menu && desk.sections[menu] && sectionOpen(desk, isOpen, menu, progress, here) ? menu : null;
-  useEffect(() => {
-    const el = modal && auto && dock.current?.querySelector<HTMLElement>(`[data-guide-section="${auto}"]`);
-    if (el && matchMedia("(min-width: 640px)").matches && !document.querySelector('[aria-label^="Guide:"]')) show(auto, el);
-  }, [here?.task, here?.n, modal, auto]);
+  // Nothing opens a menu by itself: the step's dot shows where to go and the click stays the learner's (owner, 27 Nov 2026,
+  // UX101 S-05: the menu that opened on each step covered the table being worked; replaces the 3 Nov rule).
 
   const cell = (k: string, l: string, icon: IconName, unlocked: boolean, opts: { badge?: number; end?: boolean } = {}) => {
     const on = pop === k;
@@ -145,7 +132,7 @@ export function Toolbar({ modal, hold }: { /** The step's tool open as the modal
           } else toggle(k, e.currentTarget);
         }}
         title={unlocked ? (due ? `${l} · ${k === "inbox" ? "a message about this task is waiting" : k === target.split("|")[0] && (step?.kind !== "pick" || /\bThen:/.test(step.w)) ? "your current step is done here" : "your current step reads from here"}` : l) : `${l} opens as you reach the tasks that use it`}
-        className={`relative flex h-[50px] min-w-[52px] shrink-0 flex-col items-center justify-center gap-[3px] px-1.5 text-[10.5px] focus-ring lg:h-[54px] lg:min-w-[60px] lg:px-2 lg:text-[11px] ${
+        className={`relative flex h-[50px] min-w-[52px] shrink-0 max-sm:min-w-0 max-sm:shrink max-sm:grow max-sm:basis-[14.28%] max-sm:px-0 max-sm:text-[10px] flex-col items-center justify-center gap-[3px] px-1.5 text-[10.5px] focus-ring lg:h-[54px] lg:min-w-[60px] lg:px-2 lg:text-[11px] ${
           opts.end ? "border-r border-[#2A2E3B]" : ""
         } ${on ? "bg-white text-[#111827]" : unlocked ? "text-[#F1F2F6] hover:bg-[#1F2330]" : "cursor-not-allowed text-[#7C8399]"}`}
       >
@@ -166,7 +153,7 @@ export function Toolbar({ modal, hold }: { /** The step's tool open as the modal
   const ends = new Set(desk.secs.map((s, i) => (s && (desk.secs[i + 1] === null || i === desk.secs.length - 1) ? s.k : null)).filter(Boolean) as string[]);
 
   return (
-    <div ref={ref} className="pointer-events-none absolute bottom-3 left-3 right-[72px] z-[70] flex justify-center sm:left-4" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+    <div ref={ref} className="@container pointer-events-none absolute bottom-3 left-3 right-3 z-[70] flex justify-center sm:left-4 sm:right-[72px]" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
       <div className="pointer-events-auto relative min-w-0 max-w-full">
         {pop && sec && (
           <div
@@ -196,7 +183,7 @@ export function Toolbar({ modal, hold }: { /** The step's tool open as the modal
                         isTarget ? "bg-[#FFFBF2] shadow-[inset_3px_0_0_#D97706]" : unlocked ? "bg-white hover:bg-[#F7F8FA]" : "bg-[#FAFAFB]"
                       }`}
                     >
-                      <span className={`grid h-[30px] w-[30px] shrink-0 place-items-center rounded border border-[#E3E6EC] ${unlocked ? "bg-white text-[#3F4757]" : "text-[#8A91A3]"}`}>
+                      <span className={`grid h-[30px] w-[30px] shrink-0 place-items-center rounded border border-[#E3E6EC] ${unlocked ? "bg-white text-[#3F4757]" : "text-[#6B7280]"}`}>
                         <Icon name={unlocked ? (SEC_ICON[pop] ?? UT_ICON[pop] ?? "grid") : "lock"} size={14} />
                       </span>
                       <span className="min-w-0 flex-1">
@@ -221,7 +208,7 @@ export function Toolbar({ modal, hold }: { /** The step's tool open as the modal
           aria-label="Platform tools"
           onScroll={edges}
           style={{ maskImage: fadeMask, WebkitMaskImage: fadeMask }}
-          className="flex max-w-full items-stretch overflow-x-auto rounded-lg border border-[#12141C] bg-[#12141C] shadow-[0_10px_28px_rgba(17,24,39,0.25)] [scrollbar-width:none]"
+          className="flex max-w-full items-stretch overflow-x-auto max-sm:w-full max-sm:flex-wrap max-sm:overflow-visible @max-[880px]:grid @max-[880px]:grid-cols-7 @max-[880px]:overflow-visible rounded-lg border border-[#12141C] bg-[#12141C] shadow-[0_10px_28px_rgba(17,24,39,0.25)] [scrollbar-width:none]"
         >
           {desk.secs.map((s) => (s === null ? null : cell(s.k, s.l, SEC_ICON[s.k] ?? "grid", sectionOpen(desk, isOpen, s.k, progress, here), { end: ends.has(s.k) })))}
           {desk.ut.filter((u) => UTILITIES.has(u.k)).map((u) => cell(u.k, u.l, UT_ICON[u.k] ?? "grid", true, { badge: u.k === "inbox" ? unread : undefined }))}

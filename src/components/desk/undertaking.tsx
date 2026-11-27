@@ -57,7 +57,7 @@ export function UndertakingCard({ task, a, readOnly, waiting }: {
           type="button"
           disabled={!!waiting && !signed}
           onClick={() => setOpen(true)}
-          className={`disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] inline-flex h-9 items-center gap-1.5 rounded px-4 text-[13px] font-semibold ${press} ${
+          className={`disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] inline-flex h-9 items-center gap-1.5 rounded px-4 text-[13px] font-semibold ${press} ${
             signed ? "border border-[#DDE1E8] bg-white text-[#3F4757] hover:border-[#C9CED8]" : "bg-[#4338CA] text-white hover:brightness-90"
           }`}
         >
@@ -98,7 +98,7 @@ function UndertakingSheet({ task, a, readOnly, onClose }: { task: Task; a: Attes
   const [fresh, setFresh] = useState(false);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !e.defaultPrevented && !document.querySelector('[aria-label^="Guide:"]') && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
@@ -118,8 +118,8 @@ function UndertakingSheet({ task, a, readOnly, onClose }: { task: Task; a: Attes
             <p className="text-[15px] font-semibold">Group GRC Office</p>
           </div>
           <dl className="grid grid-cols-[auto_auto] gap-x-3 font-mono text-[11.5px] text-[#3F4757]">
-            <dt className="text-[#8A91A3]">Ref</dt><dd>{a.code} · {task.id}</dd>
-            <dt className="text-[#8A91A3]">Date</dt><dd>{date}</dd>
+            <dt className="text-[#6B7280]">Ref</dt><dd>{a.code} · {task.id}</dd>
+            <dt className="text-[#6B7280]">Date</dt><dd>{date}</dd>
           </dl>
         </header>
 
@@ -147,7 +147,7 @@ function UndertakingSheet({ task, a, readOnly, onClose }: { task: Task; a: Attes
         <ol className="mt-5 grid gap-3">
           {a.items.map((t, i) => (
             <li key={t} className="grid grid-cols-[28px_1fr] text-[15px] leading-relaxed">
-              <span className="font-mono text-[13px] leading-[1.75] text-[#8A91A3]">{i + 1}.</span>
+              <span className="font-mono text-[13px] leading-[1.75] text-[#6B7280]">{i + 1}.</span>
               {t}
             </li>
           ))}
@@ -155,7 +155,7 @@ function UndertakingSheet({ task, a, readOnly, onClose }: { task: Task; a: Attes
 
         <section aria-label="Why you sign" className="mt-6 border-l-2 border-[#C7CBF5] pl-4 text-[13.5px] leading-relaxed text-[#3F4757]">
           <p>Without a signed undertaking your account is not opened for data (SITL-POL-024 Section 6.1 step 3).</p>
-          <p className="mt-1">A confirmed conduct breach later is an automatic fail (SITL-MEN-101 Section 13.2).</p>
+          <p className="mt-1">A confirmed conduct breach later is an automatic fail (SITL-POL-024 Section 8).</p>
         </section>
 
         {/* Signature block */}
@@ -250,7 +250,7 @@ function UndertakingSheet({ task, a, readOnly, onClose }: { task: Task; a: Attes
               type="button"
               disabled={lock || !ready}
               onClick={() => { setFresh(true); set({ name, at: new Date().toISOString(), ...(how === "draw" && ink ? { sig: ink } : {}) }); }}
-              className={`h-10 rounded bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+              className={`h-10 rounded bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] ${press}`}
             >
               Sign
             </button>

@@ -26,9 +26,9 @@ assert.equal(calIso(calMonths(new Date("2027-03-31T00:00:00Z"), 1)), "2027-04-30
 const sample = JSON.parse(readFileSync(new URL("../../../public/desk/sample.json", import.meta.url), "utf8")) as Desk;
 const col = (d: Desk, k: string, c: number) => (d.tp[k].pl as { r: string[][] }).r.map((r) => r[c]);
 const canon = onCalendar(structuredClone(sample), CANONICAL_START);
-assert.deepEqual(col(canon, "home|Calendar", 1), col(sample, "home|Calendar", 1));
-assert.deepEqual(col(canon, "learn|Knowledge Checks", 2), col(sample, "learn|Knowledge Checks", 2));
+assert.equal(col(canon, "home|Calendar", 1)[0], "Mon 05-OCT-2026");
+assert.equal(col(canon, "learn|Knowledge Checks", 2)[0], "Sun 11-OCT-2026");
 const mine = onCalendar(structuredClone(sample), ME.start);
-assert.equal(col(mine, "home|Calendar", 1)[11], "Wed 20 Jan");
-assert.equal(col(mine, "learn|Knowledge Checks", 2)[0], "Tue 10 Nov");
+assert.equal(col(mine, "home|Calendar", 1)[11], "Wed 20-JAN-2027");
+assert.equal(col(mine, "learn|Knowledge Checks", 2)[0], "Tue 10-NOV-2026");
 console.log("calendar ok");

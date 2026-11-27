@@ -92,7 +92,7 @@ const FIRST_MENU: Record<string, string> = {
 };
 const firstMenu = new Map(Object.entries(FIRST_MENU).flatMap(([sec, ids]) => ids.split(" ").map((id) => [id, sec] as const)));
 
-/** The toolbar menu a step opens by itself when it comes in hand (owner, 3 Nov): where its learner goes first. */
+/** The toolbar menu a step sends its learner to first. Nothing opens it by itself (owner, 27 Nov 2026). */
 export const stepMenu = (task: Task, n: number): string | null => firstMenu.get(`${task.id}-${n}`) ?? task.steps[n - 1]?.key?.split("|")[0] ?? null;
 
 /** What a locked tool waits for, in words. */

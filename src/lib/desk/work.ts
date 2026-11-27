@@ -1,3 +1,4 @@
+import { whenDmy } from "@/lib/dates";
 import { isFillCell, rmfTable, workKind, type Desk, type Step, type Task } from "./model";
 import { ATTEST, RMF, attestDone, fileExts, fileNameOk, openBefore, rmfAt, rmfExpected, rmfFilled, rmfGiven, rmfKey, submitCodes } from "./forms";
 import { LADDER, STUDY, briefOf, briefStatus, compareDone, derivedAt, handedIn, liveRow, regEmpty, regKey, regOf, regRows, regStatus, reportDone } from "./registers";
@@ -123,7 +124,7 @@ export function lockedWhy(desk: Desk, p: Progress, task: Task, s: Step, start?: 
   const reg = regOf(task.id, s.n);
   if (reg?.checkRows?.[s.n] && !p.rowChecks?.[`${task.id}-${s.n}`]) return "Fill every row, then click Check my answers.";
   const files = submitCodes(task, s).filter((c) => fileExts(task, c).length).length;
-  const submit = workKind(s, desk) === "submit" && !p.logs?.[key] ? (submitWhy(desk, p, task, s) ?? `Submit ${files > 1 ? `the ${files} files` : files ? "the file" : "your work"} first.`) : null;
+  const submit = workKind(s, desk) === "submit" && !p.logs?.[key] ? (submitWhy(desk, p, task, s) ?? `Save ${files > 1 ? `the ${files} files` : files ? "the file" : "your work"} to 02_Working first.`) : null;
   if (reg?.steps[s.n]) {
     const g = regStatus(desk, p, task, s.n);
     const left = g.cells - g.filled;
@@ -199,7 +200,7 @@ function workText(desk: Desk, p: Progress, task: Task, s: Step): string {
     case "log": {
       const at = p.logs?.[key];
       const note = (p.answers[key] ?? "").trim();
-      return at ? `Logged ${new Date(at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}${note ? ` · ${note}` : ""}` : "";
+      return at ? `Logged ${whenDmy(at)}${note ? ` · ${note}` : ""}` : "";
     }
     default:
       return (p.answers[key] ?? "").trim();

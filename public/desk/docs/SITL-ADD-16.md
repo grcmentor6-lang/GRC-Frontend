@@ -31,6 +31,15 @@ Local, regulatory and sector tailoring of the SITL Group policy library for Glob
 | Registered information assets | 189 across 4 offices |
 | Classification scheme | Public ‣ Internal ‣ Client-Confidential ‣ Client-Restricted |
 
+Natural-hazard and climate profile by office. Country scores and principal hazards are those of SITL-ERM-001 Annex B (1 low – 5 very high); the last column is what the office itself has recorded. Reviewed with the addendum each year.
+
+| Office | Natural-hazard score | Principal hazards | Recorded at the office |
+| :-: | :-: | :-: | :-: |
+| Manila, Philippines (head office) | 5 | Typhoon, earthquake, volcano (very high) | Typhoon season runs from June to November. In the last three seasons the Manila centres lost 9 working days to typhoon flooding, mains-power cuts and carrier-link outages; calls were rerouted to Warsaw and Cape Town. The server room, on floor 12 of the office tower, runs on a UPS backed by the building's generator. |
+| Warsaw, Poland | 2 | Flooding | No working day lost to weather in the last three years. The office is on the 6th floor, outside the Vistula flood zone. |
+| Phoenix, United States | 3 | Hurricane (FL/TX/GA), tornado, wildfire, earthquake (CA/WA), winter storms | None of the country's listed hazards reaches Phoenix. Summer heat above 43 °C raises the cooling load of the comms room; one cooling failure in 2025, no service lost. |
+| Cape Town, South Africa | 3 | Drought, flooding (KZN/Cape), heat | Water restrictions in drought years; scheduled power cuts (load-shedding) covered by generator and battery backup; 2 working days lost to winter storm flooding in 2024. |
+
 1.1 Services and products
 
 Inbound and outbound customer service

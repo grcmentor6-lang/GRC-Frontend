@@ -1,5 +1,6 @@
 "use client";
 
+import { isoDmy } from "@/lib/dates";
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { Card } from "@/components/ui/primitives";
@@ -9,7 +10,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 
 function formatDate(iso: string | null): string | null {
   if (!iso) return null;
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  return isoDmy(iso);
 }
 
 /**

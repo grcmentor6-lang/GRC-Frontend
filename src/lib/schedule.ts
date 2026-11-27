@@ -3,6 +3,7 @@
  * Each activity gets its planned day (from the RUA/Actions/Research timeline) + a status.
  * Used across the Working Desk to show deadlines next to steps, tasks and the open activity.
  */
+import { isoDmy } from "@/lib/dates";
 import { api } from "./api";
 
 export type ScheduleStage = "rua" | "actions" | "research";
@@ -26,7 +27,8 @@ const parseISO = (iso: string) => new Date(`${iso}T00:00:00`);
 
 /** "Tue 15 Jul" — compact absolute date. */
 export function fmtDue(iso: string): string {
-  return parseISO(iso).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  const d = parseISO(iso);
+  return `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${isoDmy(iso)}`;
 }
 
 /** Days from today (negative = past). */

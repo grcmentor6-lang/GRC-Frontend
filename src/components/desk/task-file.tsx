@@ -1,12 +1,15 @@
 "use client";
 
+import { whenDmy } from "@/lib/dates";
 import { useEffect, useRef, useState } from "react";
 import { StepBar } from "@/components/app/step-bar";
 import { Icon } from "@/components/ui/icon";
 import { useDesk } from "./desk-context";
 import { HowTo } from "./how-to";
 import { press } from "./ui";
-import { dayIndex, dueDate, fmtDay, krActivities, splitKr, type Task } from "@/lib/desk/model";
+import { ConfirmBar } from "./confirm-lock";
+import { dueDate, fmtDay, krActivities, splitKr, type Task } from "@/lib/desk/model";
+import { dueText, LATE_RULE, planOf, urgency } from "@/lib/desk-plan";
 import { stepKey, taskStatus } from "@/lib/desk/progress";
 import { badgeOfTask, standing as badgeStanding } from "@/lib/desk/badges";
 import { lockedWhy } from "@/lib/desk/work";
@@ -14,6 +17,8 @@ import { labWhy } from "@/lib/desk/labs";
 import { OrgName } from "@/lib/desk/org-tone";
 import { MethodMedal } from "@/components/badges/method-medal";
 import Link from "next/link";
+import { aboutMin, stepMinutes } from "@/lib/desk/first-week";
+import { InterviewCard } from "./first-week";
 
 /** Where an outside link asks the task file to land. The file itself has no tabs any more. */
 export type Tab = "task" | "how" | "refs" | "deliver" | "msgs";
@@ -29,7 +34,9 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
   const isDone = (n: number) => !!progress.done[stepKey(task.id, n)];
   const doneCount = task.steps.filter((s) => isDone(s.n)).length;
   const st = taskStatus(progress, task);
-  const due = dueText(start, task.dueDay, st === "submitted");
+  // The plan's own wording and its rule for "late" (lib/desk-plan.ts), as the week panel and the Calendar show them.
+  const planned = planOf(desk, progress, start, true).find((t) => t.id === task.id)!;
+  const due = { text: dueText(planned), level: urgency(planned) };
   const badge = badgeOfTask(task.id);
   const badgeState = badge ? badgeStanding(badge, progress).state : "not-started";
   // Watched by StepBar: while the task's own heading is on screen the condensed bar stays away.
@@ -39,7 +46,7 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
   // which reads as open from `lg` up and closed below, where the box would cover most of a phone.
   const [krOpen, setKrOpen] = useState<boolean | null>(null);
   const [barOn, setBarOn] = useState(false);
-  const wide = () => window.matchMedia("(min-width: 64rem)").matches;
+  const wide = () => window.matchMedia("(min-width: 90rem)").matches;
 
   useEffect(() => {
     document.getElementById(`act-${focus}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -68,7 +75,7 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
             aria-label="Key results"
             aria-expanded={krOpen ?? undefined}
             title="Key results"
-            className={`grid h-8 w-8 shrink-0 place-items-center rounded-[9px] transition-colors focus-ring ${krOpen ? "bg-[#E0F2FE] text-sky-800" : krOpen === null ? "text-sky-700 hover:bg-[#E0F2FE] lg:bg-[#E0F2FE] lg:text-sky-800" : "text-sky-700 hover:bg-[#E0F2FE]"}`}
+            className={`grid h-8 w-8 shrink-0 place-items-center rounded-[9px] transition-colors focus-ring ${krOpen ? "bg-[#E0F2FE] text-sky-800" : krOpen === null ? "text-sky-700 hover:bg-[#E0F2FE] min-[90rem]:bg-[#E0F2FE] min-[90rem]:text-sky-800" : "text-sky-700 hover:bg-[#E0F2FE]"}`}
           >
             <Icon name="checkSquare" size={16} />
           </button>
@@ -94,18 +101,15 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
                 {badge.name}
               </Link>
             )}
-            {task.hc && (
-              <span className="rounded-[3px] bg-[#111827] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-white" title={`Checkpoint ${task.hc}`}>
-                {task.hc}
-              </span>
-            )}
           </span>
         </header>
 
         {/* The facts strip: five cells, the due date first and tinted when it presses. */}
         <dl className="grid grid-cols-2 border-b border-[#DDE1E8] md:grid-cols-5">
-          <Fact label="Due" tone={st === "submitted" ? "done" : locked ? "plain" : due.level === "later" ? "plain" : "due"}>
-            {st === "submitted" ? "Submitted" : locked ? `Opens ${fmtDay(dueDate(start, (task.week - 1) * 7))}` : due.level === "later" ? fmtDay(dueDate(start, task.dueDay)) : `${due.text.replace(/^Due /, "").replace(/^./, (c) => c.toUpperCase())} · ${fmtDay(dueDate(start, task.dueDay))}`}
+          <Fact label={planned.state === "not-reached" ? "Planned for" : "Due"} tone={st === "submitted" ? "done" : locked ? "plain" : due.level === "later" ? "plain" : "due"}>
+            {st === "submitted" ? "Submitted" : locked ? `Opens ${fmtDay(dueDate(start, (task.week - 1) * 7))}` : due.level === "later" ? fmtDay(dueDate(start, task.dueDay)) : <>{due.text.replace(/^Due /, "").replace(/^./, (c) => c.toUpperCase())} · <span className="whitespace-nowrap">{fmtDay(dueDate(start, task.dueDay))}</span></>}
+            {/* What late costs, said where the word appears (the Guide's "Deadlines and late work" says the same). */}
+            {due.level === "late" && !locked && <a data-late-rule href="/app/guide#deadlines" title={LATE_RULE} className="mt-0.5 block text-[12px] font-normal leading-snug text-[#5B6474] underline decoration-dotted underline-offset-2">Late work loses no marks</a>}
           </Fact>
           <Fact label="Organisation">
             {/* "Org A · Manila": which client slot, and the office, the name does not say. On the name's line, so the
@@ -119,7 +123,7 @@ export function TaskFile({ task, focus, onFocus, tab }: { task: Task; focus: num
             </span>
           </Fact>
           <Fact label="Assigned by">{task.owner}</Fact>
-          <Fact label="Time">{task.hrs} h</Fact>
+          <Fact label="Time">{task.hrs} h <span className="text-[12px] font-normal text-[#5B6474]">· {aboutMin(stepMinutes(task))} a step</span></Fact>
           <Fact label="Progress" last>
             <span className="mt-0.5 flex items-center gap-2">
               <span className="font-semibold tabular-nums">{doneCount}/{task.steps.length}</span>
@@ -180,16 +184,6 @@ function Objective({ text }: { text: string }) {
   );
 }
 
-type Urgency = "done" | "late" | "today" | "soon" | "later";
-function dueText(start: Date, dueDay: number, submitted: boolean): { text: string; level: Urgency; title: string } {
-  const title = `Due ${fmtDay(dueDate(start, dueDay))}`;
-  if (submitted) return { text: "Submitted", level: "done", title };
-  const left = dueDay - dayIndex(start);
-  if (left < 0) return { text: `Overdue by ${-left} day${left === -1 ? "" : "s"}`, level: "late", title };
-  if (left === 0) return { text: "Due today", level: "today", title };
-  if (left === 1) return { text: "Due tomorrow", level: "soon", title };
-  return { text: `Due ${fmtDay(dueDate(start, dueDay))}`, level: "later", title };
-}
 
 /**
  * The key results as the task's checklist, in the desk's rule strip: double sky rules top and
@@ -307,7 +301,7 @@ function FloatingChecklist({ task, focus, onFocus, open, shown, setOpen }: {
     <div className="pointer-events-none sticky top-[64px] z-20 flex h-0 justify-end pr-[52px]">
       {/* It used to wait for the steps to reach the bar as well, so for the first stretch of scroll the bar's button
           showed and did nothing. */}
-      <div className={`pointer-events-auto w-[300px] max-w-full ${!shown || open === false ? "hidden" : open ? "block" : "hidden lg:block"}`}>
+      <div className={`pointer-events-auto w-[300px] max-w-full ${!shown || open === false ? "hidden" : open ? "block" : "hidden min-[90rem]:block"}`}>
         <div>
           <KrChecklist task={task} focus={focus} onFocus={onFocus} onClose={() => setOpen(false)} />
         </div>
@@ -327,12 +321,13 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
   const why = first ? lockedWhy(desk, progress, task, first, start) : null;
   // A Tech Lab of the task is required: with every step done, Submit task still waits for it, and says which one.
   const labMsg = labWhy(task.id, progress);
+  const [sure, setSure] = useState(false);
   return (
     <footer aria-label="Submit" className="flex flex-wrap items-stretch justify-between gap-4 bg-[#F7F8FA] pl-4">
       <div className="grid gap-1.5 py-3">
         <p className="text-[13.5px] font-semibold text-[#111827]">
           {submitted
-            ? `Submitted ${new Date(submitted).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`
+            ? `Submitted ${whenDmy(submitted)}`
             : left
               ? `${left} ${left === 1 ? "step" : "steps"} left before you can submit`
               : "Every step is complete."}
@@ -362,12 +357,22 @@ function Submit({ task, locked }: { task: Task; locked: boolean }) {
           {submitted ? "This task is sealed. Your work is on My Submissions, Reports and your CV." : "Submitting seals this task. Your submitted work appears on My Submissions, Reports and your CV."}
         </p>
       </div>
-      {!submitted && (
+      {submitted && <div className="basis-full"><InterviewCard task={task} /></div>}
+      {!submitted && sure && (
+        <ConfirmBar
+          className="m-3 basis-full sm:max-w-[540px] sm:basis-auto sm:self-center"
+          message={`Submit task ${task.id} seals it. You cannot change it afterwards. Continue?`}
+          yes="Yes, submit and seal"
+          onYes={() => (setSure(false), update((p) => ({ ...p, submitted: { ...p.submitted, [task.id]: new Date().toISOString() } })))}
+          onNo={() => setSure(false)}
+        />
+      )}
+      {!submitted && !sure && (
         <button
           type="button"
           disabled={locked || left > 0 || !!labMsg}
-          onClick={() => update((p) => ({ ...p, submitted: { ...p.submitted, [task.id]: new Date().toISOString() } }))}
-          className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] disabled:hover:brightness-100"
+          onClick={() => setSure(true)}
+          className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] disabled:hover:brightness-100"
         >
           Submit task
         </button>

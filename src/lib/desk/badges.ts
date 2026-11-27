@@ -7,7 +7,7 @@ import type { Progress } from "./progress";
  * a task earns towards the badge of its method's family. Every task except F1.1 earns towards exactly one badge, and no
  * task names M, so the pack's Privacy & Data Protection badge is not offered (see NO_BADGE).
  *
- * Award rule (SITL-MEN-101 Section 13a): earned when every earning task is submitted with a released task
+ * Award rule (the programme rule; no document of that name is on the platform): earned when every earning task is submitted with a released task
  * score ≥ 65; with distinction when their average is ≥ 85 and none is below 75. The capstone is
  * awarded when every method badge is earned.
  */

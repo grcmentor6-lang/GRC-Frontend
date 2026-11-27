@@ -1,4 +1,4 @@
-// The menu each step opens by itself (tools.ts stepMenu): the first toolbar menu its guide sends the learner to,
+// The menu each step points to (tools.ts stepMenu; nothing opens it by itself since 27 Nov 2026): the first toolbar menu its guide sends the learner to,
 // else the section of the step's own tool. Read from the guides by stubbing the DOM: each card's getEl/waitFor
 // names the menus it looks for (the guides only touch the DOM when a card runs, so the stub can follow the import).
 import assert from "node:assert/strict";

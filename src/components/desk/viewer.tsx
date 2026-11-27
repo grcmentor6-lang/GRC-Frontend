@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
 import { PhyPlan } from "./phy-plan";
 import { useDesk, type ViewItem } from "./desk-context";
@@ -35,6 +35,8 @@ export function ToolScreen({ mock, flush, standards: listsStandards }: { mock: P
   const standards = listsStandards && !GRADED_ON_GREYED.has(here?.task ?? "");
   const pl = mock.pl as Record<string, unknown>;
   const rows = (k: string) => (pl[k] as unknown[][] | undefined) ?? [];
+  const [q, setQ] = useState("");
+  const hit = (p: string) => !q.trim() || p.replace(/<\/?b>/g, "").toLowerCase().includes(q.trim().toLowerCase());
   const table = Array.isArray(pl.h) ? <TableView t={{ h: pl.h as string[], r: rows("r") as string[][] }} flush={flush} grey={standards ? isLater : undefined} /> : null;
   return (
     <div className={flush ? "grid" : "grid gap-3"}>
@@ -84,8 +86,12 @@ export function ToolScreen({ mock, flush, standards: listsStandards }: { mock: P
         ((pl.p as string[]).every((p) => /^<b>[^<]+<\/b>\s/.test(p)) ? (
           // Every line a "<b>Name</b> meaning" entry (a reference, a set of sentence frames): a ruled
           // two-column list, so the names line up and each meaning is read beside its name.
-          <dl className="@container divide-y divide-[#E9ECF1] rounded-lg border border-slate-200 bg-white text-[13px] leading-relaxed">
-            {(pl.p as string[]).map((p) => {
+          <>
+          {/* Search (UX101 W4, C-05): the Quick Reference is 40 entries long; an entry's name or its text. */}
+          {(pl.p as string[]).length > 8 && <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search this list" aria-label="Search this list" className="w-full rounded border border-[#DDE1E8] bg-white px-3 py-2 text-[13px] text-[#111827] placeholder:text-[#6B7280] focus-ring" />}
+          {q.trim() && !(pl.p as string[]).some(hit) && <p className="text-[13px] text-[#5B6474]">No entry matches “{q.trim()}”.</p>}
+          <dl className="@container divide-y divide-[#E9ECF1] rounded-lg border border-slate-200 bg-white text-[13px] leading-relaxed empty:hidden">
+            {(pl.p as string[]).filter(hit).map((p) => {
               const [, name, text] = p.match(/^<b>([^<]+)<\/b>\s*([\s\S]*)$/)!;
               return (
                 <div key={name} data-term={name} data-later={(standards && isLater(name)) || undefined} className={`grid gap-x-4 gap-y-0.5 px-4 py-2.5 @[560px]:grid-cols-[minmax(0,180px)_1fr] ${standards && isLater(name) ? `${LATER_BOX} ${LATER_INK}` : ""}`}>
@@ -95,8 +101,9 @@ export function ToolScreen({ mock, flush, standards: listsStandards }: { mock: P
               );
             })}
           </dl>
+          </>
         ) : (
-          <div className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4 text-[13px] leading-relaxed text-slate-700">
+          <div className="grid gap-2 rounded-lg border border-slate-200 bg-white p-4 text-[14px] leading-[1.5] text-slate-700">
             {(pl.p as string[]).map((p, i) => <p key={i}><Rich s={p} /></p>)}
           </div>
         ))}
@@ -132,7 +139,7 @@ export function ToolScreen({ mock, flush, standards: listsStandards }: { mock: P
       )}
       {typeof pl.note === "string" && (
         <div className="flex items-start gap-2">
-          <Icon name="shield" size={13} className="mt-0.5 shrink-0 text-[#8A91A3]" />
+          <Icon name="shield" size={13} className="mt-0.5 shrink-0 text-[#6B7280]" />
           <NoteList text={pl.note} quiet className="min-w-0" />
         </div>
       )}
@@ -156,7 +163,7 @@ function Body({ item }: { item: ViewItem }): { eyebrow: string; title: string; b
         eyebrow: "Template",
         title: item.id,
         body: (
-          <div className="grid gap-3 text-[13.5px] text-slate-700">
+          <div className="grid gap-3 text-[14px] leading-[1.5] text-slate-700">
             <p>{desc}</p>
             <p><span className="text-slate-500">Produces</span> {code} <span className="text-slate-500">for</span> {task}</p>
             <p><span className="text-slate-500">Issued in</span> {where}</p>
@@ -177,11 +184,11 @@ function Body({ item }: { item: ViewItem }): { eyebrow: string; title: string; b
         body: DOC_TEXT.has(doc) ? (
           <DocCitation id={doc} cites={cites} />
         ) : lib ? (
-          <ol className="grid gap-1 text-[13px] text-slate-700">
+          <ol className="grid gap-1 text-[14px] leading-[1.5] text-slate-700">
             {lib[2].map(([n, h]) => <li key={n}><span className="inline-block w-12 text-slate-400 tabular-nums">Section {n}</span>{h}</li>)}
           </ol>
         ) : (
-          <p className="text-[13.5px] text-slate-600">The task cites this document by section. Its headings are listed in the Library drawer.</p>
+          <p className="text-[14px] leading-[1.5] text-slate-600">The task cites this document by section. Its headings are listed in the Library drawer.</p>
         ),
       };
     }
@@ -201,7 +208,7 @@ function Body({ item }: { item: ViewItem }): { eyebrow: string; title: string; b
 export function Viewer({ item, onClose }: { item: ViewItem | null; onClose: () => void }) {
   useEffect(() => {
     if (!item) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !e.defaultPrevented && !document.querySelector('[aria-label^="Guide:"]') && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [item, onClose]);
@@ -212,7 +219,7 @@ export function Viewer({ item, onClose }: { item: ViewItem | null; onClose: () =
 function Sheet({ item, onClose }: { item: ViewItem; onClose: () => void }) {
   const { eyebrow, title, body } = Body({ item });
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={title}>
+    <div data-ref-sheet className="fixed inset-0 z-[65] flex justify-end" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-slate-950/25 desk-fade" />
       <aside className="desk-sheet relative flex h-full w-full max-w-[640px] flex-col bg-[#FAFAF7] shadow-2xl">
         <header className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">

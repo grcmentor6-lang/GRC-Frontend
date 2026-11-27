@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { api } from "@/lib/api";
+import { useWhere } from "@/lib/desk/where";
+
+interface MyReport { id: number; note: string; page: string | null; hasScreenshot: boolean; status: string; createdAt: string }
 
 /** Longest edge we send. A downscaled JPEG of a 4K screen is ~200 KB; the raw PNG is ~4 MB, and
  *  the API caps the payload — without this most reports would bounce. */
@@ -35,8 +38,18 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
+  // Stuck and unable to go on: the one kind of report answered, by email within 24 hours (owner, 27 Nov 2026).
+  // ponytail: the flag rides as a "STUCK:" prefix on the note (no column); the admin Issues list shows it first in the text.
+  const [stuck, setStuck] = useState(false);
+  const [sentStuck, setSentStuck] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
+  const where = useWhere();
+  // The task and step open on the desk go with the note (UX101 W9): the form says so, and the note need not.
+  const at = where ? `${where.task}${where.step ? ` step ${where.step}` : ""}` : "";
+  const [mine, setMine] = useState<MyReport[]>([]);
+  const loadMine = () => api.get<MyReport[]>("/me/feedback").then(setMine).catch(() => {});
+  useEffect(() => { if (open) void loadMine(); }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -60,8 +73,11 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
     setBusy(true);
     setError("");
     try {
-      await api.post("/me/feedback", { note: note.trim(), page: pathname, screenshot: shot });
+      await api.post("/me/feedback", { note: `${stuck ? "STUCK: " : ""}${note.trim()}`, page: at ? `${pathname} (${at})` : pathname, screenshot: shot });
       setSent(true);
+      setSentStuck(stuck);
+      setStuck(false);
+      void loadMine();
       setNote("");
       setShot(null);
       setTimeout(() => {
@@ -96,7 +112,7 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
           {sent ? (
             <div className="px-4 py-6 flex items-center gap-2.5 text-[13px] text-slate-700">
               <Icon name="checkCircle" size={17} className="text-emerald-500" />
-              Thanks — we&apos;ve got it.
+              {sentStuck ? "Sent. The programme office replies to your sign-in email within 24 hours." : "Thanks. The programme office reads every report."}
             </div>
           ) : (
             <div className="p-4 flex flex-col gap-3">
@@ -139,6 +155,15 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
                 onChange={(e) => attach(e.target.files?.[0])}
               />
 
+              <label className="flex items-start gap-2 text-[12.5px] leading-snug text-slate-700">
+                <input type="checkbox" checked={stuck} onChange={(e) => setStuck(e.target.checked)} className="mt-0.5 h-4 w-4 accent-indigo-600" />
+                <span><strong className="font-semibold text-slate-900">I&apos;m stuck and can&apos;t continue.</strong> We reply to your sign-in email within 24 hours.</span>
+              </label>
+
+              <p data-report-sends className="text-[12px] leading-snug text-slate-500">
+                Sent with your note: the page{at ? <>, <strong className="font-semibold text-slate-700">{at}</strong> (the step you have open)</> : ""}, and a screenshot only if you add one. The programme office reads every report and replies to the ones marked stuck.
+              </p>
+
               {error && <p className="text-[12px] text-rose-600">{error}</p>}
 
               <button
@@ -148,6 +173,22 @@ export function FeedbackWidget({ placement = "bottom-5 right-5" }: { placement?:
               >
                 {busy ? "Sending…" : "Send"}
               </button>
+              {mine.length > 0 && (
+                <details data-my-reports className="border-t border-slate-200 pt-2.5 text-[12.5px] text-slate-700">
+                  <summary className="cursor-pointer font-semibold text-slate-900">Your past reports ({mine.length})</summary>
+                  <ul className="mt-2 grid max-h-44 gap-2 overflow-y-auto">
+                    {mine.map((r) => (
+                      <li key={r.id} className="rounded-lg bg-slate-50 px-2.5 py-2">
+                        <span className="block text-[11.5px] text-slate-500">
+                          {new Date(r.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).replace(/ /g, "-")}
+                          {r.page?.match(/\(([^)]+)\)$/) ? ` · ${r.page.match(/\(([^)]+)\)$/)![1]}` : ""} · {r.status === "closed" ? "Closed" : "Received"}
+                        </span>
+                        <span className="line-clamp-3 break-words">{r.note}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
             </div>
           )}
         </div>

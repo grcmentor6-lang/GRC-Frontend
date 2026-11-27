@@ -31,6 +31,15 @@ Local, regulatory and sector tailoring of the SITL Group policy library for Lear
 | Registered information assets | 173 across 4 offices |
 | Classification scheme | Public ‣ Internal ‣ Confidential ‣ Restricted (Research/PII) |
 
+Natural-hazard and climate profile by office. Country scores and principal hazards are those of SITL-ERM-001 Annex B (1 low – 5 very high); the last column is what the office itself has recorded. Reviewed with the addendum each year.
+
+| Office | Natural-hazard score | Principal hazards | Recorded at the office |
+| :-: | :-: | :-: | :-: |
+| Istanbul, Turkey (head office) | 5 | Earthquake (very high) | The head office is in a building strengthened to the 2018 seismic code. No working day lost to weather in the last three years. |
+| Amsterdam, Netherlands | 3 | Coastal/river flooding (below sea level) | The office is on the 3rd floor behind the national flood defences; no working day lost to weather in the last three years. The platform is cloud-hosted in two regions, so no service runs from the office. |
+| New York, United States | 3 | Hurricane (FL/TX/GA), tornado, wildfire, earthquake (CA/WA), winter storms | Winter storms closed the office for 2 days in 2025; staff worked from home and no service was lost. |
+| Mumbai, India | 4 | Monsoon flooding, heat, cyclone | Monsoon flooding closed the office for 4 working days over the last three years; staff worked from home on the cloud platform. |
+
 1.1 Services and products
 
 AI-powered personalised learning platform

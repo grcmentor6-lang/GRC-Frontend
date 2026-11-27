@@ -9,9 +9,9 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { Field, TextInput, Select, PrimaryBtn } from "@/components/ui/forms";
 import { UniversitySelect } from "@/components/ui/university-select";
 import { COUNTRIES, DIAL_CODES, findCountry } from "@/lib/countries";
-import { CURRENT_PLAN, UPCOMING_PLANS, FOUNDATION_PRICE } from "@/lib/billing";
-import { isEntitled } from "@/lib/entitlement";
+import { CURRENT_PLAN, UPCOMING_PLANS } from "@/lib/billing";
 import { formatAccessDate } from "@/components/app/access-chip";
+import { ACCESS_WEEKS, COUNTS, SHARE_BONUS_WEEKS } from "@/lib/programme";
 
 const TABS: { id: string; label: string; icon: IconName; desc: string }[] = [
   { id: "profile", label: "My Profile", icon: "user", desc: "Name, contact & public details" },
@@ -73,6 +73,7 @@ function ProfilePanel() {
     linkedin: user?.linkedin ?? "",
     university: user?.university ?? "",
     qualification: user?.qualification ?? "",
+    emailReminders: user?.emailReminders ?? true,
   });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -141,6 +142,16 @@ function ProfilePanel() {
           <Field label="University"><UniversitySelect value={form.university ?? ""} onChange={set("university")} /></Field>
           <Field label="Qualification"><TextInput value={form.qualification ?? ""} onChange={set("qualification")} /></Field>
         </div>
+      </SettingsCard>
+      <SettingsCard title="Reminder emails" desc="Your week's plan on its first day, what is left on its last day, a nudge after a quiet week, and warnings before your access ends.">
+        <label className="flex items-center gap-2 text-[13px] text-slate-700">
+          <input
+            type="checkbox"
+            checked={form.emailReminders ?? true}
+            onChange={(e) => setForm((f) => ({ ...f, emailReminders: e.target.checked }))}
+          />
+          Send me reminder emails (saved with Save changes above)
+        </label>
       </SettingsCard>
     </form>
   );
@@ -221,11 +232,6 @@ function PasswordPanel() {
 function BillingPanel() {
   const { user } = useAuth();
   const plan = CURRENT_PLAN;
-  const paid = isEntitled(user);
-  // The "invoice" is the free seat, so it is dated from when the account was opened.
-  const joinedDate = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
-    : "—";
   const accessLabel = formatAccessDate(user?.accessExpiresOn ?? null);
   const accessExpired = !!user?.accessExpiresOn && new Date(user.accessExpiresOn) < new Date();
   return (
@@ -243,8 +249,8 @@ function BillingPanel() {
               <p className="text-[12.5px] text-indigo-100 mt-0.5">{plan.blurb}</p>
             </div>
             <div className="text-right shrink-0">
-              <div className="text-[26px] font-semibold tracking-tight">{paid ? "Free" : plan.price}</div>
-              <div className="text-[11.5px] text-indigo-200">{paid ? "Beta · full track access" : plan.cycle}</div>
+              <div className="text-[20px] font-semibold tracking-tight">Free beta</div>
+              <div className="text-[11.5px] text-indigo-200">{ACCESS_WEEKS} weeks&apos; access from your start date{accessLabel ? ` · until ${accessLabel}` : ""}</div>
             </div>
           </div>
           <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4">
@@ -260,15 +266,15 @@ function BillingPanel() {
           <div className="flex items-center gap-2 text-[12px] text-slate-500">
             <Icon name="check" size={14} className="text-emerald-500 shrink-0" strokeWidth={2.5} />
             Foundations course unlocked free for the beta — your certificate and completed work
-            stay yours for life.
+            stay yours after your access ends.
           </div>
           {accessLabel && (
             <div className="flex items-start gap-2 text-[12px] text-slate-500">
               <Icon name="calendar" size={14} className="text-indigo-500 shrink-0 mt-px" />
               <span>
                 {accessExpired ? "Active program access ended on " : "Active program access runs until "}
-                <span className="font-medium text-slate-700">{accessLabel}</span> — you have 24 weeks from your start date to work through the 16-week programme.{" "}
-                <Link href="/app/badges" className="text-indigo-600 no-underline hover:underline">Share a badge or certificate on LinkedIn</Link> to add 4 weeks.
+                <span className="font-medium text-slate-700">{accessLabel}</span> — {ACCESS_WEEKS} weeks from the start date you first chose, to work through the {COUNTS.weeks}-week programme, with 2 weeks of grace if something urgent comes up. Moving your due dates later does not move this date.{" "}
+                <Link href="/app/badges" className="text-indigo-600 no-underline hover:underline">Share a badge or certificate on LinkedIn</Link> to add {SHARE_BONUS_WEEKS} weeks.
               </span>
             </div>
           )}
@@ -324,38 +330,6 @@ function BillingPanel() {
             <p className="text-[12px] text-slate-500 mt-0.5">Card details aren&apos;t stored in this preview. They&apos;ll be saved here for future tracks.</p>
           </div>
         </div>
-      </SettingsCard>
-
-      {/* Invoices */}
-      <SettingsCard title="Invoice history" desc="Receipts for your records.">
-        {paid ? (
-          <div className="-mx-1">
-            <div className="hidden sm:grid grid-cols-[1.4fr_1fr_0.8fr_0.7fr] gap-3 px-3 pb-2 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-400 border-b border-slate-100">
-              <span>Invoice</span><span>Date</span><span>Amount</span><span>Status</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-[1.4fr_1fr_0.8fr_0.7fr] gap-x-3 gap-y-1 items-center px-3 py-3">
-              <div className="min-w-0">
-                <div className="text-[13px] font-medium text-slate-800 font-mono">GRC101-FND</div>
-                <div className="text-[11.5px] text-slate-500 truncate">Foundations Course — lifetime access</div>
-              </div>
-              <span className="text-[12.5px] text-slate-600">{joinedDate}</span>
-              <span className="text-[13px] font-medium text-slate-800">{paid ? "$0.00" : FOUNDATION_PRICE}</span>
-              <span>
-                <span className="inline-flex items-center gap-1 px-1.5 h-[19px] rounded text-[10.5px] font-medium bg-emerald-100 text-emerald-700">
-                  <span className="w-1 h-1 rounded-full bg-emerald-500" />Paid
-                </span>
-              </span>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <div className="w-11 h-11 mx-auto rounded-xl bg-slate-100 ring-1 ring-slate-200 flex items-center justify-center text-slate-400 mb-3">
-              <Icon name="download" size={20} />
-            </div>
-            <div className="text-[13px] font-medium text-slate-700">No invoices yet</div>
-            <div className="text-[12px] text-slate-400 mt-0.5">Your enrolment receipt will appear here.</div>
-          </div>
-        )}
       </SettingsCard>
     </div>
   );

@@ -1,8 +1,9 @@
 // Every LI101 task data file shows the learner's own organisation names, not the canonical ones (names.ts, registers.ts).
 // Run: npx tsx src/lib/desk/li-names.test.ts
 import assert from "node:assert/strict";
-import { readdirSync } from "node:fs";
-import { setDeskIdentity } from "./names";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { setDeskIdentity, toLearner } from "./names";
 import "./registers";
 import cfg from "./li-cfg.json";
 import kpi from "./li-kpi.json";
@@ -34,6 +35,16 @@ for (const [f, data] of Object.entries(DATA)) {
   const s = JSON.stringify(data);
   for (const name of ["GlobalConnect", "LearnTech", "M2610-00001"]) assert.ok(!s.includes(name), `${f} still shows ${name} to a learner`);
 }
+// The library documents are renamed as they load (docs.ts loadDoc → toLearner): every one on file, so a new document
+// (SITL-POL-022, SITL-POL-024) or a new section (the hazard profiles of SITL-ADD-16 and SITL-ADD-36) is covered.
+const DOCS = join(import.meta.dirname, "../../../public/desk/docs");
+const docs = readdirSync(DOCS).filter((f) => f.endsWith(".md"));
+assert.ok(docs.includes("SITL-POL-022.md") && docs.includes("SITL-POL-024.md"));
+for (const f of docs) {
+  const s = toLearner(readFileSync(join(DOCS, f), "utf8"));
+  for (const name of ["GlobalConnect", "LearnTech", "M2610-00001"]) assert.ok(!s.includes(name), `${f} still shows ${name} to a learner`);
+}
+assert.ok(toLearner(readFileSync(join(DOCS, "SITL-ADD-16.md"), "utf8")).includes("Natural-hazard and climate profile by office"));
 setDeskIdentity(null);
 assert.ok(/GlobalConnect|LearnTech|M2610-00001/.test(JSON.stringify(t122)), "back to canonical");
 console.log("li-names ok");

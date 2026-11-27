@@ -144,7 +144,7 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
                   <p className="text-[12.5px] text-[#15803D]">Complete. This lab is recorded and counts toward {lab.related}. Close this console to go back to your task.</p>
                 ) : (
                   <>
-                    <p className="text-[12.5px] font-medium text-[#78350F]">Not complete yet. {lab.related}&apos;s Submit stays closed until you press Mark complete.</p>
+                    <p className="text-[12.5px] font-medium text-[#78350F]">Not complete yet. {lab.related}&apos;s Submit task stays closed until you press Mark complete.</p>
                     <button type="button" onClick={() => setState((s) => ({ ...s, done: new Date().toISOString() }))} className="h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-110">Mark complete</button>
                   </>
                 )}
@@ -214,7 +214,7 @@ export function LabWindow({ lab: ref, index, onClose }: { lab: LabRef; index: nu
                   </label>
                   <button type="button" onClick={clear} className="h-8 rounded border border-[#C9CED8] bg-white px-2.5 text-[12.5px] font-semibold text-[#3F4757] hover:bg-[#F3F4F7]">Clear filters</button>
                   <span data-lab="count" className="h-8 content-center text-[12.5px] tabular-nums text-[#3F4757]">{shown.length} of {view.rows.length} rows</span>
-                  <button type="button" data-lab="capture" onClick={capture} disabled={!shown.length} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded bg-[#111827] px-3 text-[13px] font-semibold text-white hover:brightness-110 disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]"><Icon name="camera" size={14} /> Capture evidence</button>
+                  <button type="button" data-lab="capture" onClick={capture} disabled={!shown.length} className="ml-auto inline-flex h-8 items-center gap-1.5 rounded bg-[#111827] px-3 text-[13px] font-semibold text-white hover:brightness-110 disabled:bg-[#E3E6EC] disabled:text-[#6B7280]"><Icon name="camera" size={14} /> Capture evidence</button>
                 </div>
                 <div data-lab="table" className="max-h-[380px] min-h-0 flex-1 overflow-auto border-t border-[#DDE1E8] min-[900px]:max-h-none">
                   <table className="w-full border-collapse text-[12.5px]">
@@ -315,7 +315,7 @@ function Part({ n, total, part, state, setState, labId, captures }: { n: number;
               {captures.map((c) => <option key={c.ref} value={c.ref}>{c.ref} · {c.viewTitle} · {c.ids.length} {c.ids.length === 1 ? "row" : "rows"}</option>)}
             </select>
           </label>
-          <button type="button" disabled={!ref || busy} onClick={checkCapture} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]">{busy ? "Checking…" : "Check this capture"}</button>
+          <button type="button" disabled={!ref || busy} onClick={checkCapture} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#E3E6EC] disabled:text-[#6B7280]">{busy ? "Checking…" : "Check this capture"}</button>
           {r?.correct === false && <p role="status" data-lab="hint" className="text-[12.5px] leading-relaxed text-[#B91C1C]">{r.hint}</p>}
           {r?.released && r.recipe ? (
             <p data-lab="recipe" className="rounded border border-[#FDE68A] bg-[#FFFBEB] px-2 py-1.5 text-[12.5px] leading-relaxed text-[#78350F]"><span className="font-semibold">The answer, shown to you:</span> {r.recipe} This question will be recorded as shown, not found.</p>
@@ -336,7 +336,7 @@ function Part({ n, total, part, state, setState, labId, captures }: { n: number;
               </label>
             ))}
           </div>
-          <button type="button" disabled={busy || rows.some((l) => !picks[l])} onClick={checkRows} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#E3E6EC] disabled:text-[#8A91A3]">{busy ? "Checking…" : "Check my answers"}</button>
+          <button type="button" disabled={busy || rows.some((l) => !picks[l])} onClick={checkRows} className="h-9 rounded bg-[#111827] px-4 text-[13px] font-semibold text-white disabled:bg-[#E3E6EC] disabled:text-[#6B7280]">{busy ? "Checking…" : "Check my answers"}</button>
         </>
       )}
       {error && <p className="text-[12.5px] text-[#B91C1C]">{error}</p>}

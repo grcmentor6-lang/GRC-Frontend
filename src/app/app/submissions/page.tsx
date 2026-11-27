@@ -6,7 +6,8 @@ import { submissionText } from "@/lib/desk/work";
 import { useDeskIdentity } from "@/lib/desk/identity";
 import { dueDate, fmtDay, type Desk, type Task } from "@/lib/desk/model";
 import { stepKey, taskStatus, type Progress } from "@/lib/desk/progress";
-import { NOT_SCORED, fmtWhen, recordCounts, recordEmpty, useDeskRecord, useTaskScores } from "@/lib/desk-record";
+import { ScoreBreakdown } from "@/components/app/score-breakdown";
+import { NOT_SCORED, fmtWhen, recordCounts, recordEmpty, useDeskRecord, useScoreBreakdowns, useTaskScores, type ScoreBreakdown as Breakdown } from "@/lib/desk-record";
 import type { Scores } from "@/lib/desk/badges";
 import { OrgName } from "@/lib/desk/org-tone";
 
@@ -19,6 +20,7 @@ import { OrgName } from "@/lib/desk/org-tone";
 export default function SubmissionsPage() {
   const { state, desk, progress, start, weeks, retry } = useDeskRecord();
   const scores = useTaskScores();
+  const breakdowns = useScoreBreakdowns();
   if (state === "failed")
     return (
       <div className="page-shell grid justify-items-center gap-2 py-16 text-center">
@@ -73,7 +75,7 @@ export default function SubmissionsPage() {
             const todo = wk.filter((t) => !handedIn(desk, progress, t));
             return (
               <>
-                {wk.filter((t) => !todo.includes(t)).map((t) => <TaskRecord key={t.id} task={t} progress={progress} desk={desk} start={start} scores={scores} />)}
+                {wk.filter((t) => !todo.includes(t)).map((t) => <TaskRecord key={t.id} task={t} progress={progress} desk={desk} start={start} scores={scores} breakdown={breakdowns?.[t.id]} />)}
                 {todo.length > 0 && (
                   <p className="border border-[#E9ECF1] bg-white px-4 py-2.5 text-[13px] text-[#5B6474]">
                     Nothing handed in yet for{" "}
@@ -81,7 +83,7 @@ export default function SubmissionsPage() {
                       <span key={t.id}>
                         {i > 0 && (i === todo.length - 1 ? " and " : ", ")}
                         <Link href={`/app/desk#${t.id}`} className="font-mono font-semibold text-[#4338CA] no-underline hover:underline">{t.id}</Link>
-                        <span className="text-[#8A91A3]"> (due {fmtDay(dueDate(start, t.dueDay))})</span>
+                        <span className="text-[#6B7280]"> (due {fmtDay(dueDate(start, t.dueDay))})</span>
                       </span>
                     ))}
                     .
@@ -113,7 +115,7 @@ const lineOf = (desk: Desk, p: Progress, task: Task, menteeId?: string) =>
 /** Anything of this task's on record: a step done, work saved under a step, or the task submitted. */
 const handedIn = (desk: Desk, p: Progress, task: Task) => !!p.submitted[task.id] || lineOf(desk, p, task).some((l) => l.isDone || l.text);
 
-function TaskRecord({ task, progress, desk, start, scores }: { task: Task; progress: Progress; desk: Desk; start: Date; scores: Scores | null }) {
+function TaskRecord({ task, progress, desk, start, scores, breakdown }: { task: Task; progress: Progress; desk: Desk; start: Date; scores: Scores | null; breakdown?: Breakdown }) {
   const st = taskStatus(progress, task);
   const n = task.steps.filter((s) => progress.done[stepKey(task.id, s.n)]).length;
   const lines = lineOf(desk, progress, task, useDeskIdentity().menteeId); // a pick in the learner's letter
@@ -134,14 +136,14 @@ function TaskRecord({ task, progress, desk, start, scores }: { task: Task; progr
         <Link href={`/app/desk#${task.id}`} className="text-[12.5px] font-medium text-[#4338CA] no-underline hover:underline">Open in desk</Link>
       </header>
       {lines.every((l) => !l.isDone && !l.text) ? (
-        <p className="px-4 py-3 text-[13px] text-[#8A91A3]">Nothing handed in yet.</p>
+        <p className="px-4 py-3 text-[13px] text-[#6B7280]">Nothing handed in yet.</p>
       ) : (
         <ol>
           {lines.map(({ s, isDone, text }) => (
             <li key={s.n} className="grid grid-cols-[40px_minmax(0,2fr)_minmax(0,3fr)] items-start gap-3 border-b border-[#E9ECF1] px-4 py-2.5 text-[13px] last:border-b-0 max-md:grid-cols-[32px_minmax(0,1fr)]">
               <span className={`grid h-6 min-w-6 place-items-center rounded-full px-1 text-[12px] font-bold tabular-nums ${isDone ? "bg-[#16A34A] text-white" : "bg-[#EEF0F4] text-[#5B6474]"}`}>{s.n}</span>
-              <span className="text-[#111827]">{s.kind === "do" ? s.t : s.t.replace(/^decide( for each row)?:\s*/i, "")}</span>
-              <span className={`max-md:col-start-2 ${text ? "text-[#3F4757]" : "text-[#8A91A3]"}`}>
+              <span className="text-[#111827]">{s.kind === "do" ? s.t : s.t.replace(/^decide( for each row)?:\s*/i, "").replace(/^./, (c) => c.toUpperCase())}</span>
+              <span className={`max-md:col-start-2 ${text ? "text-[#3F4757]" : "text-[#6B7280]"}`}>
                 {/* Typed but not marked complete is a draft, not a hand-in: say so. */}
                 {text && !isDone && <span className="mr-1.5 rounded-[3px] border border-dashed border-[#C9CFD9] px-1 text-[11px] font-semibold text-[#5B6474]">Draft</span>}
                 {text || (isDone ? "Done" : "—")}
@@ -150,6 +152,7 @@ function TaskRecord({ task, progress, desk, start, scores }: { task: Task; progr
           ))}
         </ol>
       )}
+      {breakdown && <ScoreBreakdown b={breakdown} />}
     </article>
   );
 }
@@ -158,7 +161,7 @@ function TaskRecord({ task, progress, desk, start, scores }: { task: Task; progr
 function TaskScore({ score }: { score: number | null | undefined }) {
   if (score === undefined) return null;
   return score === null ? (
-    <span className="text-[12px] text-[#8A91A3]">{NOT_SCORED}</span>
+    <span className="text-[12px] text-[#6B7280]">{NOT_SCORED}</span>
   ) : (
     <span title="Released at submission: the share of this task's keyed items that match the answer key" className="whitespace-nowrap rounded-[3px] border border-[#DDE1E8] bg-white px-[7px] py-0.5 font-mono text-[12px] font-semibold tabular-nums text-[#111827]">
       Score {score}

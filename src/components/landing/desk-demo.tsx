@@ -436,7 +436,7 @@ export function DeskDemo() {
                   <p className="font-mono text-[8px] font-semibold uppercase tracking-[0.08em] text-[#3F4757]">Home</p>
                   <p className="text-[9px] text-[#5B6474]">Your week and your organisation</p>
                 </div>
-                <MenuRow n="Calendar" d="Weeks, exams and checkpoints" />
+                <MenuRow n="Calendar" d="Weeks and exams" />
                 <MenuRow n="My Organisation" d="GlobalConnect and LearnTech profiles" target />
                 <MenuRow n="My Scores" d="My scores and what the certificate needs" />
               </div>

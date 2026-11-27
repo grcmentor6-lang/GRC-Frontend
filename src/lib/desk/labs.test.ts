@@ -25,7 +25,7 @@ assert.deepEqual(
 for (const l of LABS) {
   const t = desk.tasks[l.task];
   const n = Number(l.after!.split("-")[1]);
-  assert.ok(n < t.steps.length && t.steps[t.steps.length - 1].t.startsWith("Submit"), `${l.id} opens before ${l.task}'s hand-in`);
+  assert.ok(n < t.steps.length && t.steps[t.steps.length - 1].t.startsWith("Save"), `${l.id} opens before ${l.task}'s hand-in`);
   assert.ok(desk.sections.systems.tools.some((x) => `systems|${x.n}` === l.tool), `${l.tool} is on the Systems menu`);
 }
 

@@ -12,7 +12,7 @@ export interface DocSection {
 }
 
 /** Documents with text on file. */
-export const DOC_TEXT = new Set(["SITL-TECH-000", "SITL-ADD-16", "SITL-ADD-36", "SITL-STD-001", "SITL-ERM-001", "SITL-POL-000", "SITL-POL-001", "SITL-POL-002", "SITL-POL-006", "SITL-POL-009", "SITL-POL-010", "SITL-POL-014", "SITL-POL-016", "SITL-POL-013", "SITL-POL-017", "SITL-POL-020", "SITL-POL-021", "Charter", "Organization_Profiles"]);
+export const DOC_TEXT = new Set(["SITL-TECH-000", "SITL-ADD-16", "SITL-ADD-36", "SITL-STD-001", "SITL-ERM-001", "SITL-POL-000", "SITL-POL-001", "SITL-POL-002", "SITL-POL-006", "SITL-POL-009", "SITL-POL-010", "SITL-POL-014", "SITL-POL-016", "SITL-POL-013", "SITL-POL-017", "SITL-POL-020", "SITL-POL-021", "SITL-POL-022", "SITL-POL-024", "Charter", "Organization_Profiles"]);
 
 const cache = new Map<string, Promise<DocSection[]>>();
 const ready = new Map<string, DocSection[]>();

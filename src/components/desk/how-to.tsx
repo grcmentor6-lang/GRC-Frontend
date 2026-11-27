@@ -1,5 +1,11 @@
 "use client";
 
+import { aboutMin, pauseAfter, stepMinutes } from "@/lib/desk/first-week";
+import { StepReadFirst } from "./read-first";
+import { StepHints } from "./step-hints";
+import { setWhere } from "@/lib/desk/where";
+import { stepHelp } from "@/lib/desk/step-help";
+import { ConfirmBar, asksBeforeLock } from "./confirm-lock";
 import { Fragment, useCallback, useEffect, useId, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/ui/icon";
@@ -35,7 +41,7 @@ export function isStepComplete(p: Progress, task: Task, s: Step): boolean {
  * away. One step is open at a time: opening another closes it, and the key results follow.
  */
 export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: number; onFocus: (n: number) => void; locked: boolean }) {
-  const { desk, progress, stepLock, openTool } = useDesk();
+  const { desk, progress, stepLock } = useDesk();
   const doneCount = task.steps.filter((x) => isStepComplete(progress, task, x)).length;
   // The first step not yet done is the one to do next; it carries the UP NEXT tag.
   const next = locked ? 0 : (task.steps.find((x) => !isStepComplete(progress, task, x))?.n ?? 0);
@@ -55,6 +61,16 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
   if (task.id !== helpTask) {
     setHelpTask(task.id);
     setHelp(null);
+  }
+  // C-12: an open help window follows the step in hand (the one open in the list), on the same tab; with none open it closes.
+  useEffect(() => {
+    setWhere({ task: task.id, step: focus });
+    return () => setWhere(null);
+  }, [task.id, focus]);
+  const [seenFocus, setSeenFocus] = useState(focus);
+  if (focus !== seenFocus) {
+    setSeenFocus(focus);
+    if (help && help.n !== focus) setHelp(focus ? { n: focus, q: help.q } : null);
   }
   const helpStep = help ? task.steps.find((x) => x.n === help.n) : undefined;
   const cell = "border-r border-[#E9ECF1]";
@@ -127,7 +143,7 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                       {s.n}
                     </span>
                   ) : locked || gate ? (
-                    <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EEF0F4] text-[#8A91A3]" aria-label={`Step ${s.n}, not open yet`}><Icon name="lock" size={12} /></span>
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-[#EEF0F4] text-[#6B7280]" aria-label={`Step ${s.n}, not open yet`}><Icon name="lock" size={12} /></span>
                   ) : isNext || open ? (
                     <span className="grid h-6 w-6 place-items-center rounded-full border-2 border-[#4338CA] bg-white text-[12px] font-bold text-[#4338CA] tabular-nums">{s.n}</span>
                   ) : (
@@ -141,8 +157,9 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                     <Marked text={open ? copy.title : copy.short} />
                   </span>
                   {isNext && <span className="shrink-0 rounded-[3px] bg-[#4338CA] px-1.5 py-0.5 text-[11px] font-semibold text-white">UP NEXT</span>}
+                  {!done && !locked && <span data-step-minutes className="shrink-0 text-[12px] tabular-nums text-[#5B6474]">{aboutMin(stepMinutes(task))}</span>}
                   {s.li && <span title={`Lead Implementer extension: ${desk.li[s.li]?.title ?? s.li}`} className="shrink-0 rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#3730A3]">{s.li}</span>}
-                  {open && copy.detail && s.kind === "pick" && <span className="block w-full text-[13px] leading-snug text-[#5B6474]">{copy.detail}</span>}
+                  {open && copy.detail && s.kind === "pick" && <span className="block w-full text-[14px] leading-[1.5] text-[#5B6474]">{copy.detail}</span>}
                   {/* Narrow sheet: the folded columns ride along under the step. */}
                   <span className="flex w-full flex-wrap items-center gap-2 text-[12px] text-[#5B6474] @[760px]:hidden">
                     {decision ? <TypeChip each={s.kind === "each"} /> : <ActivityChip />}
@@ -158,14 +175,14 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                       <span className="truncate text-[13px] text-[#3F4757]">{splitKr(kr.kr).text}</span>
                     </>
                   ) : (
-                    <span className="font-mono text-[12px] text-[#8A91A3]">—</span>
+                    <span className="font-mono text-[12px] text-[#6B7280]">—</span>
                   )}
                 </span>
                 <span className={`${cell} hidden min-w-0 items-center px-3 text-[13px] text-[#3F4757] @[760px]:flex`} title={s.tool}>
                   <span className="min-w-0 py-1.5"><Where tool={s.tool} wrap /></span>
                 </span>
                 <span aria-hidden className={cell} />
-                <span className={`flex items-center justify-center ${isNext && !open ? "text-[#4338CA]" : "text-[#8A91A3]"}`}>
+                <span className={`flex items-center justify-center ${isNext && !open ? "text-[#4338CA]" : "text-[#6B7280]"}`}>
                   <Icon name={isNext && !open ? "chevronRight" : "chevronDown"} size={16} className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
                 </span>
               </button>
@@ -195,6 +212,13 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                 />
               )}
             </li>
+            {/* A natural stopping point (UX101 W10): the step before it is done and the task is not over. */}
+            {done && !locked && pauseAfter(task, s.n) && task.steps[i + 1] && (
+              <li data-pause className="flex items-center gap-2 border-b border-[#E9ECF1] bg-[#F7F8FA] px-4 py-2 text-[12.5px] text-[#3F4757]">
+                <Icon name="clock" size={13} className="shrink-0 text-[#5B6474]" />
+                Good place to pause. Your next session starts with step {task.steps[i + 1].n}.
+              </li>
+            )}
             {/* A Tech Lab of the task, once the step it follows is done: a required item, which Submit waits for. */}
             {LABS.filter((l) => l.task === task.id && l.after === stepKey(task.id, s.n) && labOpen(l, progress)).map((l) => {
               const ok = labDone(l, progress);
@@ -204,10 +228,8 @@ export function HowTo({ task, focus, onFocus, locked }: { task: Task; focus: num
                   <Icon name={ok ? "check" : "bolt"} size={15} className={`shrink-0 ${ok ? "text-[#15803D]" : "text-[#B45309]"}`} />
                   <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[#78350F]">Tech Lab · required</span>
                   <span className="min-w-0 flex-1 text-[13.5px] font-semibold text-[#111827]">{name}: {desk.sections.systems?.tools.find((t) => `systems|${t.n}` === l.tool)?.d.split(" · ")[0] ?? "a check of the system"}</span>
-                  <span className="text-[12px] text-[#78350F]">{ok ? "Complete" : "Not complete: Submit waits for it"}</span>
-                  <button type="button" onClick={() => openTool(l.tool, "view")} className="inline-flex h-7 items-center rounded border border-[#C9CED8] bg-white px-2 text-[12px] font-semibold text-[#3F4757] focus-ring">
-                    {ok ? "Open again" : "Open the lab"}
-                  </button>
+                  <span className="text-[12px] text-[#78350F]">{ok ? "Complete" : "Not complete: Submit task waits for it"}</span>
+                  <span className="text-[12px] text-[#78350F]">Open it from the toolbar: {desk.sections.systems?.t ?? "Systems"} › {name}</span>
                 </li>
               );
             })}
@@ -360,7 +382,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
             data-guide="step-complete"
             disabled={readOnly || !stepAnswered(desk, progress, task, s, start)}
             onClick={markDone}
-            className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+            className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] ${press}`}
           >
             Mark step complete
           </button>
@@ -415,7 +437,7 @@ function Activity({ task, s, locked, onNext }: { task: Task; s: Step; locked: bo
                   type="button"
                   disabled={locked || !checked}
                   onClick={() => openTool(s.key)}
-                  className={`inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+                  className={`inline-flex h-9 items-center gap-1.5 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] ${press}`}
                 >
                   Open {rmfTable(s) !== null ? "Onboarding record" : s.tool.split("›").pop()?.trim()} <Icon name="arrowUpRight" size={14} />
                 </button>
@@ -527,7 +549,7 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
     if (!q) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input, textarea, select")) return;
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !e.defaultPrevented && !document.querySelector('[aria-label^="Guide:"]')) onClose();
       const i = QUESTIONS.findIndex((x) => x.key === q);
       if (e.key === "ArrowRight" && i < QUESTIONS.length - 1) setQ(QUESTIONS[i + 1].key);
       if (e.key === "ArrowLeft" && i > 0) setQ(QUESTIONS[i - 1].key);
@@ -573,7 +595,8 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
     ),
     // Why the work matters, in one plain line from the task's own "Why am I doing this". The key
     // result is not repeated here: the table's Key result column already shows it.
-    why: <p className="text-[14px] leading-relaxed text-[#111827]">{taskWhy || task.obj}</p>,
+    why: <p className="text-[14px] leading-relaxed text-[#111827]">{stepHelp(task.id, s.n)?.why || taskWhy || task.obj}</p>,
+    hint: <StepHints task={task} s={s} />,
     read: refs.length ? (
       <ul className="grid gap-px overflow-hidden rounded border border-[#DDE1E8] bg-[#E9ECF1]">
         {refs.map((r) => (
@@ -584,7 +607,7 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
                 <span className="block font-mono text-[12px] font-semibold text-[#111827]">{r.id.split("#")[0]}</span>
                 <span className="block truncate text-[12.5px] text-[#5B6474]">{refName(r.kind, r.id)}</span>
               </span>
-              <Icon name="chevronRight" size={14} className="text-[#8A91A3] group-hover:text-[#3F4757]" />
+              <Icon name="chevronRight" size={14} className="text-[#6B7280] group-hover:text-[#3F4757]" />
             </button>
           </li>
         ))}
@@ -622,7 +645,7 @@ function StepHelp({ task, s, q, setQ, onClose }: { task: Task; s: Step; q: Quest
                   on ? "bg-white text-[#111827]" : "text-[#5B6474] hover:bg-white/70 hover:text-[#111827]"
                 }`}
               >
-                <Icon name={x.icon} size={15} strokeWidth={1.7} className={on ? "text-[#4338CA]" : "text-[#8A91A3]"} />
+                <Icon name={x.icon} size={15} strokeWidth={1.7} className={on ? "text-[#4338CA]" : "text-[#6B7280]"} />
                 {x.label}
                 {on && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-[#4338CA]" aria-hidden />}
               </button>
@@ -690,7 +713,7 @@ function Attestation({ task, a, readOnly }: { task: Task; a: Attest; readOnly: b
             data-guide="attest-save"
             disabled={lock || !ready}
             onClick={() => set({ at: new Date().toISOString() })}
-            className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+            className={`h-9 rounded bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-90 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] ${press}`}
           >
             Save
           </button>
@@ -744,7 +767,7 @@ export function Work({ task, s, readOnly, bare, aside }: { task: Task; s: Step; 
         value={progress.answers[key] ?? ""}
         onChange={(e) => update((p) => ({ ...p, answers: { ...p.answers, [key]: e.target.value } }))}
         placeholder="Type what you found or did: the values you copied, the row you used, the reference you followed."
-        className="w-full resize-y rounded border border-[#C9CED8] bg-white px-3 py-2.5 text-[14px] leading-[1.5] text-[#111827] placeholder:text-[#8A91A3] focus:border-[#4338CA] focus:outline-none focus:ring-2 focus:ring-[#4338CA]/15"
+        className="w-full resize-y rounded border border-[#C9CED8] bg-white px-3 py-2.5 text-[14px] leading-[1.5] text-[#111827] placeholder:text-[#6B7280] focus:border-[#4338CA] focus:outline-none focus:ring-2 focus:ring-[#4338CA]/15"
       />
     </div>
   );
@@ -785,7 +808,9 @@ function Decision({ task, s, readOnly, bare, aside }: { task: Task; s: Step; rea
       .catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
   }, [checked, fb, pick, did, update, tries]);
-  const check = () => update((p) => ({ ...p, acks: { ...p.acks, [key]: [...(p.acks[key] ?? []).filter((x) => x !== "checked"), "checked"] } }));
+  const [sure, setSure] = useState(false);
+  const lock = () => (setSure(false), update((p) => ({ ...p, acks: { ...p.acks, [key]: [...(p.acks[key] ?? []).filter((x) => x !== "checked"), "checked"] } })));
+  const check = () => (asksBeforeLock(task.week) ? setSure(true) : lock());
 
   const best = fb?.best;
   return (
@@ -802,6 +827,7 @@ function Decision({ task, s, readOnly, bare, aside }: { task: Task; s: Step; rea
           ))}
         </div>
       )}
+      <StepReadFirst s={s} className="mb-1" />
       {fb && (
         <p data-guide="decision-result" className={`flex items-center gap-2.5 rounded-[10px] border px-4 py-3 text-[14px] font-semibold ${fb.correct === false ? "border-[#FCD34D] bg-[#FFFBEB] text-[#78350F]" : "border-[#86EFAC] bg-[#F0FDF4] text-[#14532D]"}`}>
           <Icon name={fb.correct === false ? "info" : "checkCircle"} size={18} className="shrink-0" />
@@ -823,6 +849,8 @@ function Decision({ task, s, readOnly, bare, aside }: { task: Task; s: Step; rea
             <input
               type="radio"
               name={group}
+              value={letter}
+              aria-label={`${String.fromCharCode(65 + d)}: ${o}`}
               checked={on}
               onChange={() => update((p) => ({ ...p, picks: { ...p.picks, [key]: letter } }))}
               className="mt-[3px] h-[18px] w-[18px] shrink-0 cursor-pointer appearance-none rounded-full border-2 border-[#C9CCD4] bg-white transition-[border] checked:border-[5px] checked:border-[#4338CA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4338CA]/30 disabled:cursor-default"
@@ -836,7 +864,7 @@ function Decision({ task, s, readOnly, bare, aside }: { task: Task; s: Step; rea
                 </span>
               )}
               {why && (
-                <span className="mt-2 grid gap-x-6 gap-y-1 text-[13.5px] leading-[1.55] text-[#374151] md:grid-cols-2">
+                <span className="mt-2 grid gap-x-6 gap-y-1 text-[14px] leading-[1.5] text-[#374151] md:grid-cols-2">
                   <span><strong className="font-semibold text-[#111827]">Why: </strong>{relabel(why.reason, order)}</span>
                   <span><strong className="font-semibold text-[#111827]">If you do this: </strong>{relabel(why.consequence, order)}</span>
                 </span>
@@ -845,14 +873,15 @@ function Decision({ task, s, readOnly, bare, aside }: { task: Task; s: Step; rea
           </label>
         );
       })}
-      {!checked && (
+      {!checked && sure && <ConfirmBar message="Check my answer locks your pick, and you see the best option and why. Continue?" yes="Yes, lock my pick" onYes={lock} onNo={() => setSure(false)} />}
+      {!checked && !sure && (
         <div className="mt-1.5 flex flex-wrap items-center gap-3">
           <button
             type="button"
             data-guide="check-answer"
             disabled={readOnly || !pick}
             onClick={check}
-            className={`h-10 rounded-lg bg-[#111827] px-5 text-[13.5px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+            className={`h-10 rounded-lg bg-[#111827] px-5 text-[13.5px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] ${press}`}
           >
             Check my answer
           </button>
@@ -872,7 +901,7 @@ function Decision({ task, s, readOnly, bare, aside }: { task: Task; s: Step; rea
         Outside the fieldset: a checked decision disables it, and a button inside would be disabled with it. */}
     {(fb?.why || aside) && (
       <div className="mt-2.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        {fb?.why ? <p className="min-w-0 flex-1 text-[13.5px] leading-[1.6] text-[#4B5563]"><strong className="font-semibold text-[#111827]">The rule: </strong>{relabel(fb.why, order)}</p> : <span />}
+        {fb?.why ? <p className="min-w-0 flex-1 text-[14px] leading-[1.5] text-[#4B5563]"><strong className="font-semibold text-[#111827]">The rule: </strong>{relabel(fb.why, order)}</p> : <span />}
         {aside}
       </div>
     )}

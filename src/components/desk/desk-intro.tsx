@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { GuidedTour, markTourSeen, useTourOnce, type TourStep } from "@/components/app/guided-tour";
 
 /** The one on screen: the week panel is hidden below lg, and a hidden target has no hole to cut. */
@@ -19,7 +19,7 @@ const STEPS: TourStep[] = [
   {
     title: "The twelve weeks",
     icon: "calendar",
-    body: "Each week opens on its date, counted from your start date; the dot marks this week. The logos say which organisation the week's work is for. Click a week to read its overview.",
+    body: "Each week is planned from your start date; the dot marks the week today falls in. You work the tasks in order, and a late task costs no marks. The logos say which organisation the week's work is for. Click a week to read its overview.",
     getEl: shown('nav[aria-label="Weeks"]'),
   },
   {
@@ -39,8 +39,14 @@ const STEPS: TourStep[] = [
   {
     title: "Where the work happens",
     icon: "layers",
-    body: "You are on this week's overview. Open a task and its steps appear here, one after the other. Each step has a guide of its own, which runs the first time you open that step.",
+    body: "This pane shows a week's overview or the task you have open. Open a task and its steps appear here, one after the other. Each step has a guide of its own, which runs the first time you open that step.",
     getEl: shown("main"),
+  },
+  {
+    title: "Help on every step",
+    icon: "help",
+    body: "Each step has a **?** in its row. It gives what to do, why it matters at work, **three hints** (a nudge, where to look, how to reason it out; never the answer) and the references. On a step you will also see a card headed **Read first** or **Sources for this step**: it names where the step's facts and rules are and opens them beside your work. **Report a problem**, bottom right, sends your note with the task and step you have open.",
+    getEl: () => null,
   },
   {
     title: "The platform tools",
@@ -69,10 +75,12 @@ export const INTRO_KEY = "grc101.guide.desk";
 const KEY = INTRO_KEY;
 
 /** First visit to the desk, per mentee: a walkthrough with no Skip, since there is no button to bring it back. */
-export function DeskIntro({ who, ready, onDone }: { who: string; ready: boolean; onDone: () => void }) {
+export function DeskIntro({ who, ready, onDone }: { who: string; ready: boolean; onDone?: () => void }) {
   const [at, setAt] = useState(-1);
   const start = useCallback(() => setAt(0), []);
   useTourOnce(KEY, who, ready, start, 700);
+  // Week 0's "Start the tour" (first-week.tsx TOUR_EVENT).
+  useEffect(() => { window.addEventListener("desk:tour", start); return () => window.removeEventListener("desk:tour", start); }, [start]);
   return (
     <GuidedTour
       required
@@ -82,7 +90,7 @@ export function DeskIntro({ who, ready, onDone }: { who: string; ready: boolean;
       onClose={() => {
         setAt(-1);
         markTourSeen(KEY, who);
-        onDone();
+        onDone?.();
       }}
     />
   );

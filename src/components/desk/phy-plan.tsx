@@ -24,7 +24,7 @@ export function PhyPlan() {
             </g>
           ))}
           <rect x={P.corridor[0]} y={P.corridor[1]} width={P.corridor[2]} height={P.corridor[3]} fill="#F4F5F7" stroke="#C9CED8" />
-          <text x={P.corridor[0] + 8} y={P.corridor[1] + 30} fontSize={13} fill="#8A91A3">Corridor</text>
+          <text x={P.corridor[0] + 8} y={P.corridor[1] + 30} fontSize={13} fill="#6B7280">Corridor</text>
           {P.areas.map(([id, x, y, w, h]) => (
             <g key={id as string}>
               <rect x={x as number} y={y as number} width={w as number} height={h as number} fill="#FFFFFF" stroke="#3F4757" strokeWidth={2} />

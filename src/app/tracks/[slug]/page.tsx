@@ -36,7 +36,7 @@ const COURSES: Record<string, Course> = {
     tagline: "Learn governance, risk and compliance by doing the actual work: one simulated ISO/IEC 27001 engagement, checked automatically against answer keys, with no human mentor review.",
     teaser: "",
     overview:
-      "GRC 101 takes you from zero to job-ready through one simulated enterprise engagement: you join the GRC team at GlobalConnect Customer Solutions in Manila, a call-centre operator, for 12 weeks and 25 tasks, with worked examples from LearnTech Amsterdam. You don't watch lectures. You do the work of an ISO/IEC 27001 implementation team: scope and gap analysis, risk assessment and treatment, the Statement of Applicability, control testing, internal audit and certification readiness. Every step is checked automatically against answer keys held on the server, and six checkpoints (HC1 to HC6) check a fortnight's work the same way. No person grades or reviews your work.",
+      "GRC 101 takes you from zero to job-ready through one simulated enterprise engagement: you join the GRC team at GlobalConnect Customer Solutions in Manila, a call-centre operator, for 12 weeks and 25 tasks, with worked examples from LearnTech Amsterdam. You don't watch lectures. You do the work of an ISO/IEC 27001 implementation team: scope and gap analysis, risk assessment and treatment, the Statement of Applicability, control testing, internal audit and certification readiness. Every step is checked automatically against answer keys held on the server. No person grades or reviews your work.",
     level: "Beginner · no prior experience",
     learn: [
       "Write the ISMS scope and rate the requirements of ISO/IEC 27001 clauses 4 to 10 against what an office actually does.",

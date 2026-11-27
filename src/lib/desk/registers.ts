@@ -540,11 +540,11 @@ const citRegister = (task: string, at: { find: number; status: number; level: nu
     cols: [
       { h: "Organisation", what: "Whose row it is: yours, or the worked example's." },
       { h: "A Control", w: 70, what: "The Annex A control of ISO/IEC 27001:2022." },
-      { h: "B Title", w: 160, what: "The control's title in the standard." },
-      { h: "C Owner role", w: 150, what: "The role that owns the control at the office." },
-      { h: "What it requires (LI task)", prose: true, w: 260, what: "The requirements on the control's LI task page, numbered." },
-      { h: "Observed at Manila (sprint dataset)", prose: true, w: 280, what: "What the sprint's dataset saw at the office." },
-      { h: "D Status", opts: "step", w: 150, what: "Implemented, Partially implemented or Not implemented." },
+      { h: "B Title", w: 100, what: "The control's title in the standard." },
+      { h: "C Owner role", w: 110, what: "The role that owns the control at the office." },
+      { h: "What it requires (LI task)", prose: true, w: 190, what: "The requirements on the control's LI task page, numbered." },
+      { h: "Observed at Manila (sprint dataset)", prose: true, w: 210, what: `What dataset ${sp.ds} found at the office: the facts you decide from.` },
+      { h: "D Status", opts: "step", w: 130, what: "Implemented, Partially implemented or Not implemented." },
       { h: "E Maturity level", opts: "step", w: 140, what: "Level 1 to 3, by the Maturity Model's questions." },
       { h: "F Evidence ref", opts: (desk, r) => (first(r[1]) ? evidenceOpts(desk, task, `${r[1]}-01`) : undefined), wrap: true, w: 230, what: "The file in 02_Working that holds the evidence." },
       { h: "G Gap / next action", opts: (_d, r) => sp.next?.[r[1]], prose: true, w: 260, what: "The gap, or the next action to Level 3 and the Level 4 measure." },
@@ -565,7 +565,7 @@ const citRegister = (task: string, at: { find: number; status: number; level: nu
       9: { from: [1], value: (v, p) => earlier(v(1), 9, p) ?? (sp.deep.includes(v(1)) ? fromPack(v(1), p, 9) : null), waits: () => `From the evidence pack (step ${at.pack})` },
     },
     note: {
-      [at.status]: () => `Compare each control's observations with What it requires, one requirement at a time (LI-Q4). Implemented: every requirement is met at the office. Partially implemented: some are met. Not implemented: none is met, or what exists does not operate. Each control's LI task page (LI-${sp.controls[0]} …, in Learn › Reference pages) names the ISO/IEC 27002:2022 section of its guidance.`,
+      [at.status]: () => `Compare each control's observations with What it requires, one requirement at a time (fixed question LI-Q4; the eight fixed questions are on the page LI-Q fixed questions, in Learn › Reference pages). Implemented: every requirement is met at the office. Partially implemented: some are met. Not implemented: none is met, or what exists does not operate. Each control's LI task page (LI-${sp.controls[0]} …, in Learn › Reference pages) names the ISO/IEC 27002:2022 section of its guidance.`,
       [at.level]: () => "Decide each control's level from what was observed at the office, with the Maturity Model (Ref-Maturity Model, in Learn › Reference pages). Ask its questions in order and stop at the first No. 1) Is there a documented, approved way of doing it, and records that it is done? No → Level 1. 2) Is it the Group's standard way, done the same in every office, and reviewed at least once a year? No → Level 2. 3) Is it measured against targets, with the results tracked and acted on? No → Level 3. Status and level are separate questions: the level rates how what is in place at the office is done.",
       ...fx(() => `For ${sp.controls.filter(first).join(", ").replace(/, ([^,]+)$/, " and $1")}, record sub-task 01 of the LI task (its first evidence item) in column F. Choose a file you already handed in where it holds the item (LI-Q7: reuse before writing new); else the item's own new file, where the dataset holds the records it is prepared from; else None. In column G choose the next action that takes the control to Level 3 (or keeps it there, where it is at Level 3 already) and the Level 4 measure you would track (LI-Q2, Ref-Maturity Model). F and G are checked together. The deep dives' F and G fill from your evidence pack (step ${at.pack}).`),
     },
@@ -576,11 +576,11 @@ const citRegister = (task: string, at: { find: number; status: number; level: nu
 };
 /** One sprint's evidence packs (his "LI-A evidence packs"): every sub-task of each deep-dive control's LI task, its
  *  evidence ref chosen (a file handed in, the item's own new file, or None) and, where None, the gap and next action
- *  written (checked at the task's checkpoint). */
+ *  written. */
 const packRegister = (task: string, step: number, handIn: number, hc: string, also: string[] = []): Register => {
   const sp = SPRINTS.find((s) => s.task === task)!;
-  // hc: a checkpoint ("HC2"), or, for a task no checkpoint reviews (T4.1), who reviews the gaps, in words.
-  const who = /^HC\d/.test(hc) ? `it is format-checked and kept with your hand-in` : hc;
+  // who: what happens to the gaps, in words (nothing but a format check; no person reads them).
+  const who = hc;
   return {
     code: "LI-A",
     title: `LI-A · Evidence packs for ${sp.deep.join(" and ")} (Lead Implementer task library)`,
@@ -1433,24 +1433,28 @@ export const REGISTERS: Record<string, Register> = {
       { h: "Clause" },
       { h: "Title" },
       { h: "PDCA phase (L02)", opts: "step", what: "Plan, Do, Check or Act" },
+      // UX101 W4 (C-04): a title alone does not say what a clause asks. Our summary, never the standard's text; last, so
+      // the phase column keeps its place in saved work and in the key.
+      { h: "What the clause requires (our summary)", prose: true, w: 340, what: "What the clause asks, in our words. Read the standard itself before citing it." },
     ],
-    // ISO/IEC 27001:2022's clause titles.
+    // ISO/IEC 27001:2022's clause titles; what each requires in our own words (logged, UX101 — W4).
     rows: [
-      ["Clause 4", "Context of the organization", ""],
-      ["Clause 5", "Leadership", ""],
-      ["Clause 6", "Planning", ""],
-      ["Clause 7", "Support", ""],
-      ["Clause 8", "Operation", ""],
-      ["Clause 9", "Performance evaluation", ""],
-      ["Clause 10", "Improvement", ""],
+      ["Clause 4", "Context of the organization", "", "Work out the internal and external issues that affect the ISMS, the interested parties and their requirements, and where the ISMS begins and ends (its scope)."],
+      ["Clause 5", "Leadership", "", "Top management commits to the ISMS, sets the information security policy, and assigns the roles, responsibilities and authorities."],
+      ["Clause 6", "Planning", "", "Assess the information security risks and decide how to treat them, set the objectives and how to reach them, and plan any change to the ISMS."],
+      ["Clause 7", "Support", "", "Determine and provide what the ISMS needs in order to work: resources, competent and aware people, communication and controlled documents."],
+      ["Clause 8", "Operation", "", "Carry out the processes and the risk treatment plan as Clause 6 set them out, and repeat the risk assessment at planned intervals."],
+      ["Clause 9", "Performance evaluation", "", "Monitor and measure the ISMS, audit it internally, and have top management review it."],
+      ["Clause 10", "Improvement", "", "Deal with nonconformities and their causes, and keep making the ISMS more suitable, adequate and effective."],
     ],
     mine: () => true,
     steps: { 4: [2] },
     ident: [0, 1],
-    note: { 4: ruleNote("L02") },
+    view: { 4: [3] },
+    note: { 4: (desk) => `${ruleNote("L02")(desk)} Column "What the clause requires" says what each clause asks, in our words; each clause's entry in Learn › Framework Quick Reference says more.` },
     checkRows: { 4: { label: 0, col: 2 } },
     handIn: { step: 7, cols: [2], ident: [0, 1] },
-    reads: { 4: ["learn|Rule tables"] },
+    reads: { 4: ["learn|Rule tables", "learn|Framework Quick Reference"] },
   },
   "F1.3": {
     code: "CTX-ISS",
@@ -1470,7 +1474,7 @@ export const REGISTERS: Record<string, Register> = {
       [LT, "Schools, universities and corporate training programmes in 50 countries choose online learning platforms", "External", "Market", "Customers in many countries expect their learners' data protected to their own rules, so the ISMS must show that it is", "SITL-ADD-36 Section 1"],
       ...CTX_CATS.map((c) => [GC, "", "External", c, "", ""]),
       ...CTX_ISS_6.map(([issue, topic, effect]) => [GC, issue, "", topic, effect, "Dataset CTX-ISS-6"]),
-      [GC, "", "External", CLIMATE, "", "SITL-ERM-001 Annex B"],
+      [GC, "", "External", CLIMATE, "", "SITL-ADD-16 Section 1"],
     ],
     mine: (r, desk) => r[0] === desk.orgs.A.name,
     // 2: the four external issues (A, D, E) · 3: B for the six of CTX-ISS-6 · 4 (part 2): the climate row's A and D.
@@ -1488,15 +1492,15 @@ export const REGISTERS: Record<string, Register> = {
       4: {
         fix: (v) => (words(v) >= 6 ? v.trim() : null),
         hint: (r) => (r[3] === CLIMATE
-          ? "Write the reason in one sentence of six words or more: what SITL-ERM-001 Annex B says that leads to your conclusion, as in \"Annex B scores Austria 2 of 5 for natural hazards, with flooding and avalanches\" for an office in Austria."
+          ? "Write the reason in one sentence of six words or more: what the hazard profile in SITL-ADD-16 Section 1 says that leads to your conclusion, as in \"Section 1 scores Poland 2 of 5 for natural hazards, with flooding, and Warsaw lost no working day to weather\" for the Warsaw office."
           : "Write the effect in one sentence of six words or more: what the issue does to what the ISMS must achieve, as the worked rows do, for example \"Student data must be processed lawfully, so the ISMS must protect it\"."),
       },
     },
     note: {
       2: (desk) => `Each of your four rows names its category in column C. In ${addendum(desk)} Section 1 and Section 2 (the Manila, Philippines row), find the issue of that category that applies to ${office(desk)}. Choose it in column A, write in column D what it does to the ISMS's intended outcomes, and choose in column E the section you read it in. Columns A and E are checked; column D is format-checked and kept with your hand-in.`,
-      4: (desk) => `Whether climate change is relevant to ${office(desk)} depends on what the climate can do there. Read the Philippines row of SITL-ERM-001 Annex B: its natural-hazard score (Nat., 1 to 5) and its principal hazards. Record your conclusion in column A and the reason in column D. Column A is checked; the reason is format-checked and kept with your hand-in.`,
+      4: (desk) => `Whether climate change is relevant to ${office(desk)} depends on what the climate can do there. Read the Manila row of the natural-hazard and climate profile in ${addendum(desk)} Section 1: the score (1 to 5), the principal hazards and what the office has recorded. The scores come from SITL-ERM-001 Annex B. Record your conclusion in column A and the reason in column D. Column A is checked; the reason is format-checked and kept with your hand-in.`,
     },
-    extra: { 4: [["SITL-ERM-001", ["Annex B"]]] },
+    extra: { 4: [["SITL-ADD-16", ["1"]], ["SITL-ERM-001", ["Annex B"]]] },
     load: ["SITL-ERM-001"],
     checkRows: { 2: { label: 3, col: 1, with: 5 }, 3: { label: 1, col: 2 }, 4: { label: 3, col: 1 } },
     handIn: { step: 7, cols: [1, 2, 3, 4, 5], ident: [1] },
@@ -1779,10 +1783,10 @@ export const REGISTERS: Record<string, Register> = {
       4: { from: [1], value: (v) => (v(1) === NO_POLICY ? "—" : polOf(v(1))?.[2] ?? ""), waits: () => "Fills from the policy" },
     },
     note: {
-      6: () => "For each topic, find the SITL policy that covers it: its title in SITL-POL-000 Section 3, what it covers in Ref-Policy portal (Learn › Reference pages). Choose None in the library where no policy covers the topic. The owner, the approver and the last review date then fill themselves. Status, on 19 October 2026 (the date of the portal extract): SITL-POL-000 Section 7 reviews every policy each year, so a policy last approved within the 12 months before that date is Current, and one approved earlier is Overdue. A topic no policy covers is Missing. Policy and status are checked together.",
+      6: () => "The twelve topics in column A are the example topics ISO/IEC 27002:2022 Section 5.1 gives for topic-specific policies (the list is in Learn › Framework Quick Reference, entry ISO/IEC 27001 A.5.1). For each topic, find the SITL policy that covers it: its title in SITL-POL-000 Section 3, what it covers in Ref-Policy portal (Learn › Reference pages). Choose None in the library where no policy covers the topic. The owner, the approver and the last review date then fill themselves. Status, on 19 October 2026 (the date of the portal extract): SITL-POL-000 Section 7 reviews every policy each year, so a policy last approved within the 12 months before that date is Current, and one approved earlier is Overdue. A topic no policy covers is Missing. Policy and status are checked together.",
     },
     extra: { 6: [["SITL-POL-000", ["2", "3", "7"]]] },
-    reads: { 6: ["learn|Reference pages"] },
+    reads: { 6: ["learn|Reference pages", "learn|Framework Quick Reference"] },
     checkRows: { 6: { label: 0, col: 1, with: 5 } },
     handIn: { step: 7, cols: [1, 5], ident: [0] },
   },
@@ -1836,7 +1840,7 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 9, cols: [1, 2], ident: [0] },
   },
   "T3.2 CIT": citRegister("T3.2", { find: 3, status: 4, level: 5, pack: 6, first: 7, handIn: 9 }),
-  "T3.2 PACK": packRegister("T3.2", 6, 6, "HC2"),
+  "T3.2 PACK": packRegister("T3.2", 6, 6, "it is format-checked and kept with your hand-in"),
   "T8.1": {
     code: "IR-TTX",
     title: "IR-TTX · Tabletop exercise record (template T-LI-TTX)",
@@ -1905,7 +1909,7 @@ export const REGISTERS: Record<string, Register> = {
     const r = citRegister("T8.1", { find: 5, status: 6, level: 7, pack: 8, first: 9, handIn: 11 });
     return { ...r, note: { ...r.note, 9: () => T81_FIRST } };
   })(),
-  "T8.1 PACK": packRegister("T8.1", 8, 8, "HC4"),
+  "T8.1 PACK": packRegister("T8.1", 8, 8, "it is format-checked and kept with your hand-in"),
   "T10.1": {
     code: "CFG-BASE",
     title: "CFG-BASE · Configuration baseline check (template T-LI-CFG)",
@@ -2041,7 +2045,7 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 11, cols: [3, 4], ident: [0] },
   },
   "T10.2 CIT": citRegister("T10.2", { find: 4, status: 5, level: 6, pack: 7, first: 8, handIn: 11 }),
-  "T10.2 PACK": packRegister("T10.2", 7, 7, "HC5"),
+  "T10.2 PACK": packRegister("T10.2", 7, 7, "it is format-checked and kept with your hand-in"),
   "T8.2": {
     code: "BIA-RTO",
     title: "BIA-RTO · Business impact extract (template T-LI-BIA)",
@@ -2142,7 +2146,7 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 9, cols: [5, 6, 7], ident: [0] },
   },
   "T7.1 CIT": citRegister("T7.1", { find: 2, status: 3, level: 4, pack: 5, first: 6, handIn: 9 }),
-  "T7.1 PACK": packRegister("T7.1", 5, 5, "HC4"),
+  "T7.1 PACK": packRegister("T7.1", 5, 5, "it is format-checked and kept with your hand-in"),
   "T9.1": {
     code: "PHY-PLAN",
     title: "PHY-WALK · Sheet Floor plan: the perimeter and the secure areas (template T-LI-PHY)",
@@ -2239,7 +2243,7 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 10, cols: [11, 12, 13], ident: [0] },
   },
   "T9.2 CIT": citRegister("T9.2", { find: 3, status: 4, level: 5, pack: 6, first: 7, handIn: 10 }),
-  "T9.2 PACK": packRegister("T9.2", 6, 6, "HC5"),
+  "T9.2 PACK": packRegister("T9.2", 6, 6, "it is format-checked and kept with your hand-in"),
   // T7.2: VEN-TIER (step 1, Vendors › Set Risk Tier), VEN-CL (step 2, Vendors › Contract & DPA Check), sprint 7 (steps 3–7),
   // LI-CLD and its fixed questions (step 8 part 2, Policies › New from Template).
   "T7.2": {
@@ -2473,7 +2477,7 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 11, cols: [3], ident: [0] },
   },
   "T4.2 CIT": citRegister("T4.2", { find: 6, status: 7, level: 8, pack: 9, first: 10, handIn: 11 }),
-  "T4.2 PACK": packRegister("T4.2", 9, 9, "HC2"),
+  "T4.2 PACK": packRegister("T4.2", 9, 9, "it is format-checked and kept with your hand-in"),
   "T6.2": {
     code: "LI-DOC",
     title: "LI-DOC · Mandatory-documents register (template T-LI-DOC, sheet Register)",
@@ -2521,7 +2525,7 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 9, cols: [1], ident: [0] },
   },
   "T6.2 CIT": citRegister("T6.2", { find: 3, status: 4, level: 5, pack: 6, first: 7, handIn: 9 }),
-  "T6.2 PACK": packRegister("T6.2", 6, 6, "HC3"),
+  "T6.2 PACK": packRegister("T6.2", 6, 6, "it is format-checked and kept with your hand-in"),
   "T6.1": {
     code: "LI-COMM",
     title: "LI-COMM · Competence matrix (template T-LI-COMM, sheet Competence)",
@@ -2620,7 +2624,7 @@ export const REGISTERS: Record<string, Register> = {
     handIn: { step: 12, cols: [4, 5, 6, 7, 8, 9], ident: [1] },
   },
   "T5.2 CIT": citRegister("T5.2", { find: 6, status: 7, level: 8, pack: 9, handIn: 12 }),
-  "T5.2 PACK": packRegister("T5.2", 9, 9, "HC3"),
+  "T5.2 PACK": packRegister("T5.2", 9, 9, "it is format-checked and kept with your hand-in"),
   "T5.2 OBJ": {
     code: "LI-OBJ",
     title: "LI-OBJ · ISMS objectives and plan (template T-LI-PLAN, sheet Objectives)",
@@ -3494,27 +3498,27 @@ export const STUDY: Record<string, Record<number, StudyPrompt[]>> = {
     1: [
       {
         id: "B",
-        ask: "Click the type the worked rows give ISO/IEC 27002:2022.",
+        ask: "One worked row is for a reference set of controls with guidance on implementing each. Click the type its row gives it in column B.",
         why: "Column B records the document's type under rule L01. The type says what the document is for in an ISMS: to be certified against, to guide, to bind certification bodies, or to define terms.",
-        hint: "Look in column B, on the ISO/IEC 27002:2022 row.",
+        hint: "Find the row by what it is for, in column C, then read column B on that row.",
         col: 2,
         row: (r) => r[1] === "ISO/IEC 27002:2022",
       },
       {
         id: "C",
-        ask: "Click the one-line purpose the worked rows give ISO/IEC 27000.",
+        ask: "Click the one-line purpose of the worked row whose type is Vocabulary.",
         why: "Column C says in one line what the document is for. You decide each type from it in step 2.",
-        hint: "Look in column C, on the ISO/IEC 27000 row.",
+        hint: "Find the row by its type, in column B, then read column C on that row.",
         col: 3,
         row: (r) => r[1] === "ISO/IEC 27000",
       },
       {
         id: "D",
-        ask: "Click the user the worked rows give ISO/IEC 27002:2022.",
+        ask: "Click who uses the worked row that gives an overview of ISMSs with their terms and definitions.",
         why: "Column D says who uses the document. It tells a standard an organisation works to from one written for the bodies that certify it.",
-        hint: "Look in column D, on the ISO/IEC 27002:2022 row.",
+        hint: "Find the row by what it is for, in column C, then read column D on that row.",
         col: 4,
-        row: (r) => r[1] === "ISO/IEC 27002:2022",
+        row: (r) => r[1] === "ISO/IEC 27000",
       },
     ],
   },

@@ -5,7 +5,8 @@
  * scripts/build-desk-sample.py. Phase 1 swaps the fetch for the backend's /me/desk, which runs the
  * engine per mentee and keeps answer keys server-side. Nothing else here changes.
  */
-import { CANONICAL, CANONICAL_START, calDay, calWeekday, deepMap, deskIdentityNow, swapper, type DeskIdentity } from "./names";
+import { allEntries, setGlossaryDesk } from "./glossary";
+import { CANONICAL, CANONICAL_START, calDay, calWeekdayDmy, deepMap, deskIdentityNow, swapper, type DeskIdentity } from "./names";
 
 export type Table = { h: string[]; r: string[][] };
 export type StepKind = "do" | "pick" | "each";
@@ -49,7 +50,6 @@ export interface Task {
   steps: Step[];
   li: string[];
   inj: string[];
-  hc: string;
   weight: number;
   ndec: number;
   /** His Tasks sheet: "GRC method practised" ("C.ii Map controls to compliance frameworks") and "Responsibility". */
@@ -63,7 +63,7 @@ export interface Week {
   meet: string;
   support: [string, string][];
   crit: string[];
-  hc?: string; gate?: string; kc?: string;
+  gate?: string; kc?: string;
   tasks?: string[];
 }
 export interface Inject {
@@ -136,13 +136,20 @@ export const areasOf = (resp: string): string[] =>
     .filter(Boolean)
     .map((a) => a[0].toUpperCase() + a.slice(1));
 
-/** The human checkpoints as his Weeks sheet sets them: week 4's "HC2 (T3.2 + T4.2)" → { hc: "HC2", week: 4, tasks }. */
-export const checkpoints = (weeks: Pick<Week, "n" | "hc">[]) =>
-  weeks.flatMap((w) => {
-    const m = w.hc?.match(/^(HC\d+) \((.+)\)$/);
-    return m ? [{ hc: m[1], week: w.n, tasks: m[2].match(/[FT]\d+\.\d+/g) ?? [] }] : [];
-  });
-
+export const WEEK0_TOOL = "Week 0 orientation";
+/** The glossary names rules, tasks and controls from the learner's own copy of the content. */
+const inGlossary = (d: Desk): Desk => {
+  setGlossaryDesk(d);
+  // Week 0 (UX101 W10) is reopened from Learn; it is a screen of its own, not pack content.
+  const learn = d.sections.learn;
+  if (learn && !learn.tools.some((t) => t.n === WEEK0_TOOL)) {
+    learn.tools.push({ n: WEEK0_TOOL, d: "Warm-up before F1.1, ungraded", k: "L11" });
+    d.tp[`learn|${WEEK0_TOOL}`] = { tool: WEEK0_TOOL, stamp: "Ungraded", kind: "list", pl: {} };
+  }
+  const g = d.tp["learn|Glossary"];
+  if (g) g.stamp = `${allEntries().length} entries`;
+  return d;
+};
 let cached: Promise<Desk> | null = null;
 // The desk in the learner's names (lib/desk/names.ts), copied once per identity; the canonical one is the file itself.
 let shown: { who: DeskIdentity; desk: Promise<Desk> } | null = null;
@@ -154,20 +161,20 @@ export function loadDesk(): Promise<Desk> {
     return r.json();
   });
   const who = deskIdentityNow();
-  if (who === CANONICAL) return cached;
-  if (shown?.who !== who) shown = { who, desk: cached.then((d) => onCalendar(deepMap(d, swapper(CANONICAL, who)), who.start || CANONICAL_START)) };
+  if (who === CANONICAL) return cached.then(inGlossary);
+  if (shown?.who !== who) shown = { who, desk: cached.then((d) => inGlossary(onCalendar(deepMap(d, swapper(CANONICAL, who)), who.start || CANONICAL_START))) };
   return shown.desk;
 }
 
 /**
  * The two screens that list the programme calendar, dated from the learner's start (in place, on the learner's copy):
- * Home › Calendar's "Opens" (week n opens 7·(n−1) days after the start, as the desk header says) and Learn & Grow ›
+ * Home › Calendar's "Starts" (week n starts 7·(n−1) days after the start, as the desk header says) and Learn & Grow ›
  * Knowledge Checks' "Due" (the week's last day, testDue). The content writes both for a Mon 05 Oct start.
  */
 export function onCalendar(d: Desk, start: string): Desk {
   const rows = (k: string) => ((d.tp[k]?.pl as { r?: string[][] } | undefined)?.r ?? []);
-  for (const r of rows("home|Calendar")) r[1] = calWeekday(calDay(start, 7 * (Number(r[0].slice(1)) - 1)));
-  for (const r of rows("learn|Knowledge Checks")) r[2] = calWeekday(calDay(start, 7 * Number(r[0]) - 1), false);
+  for (const r of rows("home|Calendar")) r[1] = calWeekdayDmy(calDay(start, 7 * (Number(r[0].slice(1)) - 1)));
+  for (const r of rows("learn|Knowledge Checks")) r[2] = calWeekdayDmy(calDay(start, 7 * Number(r[0]) - 1));
   return d;
 }
 
@@ -181,6 +188,7 @@ export function onCalendar(d: Desk, start: string): Desk {
 export const QUESTIONS = [
   { key: "do", label: "Do", icon: "qDo", card: "What will I do" },
   { key: "why", label: "Why", icon: "qWhy", card: "Why am I doing this" },
+  { key: "hint", label: "Hints", icon: "bolt", card: "Hints" },
   { key: "read", label: "Reference", icon: "qRead", card: "What to read or refer", title: "References" },
 ] as const;
 export type QuestionKey = (typeof QUESTIONS)[number]["key"];
@@ -233,7 +241,7 @@ export function currentWeek(start: Date, now = new Date()): number {
 export function dueDate(start: Date, dueDay: number): Date {
   return new Date(start.getTime() + dueDay * DAY);
 }
-export const fmtDay = (d: Date) => d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+export const fmtDay = (d: Date) => `${d.toLocaleDateString("en-GB", { weekday: "short" })} ${dmy(d)}`;
 /** A week's test (KC-01, FGE…) is due on the last day of its week: Sun 11 Oct for a Mon 05 Oct start. */
 export const testDue = (start: Date, week: number) => dueDate(start, week * 7 - 1);
 const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];

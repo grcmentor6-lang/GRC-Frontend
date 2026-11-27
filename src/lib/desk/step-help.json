@@ -1,0 +1,1082 @@
+{
+ "F1.1-1": {
+  "why": "Records copied from an enrolment form carry typing slips. In real engagements you verify a record against the system it came from before relying on it, because a wrong name or date travels into every later document.",
+  "h1": "Do not trust the pre-filled table: compare each of the six values with the screen it was copied from.",
+  "h3": "Go value by value, word for word, and tick off each one as you match it. The office is the easy one to get wrong, because the Legal tab shows a head office that is a different thing. The task owner and start date are on the same screens. Where a value differs, overwrite it, and only then click Check my answers. A checker that says a row is wrong is telling you which value to re-read at the source, not what to type."
+ },
+ "F1.1-2": {
+  "why": "Staff are asked to lend logins all the time, usually for a good reason. Knowing in advance what your rules say means you answer calmly instead of improvising under social pressure.",
+  "h1": "Ask whose account this is, and what you signed up to when you accepted the rules.",
+  "h3": "Test each choice against two questions. First, if the colleague acts as you, whose name is on what they do? Second, does the choice keep within the undertaking you are about to sign, or does it create a situation the undertaking forbids? Good intentions and a promise to tidy up later do not change who acted. Then read Section 3.1 of the conduct policy for what it expects you to do when someone asks."
+ },
+ "F1.1-3": {
+  "why": "Every programme has an approved way to get help, and an unapproved one that leaks data. Using the sanctioned route is a habit that protects both the client's information and your own record.",
+  "h1": "Think about where the programme's help lives, and what happens to anything you type into an outside tool.",
+  "h3": "Compare each choice by where your words and the task's data end up. Ask of each: does anything I type leave the platform, and would the situation, figures or wording still identify the work even with the names removed? Then read the AI-use section of the policy for the routes to help it allows. Read the undertaking to the end before you sign: the signature says you know the rules."
+ },
+ "F1.1-4": {
+  "why": "Where a file is kept decides who can read it and whether it can be recovered. Consultants keep client data only in approved storage, because a copy on a laptop or private cloud is a copy nobody controls.",
+  "h1": "Think about which locations the organisation controls and can audit, and which are yours alone.",
+  "h3": "The data is customer names and e-mail addresses, so ask what the handling rules allow for personal data like that: find its tier, then the row of the handling matrix that says where a working copy may sit. For each of the three places ask who controls it and who could audit it. For the paths, each of your four folders (00_Admin, 01_Inputs, 02_Working, 03_Submission) starts with your mentee ID. Copy the full path from My Tasks for each one and match the folder name to its path."
+ },
+ "F1.1-5": {
+  "why": "Dates in a plan are promises other people schedule around. You confirm them against the live plan, because a wrong due date means a late or missed deliverable that nobody saw coming.",
+  "h1": "Compare each date in the table with the date shown for the same task on your plan.",
+  "h3": "Take the three rows one at a time and read the due date on My plan, then compare it with the table cell character by character, including the month and the day. If a cell differs, correct it to match My plan: that screen is the source and the table is the copy. Click Check my answers once all three are done. If the checker flags a row, re-read that row at the source instead of guessing a new value."
+ },
+ "F1.1-6": {
+  "why": "A file nobody can find, or cannot tell from its older version, is a file that gets lost or overwritten. Consultants name and receipt every deliverable so the record shows who produced what, and when.",
+  "h1": "Naming the file is mechanical: the step lists the parts of the name. Put them in the order given.",
+  "h3": "Build the name part by part from the list on the step: your mentee ID first, then the task, then the code of Onboarding record, then the version. Save it, and look at the receipt: it should carry a hash (a fingerprint of the file's content) and a UTC time. If either is blank the save did not complete properly, so use Report a problem rather than moving on. Only then mark the step complete."
+ },
+ "F1.2-1": {
+  "why": "A worked example is how teams show a new joiner what finished work looks like. Reading it first stops you producing rows that are technically filled in but missing a part the reviewer expects.",
+  "h1": "Study the two completed rows before touching the rest: they show what every finished row contains.",
+  "h3": "For each worked row, name the three things it gives you: which type it was given, how the purpose is phrased in one line, and who is named as the user. Then read rule L01 and notice how each type is defined by what the document does, not by its number. That is the test you will apply to the other ten documents in the next step."
+ },
+ "F1.2-2": {
+  "why": "The ISO 27000 family is a toolbox. Knowing which document defines terms, which sets requirements and which is only advice stops you quoting guidance as if it were obligatory.",
+  "h1": "Use rule L01's test for each type, and ask what the document is for and who uses it.",
+  "h3": "Do not sort by the number alone. For every row ask: does this document define terms, set requirements an organisation is assessed against, give guidance on how to meet them, or set rules for the bodies that audit and certify? Match the row to the L01 definition that fits what the document does. Two documents can both be about risk and still sit in different types, because the test is purpose, not topic. Work down all ten, then reread any row where your type and its purpose seem to disagree."
+ },
+ "F1.2-3": {
+  "why": "Clients and auditors ask which standard a certificate is issued against. Saying it correctly, without mixing up requirements and guidance, is a basic credibility test for an ISMS practitioner.",
+  "h1": "Look back at the types you gave in the previous step: which type carries obligations an assessor can check?",
+  "h3": "Certification means an independent body checks you against fixed criteria. Ask which of the documents contains requirements written as obligations (the word is shall) rather than suggestions or definitions. Your step 2 types already separate those cases for you, so the choice follows from your own table. Check it holds for the Quick Reference entry, then pick."
+ },
+ "F1.2-4": {
+  "why": "Knowing where each clause sits in the four-stage improvement cycle tells you what stage an ISMS is at and what is missing from it. Auditors and managers talk about the cycle all the time.",
+  "h1": "Read what each clause requires, and match it to what that phase of the cycle is about.",
+  "h3": "For each clause, write one phrase for what it asks the organisation to do (for example, understand its situation, run something, measure it, or improve it). Then match that phrase to the L02 description of each phase. Setting things up, operating them, checking them and improving them are different activities; several clauses can share a phase. If one clause feels like it fits two phases, reread what L02 says each phase is for and choose the one the clause's main requirement belongs to."
+ },
+ "F1.2-5": {
+  "why": "Annex A is often misread as a checklist to tick. Being able to say how it is actually used is what separates someone who understands the standard from someone who has only read its headings.",
+  "h1": "Think about where the controls come from in the risk treatment process, and what Annex A is checked against.",
+  "h3": "Test each choice against two questions. Does it make the organisation follow all 93 controls whatever the risk, or does it let risk drive the selection? And does it leave a trail, so an auditor can see why each control is in or out? Then read the Clause 6.1.3 entry in the Quick Reference: note what it says Annex A is used for and what must be written down, and hold each choice against both parts."
+ },
+ "F1.2-6": {
+  "why": "A standard changes, and a practitioner has to know what changed. Amendments are where clients and auditors catch people out who learned the older text.",
+  "h1": "Look up what the 2024 amendment is about, in the standard's own entry.",
+  "h3": "Read the amendment's entry in the Quick Reference and note which part of the standard it touches: the numbered clauses, the Annex A control list, or the clause numbering itself. Hold each choice against that. For column E, work from what each document is used for and look across My plan for the tasks where that use arises. A standard used throughout the programme will name every week; a narrower one names the tasks that use it. Fill every cell in columns B to E, since an empty cell reads as unfinished work."
+ },
+ "F1.2-7": {
+  "why": "A file nobody can find, or cannot tell from its older version, is a file that gets lost or overwritten. Consultants name and receipt every deliverable so the record shows who produced what, and when.",
+  "h1": "Naming the file is mechanical: the step lists the parts of the name. Put them in the order given.",
+  "h3": "Build the name part by part from the list on the step: your mentee ID first, then the task, then the code of LI-FAM, then the version. Save it, and look at the receipt: it should carry a hash (a fingerprint of the file's content) and a UTC time. If either is blank the save did not complete properly, so use Report a problem rather than moving on. Only then mark the step complete."
+ },
+ "F1.3-1": {
+  "why": "Context work is easy to do vaguely. Seeing how a finished row is built tells you the level of detail expected before you invest the effort.",
+  "h1": "Look at the three finished rows and find the three parts each one has.",
+  "h3": "For each worked row, write down its category, how it states the effect on the ISMS's intended outcomes, and which source it was read from. Notice that the effect is about what the issue does to the ISMS achieving its aims, not a general description of the issue. These are the three parts your own rows will need, built from Manila's facts rather than the example organisation's."
+ },
+ "F1.3-2": {
+  "why": "An ISMS is shaped by the world it operates in. Naming the external issues for a real office, from a real source, is the starting point for every risk and control decision after it.",
+  "h1": "You need one issue of each named kind, taken from the Manila documents, not from your general knowledge.",
+  "h3": "Work through the four kinds in turn: legal, regulatory, technological, market. For each, find a sentence in the Manila documents that fits that kind, then write what it does to the ISMS achieving its intended outcomes in column D. Legal and regulatory are different: one is a law that applies, the other is a body or duty that supervises or demands something. In column E choose the section you actually read it in, so someone else can find it again."
+ },
+ "F1.3-3": {
+  "why": "Whether an issue is within your control decides what you do about it: you fix the ones you own and adapt to the ones you do not. Mixing them up leads to plans nobody can deliver.",
+  "h1": "Ask of each issue whether the organisation could change it by its own decision, or whether it arises around the organisation.",
+  "h3": "For each of the six issues, picture who could make it go away. If the organisation's own management could change it by deciding to, it belongs to one side. If it arises from clients, regulators, attackers or the market, whatever the organisation decides, it belongs to the other. Watch for issues that mention a client: a client's demand comes from outside, but what your own staff do in response is within your control."
+ },
+ "F1.3-4": {
+  "why": "Since the 2024 amendment, deciding about climate change is a stated part of context analysis. Practitioners must show they considered it, with a reason tied to the actual site.",
+  "h1": "Two parts: what the amendment requires, and what the Manila facts say about the hazards there.",
+  "h3": "First decide whether the requirement is to determine the question or to act on a particular answer. Then look at the Manila hazard profile and ask whether anything there could affect the office's information, systems or people. Your conclusion in column A must match your reason in column D: state the reason with evidence from the Manila profile, not a general remark about the climate."
+ },
+ "F1.3-5": {
+  "why": "Mixing up who an interested party is and what they need is a common mistake that makes a register useless. Requirements are what you will actually design controls for.",
+  "h1": "A party is someone; a requirement is a need or expectation they have. Look for the one that is a need.",
+  "h3": "Sort the choices into things that can be named as a person or body and things that can be demanded of the organisation. Only the second kind is a requirement. Then copy the first five parties from the Section 4 table in the same order, with the values given for each. Do not reorder or reword them: the rule says to copy, and the Rule and Evidence ref columns fill themselves."
+ },
+ "F1.3-6": {
+  "why": "Recording a requirement is only half the job. The register must show which ones the ISMS will actually meet, because that is what a client or auditor will check.",
+  "h1": "Think about what Clause 4.2 asks you to determine about each party's requirements.",
+  "h3": "For each of the five parties, look at their requirements one at a time and ask whether a control, policy or process in the ISMS will meet it. Name the specific requirements the ISMS addresses and leave out any it does not, rather than writing a blanket statement. If a requirement belongs to the party but is met elsewhere, say so. Each cell should be specific enough that a reader could check it later."
+ },
+ "F1.3-7": {
+  "why": "A file nobody can find, or cannot tell from its older version, is a file that gets lost or overwritten. Consultants name and receipt every deliverable so the record shows who produced what, and when.",
+  "h1": "Naming the file is mechanical: the step lists the parts of the name. Put them in the order given.",
+  "h3": "Build the name part by part from the list on the step: your mentee ID first, then the task, then the code of CTX-ISS and CTX-IP, then the version. Save it, and look at the receipt: it should carry a hash (a fingerprint of the file's content) and a UTC time. If either is blank the save did not complete properly, so use Report a problem rather than moving on. Only then mark the step complete."
+ },
+ "F2.1-1": {
+  "why": "A scope statement is read by auditors, clients and your own managers to find out what is covered. Knowing its six parts means you do not leave a gap that someone else discovers later.",
+  "h1": "Find the six parts in the worked scope before you write your own.",
+  "h3": "Read the worked scope row by row and tick off the six parts as you find them: who is covered, where, what is offered, what technology supports it, what it depends on or connects to, and what is left out with a reason. Notice the example is for a different organisation and office, so use it as a pattern for structure and level of detail, not for content."
+ },
+ "F2.1-2": {
+  "why": "Many organisations rely on outside providers for core functions. Scope has to show these dependencies, or the ISMS ignores a route through which data can be lost.",
+  "h1": "Ask whether the provider's activity is inside your organisation or performed by someone else, and what Clause 4.3 says about that.",
+  "h3": "Think about what you control. Ask two things of each choice: does it claim control over something that belongs to the provider, and does it make the dependency disappear although payroll data flows to them? Clause 4.3 c) speaks to activities performed by other organisations: read its entry, see how such an activity is shown in a scope, and ask which family of controls manages a provider."
+ },
+ "F2.1-3": {
+  "why": "The scope statement is the sentence the whole certificate hangs on. Every line must come from a document, so that a reviewer can trace the claim rather than take it on trust.",
+  "h1": "Each line has a source: find the section named for it and read the Manila facts there.",
+  "h3": "Do the four sections in turn, and for each line choose the statement that matches the Manila facts and the source you read it from. Watch for statements that are true of another office in the group but not of Manila. Then carry over every requirement you marked as addressed in CTX-IP, because the scope must reflect your earlier decisions. If you are unsure of a line, reread the section named for it."
+ },
+ "F2.1-4": {
+  "why": "Pressure to shrink scope to certify faster is real. A practitioner has to explain why a convenient exclusion does not hold up and record exclusions honestly.",
+  "h1": "Ask what Clause 4.3 says scope follows from, and whether the support floor handles things that are in scope.",
+  "h3": "A scope is justified by the issues, requirements and dependencies, not by how quickly it can be certified. If the floor handles in-scope data, ask what removing it would do to the claim the certificate makes. For section 5, an exclusion needs a reason a reader can verify, and your own answers in this task and in step 2 decide whether any exclusion exists. Write exactly what follows from those answers."
+ },
+ "F2.1-5": {
+  "why": "Every process needs a named owner, or nobody is accountable when it fails. Matching owners to processes from the charter is how you avoid inventing responsibility.",
+  "h1": "Owners come from the Charter's responsibility chart; inputs and outputs come from what each process works from and hands on.",
+  "h3": "For each process, find its row in the RACI and take the role marked as responsible. Where the Charter has no row, read POL-001 sections 5 and 6.1 for the role it names. For inputs and outputs, ask what the process starts from and what it produces for the next one, and follow the chain between processes. Your choices should link: one process's output often appears as another's input."
+ },
+ "F2.1-6": {
+  "why": "Interfaces are where boundaries leak. Recording what crosses each one, and the control that governs it, tells reviewers where to look first.",
+  "h1": "For each interface, decide what passes across the scope boundary and which Annex A control governs it.",
+  "h3": "Take each interface and ask whether both ends sit inside the scope. If they do, the boundary is not crossed and no external control applies. If they do not, ask what moves: data, a service, or people. Then choose the control that governs that kind of crossing: supplier agreements and transfers to clients are handled by different controls. Your payroll decision from step 2 should show up here consistently."
+ },
+ "F2.1-7": {
+  "why": "Naming and receipting a deliverable is how the record shows what you produced and when. A missing receipt means the work is not on file.",
+  "h1": "Name the file by the convention listed on the step, then save it.",
+  "h3": "Build the name from the parts listed: mentee ID, task, the file's code (LI-SCOPE) and version. Click Save to 02_Working, then check the receipt for a hash and a UTC time. If either is missing, use Report a problem instead of continuing. Once both appear, mark the step complete."
+ },
+ "F2.2-1": {
+  "why": "A gap analysis is only as good as the method used to rate each requirement. Learning how the worked rows were rated gives you a consistent method to apply to the other 23.",
+  "h1": "Study the two worked rows and the Maturity Model before rating anything.",
+  "h3": "For the worked rows, note how the finding at Manila leads to a status, how it leads to a maturity level, and how the reason connects the two. Then read the Maturity Model and see which questions it asks in what order. You will apply the same chain to every row: what was found, held against what is required, then what level of discipline it shows."
+ },
+ "F2.2-2": {
+  "why": "An honest gap rating is what a certification body would conclude from the same evidence. Rating generously gives a false picture and sends the wrong work to the front of the queue.",
+  "h1": "Compare what was found with what the clause requires, and use rule L13's definitions.",
+  "h3": "For each clause, write the requirement in one phrase and the finding in another. Ask whether the finding delivers all of the requirement, some of it, or none of it. A policy that exists but has not been reviewed, or a process that runs in some places only, is a different case from nothing existing at all. Apply the L13 definitions to the evidence and do not let one strong sentence in the finding carry a clause that has a missing part."
+ },
+ "F2.2-3": {
+  "why": "Maturity shows how reliable a practice is, not just whether it exists. It tells management how likely a practice is to survive staff changes.",
+  "h1": "Ask the Maturity Model's questions, in order, about what was found for each clause.",
+  "h3": "Start with the first question and move on only if you can say yes. Is the practice done at all, is it documented and managed, is it standard across the organisation, and is it measured? The level is the last question you can still say yes to. Row 6.1.2 is covered by step 4, so leave it for there. Keep status and level separate: a clause can be met in substance and still be at a low level of discipline."
+ },
+ "F2.2-4": {
+  "why": "Maturity levels are easy to inflate. Reading a finding against explicit questions stops a well-run but unmeasured process from being credited with more than it has earned.",
+  "h1": "Go through the Maturity Model's questions one by one and answer each from the note's wording.",
+  "h3": "From the note, answer each of the Maturity Model's questions yes or no, using only the note's words: is it documented and consistent, is it standard across offices, is it reviewed, is it measured against targets? Stop at the first no. Then read in the model which level each question belongs to: the level you give is the one just before the first thing the process lacks."
+ },
+ "F2.2-5": {
+  "why": "Gaps cannot all be closed at once. Picking what to fix first, and who owns it, is the main decision a gap analysis exists to support.",
+  "h1": "Consider which gaps block certification, and which ones feed the others.",
+  "h3": "Rank in two passes. First, requirements with nothing in place stop a certificate, so they come before improvements to things already working. Second, ask which gap's result is an input to another: closing the one that feeds the others first saves rework. For each of your three, name the role responsible in the Charter RACI and POL-001, and give a target date that fits the programme plan."
+ },
+ "F2.2-6": {
+  "why": "Naming and receipting the file closes the loop: the record shows what you produced and that it was saved intact.",
+  "h1": "Name the file by the convention the step lists, then save it.",
+  "h3": "Build the file name from the listed parts: mentee ID, task, LI-GAP and the version. Click Save to 02_Working and check the receipt for a hash and a UTC time. If either is missing, use Report a problem. Then mark the step complete."
+ },
+ "T10.1-1": {
+  "why": "At work a setting that has moved from its baseline is where a hardened server quietly becomes the weak one. Comparing the actual with the baseline is how it is caught before an attacker does.",
+  "h1": "For each setting, does the configured value match the baseline exactly, and what does the system's tier require?",
+  "h3": "Put the baseline and the configured value side by side and read both fully; a close value is not a match. Then check the system's classification and the handling rule the baseline carries out, because a stricter tier can make a value acceptable elsewhere a departure here. If it departs, the fix is the action that restores the baseline, not a workaround."
+ },
+ "T10.1-10": {
+  "why": "At work real customer data in a test system is exposed to developers and contractors with no business need, and it is a common source of privacy findings.",
+  "h1": "Which control talks about masking data outside production, and is a second control also triggered by the use of test data?",
+  "h3": "Split the scenario in two: personal data being exposed (masking and protection) and test data being handled (test information). Read both controls' task pages and check which requirement matches each. The question allows more than one control, so ask of each candidate whether it is really engaged or only nearby."
+ },
+ "T10.1-11": {
+  "why": "At work, evidence with an inconsistent name or no timestamp cannot be found or trusted later. The receipt is what proves the file was fixed at a point in time.",
+  "h1": "Are your file names built from the same parts, in the same order, as the convention? Did the receipt appear?",
+  "h3": "List each part the convention names (office or programme code, task, document code, version, extension) and build each name from them, one for each of the baseline check, key register and tracker. Compare two names side by side; they should differ only in the document code. Save, then read the receipt: a hash and a UTC time must both be there. Only after that mark the step complete; if the receipt lacks either, the save did not finish."
+ },
+ "T10.1-2": {
+  "why": "At work an unlisted key or an old algorithm is a breach waiting to happen; auditors ask for the register first.",
+  "h1": "For each key, what do its extract line and its system tell you about algorithm, storage, owner and the next renewal?",
+  "h3": "Read each extract line closely for algorithm, key length, where the key is stored and renewal period. The owner is whoever owns the key's system on the asset map. For the next rotation, add the renewal period to the date of the last renewal, taking care with month ends. Work one line at a time; a different example is a 12 month period from 15-Mar-2026 gives 15-Mar-2027."
+ },
+ "T10.1-3": {
+  "why": "At work a control tracker is only useful if you have read each control's own requirements first; otherwise statuses are guessed from the control title and the audit finds the guess.",
+  "h1": "Before you fill any cell, ask what each of the eleven controls actually requires of the office and where the SPR-12 notes will be read against that.",
+  "h3": "Work like an implementer: open one control's task page, read its numbered requirements, and note what evidence would prove each. Then glance at the worked first row to see how a finished row reads, and at the column headings so you know which question each column answers. Do not fill statuses yet; this step is about knowing where each requirement and each observation lives so the next steps are fast and defensible."
+ },
+ "T10.1-4": {
+  "why": "At work an inflated status tells management a gap is closed when it is not, and the first external audit finds the difference. Understating hides real progress.",
+  "h1": "For each control, compare every numbered requirement with what SPR-12 says was observed. Is each one fully there, partly there, or missing?",
+  "h3": "Take one control at a time. List its requirements, then tick each against the observation. All ticked with nothing vague points one way, none ticked points another, and a mix points to the middle status. Where the control task cites the handling standard for a tier, check the observation against that standard's rule. Watch for observations that sound reassuring but cover only part of the requirement, such as a policy that exists but is not approved or not applied everywhere. Read the sheet note for the exact status definitions."
+ },
+ "T10.1-5": {
+  "why": "At work maturity is how a manager decides where to invest next. If a level is overstated, the improvement plan skips the missing basics and the same gap returns next audit.",
+  "h1": "Ask the Maturity Model's questions in order about each control and stop at the first answer that is No. What did SPR-12 actually record?",
+  "h3": "Start at the bottom: is anything documented? Then approved? Then applied in every office, not just Manila? Then are there records? Then reviewed on a schedule? The level is set by the first question you cannot answer yes to, not by the best thing you can find. Check approval dates and whether a review has happened since; an approved policy with no review is not the same as a reviewed one. A Group document that Manila follows is different from one Manila owns; check who approved it and when it was last reviewed. Never give credit for something that is only planned."
+ },
+ "T10.1-6": {
+  "why": "At work an evidence pack is what an auditor samples. A claimed item with no file behind it, or the wrong file, turns a good control into a finding.",
+  "h1": "For each sub-task, ask: which file already in 02_Working is this evidence, and if none, does the dataset show the item exists at all?",
+  "h3": "Go sub-task by sub-task for A.8.9 and A.8.24. Read what the evidence item is, then check your handed-in work first (your baseline check and key register cover the first items); reuse beats creating. If it is not there, read the observation dataset: does it say the item exists (so you prepare the file), or that nothing exists? Where nothing exists, say so honestly and write what is missing and who should act, rather than naming a file that would not hold it. Use the naming convention exactly; the file name is the evidence reference."
+ },
+ "T10.1-7": {
+  "why": "At work the tracker is the one page a manager reads. If the evidence reference is vague or the next action is not measurable, no one can tell next quarter whether anything improved.",
+  "h1": "For each control, what is the first piece of evidence in its task, and what one concrete step moves it up a level, measured how?",
+  "h3": "For A.8.10, A.8.11, A.8.12 and A.8.18 to A.8.23, open each task page and take the first sub-task's evidence item; the file name follows from it and from where it already sits. For the next action, use the level you gave earlier: below Level 3 means the step that gets it to Level 3; already there means the step that closes its remaining gap. The Level 4 measure must be a counted figure with a target, not 'review done on time'. Wrong options usually differ in exactly those two ways."
+ },
+ "T10.1-8": {
+  "why": "At work an open path from a visitor network to a file server is how malware and data theft spread from a guest device.",
+  "h1": "Which control is about keeping zones of the network apart, and which requirement mentions guests and wireless?",
+  "h3": "Think about what has gone wrong: not access rights, not the encryption of data, but the separation between networks. Look for the control whose requirement says guest and wireless networks stay apart from internal zones, and check the network rule listed in the dataset. Compare each option's title with that single failure."
+ },
+ "T10.1-9": {
+  "why": "At work keys sitting beside the data they protect give no protection; whoever steals the server gets both.",
+  "h1": "What do the key requirements say about where keys live and how they are protected, and how far is this from that?",
+  "h3": "Name what is wrong in one phrase: it is about where the keys sit and how they are protected, not about whether the data is encrypted. Then look for the control whose task page has a requirement on how keys are generated, stored, rotated and destroyed, and read the handling standard's rule for the highest tier, which says where keys belong. Ask of each choice: does patching the server change who can read the key, and is a control about clocks concerned with keys at all?"
+ },
+ "T10.2-1": {
+  "why": "An audit conclusion is only as good as the sample behind it. A sample drawn by a published rule, with the seed recorded, can be repeated and defended; one picked by hand cannot.",
+  "h1": "Decide first what you are testing: how often a control ran, or the items it acted on. Ref-Sampling has different rows for each.",
+  "h3": "Work in order. First read the note under Ref-Sampling: a frequency row is for testing how often a control ran, a records row for testing the items it acted on. Say which of the two a set of change tickets is. Second, count the rows in the CT-B export: that is the population, and it decides which band applies. Third, read the minimum sample from the row you chose, not from a neighbouring one. Leave the test script untouched, then let the platform draw and record the seed."
+ },
+ "T10.2-10": {
+  "why": "Developer write access to production defeats the point of having a test environment. Linking an observed condition to the right control is how a gap becomes a finding.",
+  "h1": "Say in your own words what is being kept apart. Then look for the control whose title says exactly that.",
+  "h3": "Match the situation to the purpose of each control in the choices: one is about testing code before release, one is about who owns software rights, and one is about keeping the places where work is built, tested and run apart. Say which of those three purposes developers writing to the live database defeats. Then open that control's task page and read requirement 2 to confirm."
+ },
+ "T10.2-11": {
+  "why": "A hand-in that cannot be found or traced is not evidence. The naming convention, hash and UTC time are what let an auditor trust that CHG-TEST, SDLC-MAP and CIT-S13 are the versions you finished.",
+  "h1": "Read the naming convention in the step text once more, then compare each of your file names with it, part by part.",
+  "h3": "Build each name from the step's pattern: your mentee ID, this task's code, the document code of each file, the version and the right extension. Save, then read the receipt: it must show a hash and a UTC time for every file. If one is missing, save again, and use Report a problem if it stays missing. Only then click Mark step complete."
+ },
+ "T10.2-2": {
+  "why": "A control that is only sometimes followed is a finding. Testing each change against the same four attributes, and rating every miss by one rule, makes the results comparable and defensible.",
+  "h1": "Take one RFC at a time and check the four attributes in order. A single missing attribute is enough to count as a miss.",
+  "h3": "For each RFC, tick approval before implementation, testing, a rollback plan covering every component, and the review within the allowed days; remember the emergency rows have their own timing. All four met means a pass. Any one missed is a miss, and R26 then rates it by how serious the gap is and whether the affected asset is Mission Critical. On the last row, apply R19: it turns the count and severity of misses into the conclusion."
+ },
+ "T10.2-3": {
+  "why": "Security controls only work if they sit at a stage where they can act. Mapping controls to pipeline gates shows where a control exists on paper but not in the process.",
+  "h1": "For each control, first find the stage where it would be applied. Then ask whether that stage does everything the control asks, every time.",
+  "h3": "For each control, read the SDLC stage descriptions and pick the stage whose work the control is about; read the whole list of stages offered before settling, because not every control sits at one numbered stage. Then compare the stage's practice with the sheet's 'what the control asks' wording: does it do all of it, every time, and leave a record? The three choices differ on exactly those points. Words such as 'sometimes', 'by request' or 'no record' in a description are the ones to weigh."
+ },
+ "T10.2-4": {
+  "why": "A tracker is only useful if you know what is in it. Finding facts in the worked row and the task pages teaches you where evidence, owners and requirements live before you rely on them.",
+  "h1": "You are only locating three facts. Start from the worked LearnTech row, then move to the LI task pages.",
+  "h3": "Each click asks where a kind of fact sits. Ask whether the fact belongs to one row of the tracker or to the control itself. A fact about a row is in one of the tracker's columns, which the step lists by letter and name. A fact about the control (who owns it, what it requires, what evidence it looks for) is on that control's LI-A page in Learn, Reference pages. Do not guess from memory; open the page and read the exact cell or line."
+ },
+ "T10.2-5": {
+  "why": "Status is how management sees the real state of controls. Compare what was observed with what the task requires, not with what the policy says should happen.",
+  "h1": "Do not rate by impression. For each control, list what it requires and tick off which of those the observations show.",
+  "h3": "Count it per control: observations that meet every requirement point to the top status; some met and some not, to the middle; none met, to the lowest. A control your LI-SOA excludes is not rated on its merits: use the option for exclusions. Keep each requirement and observation side by side so that your reason in the row can be checked against both."
+ },
+ "T10.2-6": {
+  "why": "Maturity shows whether a control survives staff changes. A control that works only by habit is fragile, so the model asks whether it is documented, followed everywhere and measured.",
+  "h1": "For each control, ask the Maturity Model's questions in order, and stop at the first one the evidence cannot answer yes.",
+  "h3": "Start at the lowest level and go up. Done in an ad hoc way, or each person differently, stays low. Documented, approved, and followed with records fits the next level. Following the Group's way, reviewed on a cycle, fits above that. Measured against targets would be higher still, but this sprint's observations rarely show it. Note that an excluded control is not rated at all."
+ },
+ "T10.2-7": {
+  "why": "An evidence pack is how you prove a control to an auditor. Preparing items from records you already hold, even ones that show a gap, is more honest than leaving them blank.",
+  "h1": "For each sub-task, ask in order: did I already hand this in, do the office's records support a new item, or is there truly nothing?",
+  "h3": "Apply the step's rule to each sub-task. If a deliverable you already submitted covers it, link that file. Otherwise, if SPR-13 or SDLC holds records of the kind the item names, prepare the item from them even if they reveal a gap. Choose None only where no such record exists, and then write the gap and the next action. Use the file naming convention for new items."
+ },
+ "T10.2-8": {
+  "why": "A control improves when someone owns the next step and a number tracks it. Naming the first piece of evidence, the next action and the measure turns a status into a plan.",
+  "h1": "Do the three parts per control: the first evidence item, the action to reach Level 3, and a measure for Level 4.",
+  "h3": "First, take sub-task 01 of the control's LI-A page and link the file that evidences it, or choose None if nothing exists. Next, look at the level you gave in step 6: below Level 3, choose the action that closes the gap; at Level 3, choose the action that keeps it there. Last, a Level 4 measure states what is counted, the target and the period; a review simply happening on time is not a measure. Reuse an earlier file where LI-Q7 allows."
+ },
+ "T10.2-9": {
+  "why": "Emergencies are when controls are most tempting to skip. Knowing what the policy allows lets you judge an emergency fix without condoning it or blocking urgent work.",
+  "h1": "Ask what the policy lets an emergency change skip, and what it still insists on afterwards.",
+  "h3": "Think about what each choice would mean in practice. What happens to the control if emergencies are exempt entirely, at the moment risk is highest? What can always reversing a change cause on a live portal? Then read the emergency rows of the policy: what do they let an urgent change skip at the time, and what must still happen afterwards, and by when?"
+ },
+ "T11.1-1": {
+  "why": "A measure card is a contract: what is counted, how, by whom and against what target. Knowing what each field is for lets you fill one in from a blank page.",
+  "h1": "Read the LearnTech card and ask of each field: what question does it answer for the reader?",
+  "h3": "Each field answers one question. The method states what you divide by what. The data source says where the numbers come from. 'When measured' and 'when analysed' are different moments, and so are 'who measures' and 'who evaluates'. The target and threshold say what good and unacceptable look like. Pick the three fields the prompt names, find the heading whose hint matches, and click that cell in row 1."
+ },
+ "T11.1-2": {
+  "why": "Clause 9.1 stops measurement being an afterthought. Deciding in advance what, how, when and who makes results comparable and keeps reporting from drifting.",
+  "h1": "Clause 9.1 lists several things to determine. Count them in the Quick Reference entry before you look at the choices.",
+  "h3": "Run through the clause as a set of questions: what needs monitoring and measuring, which methods, when it is done, who does it, when results are analysed, and who evaluates them. Then ask of each choice how many of those questions it covers. The clause asks for a scheme, not a single figure."
+ },
+ "T11.1-3": {
+  "why": "If two people measuring the same thing get different answers, the number cannot be trusted. Valid methods give results others can check.",
+  "h1": "Think about what makes a measurement credible to someone who was not there when it was taken.",
+  "h3": "Ask what an auditor would need to trust a result: that the same method gives the same answer when repeated, and that results from different periods can be set side by side. Results shaped to look good, or approved for appearance, fail both tests. Read the b) wording of the clause and choose the pair of qualities it names."
+ },
+ "T11.1-4": {
+  "why": "Measures are best spent where controls are weakest. Choosing the lowest-maturity controls and setting realistic targets focuses effort where improvement is most needed.",
+  "h1": "Rank first by level, lowest at the top. Then deal with one card at a time.",
+  "h3": "Sort the Control list and take the five lowest; where several share a level, use the order the step suggests. For each, copy the measure, numerator, denominator, data source, timing and owner from CMM-L4. Take the target from the policy named in 'Target set in', in its Section 10 KPI table, or from the card itself where the Group figure is written there. The threshold follows the rule in the step note: a stated red line, else a fixed gap below the target."
+ },
+ "T11.1-5": {
+  "why": "Level 4 is where an organisation stops hoping a control works and starts knowing. The difference from Level 3 is evidence of measurement and action on it.",
+  "h1": "Level 3 is already documented, approved and used. What must be added to move up?",
+  "h3": "Compare the choices by what each one shows beyond a written procedure: where it is used, and whether anyone counts how well it works, against what figure, how often, who sees the result and what happens when it slips. Then read the model's wording for Level 3 and for Level 4 and place each choice on one of them, or below both."
+ },
+ "T11.1-6": {
+  "why": "A dashboard is only useful if it triggers a decision. Putting the current value next to target and threshold turns a number into a clear action for management.",
+  "h1": "Per measure, do three things in order: compute the value, judge it against target and threshold, then choose the management line.",
+  "h3": "Take numerator and denominator from the Data column and divide to get a percentage. Then apply the step note's colour rule against the target and the threshold. Choose the line whose weight fits the colour: a result that meets its target asks less of management than one below its threshold. The worked row, the guide and the LearnTech row each show a colour and the kind of line that goes with it; match yours to those, and check that the line you choose speaks of this measure's own facts."
+ },
+ "T11.1-7": {
+  "why": "A hand-in that cannot be found or traced is not evidence. The naming convention, hash and UTC time are what let an auditor trust that LI-KPI and KPI-DASH are the versions you finished.",
+  "h1": "Read the naming convention in the step text once more, then compare each of your file names with it, part by part.",
+  "h3": "Build each name from the step's pattern: your mentee ID, this task's code, the document code of each file, the version and the right extension. Save, then read the receipt: it must show a hash and a UTC time for every file. If one is missing, save again, and use Report a problem if it stays missing. Only then click Mark step complete."
+ },
+ "T11.2-1": {
+  "why": "An audit programme that treats every area the same wastes effort. Auditing weaker areas more often, and using independent auditors, is what Clause 9.2 means by risk-based.",
+  "h1": "Per audit, ask two things: how weak is it in your trackers, and who is allowed to audit it?",
+  "h3": "Apply the step note's rule line by line: read 'What your trackers show' and decide whether it calls for more than one audit in the year. Space the months out. For the auditor, read Charter Section 13 for who performs internal audits, then Sections 16 and 17: nobody audits what they run or answer for. Hold every audit's subject against that rule, not only the first few; where it bites, the Charter says who audits instead."
+ },
+ "T11.2-2": {
+  "why": "An audit is credible only if the auditor has nothing to protect. Independence is what lets findings be believed by management and by certification auditors.",
+  "h1": "Think about whose interests are affected when someone examines their own work.",
+  "h3": "An audit should be objective and impartial. Ask of each choice: does this person have a stake in the result, and are they competent and independent of the work? Then read the Clause 9.2 entry for what it says about auditors and their own work."
+ },
+ "T11.2-3": {
+  "why": "Maturity reviews tell you whether a control will survive turnover or an audit. Reading scenarios and placing them on the same scale builds a consistent judgement.",
+  "h1": "Read the scenario, then ask the model's questions in order. Stop at the first no.",
+  "h3": "Is the control documented, approved and recorded? If not, it is the lowest level. Is it done the Group's way across the office and reviewed yearly? If not, it sits in the middle. Is it also measured? If so, higher. Watch for the signal words in each scenario: 'sometimes', 'each person', 'never', 'reviewed last year'. Judge what the scenario shows, not what it implies."
+ },
+ "T11.2-4": {
+  "why": "Grading a finding fixes how urgently it is fixed. A consistent link from maturity to grade, and to the clause it breaches, makes findings fair and traceable.",
+  "h1": "The grade follows the level you set in step 3. The clause is the harder part: match the scenario to what the clause requires.",
+  "h3": "First, apply the convention in the step note to each card's level. Second, read the scenario and ask what is missing: awareness, documentation, communication, planning of change, resources, improvement, management responsibility or policy. Find the clause or control on Ref-Review references whose requirement matches that missing thing. Write the gap in one sentence and a recommendation that closes it."
+ },
+ "T11.2-5": {
+  "why": "A nonconformity is a formal record with a requirement, evidence and a grade. Writing it carefully means the person who has to fix it knows exactly what to do.",
+  "h1": "Pick the two cards first, then write each as requirement, evidence, gap and grade.",
+  "h3": "Choose one card at the lowest level and one at the next. For each: name the clause or control from the card; state what the scenario shows, using its numbers; write the gap as the difference between the requirement and the evidence. Then grade with L17: work out whether the activity was never done in the period, or failed in more than half the sample. If so, the more serious grade applies; otherwise the lesser. Check the worked NC for layout."
+ },
+ "T11.2-6": {
+  "why": "A hand-in that cannot be found or traced is not evidence. The naming convention, hash and UTC time are what let an auditor trust that LI-AUD and LI-NCR are the versions you finished.",
+  "h1": "Read the naming convention in the step text once more, then compare each of your file names with it, part by part.",
+  "h3": "Build each name from the step's pattern: your mentee ID, this task's code, the document code of each file, the version and the right extension. Save, then read the receipt: it must show a hash and a UTC time for every file. If one is missing, save again, and use Report a problem if it stays missing. Only then click Mark step complete."
+ },
+ "T12.1-1": {
+  "why": "An action is not closed because someone says so. Testing the evidence stops problems from being marked done while the cause remains, which is what Clause 10.2 requires.",
+  "h1": "For each action, check three things: is the fix in place, is there a dated record, and has anyone checked that it worked?",
+  "h3": "Compare today's date with the due date first. Past due, not done and no new date calls for escalation. Not yet due, or done but with nothing showing it worked, stays open. Closed needs a dated, attributable system record and a check of effectiveness; a statement, a draft or an undated screenshot is not enough. Write the reason in a sentence and a check date."
+ },
+ "T12.1-2": {
+  "why": "Fixing the symptom lets the same nonconformity return. Clause 10.2 asks you to look at causes and to check that the fix worked.",
+  "h1": "Corrective action has more than one job. Which choices stop at the first job?",
+  "h3": "Think of a leak: you mop up, then find the cause, then check it has stopped. The clause asks for the same sequence. Read the Clause 10.2 entry and list what it requires after the first reaction. Then ask of each choice which of those jobs it does, and whether speed or naming a person corrects anything."
+ },
+ "T12.1-3": {
+  "why": "Management can only decide with the full picture. Checking which inputs are really in the pack shows leaders exactly where their decisions will be blind.",
+  "h1": "Count an input as in hand only if a file actually holds it. A promise or a plan is not a file.",
+  "h3": "Take each Clause 9.3.2 input in turn and find a file in the pack index that holds it. For an input about changes, the file must record a review for changes; a file marked as not reviewed, as practice only, or noting that no audit was held does not count. Where a file qualifies, record its name. Where none does, mark the input as absent."
+ },
+ "T12.1-4": {
+  "why": "Management review exists to produce decisions, and certification depends on it having happened. Judging readiness honestly avoids a failed Stage 1.",
+  "h1": "Do two things: choose the output of a management review, then judge readiness against a test.",
+  "h3": "Read the Clause 9.3 entry in the Quick Reference: the outputs of a management review are of one kind, and the entry says what they are about. Ask of each choice whether a review of the ISMS would produce it. For readiness, L24 asks whether an internal audit has been held and reported, and whether a management review has met with every input. Check the pack index for each: look at what was held and the date of the booked review. Give your answer with the reason that the test supports."
+ },
+ "T12.1-5": {
+  "why": "A roadmap turns a measure into a habit. Deciding when each measure goes live and how it reaches management is what moves an organisation from Level 3 to Level 4.",
+  "h1": "Per measure, answer two questions: when can it start, and who sees the results and how often?",
+  "h3": "Take the two decisions separately. Quarter: a measure can go live only when its results can be reproduced, so read the 'what has to be ready first' cell; where it names something with a date, that date decides the quarter, and where it names nothing, there is no reason to wait. Route: start from how often the measure is taken, because a result cannot reach a forum more often than it exists. The step note names the forums; the GRC Charter Section 6 and SITL-POL-001 Section 4 say how often each meets, and Clause 9.3 says where measurement results must end up."
+ },
+ "T12.1-6": {
+  "why": "A hand-in that cannot be found or traced is not evidence. The naming convention, hash and UTC time are what let an auditor trust that ACT-UPD, LI-MR and L4-ROAD are the versions you finished.",
+  "h1": "Read the naming convention in the step text once more, then compare each of your file names with it, part by part.",
+  "h3": "Build each name from the step's pattern: your mentee ID, this task's code, the document code of each file, the version and the right extension. Save, then read the receipt: it must show a hash and a UTC time for every file. If one is missing, save again, and use Report a problem if it stays missing. Only then click Mark step complete."
+ },
+ "T12.2-1": {
+  "why": "Knowing what each audit stage looks at lets you prepare the right evidence at the right time, instead of scrambling for everything at once.",
+  "h1": "Think about what an auditor does before they commit to a full examination of operating controls.",
+  "h3": "Certification is staged: the stages differ in what the auditor looks at and in whether the system must already be running. Read the Stage 1 and Stage 2 rows of the Certification card and rule L11, and note for each what is examined and what it leads to. Then ask which stage each choice describes."
+ },
+ "T12.2-2": {
+  "why": "Management signs off the effort and the budget. A short briefing that places each audit activity in its place and shows the three-year rhythm lets them plan ahead.",
+  "h1": "Do the cycle question first. Then take each fact and ask: what is being checked, and has the ISMS already been running?",
+  "h3": "For the cycle, read the Certification card's row on how long a certificate lasts and note which audits occur between certificates. For each fact, ask what is examined. Documents and readiness come first. Interviews, sampling of operating controls, grading and the recommendation come next. Part-of-system audits between certificates are periodic checks. A whole-system audit before expiry starts the cycle again. Place each statement accordingly, then write your two pages from them."
+ },
+ "T12.2-3": {
+  "why": "An auditor's request is answered with a record, not a promise. Matching each to the right evidence, or admitting there is none, is what makes a response credible.",
+  "h1": "For each request, check the evidence against four tests: right record, right office, right dates, right source.",
+  "h3": "Read the request, then scan EVIDENCE-INDEX for a file whose description holds the record asked for. Reject it if it is from another office, if its date falls outside the audit window in the note, or if it is a draft or a statement rather than a system record or controlled document. Where no file passes, choose the option for no evidence and write the action you would raise to produce it."
+ },
+ "T12.2-4": {
+  "why": "Audit logs need one clock. Recording times in UTC avoids disputes about when evidence was supplied, whichever time zone the office is in.",
+  "h1": "The portal records Manila time. Convert each time to UTC by taking away the offset the step names.",
+  "h3": "Subtract the offset from each Manila time. Take care when a time is in the early hours: subtracting can take you back to the previous calendar day, so the date must change as well as the hour. Work through each request, then re-read the whole log to check that no date or hour has slipped."
+ },
+ "T12.2-5": {
+  "why": "How you answer a finding shows how the ISMS learns. Fixing the instance, finding the cause and changing the process are three different things, and auditors check all three.",
+  "h1": "Keep the three parts apart: what you fix now, why it happened, and what changes so it will not happen again.",
+  "h3": "The correction deals with the gap now. The root cause explains why the programme missed it: look at how it was built and ordered, not at one person. The corrective action changes the process so that the cause cannot recur. Give each an owner and a date. Avoid disputing without evidence or waiting for a later audit; neither answers a finding."
+ },
+ "T12.2-6": {
+  "why": "A hand-in that cannot be found or traced is not evidence. The naming convention, hash and UTC time are what let an auditor trust that LI-CERT, AUD-LOG and LI-NCR-R are the versions you finished.",
+  "h1": "Read the naming convention in the step text once more, then compare each of your file names with it, part by part.",
+  "h3": "Build each name from the step's pattern: your mentee ID, this task's code, the document code of each file, the version and the right extension. Save, then read the receipt: it must show a hash and a UTC time for every file. If one is missing, save again, and use Report a problem if it stays missing. Only then click Mark step complete."
+ },
+ "T3.1-1": {
+  "why": "Auditors read a policy against Clause 5.2 line by line. Knowing what each line is for lets you recognise it in real life.",
+  "h1": "Read the seven items of Clause 5.2 and their notes, then match each everyday situation to the item it tests.",
+  "h3": "Reasoning: each situation is a symptom of one missing or present requirement. Ask what the policy would have to say for the situation to be handled properly, then find the item that says it. Do this before you read the policy so your match is not coloured by what the policy happens to contain."
+ },
+ "T3.1-2": {
+  "why": "A row marked as met without a cited section cannot be checked by anyone else. The section is what makes the finding evidence.",
+  "h1": "For each item, search the policy for the passage that does what the item asks, and cite its section only if you can point to one.",
+  "h3": "Reasoning: apply rule L08 literally. If you can name a section whose words meet the item, the item is met. If you can only say the policy probably covers it somewhere, or a section merely touches on it, there is a gap. Writing the section in the Section column is your proof; leave it empty only where nothing in the policy qualifies."
+ },
+ "T3.1-3": {
+  "why": "Policies decay quietly. A document past its review date still looks valid, which is why auditors check dates.",
+  "h1": "Compare the approval date with the review interval that the document control rules set.",
+  "h3": "Reasoning: separate two questions. Is the policy still in force, and has it been reviewed on time? They can have different answers. Then decide who has authority over each possible action: read SITL-POL-000 Section 7 for who reviews and re-approves a policy, and ask what a reviewer who finds a problem is expected to do with it, and what would become of the finding under each choice."
+ },
+ "T3.1-4": {
+  "why": "The person who approves a policy is the person who can commit the organisation to it. A policy no one senior owns is only a suggestion.",
+  "h1": "Re-read who the Clause 5.2 summary says establishes the policy, and think who in the company has authority to do that.",
+  "h3": "Reasoning: the standard places the policy with the people who direct and control the organisation, because the policy sets its direction and commits resources. Roles that run or support the system prepare and maintain it, but they do not hold the authority to establish it."
+ },
+ "T3.1-5": {
+  "why": "Auditors do not accept words as proof of leadership commitment; they ask for records in which leaders acted.",
+  "h1": "Pick the item that shows leaders spending, deciding or assigning, then find five such items in your inputs and name their source.",
+  "h3": "Reasoning: commitment is shown by decisions that cost something or bind someone, such as resources, roles, approvals and review of results. Awareness material or requests to staff show that someone cares, but they are not decisions by top management. For each item you record, write exactly where you found it so a reader can check."
+ },
+ "T3.1-6": {
+  "why": "The register is how a reader sees at a glance which topics have a policy and whether it is up to date. A gap in it is a gap in the ISMS.",
+  "h1": "Take each of the twelve topics in turn, find the SITL policy that covers it, then compare its dates with the yearly review rule.",
+  "h3": "Reasoning: status has three outcomes. One means a policy exists and is within its review period, one means it exists but its review date has passed, and one means no SITL policy covers the topic at all. Work out the date from the portal extract and the yearly rule rather than from the policy's title, and do not match a topic to a policy that only mentions it in passing."
+ },
+ "T3.1-7": {
+  "why": "A saved file with a hash and a UTC time is proof of what you handed in and when. A reviewer or auditor trusts a record they can check, not a file name.",
+  "h1": "Name LI-POL and POL-SET by the convention shown on the step, save, then read the receipt before you mark the step complete.",
+  "h3": "The hash proves the file has not changed since you saved it, and the UTC time fixes when, in a clock nobody can argue about. If you mark the step complete before the receipt shows, you have nothing to point to if the hand-in is questioned. A wrong name also breaks later steps that look the file up by its name."
+ },
+ "T3.2-1": {
+  "why": "A RACI that gives no one the accountability, or gives it to two people, leaves each process without an owner when something fails.",
+  "h1": "For each process, find the role that does the work and the single role that answers for it, using the Charter's RACI.",
+  "h3": "Reasoning: Responsible is whoever does the work; Accountable is one person who answers for the result and can say yes or no. One A per row is a rule, not a preference. If a table does not name the accountable role, infer it from who the policy makes responsible for that area, and be able to say which section told you."
+ },
+ "T3.2-2": {
+  "why": "Clause 5.3 makes top management name people for two jobs. Without them, nobody has to ensure conformity or report on the ISMS.",
+  "h1": "Recall the two things Clause 5.3 says top management must assign, then find the role in the policy that holds each.",
+  "h3": "Reasoning: read the Clause 5.3 entry in the Quick Reference. It names two assignments, and both are about the management system itself, not about day-to-day security work. Hold each choice against the entry's two items. Then record the role holder in the header together with the section that names them."
+ },
+ "T3.2-3": {
+  "why": "You cannot say where a control stands without first knowing what it asks for. The tracker is the one list management reads to see the programme's progress.",
+  "h1": "Open the tracker and the Lead Implementer page of each control (A.5.1 to A.5.4) and note what each one requires before you rate anything.",
+  "h3": "Reasoning: you will compare observed facts with requirements in the next steps, so the requirements have to be fixed first. Reading the worked LearnTech row shows what a finished row looks like. Rate from what the page says the control requires, not from what you remember about the control's title."
+ },
+ "T3.2-4": {
+  "why": "Status tells management what work is left. Calling a half-built control finished hides the gap, and calling a working one empty wastes effort.",
+  "h1": "For each control, list its requirements from the LI page, then see which of them the observation actually shows.",
+  "h3": "Reasoning: count requirements met by evidence. All met means complete, some met means partial, none met means not started. One missing requirement changes the answer, so count rather than go by overall impression. A plan, a promise or something done in practice without a record is not evidence of a requirement."
+ },
+ "T3.2-5": {
+  "why": "Maturity says how reliably a control is run, which is different from whether it is complete. Management plans effort differently for each.",
+  "h1": "Ask the Maturity Model questions in order for each control and stop at the first one the observation cannot answer with yes.",
+  "h3": "Reasoning: each level needs the one before it. A control done only by habit has no document to approve. Applying it in one office is not the Group's way until the Group has set it for every office. A status gap does not by itself lower the maturity: a control can be incomplete and still run in a documented, approved way."
+ },
+ "T3.2-6": {
+  "why": "An evidence pack is what an auditor opens to see that a control works. Claiming a file that does not exist is worse than recording a gap.",
+  "h1": "For every sub-task of LI-A.5.2 and LI-A.5.3, ask: do I already hold this item, can I prepare it from the facts, or does nothing at the office show it yet?",
+  "h3": "Reasoning: reuse a deliverable you already made when it truly holds the item, since one record should not be written twice. Prepare a new file only from facts the dataset gives. Where the dataset says the check, list or rating was never done, choose None and write the gap and the next action, because inventing an item makes the record false. Check the file name matches your 02_Working naming."
+ },
+ "T3.2-7": {
+  "why": "The first evidence item shows where a control's proof starts. The next action and measure turn a status line into a plan someone can follow.",
+  "h1": "For A.5.1 and A.5.4, find sub-task 01 on the LI page and name the file that holds it. Then pick the next action and a measure that counts something.",
+  "h3": "Reasoning: the next action is whatever closes the gap between how the office runs the control now and how the Maturity Model describes the next level. A measure such as improving awareness cannot be checked. A measure with a count, a target and a frequency can. Use the file name pattern from your own hand-ins."
+ },
+ "T3.2-8": {
+  "why": "Small teams often cannot split every duty. What matters is that a risk you cannot remove is covered and someone owns the cover.",
+  "h1": "Think about what A.5.3 asks when duties cannot be split, and what a control in its place would need.",
+  "h3": "Reasoning: first decide whether one person holding both duties is a conflict under the control. Then read requirement 3 on the control's task page: what does it ask for where duties cannot be split, and who must own it? Test each choice against that requirement: does it leave the risk uncovered, cover it, or stop the team doing its work?"
+ },
+ "T3.2-9": {
+  "why": "A saved file with a hash and a UTC time is proof of what you handed in and when. A reviewer or auditor trusts a record they can check, not a file name.",
+  "h1": "Name LI-RACI and CIT-S1 by the convention shown on the step, save, then read the receipt before you mark the step complete.",
+  "h3": "The hash proves the file has not changed since you saved it, and the UTC time fixes when, in a clock nobody can argue about. If you mark the step complete before the receipt shows, you have nothing to point to if the hand-in is questioned. A wrong name also breaks later steps that look the file up by its name."
+ },
+ "T4.1-1": {
+  "why": "Different assessors using different scales get scores that cannot be compared. The method card fixes the scales so everyone rates the same way.",
+  "h1": "Fill each part of the card from the policy sections that define it, and write the section next to each.",
+  "h3": "Reasoning: copy the organisation's own criteria, not general ones, and quote the section so a reader can check you. The appetite SITL-ERM-001 sets differs by criticality band, so find GlobalConnect's band first: its own organisation document states it. Acceptance authority comes from the Charter; the card should say who owns and who accepts."
+ },
+ "T4.1-10": {
+  "why": "The tier sets how an asset is handled. A tier that is too low exposes people's data.",
+  "h1": "Decide whether an e-mail address identifies a person, then read what the standard says about the lowest tier for personal data.",
+  "h3": "Reasoning: the rule gives a floor for personal data, not a ceiling. Your choice is the lowest tier allowed, so apply the floor even if the data feels harmless. Check what the glossary says about identifying a person before you decide."
+ },
+ "T4.1-11": {
+  "why": "A saved file with a hash and a UTC time is proof of what you handed in and when. A reviewer or auditor trusts a record they can check, not a file name.",
+  "h1": "Name LI-RAM and CIT-S2 by the convention shown on the step, save, then read the receipt before you mark the step complete.",
+  "h3": "The hash proves the file has not changed since you saved it, and the UTC time fixes when, in a clock nobody can argue about. If you mark the step complete before the receipt shows, you have nothing to point to if the hand-in is questioned. A wrong name also breaks later steps that look the file up by its name."
+ },
+ "T4.1-2": {
+  "why": "If two assessors rating the same risk get different answers, the register cannot be trusted. The standard asks for repeatability.",
+  "h1": "Recall what Clause 6.1.2 b) expects when assessments are repeated.",
+  "h3": "Reasoning: the clause is about the quality of the results, not the size of the numbers or the tools used. Think about what a manager needs to be able to do with two assessments made a year apart."
+ },
+ "T4.1-3": {
+  "why": "A risk with no named person has nobody who decides what happens to it. Ownership is how risks are managed.",
+  "h1": "Recall the people Clause 6.1.2 c) says must be identified for each risk.",
+  "h3": "Reasoning: the clause names the person with accountability and authority to manage the risk. Auditors check and suppliers deliver, but neither decides to accept or treat the risk for the organisation."
+ },
+ "T4.1-4": {
+  "why": "You cannot say where a control stands without first knowing what it asks for. The tracker is the one list management reads to see the programme's progress.",
+  "h1": "Open the tracker and the Lead Implementer page of each control (A.5.9 to A.5.14) and note what each one requires before you rate anything.",
+  "h3": "Reasoning: you will compare observed facts with requirements in the next steps, so the requirements have to be fixed first. Reading the worked LearnTech row shows what a finished row looks like. Rate from what the page says the control requires, not from what you remember about the control's title."
+ },
+ "T4.1-5": {
+  "why": "Status tells management what work is left. Calling a half-built control finished hides the gap, and calling a working one empty wastes effort.",
+  "h1": "For each control, list its requirements from the LI page, then see which of them the observation actually shows.",
+  "h3": "Reasoning: count requirements met by evidence. All met means complete, some met means partial, none met means not started. One missing requirement changes the answer, so count rather than go by overall impression. A plan, a promise or something done in practice without a record is not evidence of a requirement."
+ },
+ "T4.1-6": {
+  "why": "Maturity says how reliably a control is run, which is different from whether it is complete. Management plans effort differently for each.",
+  "h1": "Ask the Maturity Model questions in order for each control and stop at the first one the observation cannot answer with yes.",
+  "h3": "Reasoning: each level needs the one before it. A control done only by habit has no document to approve. Applying it in one office is not the Group's way until the Group has set it for every office. A status gap does not by itself lower the maturity: a control can be incomplete and still run in a documented, approved way."
+ },
+ "T4.1-7": {
+  "why": "An evidence pack is what an auditor opens to see that a control works. Claiming a file that does not exist is worse than recording a gap.",
+  "h1": "For every sub-task of LI-A.5.9 and LI-A.5.12, ask: do I already hold this item, can I prepare it from the facts, or does nothing at the office show it yet?",
+  "h3": "Reasoning: reuse a deliverable you already made when it truly holds the item, since one record should not be written twice. Prepare a new file only from facts the dataset gives. Where the dataset says the check, list or rating was never done, choose None and write the gap and the next action, because inventing an item makes the record false. Check the file name matches your 02_Working naming."
+ },
+ "T4.1-8": {
+  "why": "The first evidence item shows where a control's proof starts. The next action and measure turn a status line into a plan someone can follow.",
+  "h1": "For A.5.10, A.5.11, A.5.13 and A.5.14, find sub-task 01 on the LI page and name the file that holds it. Then pick the next action and a measure that counts something.",
+  "h3": "Reasoning: the next action is whatever closes the gap between how the office runs the control now and how the Maturity Model describes the next level. A measure such as improving awareness cannot be checked. A measure with a count, a target and a frequency can. Use the file name pattern from your own hand-ins."
+ },
+ "T4.1-9": {
+  "why": "What is not in the inventory cannot be protected, owned or classified. Unlisted cloud services are a common blind spot.",
+  "h1": "Ask what A.5.9 says the inventory covers and what it expects about every item in it.",
+  "h3": "Reasoning: read on the control's task page what the inventory covers (hardware only, or services too) and what every item in it needs. Then ask of each choice: does it leave the organisation knowing what it holds and who answers for it? Consider also whose data sits in the tool, whoever runs the service."
+ },
+ "T4.2-1": {
+  "why": "A chain shows how a risk happens from asset to consequence. A risk that skips a link cannot be treated at the right place.",
+  "h1": "Read the LearnTech worked row, then trace each of your Manila rows left to right and note how each cell follows from the one before.",
+  "h3": "Reasoning: a chain reads asset, threat, weakness, consequence, existing control, and the Annex A control that the existing one maps to. If you cannot read it as one sentence, a link is weak. The worked row shows how specific each cell should be."
+ },
+ "T4.2-10": {
+  "why": "The first evidence item shows where a control's proof starts. The next action and measure turn a status line into a plan someone can follow.",
+  "h1": "For A.5.6, find sub-task 01 on the LI page and name the file that holds it. Then pick the next action and a measure that counts something.",
+  "h3": "Reasoning: the next action is whatever closes the gap between how the office runs the control now and how the Maturity Model describes the next level. A measure such as improving awareness cannot be checked. A measure with a count, a target and a frequency can. Use the file name pattern from your own hand-ins."
+ },
+ "T4.2-11": {
+  "why": "A saved file with a hash and a UTC time is proof of what you handed in and when. A reviewer or auditor trusts a record they can check, not a file name.",
+  "h1": "Name LI-CHAIN, RR-UPD and CIT-S3 by the convention shown on the step, save, then read the receipt before you mark the step complete.",
+  "h3": "The hash proves the file has not changed since you saved it, and the UTC time fixes when, in a clock nobody can argue about. If you mark the step complete before the receipt shows, you have nothing to point to if the hand-in is questioned. A wrong name also breaks later steps that look the file up by its name."
+ },
+ "T4.2-2": {
+  "why": "A vague risk statement cannot be rated or owned. Auditors read the statement first and judge the rest from it.",
+  "h1": "For each chain, test each of the three drafts against the R06 frame: a cause that is true today, one event, a business consequence, and the exact asset name.",
+  "h3": "Reasoning: reject drafts that mix several events, describe something that has not happened as already true, name no asset or give a technical outcome with no business effect. The best draft meets every part of the frame, not the one that sounds most alarming."
+ },
+ "T4.2-3": {
+  "why": "The rating decides who must act and how fast. A wrong score sends the risk to the wrong person.",
+  "h1": "Match the frequency words in THR-5 to the likelihood descriptors, and the chain's consequence to the impact descriptors.",
+  "h3": "Reasoning: likelihood is how often the event can be expected, impact is how bad the consequence is in the organisation's own words. Rate them separately. Use the descriptor that matches, not a number you feel is fair, and note that a control already working lowers likelihood by a step (R07)."
+ },
+ "T4.2-4": {
+  "why": "A risk register that ignores fresh intelligence goes out of date the day a threat becomes active.",
+  "h1": "Ask which part of a risk the brief tells you about: how often or how bad.",
+  "h3": "Reasoning: threat intelligence is meant to feed the risk assessment, so ask when the register should change: when the threat changes, or only after harm. Then ask what the brief changes your view of: the chance of the event, or the damage if it happens. That tells you which score moves. Record the brief as the source so a reader can see why the number changed."
+ },
+ "T4.2-5": {
+  "why": "If the analyst can accept their own risk, the check is meaningless. Acceptance authority rises with the score.",
+  "h1": "Work out each risk's residual rating, then look up who rule R36 lets accept that rating. Then fill owner, acceptance authority and existing controls.",
+  "h3": "Reasoning: the person who rated the risk, or any manager, has no standing to accept it. The authority depends on the residual score, so count which controls actually work, lower the likelihood by R07 and then read the Charter. A control that does not work reduces nothing."
+ },
+ "T4.2-6": {
+  "why": "You cannot say where a control stands without first knowing what it asks for. The tracker is the one list management reads to see the programme's progress.",
+  "h1": "Open the tracker and the Lead Implementer page of each control (A.5.6 and A.5.7) and note what each one requires before you rate anything.",
+  "h3": "Reasoning: you will compare observed facts with requirements in the next steps, so the requirements have to be fixed first. Reading the worked LearnTech row shows what a finished row looks like. Rate from what the page says the control requires, not from what you remember about the control's title."
+ },
+ "T4.2-7": {
+  "why": "Status tells management what work is left. Calling a half-built control finished hides the gap, and calling a working one empty wastes effort.",
+  "h1": "For each control, list its requirements from the LI page, then see which of them the observation actually shows.",
+  "h3": "Reasoning: count requirements met by evidence. All met means complete, some met means partial, none met means not started. One missing requirement changes the answer, so count rather than go by overall impression. A plan, a promise or something done in practice without a record is not evidence of a requirement."
+ },
+ "T4.2-8": {
+  "why": "Maturity says how reliably a control is run, which is different from whether it is complete. Management plans effort differently for each.",
+  "h1": "Ask the Maturity Model questions in order for each control and stop at the first one the observation cannot answer with yes.",
+  "h3": "Reasoning: each level needs the one before it. A control done only by habit has no document to approve. Applying it in one office is not the Group's way until the Group has set it for every office. A status gap does not by itself lower the maturity: a control can be incomplete and still run in a documented, approved way."
+ },
+ "T4.2-9": {
+  "why": "An evidence pack is what an auditor opens to see that a control works. Claiming a file that does not exist is worse than recording a gap.",
+  "h1": "For every sub-task of LI-A.5.7, ask: do I already hold this item, can I prepare it from the facts, or does nothing at the office show it yet?",
+  "h3": "Reasoning: reuse a deliverable you already made when it truly holds the item, since one record should not be written twice. Prepare a new file only from facts the dataset gives. Where the dataset says the check, list or rating was never done, choose None and write the gap and the next action, because inventing an item makes the record false. Check the file name matches your 02_Working naming."
+ },
+ "T5.1-1": {
+  "why": "The plan turns a rated risk into work with an owner and a date. Knowing a finished row first stops half-filled plans.",
+  "h1": "Read the two LearnTech rows and list what each column holds, then read the facts on your own three rows.",
+  "h3": "Reasoning: a finished row has an option, the controls that carry it out, Annex A IDs, a named owner, a date, the residual rating and the approver. Note which facts on your rows will decide the option, such as how many ways in, whether something can be switched off, and how the residual score compares with the appetite."
+ },
+ "T5.1-2": {
+  "why": "Treatment is where the organisation chooses what to do about a risk. A consistent rule keeps the choice from depending on who asks.",
+  "h1": "Apply rule L12's four questions in order to each row, comparing its residual score with the appetite.",
+  "h3": "Reasoning: do not choose the option you like. Ask the questions in order and stop at the first that applies. The facts that settle each are in the row: whether the asset is still needed, whether the residual score is within the appetite, and whether a control can reduce it. Different rows can end up with different options."
+ },
+ "T5.1-3": {
+  "why": "A control that acts on nothing wastes money, and a necessary control that is left out leaves the risk standing.",
+  "h1": "For each proposed control, ask whether it acts on the cause, the event or the consequence in the risk statement. Then find its Annex A match.",
+  "h3": "Reasoning: needed means the control changes this risk, not that it is a good idea in general. Read the risk statement and mark its cause, its event and its consequence; a proposed control that touches none of the three belongs to some other risk, however sensible it is. For each needed control, read the Annex A titles and pick the one whose purpose matches, not just one that shares a word. The comparison is a check that nothing necessary was left out (Clause 6.1.3 c)."
+ },
+ "T5.1-4": {
+  "why": "Treating Annex A as the only source would stop you using a control that works. Ignoring it would let necessary controls go missing.",
+  "h1": "Re-read Clause 6.1.3 b) and c): what are the controls chosen from, and what is Annex A used for?",
+  "h3": "Reasoning: read the Clause 6.1.3 entry, items b) and c). Note two things: where it says controls may be chosen from, and what job it gives Annex A. Then test each choice: does the clause restrict you to one list, and does it mention anyone's prior agreement?"
+ },
+ "T5.1-5": {
+  "why": "The people who live with the residual risk should be the ones who agree to carry it.",
+  "h1": "Recall Clause 6.1.3 f): who approves the plan and who accepts the risks that remain.",
+  "h3": "Reasoning: acceptance belongs with the person who has the authority and accountability for the risk, which you identified when you set up risk ownership. People who run the system or check it do not own the risks and cannot accept them on the organisation's behalf."
+ },
+ "T5.1-6": {
+  "why": "A treatment with no date never happens, and an acceptance with no expiry becomes permanent without anyone deciding it.",
+  "h1": "Look up days by rating in R08, count them from the plan's date, then fill the acceptance columns for the one risk you keep.",
+  "h3": "Reasoning: the number of days depends on the rating (R08, SITL-ERM-001 Section 7), and counting starts at the plan's date stated in the step. A risk you treat needs only its due date. For the risk you retain, SITL-POL-002 Section 6.2 sets each column: the reason is given against the appetite, the expiry and the re-assessment date are each counted at the interval that section sets for the residual rating, and the approver is the authority R36 names for that score."
+ },
+ "T5.1-7": {
+  "why": "A saved file with a hash and a UTC time is proof of what you handed in and when. A reviewer or auditor trusts a record they can check, not a file name.",
+  "h1": "Name LI-RTP by the convention shown on the step, save, then read the receipt before you mark the step complete.",
+  "h3": "The hash proves the file has not changed since you saved it, and the UTC time fixes when, in a clock nobody can argue about. If you mark the step complete before the receipt shows, you have nothing to point to if the hand-in is questioned. A wrong name also breaks later steps that look the file up by its name."
+ },
+ "T5.2-1": {
+  "why": "The SoA is the document an auditor opens first. Knowing how a finished row reads, and where the carried-over cells came from, lets you complete the other rows consistently.",
+  "h1": "Read the LearnTech worked row across all its columns, then find where your own tracker's entries appear.",
+  "h3": "The first row is a worked example for another company, so it shows the shape of a good row: the source named, the inclusion justification written, the status and evidence reference filled. Compare it with a row for a control you already sprinted in your CIT files; those Implemented? and Evidence ref cells were carried over, not typed. Rule L07 says the not-yet-sprinted controls must say when they are planned."
+ },
+ "T5.2-10": {
+  "why": "An objective nobody can measure cannot be reported in the management review, so Clause 6.2 asks for objectives you can check.",
+  "h1": "A measurable objective says what is counted, a target and a date. Check each choice against all three.",
+  "h3": "Clause 6.2 b says objectives must be measurable. The Quick Reference spells that out as a thing that is counted, a target to reach and a date. Test each line by asking what you would count, what number would count as success, and by when. A line that names an intention or an activity without a number cannot be reported against."
+ },
+ "T5.2-11": {
+  "why": "Objectives with no owner, action or date never get done. Clause 6.2 asks for what will be done, who is responsible, what resources and when.",
+  "h1": "Match each objective to one of the four gaps in its row, then ask who is Responsible for that area in the Charter RACI.",
+  "h3": "Start from the four gap rows in the sheet and write one objective for each; each must follow the measurable rule L14: a counted thing, a target and a date, and agree with SITL-POL-001. For the person, read Section 16 of the Charter, the RACI, for the R role of that area. For the plan, say what will be done, with what, and when it will be finished. Keep each objective to one measure so it can be reported on its own."
+ },
+ "T5.2-12": {
+  "why": "Auditors ask when a record was created and that it has not changed since. The hash and UTC time in the receipt are that proof.",
+  "h1": "Name LI-SOA and LI-OBJ by the convention, save, and read the receipt before marking complete.",
+  "h3": "The naming convention is shown in the step text; follow its order of parts exactly and keep each file name unique to its content. After you click Save to 02_Working the receipt shows a hash and a UTC time. If either is missing, the save did not complete, so save again. Only when you can see both should you click Mark step complete."
+ },
+ "T5.2-2": {
+  "why": "Clause 6.1.3 d asks you to justify every Annex A decision. A reason that names a real source can be defended in the audit; a bare yes cannot.",
+  "h1": "For each control read its SOA-93 fact and ask what, if anything, in it calls for the control.",
+  "h3": "Rule L06 says a control applies when something in the file calls for it, and the source you record is the first of those that fits, in that order. Read each control's fact at Manila: it names what calls for it, such as a regulation, an agreement, a treated risk or a Group rule. Exclude only when the office genuinely does nothing the control governs. Work through the rows in order and keep your reading of the source order the same every time."
+ },
+ "T5.2-3": {
+  "why": "Excluding a control without a recorded reason fails Clause 6.1.3 d. The SoA must list all 93 controls and say why any is left out.",
+  "h1": "Think about what the SoA must show for every Annex A control, even one the office does not use.",
+  "h3": "Rule L06 allows exclusion only when the office does nothing the control governs, and it requires the justification to be recorded. The row never leaves the SoA, because the standard asks you to justify excluding a control rather than silently drop it. Ask which choice records the fact about Manila, gives its reason, and still says when to look again if the facts change."
+ },
+ "T5.2-4": {
+  "why": "The SoA is a named required output, and an auditor tests it against the clause. Knowing its four elements stops you leaving one out of the real document.",
+  "h1": "Recall Clause 6.1.3 d and ask which list matches what the clause actually requires the SoA to contain.",
+  "h3": "Open the Quick Reference entry for Clause 6.1.3 d. It lists what the SoA holds in four parts. Write the four down, then compare each choice with them, part by part. Ask also where the other choices' items would normally be kept: a project plan and a risk register are records too, but different ones."
+ },
+ "T5.2-5": {
+  "why": "The SoA and the plan for treating risks describe the same decisions from two sides. If they disagree, the auditor cannot tell which one is true.",
+  "h1": "Ask which output the controls in the SoA come from, and what Clause 6.1.3 says about their relationship.",
+  "h3": "Clause 6.1.3 b to e runs in sequence: risk treatment determines which controls are necessary, the SoA records them, and a treatment plan is then formulated from them. So the SoA has to agree with the output that determined the controls. Check each choice against that chain and ask which of them would be changed if a control were added or dropped."
+ },
+ "T5.2-6": {
+  "why": "The tracker is the single place the programme records where each control stands, so you open it before deciding anything, and owners come from roles not names.",
+  "h1": "Find the worked row and the LI page for A.5.8; read them before you touch your own rows.",
+  "h3": "The tracker opens with columns A to G filtered to this sprint. Read the worked row to see how a finished row looks, then open the LI page for A.5.8 and note its owner role and what it requires. The Quick Reference and the SOA-93 observation for it are your sources in the next steps. The task here is to read and locate; you will decide status and maturity in the next steps."
+ },
+ "T5.2-7": {
+  "why": "A control's status tells management what is really in place. Overstating it hides work still owed, and the auditor finds it later.",
+  "h1": "Take A.5.8 one requirement at a time and ask whether the SOA-93 observation shows it is met.",
+  "h3": "Open the LI task page for A.5.8 and read its 'What it requires' list. Then read the SOA-93 observation for the same control. For each requirement, ask whether the observation shows it exists today; a plan, an intention or a draft does not count. If every requirement is shown, say so; if only some are, or none, say that. A requirement met in one place but missing in another is only partly met. Check the note on the sheet that defines the three statuses before you choose."
+ },
+ "T5.2-8": {
+  "why": "Maturity shows how far a control can be trusted to keep working. An auditor asks for records and review, so rating it high without them fails in the audit room.",
+  "h1": "Ask the Maturity Model questions in order for A.5.8 and stop at the first one the SOA-93 observation cannot answer yes to.",
+  "h3": "Open Ref-Maturity Model under Learn, Reference pages. The questions are ordered: is it documented and approved, with records; is it the Group's standard way, used in every office and reviewed; is it measured. Take the SOA-93 observation for A.5.8 and answer each in turn. The first question that gets a no sets the level, whatever is true further down. A good practice only in Manila, or an approved document nobody has reviewed, stops the climb early."
+ },
+ "T5.2-9": {
+  "why": "Evidence is what lets you prove a control to an auditor. A pack with the right file against each sub-task shows you can, and a gap listed honestly is better than a file that does not fit.",
+  "h1": "For each sub-task, check whether you already made a file for it, then whether the SOA-93 observation holds the records to prepare one.",
+  "h3": "Work down the sub-tasks in the A.5.8 LI page. For each, follow the order on the sheet: first a file you made in an earlier task, then a new item prepared from what the SOA-93 observation says exists, and only then None with the gap recorded. Name the file as it sits in 02_Working. Do not put a file against a sub-task it does not evidence just to fill the cell; a gap you record can be fixed, one you hide cannot."
+ },
+ "T6.1-1": {
+  "why": "Clause 7.2 starts with what each role needs to be competent in. You must see that first, because you cannot judge a person against a need you have not read.",
+  "h1": "Read the two worked rows and see what HR holds and what action was chosen, then read your own rows' needs.",
+  "h3": "Each of the ten role holders has the competence their role needs, taken from what the role runs in your LI-RACI from T3.2. The worked rows show how HR records and the Action column fit together. Note that one of your roles needs competence for the management review, which comes from your RACI, not from the person's job title."
+ },
+ "T6.1-10": {
+  "why": "Auditors ask when a record was created and that it has not changed since. The hash and UTC time in the receipt are that proof.",
+  "h1": "Name LI-COMM and AWR-PLAN by the convention, save, and read the receipt before marking complete.",
+  "h3": "The naming convention is shown in the step text; follow its order of parts exactly and keep each file name unique to its content. After you click Save to 02_Working the receipt shows a hash and a UTC time. If either is missing, the save did not complete, so save again. Only when you can see both should you click Mark step complete."
+ },
+ "T6.1-2": {
+  "why": "Clause 7.2 requires you to keep evidence of competence. A skilled person with no record is still a gap an auditor will write up.",
+  "h1": "Compare three things on each row: what the role needs, the person's CV, and the HR records on file.",
+  "h3": "Apply Clause 7.2 a to d and SITL-POL-020 section 3.1. Read the competence the role needs, then what the CV shows, then what HR actually holds. A person can have the skill and still lack a record, which is a different finding from lacking the skill, and the action differs: train in one case, document in the other. The two worked rows show the pattern. Choose an action for every row that is not simply in good order."
+ },
+ "T6.1-3": {
+  "why": "What you keep is what you can show an auditor. Clause 7.2 names the one thing you must hold to prove competence.",
+  "h1": "Recall Clause 7.2 d and ask what kind of thing it says to keep as evidence.",
+  "h3": "Read Clause 7.2 d in the Quick Reference and note what it says to keep, and as evidence of what. Ask of each choice whether it is evidence of someone's ability to do the job, whether it is proportionate to that purpose, and whether it is something the clause actually names."
+ },
+ "T6.1-4": {
+  "why": "Awareness is a requirement on everyone working under the organisation's control, not only the security team, and Clause 7.3 lists exactly three things.",
+  "h1": "Clause 7.3 a to c lists three items. Find the choice that matches them.",
+  "h3": "Read Clause 7.3 in the Quick Reference and write down its three items, a to c. All three are about the management system and the person's own part in it. Check each choice against those three, and ask whether business performance or contracts appear anywhere in the clause."
+ },
+ "T6.1-5": {
+  "why": "A message that nobody sends, or sends to the wrong people, leaves the ISMS unknown. Clause 7.4 asks what, when, with whom and how.",
+  "h1": "For each of the five messages find its row in the Group communication plan, then fill in when, who and how.",
+  "h3": "Clause 7.4 asks you to decide what to communicate, when, with whom and how. Use the Group ISMS communication plan row for each kind of message. For the incident lesson, check the condition on the row and the severity named in the message text before you decide who receives it. Keep the audience and the channel consistent with the row, not invented."
+ },
+ "T6.1-6": {
+  "why": "The tracker is the single place the programme records where each control stands, so you open it before deciding anything, and owners come from roles not names.",
+  "h1": "Find the worked row and the LI page for A.6.3; read them before you touch your own rows.",
+  "h3": "The tracker opens with columns A to G filtered to this sprint. Read the worked row to see how a finished row looks, then open the LI page for A.6.3 and note its owner role and what it requires. Look at columns F and G and the Observed column. The task here is to read and locate; you will decide status and maturity in the next steps."
+ },
+ "T6.1-7": {
+  "why": "A control's status tells management what is really in place. Overstating it hides work still owed, and the auditor finds it later.",
+  "h1": "Take A.6.3 one requirement at a time and ask whether the SPR-04 observation shows it is met.",
+  "h3": "Open the LI task page for A.6.3 and read its 'What it requires' list. Then read the SPR-04 observation for the same control. For each requirement, ask whether the observation shows it exists today; a plan, an intention or a draft does not count. If every requirement is shown, say so; if only some are, or none, say that. A requirement met in one place but missing in another is only partly met. Check the note on the sheet that defines the three statuses before you choose."
+ },
+ "T6.1-8": {
+  "why": "Maturity shows how far a control can be trusted to keep working. An auditor asks for records and review, so rating it high without them fails in the audit room.",
+  "h1": "Ask the Maturity Model questions in order for A.6.3 and stop at the first one the SPR-04 observation cannot answer yes to.",
+  "h3": "Open Ref-Maturity Model under Learn, Reference pages. The questions are ordered: is it documented and approved, with records; is it the Group's standard way, used in every office and reviewed; is it measured. Take the SPR-04 observation for A.6.3 and answer each in turn. The first question that gets a no sets the level, whatever is true further down. A good practice only in Manila, or an approved document nobody has reviewed, stops the climb early."
+ },
+ "T6.1-9": {
+  "why": "Evidence is what lets you prove a control to an auditor. A pack with the right file against each sub-task shows you can, and a gap listed honestly is better than a file that does not fit.",
+  "h1": "For each sub-task, check whether you already made a file for it, then whether SPR-04 holds the records to prepare one.",
+  "h3": "Work down the sub-tasks in the A.6.3 LI page. For each, follow the order on the sheet: first a file you hand in yourself, from an earlier task or this one, then a new item prepared from what SPR-04 says exists, and only then None with the gap recorded. Name the file as it sits in 02_Working. Do not put a file against a sub-task it does not evidence just to fill the cell; a gap you record can be fixed, one you hide cannot."
+ },
+ "T6.2-1": {
+  "why": "Clause 7.5 treats a document you maintain differently from a record you retain, and the audit tests each differently, so getting the kind right decides what you must keep current.",
+  "h1": "Read the clause wording for each item and ask whether it asks for the thing itself or for evidence that something happened.",
+  "h3": "The Clause 7.5.1 rule in the step note: where the clause asks for the thing itself, it is a document you maintain; where it asks you to retain, or to have it available as evidence, it is a record. Read the 'What the clause asks for' column for each of the ten items and apply that test. Do not decide from what Manila happens to hold, which is the next column."
+ },
+ "T6.2-2": {
+  "why": "Documents without version, owner and approval cannot be trusted or audited. Clause 7.5.2 sets what every controlled document must carry.",
+  "h1": "Read Clause 7.5.2 a to c against the wiki page, then build the block from the policy rules for who owns and approves a procedure.",
+  "h3": "Part one: Clause 7.5.2 in the Quick Reference asks for identification and description, format, and review and approval. Compare the page against each. Part two: on the Block sheet, fill the ID, version, owner and approval. SITL-POL-000 section 7.1 sets the rules, section 2 names who approves a procedure and section 3 the policy owner. Use roles from those sections, not names you invent."
+ },
+ "T6.2-3": {
+  "why": "The tracker is the single place the programme records where each control stands, so you open it before deciding anything, and owners come from roles not names.",
+  "h1": "Find the worked row and the LI page for A.5.37, A.6.1 and the rest of sprint 5; read them before you touch your own rows.",
+  "h3": "The tracker opens with columns A to G filtered to this sprint. Read the worked row to see how a finished row looks, then open the LI page for A.5.37, A.6.1 and the rest of sprint 5 and note its owner role and what it requires. Use the worked row to see how a row reads and the LI-A.6.5 page, requirement 1, to see how a role is chosen. The task here is to read and locate; you will decide status and maturity in the next steps."
+ },
+ "T6.2-4": {
+  "why": "A control's status tells management what is really in place. Overstating it hides work still owed, and the auditor finds it later.",
+  "h1": "Take each control one requirement at a time and ask whether the SPR-05 observation shows it is met.",
+  "h3": "Open the LI task page for each control and read its 'What it requires' list. Then read the SPR-05 observation for the same control. For each requirement, ask whether the observation shows it exists today; a plan, an intention or a draft does not count. If every requirement is shown, say so; if only some are, or none, say that. A requirement met in one place but missing in another is only partly met. Check the note on the sheet that defines the three statuses before you choose."
+ },
+ "T6.2-5": {
+  "why": "Maturity shows how far a control can be trusted to keep working. An auditor asks for records and review, so rating it high without them fails in the audit room.",
+  "h1": "Ask the Maturity Model questions in order for each control and stop at the first one the SPR-05 observation cannot answer yes to.",
+  "h3": "Open Ref-Maturity Model under Learn, Reference pages. The questions are ordered: is it documented and approved, with records; is it the Group's standard way, used in every office and reviewed; is it measured. Take the SPR-05 observation for each control and answer each in turn. The first question that gets a no sets the level, whatever is true further down. A good practice only in Manila, or an approved document nobody has reviewed, stops the climb early."
+ },
+ "T6.2-6": {
+  "why": "Evidence is what lets you prove a control to an auditor. A pack with the right file against each sub-task shows you can, and a gap listed honestly is better than a file that does not fit.",
+  "h1": "For each sub-task, check whether you already made a file for it, then whether SPR-05 holds the records to prepare one.",
+  "h3": "Work down the sub-tasks in the A.6.1 and A.6.7 LI page. For each, follow the order on the sheet: first a file you made in an earlier task, then a new item prepared from what SPR-05 says exists, and only then None with the gap recorded. Name the file as it sits in 02_Working. Do not put a file against a sub-task it does not evidence just to fill the cell; a gap you record can be fixed, one you hide cannot."
+ },
+ "T6.2-7": {
+  "why": "One first evidence item per control keeps the tracker honest and shows where the next piece of proof will come from. The Level 4 measure turns a vague aim into something you can report.",
+  "h1": "For each control take sub-task 01 of its LI page for column F, then pick the next step up from the level you gave it for G.",
+  "h3": "Column F takes the file for sub-task 01 of the other five controls: reuse one of your own files if it fits, otherwise a new item prepared from SPR-05. For G, look at the maturity you set earlier and choose the action that closes the gap to the next level, as the Maturity Model words it. The Level 4 measure must be a thing you can count, with a target and how often you count it; 'reviewed on time' is not a measure."
+ },
+ "T6.2-8": {
+  "why": "Starting before screening protects nobody and exposes the company. A.6.1 expects screening to be proportionate and any exception to be managed.",
+  "h1": "Ask what A.6.1 requires before someone joins, and what should happen when that was not done.",
+  "h3": "Use the LI-A.6.1 requirements and sub-task 03 plus the SPR-05 observation. Two questions settle it. When does the control place screening relative to the start date, and does it scale with the role's risk? And when a check was missed, what does the control expect to be written down, and what about the person's access in the meantime? Check each choice for both parts."
+ },
+ "T6.2-9": {
+  "why": "Auditors ask when a record was created and that it has not changed since. The hash and UTC time in the receipt are that proof.",
+  "h1": "Name LI-DOC and CIT-S5 by the convention, save, and read the receipt before marking complete.",
+  "h3": "The naming convention is shown in the step text; follow its order of parts exactly and keep each file name unique to its content. After you click Save to 02_Working the receipt shows a hash and a UTC time. If either is missing, the save did not complete, so save again. Only when you can see both should you click Mark step complete."
+ },
+ "T7.1-1": {
+  "why": "An access rules matrix is what turns 'least privilege' into something a reviewer can check. If a role holds more than its duties need, it shows here.",
+  "h1": "For each line compare what the role does and who it reports to with the access it holds, using the levels the sheet offers.",
+  "h3": "On each line read the role's duties, who the role reports to, the system and its asset owner, and the access held today. Choose the level from the list on the sheet that the duties need (SITL-POL-006 Section 3.1), not the level the role holds now; where the two differ, the line is a finding. For the approver, read Section 6.1 step 2: it names two approvals in order, and both people are on the line itself."
+ },
+ "T7.1-2": {
+  "why": "The tracker is the single place the programme records where each control stands, so you open it before deciding anything, and owners come from roles not names.",
+  "h1": "Find the worked row and the LI page for A.5.15, A.5.16 and the other sprint 6 controls; read them before you touch your own rows.",
+  "h3": "The tracker opens with columns A to G filtered to this sprint. Read the worked row to see how a finished row looks, then open the LI page for A.5.15, A.5.16 and the other sprint 6 controls and note its owner role and what it requires. The A.5.18 observation in SPR-06 and the LI-A.5.16 page tell you the owner role. The task here is to read and locate; you will decide status and maturity in the next steps."
+ },
+ "T7.1-3": {
+  "why": "A control's status tells management what is really in place. Overstating it hides work still owed, and the auditor finds it later.",
+  "h1": "Take each control one requirement at a time and ask whether the SPR-06 observation shows it is met.",
+  "h3": "Open the LI task page for each control and read its 'What it requires' list. Then read the SPR-06 observation for the same control. For each requirement, ask whether the observation shows it exists today; a plan, an intention or a draft does not count. If every requirement is shown, say so; if only some are, or none, say that. A requirement met in one place but missing in another is only partly met. Check the note on the sheet that defines the three statuses before you choose."
+ },
+ "T7.1-4": {
+  "why": "Maturity shows how far a control can be trusted to keep working. An auditor asks for records and review, so rating it high without them fails in the audit room.",
+  "h1": "Ask the Maturity Model questions in order for each control and stop at the first one the SPR-06 observation cannot answer yes to.",
+  "h3": "Open Ref-Maturity Model under Learn, Reference pages. The questions are ordered: is it documented and approved, with records; is it the Group's standard way, used in every office and reviewed; is it measured. Take the SPR-06 observation for each control and answer each in turn. The first question that gets a no sets the level, whatever is true further down. A good practice only in Manila, or an approved document nobody has reviewed, stops the climb early."
+ },
+ "T7.1-5": {
+  "why": "Evidence is what lets you prove a control to an auditor. A pack with the right file against each sub-task shows you can, and a gap listed honestly is better than a file that does not fit.",
+  "h1": "For each sub-task, check whether you already made a file for it, then whether SPR-06 holds the records to prepare one.",
+  "h3": "Work down the sub-tasks in the A.5.16 and A.5.18 LI page. For each, follow the order on the sheet: first a file you hand in yourself, from an earlier task or this one, then a new item prepared from what SPR-06 says exists, and only then None with the gap recorded. Name the file as it sits in 02_Working. Do not put a file against a sub-task it does not evidence just to fill the cell; a gap you record can be fixed, one you hide cannot."
+ },
+ "T7.1-6": {
+  "why": "One first evidence item per control keeps the tracker honest and shows where the next piece of proof will come from. The Level 4 measure turns a vague aim into something you can report.",
+  "h1": "For each control take sub-task 01 of its LI page for column F, then pick the next step up from the level you gave it for G.",
+  "h3": "Column F takes the file for sub-task 01 of A.5.15 and A.5.17: reuse one of your own files if it fits, otherwise a new item prepared from SPR-06. For G, start from the level you set in the earlier step. Below Level 3, choose the action that reaches it, as the Maturity Model words it. Already there, no step to Level 3 is left, so ask instead whether anything about the control is still open. The Level 4 measure must be a thing you can count, with a target and how often you count it; 'reviewed on time' is not a measure."
+ },
+ "T7.1-7": {
+  "why": "Leavers who keep access are a classic breach route. Recording it as an exception with a root cause, not a shrug, is what the control expects.",
+  "h1": "Compare the three days with the time the policy sets, then decide what must happen now and what you must record.",
+  "h3": "SITL-POL-006 section 3.1 and 6.3 set the time within which a leaver's access must go, and say any use after termination is an incident. Three days is beyond that, so ask whether this is acceptable or a departure, what you do today about the live account, and what you check to learn whether it was used. A good record names the departure, the action and the cause."
+ },
+ "T7.1-8": {
+  "why": "Shared accounts break accountability, because nobody can say who did what. A.5.16 is about identities that can be traced.",
+  "h1": "Ask what conditions the control sets on a shared identity, and what it still wants to be able to show afterwards.",
+  "h3": "Read the LI-A.5.16 requirement on shared identities and the SPR-06 account observation. Note each condition the requirement sets and what it says about tracing an action to a person. Then test each choice: does it state those conditions, or only an absolute, for or against?"
+ },
+ "T7.1-9": {
+  "why": "Auditors ask when a record was created and that it has not changed since. The hash and UTC time in the receipt are that proof.",
+  "h1": "Name ACC-RULES and CIT-S6 by the convention, save, and read the receipt before marking complete.",
+  "h3": "The naming convention is shown in the step text; follow its order of parts exactly and keep each file name unique to its content. After you click Save to 02_Working the receipt shows a hash and a UTC time. If either is missing, the save did not complete, so save again. Only when you can see both should you click Mark step complete."
+ },
+ "T7.2-1": {
+  "why": "Tier decides how hard you look at a supplier. Under-tiering a supplier that holds sensitive data leaves your biggest risk with your lightest checks.",
+  "h1": "Read each supplier's intake form and use the term definitions in the policy, not your own sense of 'big' or 'small'.",
+  "h3": "Rule R35 uses terms defined in SITL-POL-013 section 3.1, with a table that says to read them on the intake form. For each supplier, mark which terms its intake lines meet, such as the data it holds or the access it has, and apply the rule to get the tier. Special-category data raises the tier. Do not tier by the contract value or by how well you know the vendor."
+ },
+ "T7.2-10": {
+  "why": "Auditors ask when a record was created and that it has not changed since. The hash and UTC time in the receipt are that proof.",
+  "h1": "Name VEN-CL, LI-CLD and CIT-S7 by the convention, save, and read the receipt before marking complete.",
+  "h3": "The naming convention is shown in the step text; follow its order of parts exactly and keep each file name unique to its content. After you click Save to 02_Working the receipt shows a hash and a UTC time. If either is missing, the save did not complete, so save again. Only when you can see both should you click Mark step complete."
+ },
+ "T7.2-2": {
+  "why": "A contract that lacks a required clause leaves the company with no right when something goes wrong, so each agreement is checked against the tier's list.",
+  "h1": "Take one supplier at a time: find the clauses required for its tier, then read what its contract actually says.",
+  "h3": "On VEN-CL, use the 'Required from tier' and 'The contract must say' columns, then compare with 'What the contract says' and the hosting location. Rule R27 and POL-013 section 6.3 define the three outcomes for a clause. A clause that is there but weaker than required is not the same as one that is absent. Decide per clause, not per supplier."
+ },
+ "T7.2-3": {
+  "why": "The tracker is the single place the programme records where each control stands, so you open it before deciding anything, and owners come from roles not names.",
+  "h1": "Find the worked row and the LI page for A.5.19 and A.5.20 onward; read them before you touch your own rows.",
+  "h3": "The tracker opens with columns A to G filtered to this sprint. Read the worked row to see how a finished row looks, then open the LI page for A.5.19 and A.5.20 onward and note its owner role and what it requires. LI-A.5.19 to 5.23 and the fixed LI-Q questions are the pages you will need. The task here is to read and locate; you will decide status and maturity in the next steps."
+ },
+ "T7.2-4": {
+  "why": "A control's status tells management what is really in place. Overstating it hides work still owed, and the auditor finds it later.",
+  "h1": "Take each control one requirement at a time and ask whether the SPR-07 observation shows it is met.",
+  "h3": "Open the LI task page for each control and read its 'What it requires' list. Then read the SPR-07 observation for the same control. For each requirement, ask whether the observation shows it exists today; a plan, an intention or a draft does not count. If every requirement is shown, say so; if only some are, or none, say that. A requirement met in one place but missing in another is only partly met. Check the note on the sheet that defines the three statuses before you choose."
+ },
+ "T7.2-5": {
+  "why": "Maturity shows how far a control can be trusted to keep working. An auditor asks for records and review, so rating it high without them fails in the audit room.",
+  "h1": "Ask the Maturity Model questions in order for each control and stop at the first one the SPR-07 observation cannot answer yes to.",
+  "h3": "Open Ref-Maturity Model under Learn, Reference pages. The questions are ordered: is it documented and approved, with records; is it the Group's standard way, used in every office and reviewed; is it measured. Take the SPR-07 observation for each control and answer each in turn. The first question that gets a no sets the level, whatever is true further down. A good practice only in Manila, or an approved document nobody has reviewed, stops the climb early."
+ },
+ "T7.2-6": {
+  "why": "Evidence is what lets you prove a control to an auditor. A pack with the right file against each sub-task shows you can, and a gap listed honestly is better than a file that does not fit.",
+  "h1": "For each sub-task, check whether you already made a file for it, then whether SPR-07 holds the records to prepare one.",
+  "h3": "Work down the sub-tasks in the A.5.19 and A.5.23 LI page. For each, follow the order on the sheet: first a file you hand in yourself, from an earlier task or this one, then a new item prepared from what SPR-07 says exists, and only then None with the gap recorded. Name the file as it sits in 02_Working. Do not put a file against a sub-task it does not evidence just to fill the cell; a gap you record can be fixed, one you hide cannot."
+ },
+ "T7.2-7": {
+  "why": "One first evidence item per control keeps the tracker honest and shows where the next piece of proof will come from. The Level 4 measure turns a vague aim into something you can report.",
+  "h1": "For each control take sub-task 01 of its LI page for column F, then pick the next step up from the level you gave it for G.",
+  "h3": "Column F takes the file for sub-task 01 of A.5.20, A.5.21 and A.5.22: reuse one of your own files if it fits, otherwise a new item prepared from SPR-07. For G, start from the level you set in the earlier step. Below Level 3, choose the action that reaches it, as the Maturity Model words it. Already there, no step to Level 3 is left, so ask instead whether anything about the control is still open. The Level 4 measure must be a thing you can count, with a target and how often you count it; 'reviewed on time' is not a measure."
+ },
+ "T7.2-8": {
+  "why": "In the cloud, responsibility is split. If you assume the provider does everything you miss your own share, and that is where cloud breaches happen.",
+  "h1": "Look at the SaaS row of the cloud reference and ask what the provider secures and what stays with the customer.",
+  "h3": "Ref-Cloud has a row for each service model, and rule L19 gives the model for this tool. Read that model's row: it says what the provider secures and what remains with the customer. Find application patching in one of the two lists. Then fill the matrix in LI-CLD, taking the model from the intake form and marking each duty to the right party."
+ },
+ "T7.2-9": {
+  "why": "A supplier holding your customers' data can only protect it if the contract lets you know quickly and check. SITL-POL-013 section 6.3 lists what is essential.",
+  "h1": "Read the clause table in POL-013 section 6.3 and pick what protects customer data, not what helps the supplier or marketing.",
+  "h3": "Find the table in section 6.3. It lists clauses by supplier tier. Work out the tier of a supplier that holds customer data, then read which clauses the table marks as essential for it. Check each choice against the table, and ask whether a commercial term protects the data at all."
+ },
+ "T8.1-1": {
+  "why": "At work a tabletop only teaches if everyone starts from the same facts. Missing the timeline or the data involved early skews every later decision.",
+  "h1": "Read the scenario and each inject in order. Which facts would change what you do first: who, what data, when?",
+  "h3": "Read the scenario once for context, then the injects slowly, noting times. The injects are in UTC but the office works in Manila time, so convert before comparing anything. Look for what is affected, whether personal data is involved, and the moment the organisation first knew. Pick facts that will matter later when you set phases and deadlines, not colour or detail that does not drive a decision."
+ },
+ "T8.1-10": {
+  "why": "At work staff who cannot report a suspicious e-mail leave the security team blind to early warning signs, and incidents start later than they need to.",
+  "h1": "Which control is about the people and the channel for raising something suspicious, as opposed to handling it afterwards?",
+  "h3": "Separate three jobs: planning for incidents, deciding what is an incident, and the act of staff raising a concern. The scenario's problem is that people did not know how to raise it. Ask which control covers a simple, known way to report events, and ignore the ones about what the response team does once it has been told. Compare each option's wording against that single gap."
+ },
+ "T8.1-11": {
+  "why": "At work, evidence with an inconsistent name or no timestamp cannot be found or trusted later. The receipt is what proves the file was fixed at a point in time.",
+  "h1": "Are your file names built from the same parts, in the same order, as the convention? Did the receipt appear?",
+  "h3": "List each part the convention names (office or programme code, task, document code, version, extension) and build each name from them, one for each of the tabletop record and the tracker. Compare two names side by side; they should differ only in the document code. Save, then read the receipt: a hash and a UTC time must both be there. Only after that mark the step complete; if the receipt lacks either, the save did not finish."
+ },
+ "T8.1-2": {
+  "why": "At work a team that cannot say which stage an event belongs to will skip stages, for instance containing before preserving evidence or closing without a lessons review.",
+  "h1": "For each inject, ask what the team is doing at that moment: getting ready, judging, acting, learning or securing evidence?",
+  "h3": "Read the policy's life-cycle section so you know what each stage covers. Then take each inject and ask what its main verb is: a plan or training already in place, someone judging severity, someone containing, someone gathering or sealing artefacts, someone reviewing afterwards. Two injects can look alike; choose by what the team is doing, not by the incident's topic. Check the injects are in time order, so stages should flow roughly forward."
+ },
+ "T8.1-3": {
+  "why": "At work the first reflex, wiping the machine, destroys the evidence needed for investigation, legal action or insurance, and that cannot be undone.",
+  "h1": "What does the policy's first hour say about evidence, and what does reimaging make impossible later?",
+  "h3": "Weigh two things: the speed of getting the device back and the value of what is on it. Ask whether anything lost by reimaging could be needed to prove what happened, who is responsible, or whether personal data left. Then read the first-hour checklist and the evidence line of the severity section and see which order they set. Test each choice against that order: what does it do first, and what record does it leave?"
+ },
+ "T8.1-4": {
+  "why": "At work a breach clock that starts at the wrong moment, or in the wrong time zone, means a late notification to the regulator and possible penalties.",
+  "h1": "Which law applies to these people, who must be told, and when did the clock actually start? Which time zone are the deadlines in?",
+  "h3": "First identify the jurisdiction from where the affected people are. Then find who must be notified and the time limit in the office addendum's Section 2, rule R30 and the notification procedure. Three moments compete for the start of the clock: the alert, the moment the incident was logged, and the confirmation of what the file held. The procedure's own definition of discovery time picks one. The injects are already in UTC, so add the limit to that time as it stands; converting to Manila time and back only invites a slip. Check that the date rolls over correctly."
+ },
+ "T8.1-5": {
+  "why": "At work a control tracker is only useful if you have read each control's own requirements first; otherwise statuses are guessed from the control title and the audit finds the guess.",
+  "h1": "Before you fill any cell, ask what each of the seven controls actually requires of the office and where the SPR-08 notes will be read against that.",
+  "h3": "Work like an implementer: open one control's task page, read its numbered requirements, and note what evidence would prove each. Then glance at the worked first row to see how a finished row reads, and at the column headings so you know which question each column answers. Do not fill statuses yet; this step is about knowing where each requirement and each observation lives so the next steps are fast and defensible."
+ },
+ "T8.1-6": {
+  "why": "At work an inflated status tells management a gap is closed when it is not, and the first external audit finds the difference. Understating hides real progress.",
+  "h1": "For each control, compare every numbered requirement with what SPR-08 says was observed. Is each one fully there, partly there, or missing?",
+  "h3": "Take one control at a time. List its requirements, then tick each against the observation. All ticked with nothing vague points one way, none ticked points another, and a mix points to the middle status. Some of this sprint's observations come from the tabletop you have just run: where SPR-08 says what the exercise found (the call tree, who is trained, whether lessons are tracked), set that against the requirement about testing or records, not only the one about having a procedure. Watch for observations that sound reassuring but cover only part of the requirement. Read the sheet note for the exact status definitions."
+ },
+ "T8.1-7": {
+  "why": "At work maturity is how a manager decides where to invest next. If a level is overstated, the improvement plan skips the missing basics and the same gap returns next audit.",
+  "h1": "Ask the Maturity Model's questions in order about each control and stop at the first answer that is No. What did SPR-08 actually record?",
+  "h3": "Start at the bottom: is anything documented? Then approved? Then applied in every office, not just Manila? Then are there records? Then reviewed on a schedule? The level is set by the first question you cannot answer yes to, not by the best thing you can find. Incident documents may be Group-wide and reviewed, or Manila's own and unreviewed; that decides the level more than whether they exist. A Group document that Manila follows is different from one Manila owns; check who approved it and when it was last reviewed. Never give credit for something that is only planned."
+ },
+ "T8.1-8": {
+  "why": "At work an evidence pack is what an auditor samples. A claimed item with no file behind it, or the wrong file, turns a good control into a finding.",
+  "h1": "For each sub-task, ask: which file already in 02_Working is this evidence, and if none, does the dataset show the item exists at all?",
+  "h3": "Go sub-task by sub-task for A.5.24 and A.5.28. Read what the evidence item is, then check your handed-in work first (your tabletop record is one of them); reuse beats creating. If it is not there, read the observation dataset: does it say the item exists (so you prepare the file), or that nothing exists? Where nothing exists, say so honestly and write what is missing and who should act, rather than naming a file that would not hold it. Use the naming convention exactly; the file name is the evidence reference."
+ },
+ "T8.1-9": {
+  "why": "At work the tracker is the one page a manager reads. If the evidence reference is vague or the next action is not measurable, no one can tell next quarter whether anything improved.",
+  "h1": "For each control, what is the first piece of evidence in its task, and what one concrete step moves it up a level, measured how?",
+  "h3": "For A.5.5, A.5.25, A.5.26, A.5.27 and A.6.8, open each task page and take the first sub-task's evidence item; the file name follows from it and from where it already sits. For the next action, use the level you gave earlier: below Level 3 means the step that gets it to Level 3; already there means the step that closes its remaining gap. The Level 4 measure must be a counted figure with a target, not 'review done on time'. Wrong options usually differ in exactly those two ways."
+ },
+ "T8.2-1": {
+  "why": "At work a recovery plan that has never been compared with the actual test is a promise nobody has checked; leadership finds out during a real outage.",
+  "h1": "For each service, how long did recovery take and how much data was lost, and how does each compare to what the business said it could tolerate?",
+  "h3": "Time to recover runs from when the decision to restore was declared to when the service was back. Data lost runs from the point the recovered data goes up to, to the declared time. A service meets its targets only if both are within the objective, so one good figure is not enough. Use the worked first row to see how times are written, and do the subtraction carefully across hours and minutes. Check which figure belongs to RTO and which to RPO."
+ },
+ "T8.2-10": {
+  "why": "At work, evidence with an inconsistent name or no timestamp cannot be found or trusted later. The receipt is what proves the file was fixed at a point in time.",
+  "h1": "Are your file names built from the same parts, in the same order, as the convention? Did the receipt appear?",
+  "h3": "List each part the convention names (office or programme code, task, document code, version, extension) and build each name from them, one for each of the four deliverables. Compare two names side by side; they should differ only in the document code. Save, then read the receipt: a hash and a UTC time must both be there. Only after that mark the step complete; if the receipt lacks either, the save did not finish."
+ },
+ "T8.2-2": {
+  "why": "At work a missed recovery target that is recorded as simply fine hides a risk until the next real outage.",
+  "h1": "What does the control need when a test missed its objective: only a note, or a fix and a retest too?",
+  "h3": "Read the control task's third requirement about testing against objectives and the status definitions in the sheet note. Ask three questions: was the plan tested, was the miss recorded, and was it remediated and retested. Status depends on how many of those are done, so decide which are true here. Beware options that either ignore the miss or overstate the position."
+ },
+ "T8.2-3": {
+  "why": "At work an obligations register is what tells each policy owner which legal duties they carry. Merged duties or the wrong policy mean a duty with no owner.",
+  "h1": "Is each line one duty or several? Which policy's own topic covers that duty, rather than the row's general process?",
+  "h3": "Read the source section and split any sentence containing more than one duty into separate lines, one action each. For the type, apply the rule printed in the sheet note. For the policy, do not use the row's process column; open the policy portal and read what each policy covers, then match on topic. For the RoPA, decide role, lawful basis and DPIA need by following the policy questions in the order they are asked, stopping at the first that fits."
+ },
+ "T8.2-4": {
+  "why": "At work a control tracker is only useful if you have read each control's own requirements first; otherwise statuses are guessed from the control title and the audit finds the guess.",
+  "h1": "Before you fill any cell, ask what each of the eight controls actually requires of the office and where the SPR-09 notes will be read against that.",
+  "h3": "Work like an implementer: open one control's task page, read its numbered requirements, and note what evidence would prove each. Then glance at the worked first row to see how a finished row reads, and at the column headings so you know which question each column answers. Do not fill statuses yet; this step is about knowing where each requirement and each observation lives so the next steps are fast and defensible."
+ },
+ "T8.2-5": {
+  "why": "At work an inflated status tells management a gap is closed when it is not, and the first external audit finds the difference. Understating hides real progress.",
+  "h1": "For each control, compare every numbered requirement with what SPR-09 says was observed. Is each one fully there, partly there, or missing?",
+  "h3": "Take one control at a time. List its requirements, then tick each against the observation. All ticked with nothing vague points one way, none ticked points another, and a mix points to the middle status. Where a figure is given, such as licences against installs, compare the two numbers directly and see whether they match. Watch for observations that sound reassuring but cover only part of the requirement, such as a policy that exists but is not approved or not applied everywhere. Read the sheet note for the exact status definitions."
+ },
+ "T8.2-6": {
+  "why": "At work maturity is how a manager decides where to invest next. If a level is overstated, the improvement plan skips the missing basics and the same gap returns next audit.",
+  "h1": "Ask the Maturity Model's questions in order about each control and stop at the first answer that is No. What did SPR-09 actually record?",
+  "h3": "Start at the bottom: is anything documented? Then approved? Then applied in every office, not just Manila? Then are there records? Then reviewed on a schedule? The level is set by the first question you cannot answer yes to, not by the best thing you can find. Check whether the plan or register is Manila's own or the Group's, and whether it is reviewed every year or never. A Group document that Manila follows is different from one Manila owns; check who approved it and when it was last reviewed. Never give credit for something that is only planned."
+ },
+ "T8.2-7": {
+  "why": "At work an evidence pack is what an auditor samples. A claimed item with no file behind it, or the wrong file, turns a good control into a finding.",
+  "h1": "For each sub-task, ask: which file already in 02_Working is this evidence, and if none, does the dataset show the item exists at all?",
+  "h3": "Go sub-task by sub-task for A.5.30 and A.5.31. Read what the evidence item is, then check your handed-in work first (your BIA-RTO and obligations register may serve); reuse beats creating. If it is not there, read the observation dataset: does it say the item exists (so you prepare the file), or that nothing exists? Where nothing exists, say so honestly and write what is missing and who should act, rather than naming a file that would not hold it. Use the naming convention exactly; the file name is the evidence reference."
+ },
+ "T8.2-8": {
+  "why": "At work the tracker is the one page a manager reads. If the evidence reference is vague or the next action is not measurable, no one can tell next quarter whether anything improved.",
+  "h1": "For each control, what is the first piece of evidence in its task, and what one concrete step moves it up a level, measured how?",
+  "h3": "For A.5.29 and A.5.32 to A.5.36, open each task page and take the first sub-task's evidence item; the file name follows from it and from where it already sits. For the next action, use the level you gave earlier: below Level 3 means the step that gets it to Level 3; already there means the step that closes its remaining gap. The Level 4 measure must be a counted figure with a target, not 'review done on time'. Wrong options usually differ in exactly those two ways."
+ },
+ "T8.2-9": {
+  "why": "At work an independent review that is done by the people who run the area is marked by themselves, so auditors treat it as no review at all.",
+  "h1": "What does independence mean here: who must be separate from the area being reviewed?",
+  "h3": "Read requirement 2 of the control. Ask, for each person named in the options, whether they run, configure or are accountable for the Manila IT controls. If they do, they would be marking their own work. Independence is about reporting line and responsibility, not seniority or technical skill, so a skilled manager of the area is not independent."
+ },
+ "T9.1-1": {
+  "why": "At work a sensitive room that is not marked on the plan gets treated like a normal office, and visitors or contractors walk into rooms they should never enter.",
+  "h1": "For each point, who may be there, and does it hold equipment or restricted information that only named people should reach?",
+  "h3": "Use the marking definitions printed in the sheet note. Ask about each point: do visitors go here unescorted, do all staff, or only named people? Does it hold processing equipment, or media or information at the top tier? If yes to the last, it is secure. Perimeter points are those between outside and inside. Do not mark by room name alone; a cupboard can be secure and a large room not."
+ },
+ "T9.1-10": {
+  "why": "At work, evidence with an inconsistent name or no timestamp cannot be found or trusted later. The receipt is what proves the file was fixed at a point in time.",
+  "h1": "Are your file names built from the same parts, in the same order, as the convention? Did the receipt appear?",
+  "h3": "List each part the convention names (office or programme code, task, document code, version, extension) and build each name from them, one for each of the walkthrough and the tracker. Compare two names side by side; they should differ only in the document code. Save, then read the receipt: a hash and a UTC time must both be there. Only after that mark the step complete; if the receipt lacks either, the save did not finish."
+ },
+ "T9.1-2": {
+  "why": "At work physical gaps are found by walking the site with the controls in mind. A photo filed against the wrong control sends the fix to the wrong owner.",
+  "h1": "For each photo, which requirement is shown, and is it shown as met or as not met?",
+  "h3": "Read the caption, then ask what is being protected: entry, equipment, cabling, screens, disposal. Open the matching control task and read its numbered requirements; a photo is evidence for the control whose requirement it demonstrates. A photo is a positive example when a requirement is visibly met; a gap means one is not. For a gap, the action must say what changes, and the owner is the role that controls that area."
+ },
+ "T9.1-3": {
+  "why": "At work a flooded server room takes everything down at once, and an auditor expects water detection near the equipment.",
+  "h1": "Which control is about protecting rooms and equipment from environmental threats, rather than from people entering?",
+  "h3": "Separate physical entry, equipment siting and protection, and environmental or physical threats. The risk here comes from water above the room, not from who is in it. Compare each choice's title with that. Then open the task page of the control you chose and read its second requirement: it should speak of equipment rooms and water. Do not choose by which control sounds most important."
+ },
+ "T9.1-4": {
+  "why": "At work laptops handed on after a quick format still hold recoverable customer data, and that is a reportable leak waiting to happen.",
+  "h1": "What does the control want before a device leaves: only a delete, or something stronger, and what record?",
+  "h3": "Think about what a quick format actually removes: the pointers to the data, or the data itself? Read the control's first and third requirements about sanitising and keeping a record per device, then the disposal row of the handling matrix for the tier. Test each choice for two things: the method used on the storage, and what is written down afterwards."
+ },
+ "T9.1-5": {
+  "why": "At work a control tracker is only useful if you have read each control's own requirements first; otherwise statuses are guessed from the control title and the audit finds the guess.",
+  "h1": "Before you fill any cell, ask what each of the fourteen controls actually requires of the office and where the SPR-10 notes will be read against that.",
+  "h3": "Work like an implementer: open one control's task page, read its numbered requirements, and note what evidence would prove each. Then glance at the worked first row to see how a finished row reads, and at the column headings so you know which question each column answers. Do not fill statuses yet; this step is about knowing where each requirement and each observation lives so the next steps are fast and defensible."
+ },
+ "T9.1-6": {
+  "why": "At work an inflated status tells management a gap is closed when it is not, and the first external audit finds the difference. Understating hides real progress.",
+  "h1": "For each control, compare every numbered requirement with what SPR-10 says was observed. Is each one fully there, partly there, or missing?",
+  "h3": "Take one control at a time. List its requirements, then tick each against the observation. All ticked with nothing vague points one way, none ticked points another, and a mix points to the middle status. For the physical entry control, compare when access to the secure areas was last reviewed with the interval the office addendum sets, and what the walkthrough saw of visitors with what the requirement says. Watch for observations that sound reassuring but cover only part of the requirement, such as a rule that exists but is not enforced everywhere. Read the sheet note for the exact status definitions."
+ },
+ "T9.1-7": {
+  "why": "At work maturity is how a manager decides where to invest next. If a level is overstated, the improvement plan skips the missing basics and the same gap returns next audit.",
+  "h1": "Ask the Maturity Model's questions in order about each control and stop at the first answer that is No. What did SPR-10 actually record?",
+  "h3": "Start at the bottom: is anything documented? Then approved? Then applied in every office, not just Manila? Then are there records? Then reviewed on a schedule? The level is set by the first question you cannot answer yes to, not by the best thing you can find. Compare a Group procedure reviewed yearly with a Manila approved one, and check whether records exist. A Group document that Manila follows is different from one Manila owns; check who approved it and when it was last reviewed. Never give credit for something that is only planned."
+ },
+ "T9.1-8": {
+  "why": "At work an evidence pack is what an auditor samples. A claimed item with no file behind it, or the wrong file, turns a good control into a finding.",
+  "h1": "For each sub-task, ask: which file already in 02_Working is this evidence, and if none, does the dataset show the item exists at all?",
+  "h3": "Go sub-task by sub-task for A.7.2 and A.7.14. Read what the evidence item is, then check your handed-in work first (your walkthrough record covers two of them); reuse beats creating. If it is not there, read the observation dataset: does it say the item exists (so you prepare the file), or that nothing exists? Where nothing exists, say so honestly and write what is missing and who should act, rather than naming a file that would not hold it. Use the naming convention exactly; the file name is the evidence reference."
+ },
+ "T9.1-9": {
+  "why": "At work the tracker is the one page a manager reads. If the evidence reference is vague or the next action is not measurable, no one can tell next quarter whether anything improved.",
+  "h1": "For each control, what is the first piece of evidence in its task, and what one concrete step moves it up a level, measured how?",
+  "h3": "For A.7.1 and A.7.3 to A.7.13, open each task page and take the first sub-task's evidence item; the file name follows from it and from where it already sits. For the next action, use the level you gave earlier: below Level 3 means the step that gets it to Level 3; already there means the step that closes its remaining gap. The Level 4 measure must be a counted figure with a target, not 'review done on time'. Wrong options usually differ in exactly those two ways."
+ },
+ "T9.2-1": {
+  "why": "At work an unfixed internet-facing flaw is how breaches start, and a late patch with no recorded exception is the first thing an auditor will sample.",
+  "h1": "How exposed is this finding, is it listed as exploited, and how many days does that class allow from first detection?",
+  "h3": "Apply rule R24 in order: exposure first, then known exploitation, then the CVSS band, to set the class. The class gives a number of days; add it to the first detected date to get the due date. For status, ask whether a re-scan has verified the fix, whether a valid exception exists, and whether it is past due. Check every date carefully, as a day off changes the status."
+ },
+ "T9.2-10": {
+  "why": "At work, evidence with an inconsistent name or no timestamp cannot be found or trusted later. The receipt is what proves the file was fixed at a point in time.",
+  "h1": "Are your file names built from the same parts, in the same order, as the convention? Did the receipt appear?",
+  "h3": "List each part the convention names (office or programme code, task, document code, version, extension) and build each name from them, one for each of the vulnerability test and the tracker. Compare two names side by side; they should differ only in the document code. Save, then read the receipt: a hash and a UTC time must both be there. Only after that mark the step complete; if the receipt lacks either, the save did not finish."
+ },
+ "T9.2-2": {
+  "why": "At work missing a patch deadline without an approved exception is a breach of your own rule, and it must be reported as one, not softened.",
+  "h1": "Which class does this finding fall in, and how long does that class allow compared with its age?",
+  "h3": "Take the class from exposure and known exploitation, read its allowed days, then compare with how old the finding is. Then ask whether an exception covers it. A finding past its limit with no exception is treated differently from one still inside the window. Do not count a plan to patch as an exception."
+ },
+ "T9.2-3": {
+  "why": "At work a control tracker is only useful if you have read each control's own requirements first; otherwise statuses are guessed from the control title and the audit finds the guess.",
+  "h1": "Before you fill any cell, ask what each of the thirteen controls actually requires of the office and where the SPR-11 notes will be read against that.",
+  "h3": "Work like an implementer: open one control's task page, read its numbered requirements, and note what evidence would prove each. Then glance at the worked first row to see how a finished row reads, and at the column headings so you know which question each column answers. Do not fill statuses yet; this step is about knowing where each requirement and each observation lives so the next steps are fast and defensible."
+ },
+ "T9.2-4": {
+  "why": "At work an inflated status tells management a gap is closed when it is not, and the first external audit finds the difference. Understating hides real progress.",
+  "h1": "For each control, compare every numbered requirement with what SPR-11 says was observed. Is each one fully there, partly there, or missing?",
+  "h3": "Take one control at a time. List its requirements, then tick each against the observation. All ticked with nothing vague points one way, none ticked points another, and a mix points to the middle status. Read the numbers in the observation, such as devices covered out of the total or how long logs are kept, against the figure the control task asks for. Watch for observations that sound reassuring but cover only part of the requirement, such as a policy that exists but is not approved or not applied everywhere. Read the sheet note for the exact status definitions."
+ },
+ "T9.2-5": {
+  "why": "At work maturity is how a manager decides where to invest next. If a level is overstated, the improvement plan skips the missing basics and the same gap returns next audit.",
+  "h1": "Ask the Maturity Model's questions in order about each control and stop at the first answer that is No. What did SPR-11 actually record?",
+  "h3": "Start at the bottom: is anything documented? Then approved? Then applied in every office, not just Manila? Then are there records? Then reviewed on a schedule? The level is set by the first question you cannot answer yes to, not by the best thing you can find. Some services are run by the Group, some are Manila's own approved documents, and some have nothing recorded; each points to a different level. A Group document that Manila follows is different from one Manila owns; check who approved it and when it was last reviewed. Never give credit for something that is only planned."
+ },
+ "T9.2-6": {
+  "why": "At work an evidence pack is what an auditor samples. A claimed item with no file behind it, or the wrong file, turns a good control into a finding.",
+  "h1": "For each sub-task, ask: which file already in 02_Working is this evidence, and if none, does the dataset show the item exists at all?",
+  "h3": "Go sub-task by sub-task for A.8.8 and A.8.13. Read what the evidence item is, then check your handed-in work first (your vulnerability test and a recovery deliverable from the previous task may serve); reuse beats creating. If it is not there, read the observation dataset: does it say the item exists (so you prepare the file), or that nothing exists? Where nothing exists, say so honestly and write what is missing and who should act, rather than naming a file that would not hold it. Use the naming convention exactly; the file name is the evidence reference."
+ },
+ "T9.2-7": {
+  "why": "At work the tracker is the one page a manager reads. If the evidence reference is vague or the next action is not measurable, no one can tell next quarter whether anything improved.",
+  "h1": "For each control, what is the first piece of evidence in its task, and what one concrete step moves it up a level, measured how?",
+  "h3": "For A.8.1 to A.8.7 and A.8.14 to A.8.17, open each task page and take the first sub-task's evidence item; the file name follows from it and from where it already sits. For the next action, use the level you gave earlier: below Level 3 means the step that gets it to Level 3; already there means the step that closes its remaining gap. The Level 4 measure must be a counted figure with a target, not 'review done on time'. Wrong options usually differ in exactly those two ways."
+ },
+ "T9.2-8": {
+  "why": "At work backups that are never restored are a hope, not a control. Many firms learn this when a restore fails during a real incident.",
+  "h1": "What does the control require to prove a backup works, and how often does the policy say that proof is needed?",
+  "h3": "Read the control's requirements on testing and the policy's restore-test frequency for this organisation's size. Compare that interval with how long it has actually been. Then use the status definitions: some parts exist, so ask whether enough of the requirements are met to count as fully done, and what is still missing."
+ },
+ "T9.2-9": {
+  "why": "At work logs that are deleted after a week or editable by admins are useless for investigation, because the attacker often is an admin.",
+  "h1": "Which control covers keeping logs safe and long enough, and which two requirements does this scenario break?",
+  "h3": "Look at both facts: retention length and who can delete. Then find the control whose requirements cover protecting logs from tampering and keeping them for a set period, and check the policy's logging section for the period. Controls about monitoring or clocks are neighbours, but they do not address either problem."
+ }
+}

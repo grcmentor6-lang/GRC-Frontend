@@ -16,10 +16,13 @@ import { ProgramTabs } from "@/components/app/program-tabs";
 import { LRN_CHIP } from "@/lib/tones";
 import { TRACK_PREVIEWS, type TrackPreview } from "@/lib/track-previews";
 import { startWelcomeTour } from "@/components/app/welcome-tour";
+import { AccessBanner } from "@/components/app/access-banner";
 import { AccessChip } from "@/components/app/access-chip";
 import { DashboardOrgs } from "@/components/desk/org-drawer";
 import { useDeskRecord, useTaskScores, averageScore, recordCounts, recordEmpty } from "@/lib/desk-record";
 import { planOf, nextStep, dueText } from "@/lib/desk-plan";
+import { firstAction, inFirstWeek } from "@/lib/desk/first-week";
+import { CatchUpCard } from "@/components/desk/catch-up";
 import { dueDate, fmtDay } from "@/lib/desk/model";
 import { ALL_WEEKS_OPEN } from "@/lib/flags";
 
@@ -164,7 +167,11 @@ export default function DashboardPage() {
   const allIn = !!counts && counts.tasksSubmitted === counts.tasks;
   // Every open task handed in, more to come: the next week's opening date.
   const waiting = !next && !allIn ? plan.find((t) => t.state === "not-open") : undefined;
-  const dueNext = plan.find((t) => t.state === "overdue") ?? plan.find((t) => t.state === "today" || t.state === "upcoming");
+  // The task the learner is on, with its date: never a later week's, which they have not reached.
+  const dueNext = next?.task;
+  // The first week (UX101 W10): one big action, by the learner's own next task (nextTask), the rest secondary.
+  const act = desk ? firstAction(desk, progress) : null;
+  const firstWeek = !!desk && inFirstWeek(desk, progress);
   const pctTasks = counts?.tasks ? Math.round((counts.tasksSubmitted / counts.tasks) * 100) : 0;
 
   if (!locked && state === "loading") {
@@ -193,7 +200,7 @@ export default function DashboardPage() {
     headline = <>Your first step: open the Working Desk and pick the day your 12 weeks begin. Every due date counts from it.</>;
   } else if (next) {
     headline = <>{started ? "Your next step is" : "Your first step is"} <span className="font-medium text-white">{next.task.id} step {next.n}</span> — {next.task.title}.</>;
-    cta = { href: next.href, label: started ? "Continue" : "Start step 1" };
+    cta = { href: act && act.task.id === next.task.id ? act.href : next.href, label: act && act.task.id === next.task.id ? act.label : started ? "Continue" : "Start step 1" };
   } else if (allIn) {
     headline = <>Every GRC 101 task is submitted.</>;
   } else if (waiting) {
@@ -240,6 +247,11 @@ export default function DashboardPage() {
               {!locked && state === "failed" && (
                 <button onClick={retry} className="focus-ring inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-white text-indigo-700 text-[13px] font-semibold tracking-tight">Try again</button>
               )}
+              {!locked && !started && !noStart && firstWeek && (
+                <Link href="/app/desk#W0" className="focus-ring inline-flex items-center gap-2 h-10 px-3 rounded-xl bg-white/10 ring-1 ring-white/20 text-[12.5px] font-medium tracking-tight no-underline text-white hover:bg-white/15">
+                  New here? Week 0 warm-up, about 60 to 90 min, optional
+                </Link>
+              )}
               {!locked && next && !noStart && (
                 <span className="inline-flex items-center gap-2 h-10 px-3 rounded-xl bg-white/10 ring-1 ring-white/20 text-[12.5px] font-medium tracking-tight">
                   {next.task.stepsDone} of {next.task.steps} steps · {dueText(next.task)}
@@ -247,7 +259,7 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
-          {!locked && counts && (
+          {!locked && counts && !(firstWeek && !started) && (
             <div className="shrink-0 md:w-[210px]">
               <div className="rounded-xl bg-white/10 ring-1 ring-white/15 backdrop-blur-sm p-4 flex items-center gap-3">
                 <Ring pct={pctTasks} size={64} stroke={8}>
@@ -264,6 +276,15 @@ export default function DashboardPage() {
       </div>
       </Reveal>
 
+      <div className="overflow-hidden rounded-2xl ring-1 ring-slate-200 empty:hidden"><AccessBanner /></div>
+
+      {/* Two or more weeks behind the calendar: a new plan is offered here and on the desk, in place of red. */}
+      {!locked && desk && !noStart && state === "ready" && (
+        <div className="overflow-hidden rounded-2xl ring-1 ring-slate-200 empty:hidden">
+          <CatchUpCard desk={desk} progress={progress} start={start} accessEnd={user?.accessExpiresOn} />
+        </div>
+      )}
+
       {!locked && counts && (
         <Reveal delay={0.08}>
         <div data-tour="dash-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -272,7 +293,7 @@ export default function DashboardPage() {
           {noStart ? (
             <Stat icon="calendar" tone="amber" value="—" label="Due dates start when you pick your start date" />
           ) : dueNext ? (
-            <Stat icon="calendar" tone={dueNext.state === "overdue" ? "rose" : "amber"} value={dueNext.id} sub={dueText(dueNext)} label={`Next task due · ${fmtDay(dueNext.due)}`} />
+            <Stat icon="calendar" tone={dueNext.state === "overdue" ? "rose" : "amber"} value={dueNext.id} sub={dueText(dueNext)} label={`${dueNext.state === "not-reached" ? "Next task · planned for" : "Next task due ·"} ${fmtDay(dueNext.due)}`} />
           ) : (
             <Stat icon="calendar" tone="emerald" value="—" label="Nothing open is due" />
           )}
@@ -292,7 +313,7 @@ export default function DashboardPage() {
       <div className="space-y-5">
         <div data-tour="dash-orgs">
         <Card>
-          <details open className="group/orgs">
+          <details open={!firstWeek} className="group/orgs">
             <summary className="focus-ring list-none cursor-pointer flex items-center justify-between mb-4 rounded-lg [&::-webkit-details-marker]:hidden">
               <h2 className="flex items-center gap-1.5 text-[14px] font-semibold tracking-tight text-slate-900">
                 <Icon name="chevronDown" size={14} className="text-slate-400 transition-transform duration-200 -rotate-90 group-open/orgs:rotate-0" />

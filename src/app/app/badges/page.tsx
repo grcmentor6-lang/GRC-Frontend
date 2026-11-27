@@ -46,7 +46,7 @@ function TaskChip({ id, desk, p, muted, score }: { id: string; desk: Desk; p: Pr
       href={`/app/desk#${id}`}
       title={`${id} ${desk.tasks[id]?.title ?? ""}${done ? ` · submitted${score !== undefined ? ` · score ${score}` : ""}` : ""}`}
       className={`inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-0.5 font-mono text-[11.5px] font-semibold no-underline focus-ring ${
-        done ? "border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]" : muted ? "border-[#E9ECF1] bg-white text-[#8A91A3] hover:border-[#C9CED8]" : "border-[#DDE1E8] bg-white text-[#111827] hover:border-[#C9CED8]"
+        done ? "border-[#BBF7D0] bg-[#F0FDF4] text-[#15803D]" : muted ? "border-[#E9ECF1] bg-white text-[#6B7280] hover:border-[#C9CED8]" : "border-[#DDE1E8] bg-white text-[#111827] hover:border-[#C9CED8]"
       }`}
     >
       {done && <Icon name="check" size={11} strokeWidth={3} />}
@@ -134,7 +134,7 @@ function BadgesBody({ desk, p, scores }: { desk: Desk; p: Progress; scores: Scor
         <div className="min-w-[240px] flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 id="cap" className="text-[16px] font-bold text-[#111827]">{CAPSTONE.name}</h2>
-            <span className="font-mono text-[11.5px] text-[#8A91A3]">{CAPSTONE.code}</span>
+            <span className="font-mono text-[11.5px] text-[#6B7280]">{CAPSTONE.code}</span>
             <Pill s={cap.state} />
           </div>
           <p className="mt-1 text-[13px] leading-relaxed text-[#3F4757]">{CAPSTONE.can}</p>
@@ -202,7 +202,7 @@ function BadgeCard({ b, g, desk, p, scores }: { b: MethodBadge; g: BadgeStanding
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <h2 className="text-[15.5px] font-bold text-[#111827]">{b.name}</h2>
-          <span className="font-mono text-[11.5px] text-[#8A91A3]">{b.code}</span>
+          <span className="font-mono text-[11.5px] text-[#6B7280]">{b.code}</span>
           <span className="ml-auto"><Pill s={g.state} /></span>
         </div>
         <p className="text-[12px] leading-snug text-[#5B6474]">

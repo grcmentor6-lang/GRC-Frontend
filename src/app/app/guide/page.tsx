@@ -6,6 +6,8 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { startWelcomeTour } from "@/components/app/welcome-tour";
 import { AccessChip } from "@/components/app/access-chip";
 import { DASH_NAV } from "@/components/app/nav";
+import { LATE_RULE } from "@/lib/desk-plan";
+import { ACCESS_WEEKS, COUNTS, EXAMS, GLOSSARY_LINE, REPORT_SENDS, RETAKE_DAYS, SCORES_SHOWN, SHARE_BONUS_WEEKS, SUPPORT_LINES, examOpensAfter, useProgrammeFacts } from "@/lib/programme";
 
 type Section = { id: string; title: string; icon: IconName };
 
@@ -19,9 +21,12 @@ const SECTIONS: Section[] = [
   { id: "saving", title: "Your work is saved to your account", icon: "checkCircle" },
   { id: "example", title: "Your first task, step by step", icon: "play" },
   { id: "checking", title: "How your work is checked", icon: "bullseye" },
+  { id: "marking", title: "How cells and picks are marked", icon: "checkCircle" },
+  { id: "exams", title: "Exams", icon: "bullseye" },
   { id: "outputs", title: "What your work turns into", icon: "trophy" },
   { id: "access", title: "How long you have access", icon: "calendar" },
   { id: "around", title: "Finding your way around", icon: "home" },
+  { id: "support", title: "Help and support", icon: "info" },
   { id: "first", title: "Your first session", icon: "rocket" },
   { id: "tips", title: "Doing it well", icon: "lightbulb" },
 ];
@@ -30,7 +35,7 @@ const SECTIONS: Section[] = [
 const MENU_HELP: Record<string, string> = {
   dashboard: "Your next desk step, your due dates and how far through the desk you are.",
   desk: "Where you do the work. You will spend most of your time here.",
-  calendar: "The due date of every desk task, counted from your start date, with what is overdue.",
+  calendar: "The due date of every desk task, counted from your start date, with what is overdue, and when each exam opens.",
   submissions: "Every task and step you have completed on the desk, week by week.",
   library: "Every clause and control of the standards the programme uses, in plain terms, as graphics you can save and share.",
   badges: "The method badges your desk tasks earn.",
@@ -121,6 +126,12 @@ function Cards({ items }: { items: { t: string; d: string; icon?: IconName }[] }
 
 export default function GuidePage() {
   const [active, setActive] = useState(SECTIONS[0].id);
+  const { desk, facts } = useProgrammeFacts();
+  const main = facts?.orgs.find((o) => o.role === "main");
+  const side = facts?.orgs.find((o) => o.role === "examples");
+  const orgLead = main && side
+    ? `Every task is answered for ${main.name}. ${side.name} only supplies worked examples, in ${side.examplesIn === 1 ? "one task" : `${side.examplesIn} tasks`}; you do no ISMS work for it. Answers come from the organisation's facts, not from general knowledge.`
+    : "Every task is answered for your organisation. Answers come from its facts, not from general knowledge.";
 
   // Contents-rail highlight. ponytail: plain IntersectionObserver, no scroll-spy library.
   useEffect(() => {
@@ -144,8 +155,8 @@ export default function GuidePage() {
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/70">User guide</p>
         <h1 className="text-[26px] md:text-[30px] font-semibold tracking-[-0.02em] mt-1.5">How grcmentor works</h1>
         <p className="text-[13.5px] text-white/85 leading-relaxed tracking-tight mt-2 max-w-[62ch]" style={{ textWrap: "pretty" }}>
-          For twelve weeks you work in a simulated Group GRC Office, for two organisations, on real
-          standards and real deliverables. Read this once, end to end: who you work for, how the Working
+          For {COUNTS.weeks} weeks you work in a simulated Group GRC Office, for one organisation (with a second that supplies
+          worked examples), on a real standard and real deliverables. Read this once, end to end: who you work for, how the Working
           Desk works, how your work is checked, and what to do on day one.
         </p>
         <div className="flex flex-wrap items-center gap-2 mt-5">
@@ -189,7 +200,7 @@ export default function GuidePage() {
           <Sec id="what" title="What grcmentor is" icon="sparkle" lead="Not a course you watch. A job you do. You join a Group GRC Office as a mentee, take tasks from named owners, and hand in the files a GRC team really produces.">
             <div className="grid sm:grid-cols-3 gap-3">
               {[
-                { icon: "briefcase" as IconName, t: "You join a team", d: "Two simulated organisations, each with offices, regulators, policies, registers and people, and the standards that bind them." },
+                { icon: "briefcase" as IconName, t: "You join a team", d: "A simulated organisation with offices, regulators, policies, registers and people, and the standard that binds it, ISO/IEC 27001." },
                 { icon: "clipboard" as IconName, t: "You do the work", d: "Each week brings tasks: fill a register, map a framework, test a control, review access, write a procedure, decide what to do." },
                 { icon: "trophy" as IconName, t: "It builds your record", d: "What you complete on the desk feeds My Submissions, your badges, your certificate and your CV." },
               ].map((c) => (
@@ -202,13 +213,13 @@ export default function GuidePage() {
             </div>
           </Sec>
 
-          <Sec id="shape" title="How the programme is shaped" icon="layers" lead="GRC 101 is twelve weeks. Learn these four names: the desk and every page around it use them.">
+          <Sec id="shape" title="How the programme is shaped" icon="layers" lead={`GRC 101 is ${COUNTS.weeks} weeks: ${COUNTS.tasks} tasks and ${COUNTS.steps} steps in all. Learn these four names: the desk and every page around it use them.`}>
             <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               {[
-                { k: "Week", d: "Weeks 1 and 2 are Foundation (your rules, your organisation, classification and evidence). Weeks 3 to 12 are Practice, one GRC area each: obligations, policies, audit evidence, access reviews, risk, control testing, vendors, privacy, awareness, follow-up." },
+                { k: "Week", d: `Weeks 1 and 2 are Foundation (your rules, your organisation, context and scope). Weeks 3 to ${COUNTS.weeks} are Practice: policy and risk, then the control sprints through Annex A, then measurement, internal audit and certification readiness.` },
                 { k: "Task", d: "Two or three per week, coded by week: F1.1, F1.2, F1.3 in week 1, T3.1 and T3.2 in week 3. Each has an owner, an objective, key results, a due date and the files you hand in." },
-                { k: "Step", d: "A task is a list of steps, done in order. Each step says what to do, which screen to do it in, and when it is done." },
-                { k: "Submit", d: "When every step of a task is complete, Submit task seals it with the time. A sealed task cannot be changed." },
+                { k: "Step", d: "A task is a list of steps, done in order. Each step says what to do, which screen to do it in, and when it is done. A card at its top, headed Read first on a decision and Sources for this step elsewhere, names where its facts and rules are: each source opens beside your work, at the part to read." },
+                { k: "Submit", d: "When every step of a task is complete, Submit task seals it with the time, after asking you to confirm. A sealed task cannot be changed. The last step's Save to 02_Working button only saves the finished file: it does not hand the task in." },
               ].map((r, i, arr) => (
                 <div key={r.k} className="flex gap-3" style={{ paddingLeft: i * 14 }}>
                   <div className="shrink-0 flex flex-col items-center">
@@ -225,11 +236,24 @@ export default function GuidePage() {
             <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-3">
               You choose your start date the first time you open the desk. Every task&apos;s due date counts from
               it: week 1&apos;s tasks fall due in the first seven days, week 2&apos;s in the next seven, and so on. The
-              desk, the Calendar and the bell all show the same dates.
+              desk, the Calendar, the bell and the dates in your first task all come from that one date. If you did
+              not choose within a week of joining, a start date was set for you; the desk asks you again on your
+              first visit, so nothing is late before you begin.
             </p>
+            {/* UX101 W1 (G-01): what late costs, as the code has it. The same sentence is the overdue label's tooltip. */}
+            <div id="deadlines" data-guide-deadlines className="mt-4 rounded-xl bg-white ring-1 ring-slate-200 p-5">
+              <h3 className="text-[13.5px] font-semibold tracking-tight text-slate-900">Deadlines and late work</h3>
+              <div className="mt-1.5 space-y-2 text-[12.5px] text-slate-600 leading-relaxed tracking-tight" style={{ textWrap: "pretty" }}>
+                <p>{LATE_RULE}</p>
+                <p><span className="font-medium text-slate-700">&ldquo;Overdue&rdquo; is a label, not a mark.</span> It appears only on the task you are on (your next unfinished task), once its date has passed. A task or week you have not reached says &ldquo;Not started yet&rdquo;, never overdue, and nothing is overdue before your start date or before you have done your first step.</p>
+                <p><span className="font-medium text-slate-700">You work in order, not by the calendar.</span> The desk opens on your next unfinished task, and its header shows that task&apos;s week. If your start date puts today in a different week, the header says so beside it (&ldquo;calendar week 8&rdquo;).</p>
+                <p><span className="font-medium text-slate-700">Two or more weeks behind?</span> The desk and the Dashboard offer to move your due dates so that the week you are on starts today. Your work, your scores and the end of your access stay as they are. When {COUNTS.weeks} weeks no longer fit before your access ends, the dates cannot move, and you get a short list of the tasks to do first.</p>
+                <p><span className="font-medium text-slate-700">A knowledge check or exam marked &ldquo;late&rdquo;</span> means its own timer ran out before you sent it, so the answers saved by then were graded. It has nothing to do with the week&apos;s date.</p>
+              </div>
+            </div>
           </Sec>
 
-          <Sec id="org" title="The organisations you work for" icon="briefcase" lead="Every task is answered for one specific organisation, sometimes both. Answers come from that organisation's facts, not from general knowledge.">
+          <Sec id="org" title="The organisations you work for" icon="briefcase" lead={orgLead}>
             <Cards
               items={[
                 { t: "Where to read about them", d: "The organisation buttons in the header, the cards on your Dashboard, and Home › My Organisation on the desk." },
@@ -264,17 +288,24 @@ export default function GuidePage() {
           <Sec id="desk" title="Doing the work: the Working Desk" icon="desk" lead="One screen holds the whole engagement: the weeks, the task in hand, and the organisation's systems.">
             <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               <Step n={1} title="The week panel">
-                <p>On the left: the twelve weeks, each task with its steps done and its due date (&ldquo;Due in 3 days&rdquo;, &ldquo;Overdue by 1 day&rdquo;, &ldquo;Submitted&rdquo;). Arriving on the desk opens this week&apos;s overview.</p>
+                <p>On the left: the {COUNTS.weeks} weeks, each task with its steps done and its due date (&ldquo;Due in 3 days&rdquo;, &ldquo;Overdue by 1 day&rdquo;, &ldquo;Submitted&rdquo;). The task you are on says &ldquo;Overdue&rdquo; once its date has passed, which costs nothing (Deadlines and late work, above). Arriving on the desk opens your next unfinished task; on your very first visit, week 1&apos;s overview.</p>
               </Step>
               <Step n={2} title="The toolbar">
-                <p>Along the bottom: the organisation&apos;s systems, grouped as Home, Frameworks, Risk, Policies, Reg Watch, Learn, Evidence, and later Access, Testing, Vendors and Awareness, plus your Inbox. A section opens as you reach the tasks that use it.</p>
+                <p>Along the bottom: the organisation&apos;s systems, plus your Inbox. A section opens in the week of the tasks that use it, and some screens inside a section open later than the section itself.</p>
+                {desk && facts && (
+                  <ul className="list-disc pl-4 space-y-0.5">
+                    {facts.toolbar.map((g) => (
+                      <li key={g.week}><span className="font-medium text-slate-700">Week {g.week}</span>: {g.sections.join(", ")}</li>
+                    ))}
+                  </ul>
+                )}
                 <p>An <span className="font-medium text-slate-700">orange dot</span> marks where your current step needs you: the screen it is done in, and the screens it reads from. Inside a section, the screen for your step is tagged with the step number.</p>
               </Step>
               <Step n={3} title="Work and reading side by side">
                 <p>Your step&apos;s own screen opens as the working window. Anything else you open, such as a policy or a register to read, opens as a window beside it that you can move and resize.</p>
               </Step>
               <Step n={4} title="Help on every step">
-                <p>Each step has a short walk-through that runs the first time you open it; Show me how runs it again. Help with this step gives the plain-English note and the references the step relies on. Learn holds the rule tables, reference pages and a glossary.</p>
+                <p>Each step has a short walk-through that runs the first time you open it; Show me how runs it again. Help with this step gives the plain-English note and the references the step relies on. Learn holds the rule tables, reference pages and a searchable glossary of every code and term; hover over (or tap) a code in a step to read what it means.</p>
               </Step>
               <Step n={5} title="The Inbox">
                 <p>Messages from the people in the task arrive at the step they belong to. When one is waiting for the task in hand, the Inbox carries the orange dot. Some ask you to choose a reply.</p>
@@ -282,7 +313,7 @@ export default function GuidePage() {
             </div>
           </Sec>
 
-          <Sec id="lab" title="Tech Lab" icon="bolt" lead="Five tasks carry a Tech Lab: a practice console of a simulated system, where you query the system yourself and record what you find. Each lab is a required part of its task.">
+          <Sec id="lab" title="Tech Lab" icon="bolt" lead={`${COUNTS.labs} Tech Labs, in ${COUNTS.labTasks} tasks. Each is a practice console of a simulated system, where you query the system yourself and record what you find, and a required part of its task.`}>
             <Cards
               items={[
                 { t: "LedgerSim", d: "Who can set up a supplier and pay it, in the finance system. Week 3, task T3.2." },
@@ -296,7 +327,7 @@ export default function GuidePage() {
               A lab opens on the toolbar, under Systems, once you have done the step it follows; the task&apos;s step
               list then shows it as a required item. It has parts to work through, findings to record and evidence
               captures (E1, E2 …) you can see under Evidence. Press Mark complete at the end. Until every lab of a
-              task is complete its Submit stays closed, and the certificate needs all five.
+              task is complete its Submit task stays closed, and the certificate needs all {COUNTS.labs}.
             </p>
           </Sec>
 
@@ -326,7 +357,7 @@ export default function GuidePage() {
                 <p>After one more decision about a dataset, fill the Folders table with your four folder paths, then check the Week 1 dates table, the due dates of F1.2, F1.3 and the week 1 knowledge check, against Home › My plan.</p>
               </Step>
               <Step n={5} title="Name the file and hand it in">
-                <p>Type the file name from its four parts, then Submit. You get a receipt with the time; the task is sealed and F1.2 is next.</p>
+                <p>Type the file name from its four parts, then Save to 02_Working. You get a receipt with the time. When every step is complete, Submit task seals F1.1 (after one more confirmation) and F1.2 is next.</p>
               </Step>
             </div>
           </Sec>
@@ -338,12 +369,56 @@ export default function GuidePage() {
                 <><span className="font-medium text-slate-700">Decisions</span> are checked the moment you press Check my answer. The pick then locks: read the feedback, it is the lesson.</>,
                 <><span className="font-medium text-slate-700">Tables of decisions</span> are checked row by row with Check my answers, each row showing the right answer and the rule behind it.</>,
                 <><span className="font-medium text-slate-700">Mark step complete</span> stays grey until a step&apos;s work is there, and says what is left.</>,
-                <><span className="font-medium text-slate-700">Submitting</span> seals the task with the date and time. Scores for whole tasks are not shown in the app yet.</>,
+                <><span className="font-medium text-slate-700">Submitting</span> seals the task with the date and time{SCORES_SHOWN ? " and releases its score out of 100. The score counts the keyed decisions and table rows you answered right; it appears on My Submissions, the Dashboard, Reports, your CV and your certificate. No person marks it. A task with nothing keyed has no score. How it is made is in How cells and picks are marked" : ""}.</>,
               ]}
             />
             <div className="mt-3">
               <Note>Some options in a decision are reasonable and still not the best. Read why each option is right or wrong, not only whether you picked the best one.</Note>
             </div>
+          </Sec>
+
+          <Sec id="marking" title="How cells and picks are marked" icon="checkCircle" lead="Three kinds of answer, three rules. Only the first two carry points, and your score page shows every one.">
+            <Bullets
+              items={[
+                <><span className="font-medium text-slate-700">A pick</span> (a decision or an Inbox reply): one option is the best, so it is right or wrong, worth one equal share of the task&apos;s 100 points. After you lock it, the feedback gives the rule behind every option.</>,
+                <><span className="font-medium text-slate-700">A table of picks</span> (one decision per row): worth the same one share, split by the rows you got right. 7 of 9 rows right earns 7/9 of that share, and the score page lists the rows you missed with the rule.</>,
+                <><span className="font-medium text-slate-700">A written cell</span> (a sentence, a reason, a next action): it is checked for its format only, such as being filled, long enough, naming an owner or a source. It is kept with your hand-in. No person reads it and a model does not mark it, so it adds and removes no points. Write it as you would for a real reviewer.</>,
+              ]}
+            />
+            <div className="mt-3 grid sm:grid-cols-2 gap-3">
+              <div className="rounded-xl bg-white ring-1 ring-emerald-200 p-4 text-[12px] leading-relaxed tracking-tight text-slate-600">
+                <h4 className="text-[13px] font-semibold text-slate-900">A good written cell</h4>
+                <p className="mt-1 italic">&ldquo;No restore test records at Amsterdam. Next: run and record a monthly restore test, owner the IT lead.&rdquo;</p>
+                <p className="mt-1">It says what is missing, the next action and who owns it, in eight words or more, so it passes the check and would help a real reader.</p>
+              </div>
+              <div className="rounded-xl bg-white ring-1 ring-amber-200 p-4 text-[12px] leading-relaxed tracking-tight text-slate-600">
+                <h4 className="text-[13px] font-semibold text-slate-900">A weak written cell</h4>
+                <p className="mt-1 italic">&ldquo;Needs work.&rdquo;</p>
+                <p className="mt-1">Too short and no action or owner: the desk asks you to write it again before the step can be marked complete. Passing the check is only a floor. The cell is still your evidence.</p>
+              </div>
+            </div>
+            <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-3">
+              After you submit a task, My Submissions and Reports show how its score was made: each item, what it was worth, what you earned and, for a miss, the rule behind it. That detail stays in your own account. Your CV and certificate show only the work you finished.
+            </p>
+          </Sec>
+
+          <Sec id="exams" title="Exams" icon="bullseye" lead="Two exams sit inside the programme. The weekly knowledge checks are practice and have no pass mark; the two exams do, and the certificate needs both passed.">
+            <div className="grid sm:grid-cols-2 gap-3">
+              {EXAMS.map((e) => (
+                <div key={e.id} className="rounded-xl bg-white ring-1 ring-slate-200 p-4">
+                  <h4 className="text-[13px] font-semibold tracking-tight text-slate-900">{e.title} ({e.id})</h4>
+                  <ul className="mt-2 space-y-1 text-[12px] text-slate-600 leading-relaxed tracking-tight">
+                    <li><span className="font-medium text-slate-700">Opens</span>: in week {e.week}{desk ? `, once you have submitted ${examOpensAfter(desk, e)}` : ""}.</li>
+                    <li><span className="font-medium text-slate-700">Length</span>: {e.questions} questions, {e.minutes} minutes. The clock starts when you press Start.</li>
+                    <li><span className="font-medium text-slate-700">Pass mark</span>: {e.passMark} %.</li>
+                    <li><span className="font-medium text-slate-700">Attempts</span>: {e.attempts}, each a new draw of questions. Fail them all and one more opens {RETAKE_DAYS} days after the last.</li>
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-3">
+              There is nothing to book: an exam opens by itself on the desk (Learn › Knowledge Checks, or the week panel) and the Calendar lists both.
+            </p>
           </Sec>
 
           <Sec id="outputs" title="What your work turns into" icon="trophy" lead="You never write these by hand. They are built from what you complete on the desk.">
@@ -366,13 +441,15 @@ export default function GuidePage() {
             </div>
           </Sec>
 
-          <Sec id="access" title="How long you have access" icon="calendar" lead="The programme is 12 weeks of work. Your access stays open for 24 weeks from the start date you pick, so there is room for catching up.">
+          <Sec id="access" title="How long you have access" icon="calendar" lead={`The programme is ${COUNTS.weeks} weeks of work. Your access stays open for ${ACCESS_WEEKS} weeks from the start date you pick: the programme, plus 2 weeks of grace if something urgent comes up.`}>
             <div className="mb-3"><AccessChip variant="light" /></div>
             <Bullets
               items={[
-                <><strong>24 weeks from your start date.</strong> Your access runs until the date shown above, which also appears on your Dashboard.</>,
+                <><strong>{ACCESS_WEEKS} weeks from your first start date.</strong> Your access runs until the date shown above, which also appears on your Dashboard. If you shared on LinkedIn, the {SHARE_BONUS_WEEKS} extra weeks are already in it.</>,
+                <><strong>Moving your due dates does not move it.</strong> If you choose a new start date to catch up, every due date follows, and the end of your access stays where it was.</>,
+                <><strong>After it ends the desk is read-only.</strong> You can still open and read everything, but nothing new can be saved or handed in. Your record, CV and certificate stay.</>,
                 <><strong>Your finished work stays yours.</strong> Your certificate, CV and badges stay viewable and shareable after the window closes.</>,
-                <><strong>Need more time? Share your progress.</strong> Post a badge or certificate on LinkedIn, then paste the link on the <Link href="/app/badges" className="text-indigo-600 no-underline hover:underline">Badges</Link> or <Link href="/app/certificate" className="text-indigo-600 no-underline hover:underline">Certificate</Link> page to add <strong>4 weeks</strong>. One time only.</>,
+                <><strong>Need more time? Share your progress.</strong> Post a badge or certificate on LinkedIn, then paste the link on the <Link href="/app/badges" className="text-indigo-600 no-underline hover:underline">Badges</Link> or <Link href="/app/certificate" className="text-indigo-600 no-underline hover:underline">Certificate</Link> page to add <strong>{SHARE_BONUS_WEEKS} weeks</strong>. One time only.</>,
               ]}
             />
           </Sec>
@@ -398,14 +475,25 @@ export default function GuidePage() {
             </div>
             <p className="text-[12.5px] text-slate-600 leading-relaxed tracking-tight mt-3">
               The bell in the header lists desk tasks due in the next seven days and any that are overdue. Found
-              a problem? The button at the bottom right sends us a note, the page and a screenshot.
+              a problem? {REPORT_SENDS}
             </p>
+          </Sec>
+
+          <Sec id="support" title="Help and support" icon="info" lead={SUPPORT_LINES.live}>
+            <Bullets
+              items={[
+                SUPPORT_LINES.help,
+                "Learn on the desk holds the rule tables and reference pages the steps refer to.",
+                GLOSSARY_LINE,
+                REPORT_SENDS,
+              ]}
+            />
           </Sec>
 
           <Sec id="first" title="Your first session" icon="rocket" lead="Do these in order and you will have your first task submitted.">
             <div className="rounded-xl bg-white ring-1 ring-slate-200 p-5">
               <Step n={1} title="Open the Working Desk and pick your start date">
-                <p>The first time you open the desk it asks when your twelve weeks begin. Week 1 opens that day and every due date counts from it, so pick the day you will actually start.</p>
+                <p>The first time you open the desk it asks when your {COUNTS.weeks} weeks begin. Week 1 opens that day and every due date counts from it, so pick the day you will actually start.</p>
               </Step>
               <Step n={2} title="Let the desk walk you through">
                 <p>The desk&apos;s own walk-through runs once. Then read week 1&apos;s overview: what the week is for and what you hand in.</p>
@@ -428,7 +516,7 @@ export default function GuidePage() {
                 "Read the screen the step names before you type. The facts are there, and copied values are checked against it.",
                 "Use this organisation's names: its offices, systems, roles and regulators. \"Relevant stakeholders\" says nothing; \"the Compliance Manager\" does.",
                 "Before a decision, find the policy or rule it rests on. The feedback will cite it.",
-                "Watch your due dates on the week panel or the Calendar. Overdue tasks show in red.",
+                "Watch your due dates on the week panel or the Calendar. The task you are on shows in red once its date has passed; that costs no marks (see Deadlines and late work).",
                 "Work a task in one or two sittings. Your work is saved, but a register half done means re-reading its sources.",
                 "Stuck? Use Show me how, then Help with this step. Still stuck? Report it with the button at the bottom right, naming the step (for example F1.1-4).",
               ]}

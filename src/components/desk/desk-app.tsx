@@ -1,5 +1,6 @@
 "use client";
 
+import { AccessBanner } from "@/components/app/access-banner";
 import { ALL_WEEKS_OPEN, deskOpenFor } from "@/lib/flags";
 import { stepGate, taskGate } from "@/lib/desk/locks";
 import { Icon } from "@/components/ui/icon";
@@ -16,13 +17,16 @@ import { KnowledgeCheck, TestDock, liveStored, storeLive } from "./knowledge-che
 import { KC_HASH } from "@/lib/desk/kc";
 import { Toolbar } from "./toolbar";
 import { Viewer } from "./viewer";
-import { DeskIntro, INTRO_KEY } from "./desk-intro";
-import { tourDue } from "@/components/app/guided-tour";
+import { DeskIntro } from "./desk-intro";
 import { ToolModal, ToolWindow } from "./tool-modal";
 import { press } from "./ui";
 import { thenOf } from "./how-to";
 import { ATTEST } from "@/lib/desk/forms";
-import { currentWeek, loadDesk, startOf, weekOpen, type Desk } from "@/lib/desk/model";
+import { fmtDay, loadDesk, startOf, weekOpen, type Desk } from "@/lib/desk/model";
+import { calendarWeek, nextTask } from "@/lib/desk-plan";
+import { firstAction } from "@/lib/desk/first-week";
+import { CatchUpOffer } from "./catch-up";
+import { ResumeCard, Week0, markWeek0, week0Seen } from "./first-week";
 import { decisionChecked, stepKey, taskStatus, useDroppedSaves, useProgress, useSaveState, type Progress } from "@/lib/desk/progress";
 
 /** Midnight of the mentee's start date. They may start any day; until they choose, today. */
@@ -38,10 +42,10 @@ function TaskLocked({ task, title, first, between, onOpen }: { task: string; tit
   return (
     <div data-task-locked={task} className="mx-auto mt-10 w-full max-w-[560px] px-4">
       <div className="rounded-2xl border border-dashed border-[#C9CED8] px-6 py-7 text-center">
-        <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-[#F3F4F7] text-[#8A91A3]"><Icon name="lock" size={20} /></span>
+        <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl bg-[#F3F4F7] text-[#6B7280]"><Icon name="lock" size={20} /></span>
         <h1 className="mt-3 text-[16px] font-semibold text-[#3F4757]"><span className="font-mono text-[14px]">{task}</span> is not open yet</h1>
         <p className="mt-1 text-[13.5px] text-[#5B6474] [text-wrap:pretty]">{title}</p>
-        <p className="mt-3 text-[13.5px] leading-relaxed text-[#3F4757] [text-wrap:pretty]">Tasks open in order. This one opens as soon as you submit <strong className="font-semibold text-[#111827]">{first}</strong>{between ? " and the tasks between" : ""}.</p>
+        <p className="mt-3 text-[14px] leading-[1.5] text-[#3F4757] [text-wrap:pretty]">Tasks open in order. This one opens as soon as you submit <strong className="font-semibold text-[#111827]">{first}</strong>{between ? " and the tasks between" : ""}.</p>
         <button type="button" onClick={() => onOpen(first)} className={`mt-4 h-9 rounded-lg bg-[#4338CA] px-4 text-[13px] font-semibold text-white hover:brightness-110 ${press}`}>Go to {first}</button>
       </div>
     </div>
@@ -93,7 +97,7 @@ export function DeskApp() {
   return (
     <MotionConfig reducedMotion="user">
       {/* The shell shows at once, locked; the desk mounts afresh on the saved work, as its starting task depends on it. */}
-      <DeskLoaded key={`${user.startDate ?? ""}|${status}`} desk={desk} who={user.email} startIso={user.startDate} preview={ALL_WEEKS_OPEN || user.role === "admin" || deskOpenFor(user.email)} locked={status === "loading"} />
+      <DeskLoaded key={`${user.startDate ?? ""}|${status}`} desk={desk} who={user.email} startIso={user.startDate} accessEnd={user.accessExpiresOn} preview={ALL_WEEKS_OPEN || user.role === "admin" || deskOpenFor(user.email)} locked={status === "loading"} />
     </MotionConfig>
   );
 }
@@ -150,10 +154,13 @@ function DeskSkeleton() {
   );
 }
 
-function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who: string; startIso: string | null; /** Admins see every week open, to test the programme ahead of the calendar. */ preview?: boolean; /** Saved work has not arrived: the shell shows, and nothing can be touched. */ locked: boolean }) {
+function DeskLoaded({ desk, who, startIso, accessEnd, preview, locked }: { desk: Desk; who: string; startIso: string | null; /** The last day of access (ISO), which a moved start date never changes. */ accessEnd: string | null; /** Admins see every week open, to test the programme ahead of the calendar. */ preview?: boolean; /** Saved work has not arrived: the shell shows, and nothing can be touched. */ locked: boolean }) {
   const { progress, update } = useProgress(who);
   const start = useMemo(() => startOf(startIso), [startIso]);
-  const now = currentWeek(start);
+  // Where the learner is, by their own order, not the calendar's (UX101 W1): the desk opens on their next unfinished
+  // task. A learner in calendar week 8 who has handed in only F1.1 lands on F1.2, not on week 8's incident work.
+  const upNext = nextTask(desk, progress) ?? desk.order[desk.order.length - 1];
+  const begun = Object.keys(progress.done).length > 0 || Object.keys(progress.submitted).length > 0;
   const isOpen = useCallback((w: number) => preview || weekOpen(w, start), [start, preview]);
 
   // A #T… link is read here, at first render, not only in the effect below: the desk mounts twice on a reload (locked,
@@ -161,13 +168,20 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   // reloaded /app/desk#F1.3 on the overview (tester, 4 Nov).
   const [linked] = useState(() => parseHash(desk));
   const [taskId, setTaskId] = useState<string>(
-    () => linked?.task ?? desk.order.find((id) => desk.tasks[id].week === now && !progress.submitted[id]) ?? desk.order.find((id) => desk.tasks[id].week === now) ?? desk.order[0],
+    () => linked?.task ?? upNext,
   );
   const [focus, setFocus] = useState(linked?.step || 1);
+  // Week 0 (UX101 W10): the ungraded warm-up, first for a learner with no work who has not skipped it; #W0 reopens it.
+  // It is not a week: the header still says Week 1, and no date moves.
+  const [orient, setOrient] = useState(() => location.hash === "#W0" || (!linked && !begun && !week0Seen(who)));
+  const leaveOrient = useCallback((v: "skipped" | "done" = "skipped") => { setOrient((o) => (o ? (markWeek0(who, v), false) : o)); }, [who]);
+  // "Pick up where you left off": a returning learner's first view, until they go anywhere or close it.
+  const [resume, setResume] = useState(() => begun && !linked);
   const [tab, setTab] = useState<Tab>("how");
   // A week's overview, when one is open instead of a task.
-  // Arriving on the desk opens this week's overview; a #T… link replaces it with the task.
-  const [weekView, setWeekView] = useState<number | null>(linked ? null : now);
+  // Arriving opens the next unfinished task. Before any work is done it opens that task's week overview instead (the
+  // first-visit guide starts there); a #T… link replaces either with its task.
+  const [weekView, setWeekView] = useState<number | null>(linked || begun ? null : desk.tasks[upNext].week);
   // A knowledge check or exam open as the screen (#KC-01, #FGE, #FEX): read at first render too, so a reload stays on it.
   const [testView, setTestView] = useState<string | null>(() => location.hash.match(KC_HASH)?.[1] ?? null);
   const [viewing, setViewing] = useState<ViewItem | null>(null);
@@ -194,10 +208,10 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   // The week panel folds to a rail. It opens every time you arrive on the desk, and folds itself
   // when you pick a task from it, so the work gets the room.
   const [panelOpen, setPanel] = useState(true);
-  // The first-visit guide is due or on screen: no menu opens by itself under it (Toolbar).
-  const [intro, setIntro] = useState(() => tourDue(INTRO_KEY, who));
 
   const openTask = useCallback((id: string, step?: number, t: Tab = "how") => {
+    leaveOrient();
+    setResume(false);
     setTaskId(id);
     setFocus(step ?? 1);
     setTab(t);
@@ -205,7 +219,7 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
     setWeekView(null);
     setTestView(null);
     history.replaceState(null, "", `#${id}${step ? `-${step}` : ""}`);
-  }, []);
+  }, [leaveOrient]);
 
   // Deep links: #T5.1 opens a task, #T5.1-4 its fourth activity.
   useEffect(() => {
@@ -217,6 +231,7 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
         return;
       }
       setTestView(null);
+      if (location.hash === "#W0") return setOrient(true);
       const wk = location.hash.match(/^#W(\d{1,2})$/);
       if (wk && desk.weeks[Number(wk[1]) - 1]) {
         setWeekView(Number(wk[1]));
@@ -286,6 +301,8 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
   const ctx: DeskCtx = { desk, progress, update, start, isOpen, openTask, view, here, openTool, closeTool, free, taskLock, stepLock, liveTest, openTest, endTest };
   // A week opens on its overview; its first task still to submit becomes the task in hand.
   const openWeek = (n: number) => {
+    leaveOrient();
+    setResume(false);
     setTaskId(desk.order.find((x) => desk.tasks[x].week === n && !progress.submitted[x]) ?? desk.order.find((x) => desk.tasks[x].week === n)!);
     setWeekView(n);
     setTestView(null);
@@ -311,7 +328,14 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
               Working Desk {locked ? <span className="text-[11.5px] font-normal text-[#5B6474]">Opening your work…</span> : <SaveNote who={who} />}
             </p>
             <p className="truncate text-[12px] text-[#5B6474] tabular-nums">
-              GRC 101 · Week {currentWeek(start)} of {desk.weeks.length} · {desk.weeks[currentWeek(start) - 1].ph}
+              {/* The week of what is open, then the task; the calendar's week apart, and only when it differs. */}
+              <span data-desk-week>{orient && !testView ? "GRC 101 · Week 0 · orientation" : `GRC 101 · Week ${week}${weekView || testView ? "" : ` · ${task.id}`}`}</span>
+              {(() => {
+                const cal = calendarWeek(start);
+                if (orient && !testView) return null;
+                const text = cal === 0 ? `starts ${fmtDay(start)}` : cal > desk.weeks.length ? `the ${desk.weeks.length} planned weeks have passed` : cal !== week ? `calendar week ${cal}` : "";
+                return text ? <span data-desk-calendar-week title="The week your start date puts today in. It moves nothing: you work in your own order."> · {text}</span> : null;
+              })()}
             </p>
           </div>
           <div className="flex min-w-0 flex-1 max-md:h-[48px]">
@@ -336,7 +360,13 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
             <div className="border-b border-[#DDE1E8] bg-white px-3 py-2 lg:hidden">
               <TaskPills week={week} taskId={weekView || testView ? "" : task.id} desk={desk} progress={progress} openTask={openTask} />
             </div>
-            <main className="desk-panel min-h-0 min-w-0 flex-1 overflow-y-auto bg-white pb-28">
+            {/* Above the scrolling sheet, so a step scrolled into view never hides it. */}
+            {!locked && <AccessBanner desk />}
+            {!locked && !testView && !orient && <CatchUpOffer accessEnd={accessEnd} />}
+            {!locked && !testView && !orient && resume && !weekView && (
+              <ResumeCard onGo={() => { const a = firstAction(desk, progress); if (a) openTask(a.task.id, a.n); }} onClose={() => setResume(false)} />
+            )}
+            <main className="desk-panel min-h-0 min-w-0 flex-1 overflow-y-auto bg-white pb-28 max-sm:pb-44 max-sm:pr-[20px]">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   // @container: the task file's step bar bleeds to the column's width (see StepBar).
@@ -355,6 +385,9 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
                     </div>
                   ) : testView ? (
                     <KnowledgeCheck id={testView} />
+                  ) : null}
+                  {locked || testView ? null : orient ? (
+                    <Week0 onSkip={() => { leaveOrient("skipped"); history.replaceState(null, "", `#W${desk.tasks[upNext].week}`); setWeekView(desk.tasks[upNext].week); }} onDone={() => { leaveOrient("done"); openTask(upNext, firstAction(desk, progress)?.n); }} />
                   ) : weekView ? (
                     <WeekOverview week={weekView} />
                   ) : (
@@ -367,12 +400,14 @@ function DeskLoaded({ desk, who, startIso, preview, locked }: { desk: Desk; who:
                 </motion.div>
               </AnimatePresence>
             </main>
-            <Toolbar modal={toolKey} hold={locked || intro} />
+            <Toolbar />
           </div>
         </div>
 
       </div>
-      <DeskIntro who={who} ready={!locked} onDone={() => setIntro(false)} />
+      {/* One after the other, never stacked (UX101 review C): while Week 0 is the screen the tour does not start by itself
+          (its own "Start the tour" button still runs it); it starts once Week 0 is skipped or finished. */}
+      <DeskIntro who={who} ready={!locked && !orient} />
       <Viewer item={viewing} onClose={() => setViewing(null)} />
       <ToolModal
         toolKey={toolKey}
@@ -419,7 +454,6 @@ function TaskPills({ week, taskId, desk, progress, openTask }: { week: number; t
             <span className="relative"><Ring value={done / t.steps.length} done={st === "submitted"} /></span>
             <span className={`relative flex shrink-0 items-center gap-1 font-mono text-[11.5px] ${here ? "text-indigo-700" : "text-slate-500"}`}>{t.id}{taskLock(t.id) && <Icon name="lock" size={10} strokeWidth={2.5} aria-label="not open yet" />}</span>
             <span className={`relative min-w-0 truncate text-[12.5px] max-sm:hidden ${here ? "font-semibold text-slate-900" : "text-slate-700"}`}>{t.title}</span>
-            {t.hc ? <span className="relative shrink-0 text-[10.5px] font-semibold text-amber-700">{t.hc}</span> : null}
             {t.li.length > 0 && <span title={`Includes Lead Implementer extension ${t.li.join(", ")}`} className="relative shrink-0 rounded-[3px] border border-[#C7CBF5] bg-[#EEF0FF] px-[5px] py-px font-mono text-[10px] font-semibold text-[#3730A3]">LI</span>}
           </button>
         );

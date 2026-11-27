@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { KC_HASH, checkOf, kcStatus, opensAfter, whyClosed } from "./kc";
+import { KC_HASH, attemptsLine, checkOf, kcStatus, opensAfter, whyClosed } from "./kc";
 import { KC_ALL_OPEN } from "@/lib/flags";
 import { setDeskIdentity, toCanon, toLearner, type DeskIdentity } from "./names";
 import type { Desk } from "./model";
@@ -16,7 +16,7 @@ const P = (submitted: string[], kc?: Progress["kc"]) => ({ done: {}, picks: {}, 
 // Which check a week has, and what it waits for: the same rule as backend services/desk_kc.why_closed.
 assert.deepEqual(desk.weeks.map(checkOf), ["KC-01", "FGE", "KC-03", "KC-04", "KC-05", "KC-06", "KC-07", "KC-08", "KC-09", "KC-10", "KC-11", "FEX"]);
 assert.deepEqual(opensAfter(desk, "FGE"), ["F1.1", "F1.2", "F1.3", "F2.1", "F2.2"]);
-assert.deepEqual(opensAfter(desk, "FEX"), ["T12.1", "T12.2"]);
+assert.deepEqual(opensAfter(desk, "FEX"), desk.order); // every week is asked about, so every task first
 assert.equal(whyClosed(desk, P([]), "KC-01"), "Opens once you submit F1.1–F1.3.");
 assert.equal(whyClosed(desk, P(["F1.1"]), "KC-01"), "Opens once you submit F1.2 and F1.3.");
 assert.equal(whyClosed(desk, P(["F1.1", "F1.2", "F1.3", "F2.1"]), "FGE"), "Opens once you submit F2.2.");
@@ -65,3 +65,12 @@ for (let i = 0; i < 50; i++) {
 setDeskIdentity(null);
 assert.ok(moved > 1000, "names and dates really were swapped");
 console.log(`kc ok: ${texts.size} texts × 50 learners round-trip (${checked} checks, ${moved} rewritten)`);
+
+// One standing: the server's cleaned copy has only scored attempts, a live attempt keeps a check open and shows as in progress.
+{
+  const p = { submitted: {}, kc: { "KC-01": { attempts: [], live: true } } } as never;
+  assert.equal(whyClosed(desk, p, "KC-01"), null);
+  assert.equal(kcStatus(desk, p, "KC-01").label, "In progress");
+  assert.equal(attemptsLine(1, 2), "1 of 2 attempts used");
+  assert.equal(kcStatus(desk, { submitted: {}, kc: {} } as never, "KC-01").label, "Not open yet");
+}

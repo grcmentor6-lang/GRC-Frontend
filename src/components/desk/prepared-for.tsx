@@ -18,7 +18,7 @@ export function PreparedFor({ className = "pl-3" }: { className?: string }) {
   // A long name gives way first; the ID, which is what identifies a leaked copy, always shows whole.
   return (
     <p data-prepared-for title={text} className={`flex shrink-0 whitespace-nowrap border-t border-[#DDE1E8] py-1 pr-6 text-[11px] leading-4 text-[#5B6474] ${className}`}>
-      <span className="min-w-0 truncate">Prepared for&nbsp;{name}{name && <span className="text-[#8A91A3]">&nbsp;·&nbsp;</span>}</span>
+      <span className="min-w-0 truncate">Prepared for&nbsp;{name}{name && <span className="text-[#6B7280]">&nbsp;·&nbsp;</span>}</span>
       <span className="shrink-0 font-mono tabular-nums">{menteeId}</span>
     </p>
   );

@@ -175,7 +175,7 @@ export default function CertificatePage() {
       ) : isLocked ? (
         // No content exists for this programme yet, so no sheet with the mentee's name on it either.
         <section className="rounded-md border border-[#DDE1E8] bg-white px-6 py-10 text-center">
-          <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-[#F3F4F7] text-[#8A91A3]"><Icon name="lock" size={18} /></span>
+          <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-[#F3F4F7] text-[#6B7280]"><Icon name="lock" size={18} /></span>
           <h2 className="mt-3 text-[16px] font-bold text-[#111827]">{locked!.programTitle}</h2>
           <p className="mx-auto mt-2 max-w-md text-[13.5px] text-[#3F4757]">
             This programme has not opened yet, so there is no certificate to work towards. It {locked!.statusNote.replace(/^Locked · /, "")}.

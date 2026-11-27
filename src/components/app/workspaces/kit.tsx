@@ -7,6 +7,7 @@
 // lifted into the graded `fields` payload. There are NO free message/chat inputs anywhere;
 // stakeholder exchanges are pre-scripted and shown read-only.
 
+import { DateField } from "@/components/app/date-field";
 import { useEffect } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Gloss } from "@/components/app/glossary";
@@ -62,8 +63,8 @@ export function WTextInput({ value, onChange, placeholder, type = "text", classN
 }) {
   return (
     <div className={`flex items-center gap-2 h-10 px-3 rounded-lg bg-white ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-indigo-500/30 transition-all ${className}`}>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="flex-1 bg-transparent outline-none text-[13px] text-slate-900 placeholder:text-slate-400" />
+      {type === "date" ? <DateField value={value} onChange={onChange} className="bg-transparent outline-none text-[13px] text-slate-900" /> : <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+        className="flex-1 bg-transparent outline-none text-[13px] text-slate-900 placeholder:text-slate-400" />}
     </div>
   );
 }

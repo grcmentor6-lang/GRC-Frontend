@@ -6,6 +6,7 @@ import type { Table } from "@/lib/desk/model";
 import { cellTone } from "@/lib/desk/cell-tone";
 import { ladderCell } from "@/lib/desk/tree-text";
 import { TreeCard } from "./walk-card";
+import { GlossText } from "./gloss-tip";
 import { LATER_BOX, LATER_INK } from "@/components/app/later";
 
 /** Press feedback shared by every clickable on the desk. */
@@ -22,7 +23,7 @@ export function TableView({ t, max, flush, grey }: { t: Partial<Table>; max?: nu
         <thead className="bg-[#F8F9FB] font-sans text-left text-[10.5px] uppercase tracking-[0.08em] text-[#6B7280]">
           <tr>
             {t.h.map((h) => (
-              <th key={h} className="min-w-[84px] border-y border-b-[#E3E5EA] border-t-[#E8EAEF] px-3.5 py-3 align-bottom font-semibold leading-[1.4]">{h}</th>
+              <th key={h} className="min-w-[84px] border-y border-b-[#E3E5EA] border-t-[#E8EAEF] px-3.5 py-3 align-bottom font-semibold leading-[1.4]"><GlossText text={h} /></th>
             ))}
           </tr>
         </thead>

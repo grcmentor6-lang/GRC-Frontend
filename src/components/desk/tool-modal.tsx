@@ -1,5 +1,8 @@
 "use client";
 
+import { StepReadFirst } from "./read-first";
+import { GlossaryPage } from "./glossary-page";
+import { Week0 } from "./first-week";
 import { Fragment, createContext, useContext, useEffect, useRef, useState } from "react";
 import { KcChip, openKc } from "./knowledge-check";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
@@ -8,6 +11,7 @@ import { useDesk } from "./desk-context";
 import { DecisionSummary, LI_TAG, PartHead, Work, thenLabel, thenOf } from "./how-to";
 import { BriefProgress, BriefWork, CopyWork, GridProgress, GridWork, LogWork, RegisterProgress, RegisterWork, LadderWork, RmfFile, RmfProgress, RuleHelper, StudyWork, SubmitWork, TreeWork, ChecklistWork, ReportWork, SplitWork, CompareWork, ConsistencyWork } from "./work-kinds";
 import { DECIDE_FROM, LADDER, STUDY, briefOf, deliverableFor, handedIn, regOf, rowDocs, stepSources } from "@/lib/desk/registers";
+import { docSections } from "@/lib/desk/step-sources";
 import { gridKey, lockedWhy, stepAnswered } from "@/lib/desk/work";
 import { Inbox, MessageNotice } from "./chat";
 import { LISTS_STANDARDS, ToolScreen } from "./viewer";
@@ -19,7 +23,7 @@ import { DocCitation } from "./doc-text";
 import { DOC_TEXT } from "@/lib/desk/docs";
 import { OrgDetails, type OrgFull } from "./org-drawer";
 import { ORG_TONE, OrgMark, OrgName } from "@/lib/desk/org-tone";
-import { checkpoints, dmy, dueDate, fmtDay, rmfTable, screenOf, testDue, workKind, type Desk, type Step, type Task } from "@/lib/desk/model";
+import { dmy, dueDate, fmtDay, rmfTable, screenOf, testDue, workKind, type Desk, type Step, type Task } from "@/lib/desk/model";
 import { RMF, folders, submitCodes } from "@/lib/desk/forms";
 import { decisionChecked, stepKey } from "@/lib/desk/progress";
 import { appZoom } from "@/lib/zoom";
@@ -29,6 +33,7 @@ import { autoGuide, guideFor } from "./step-guides";
 import { LabWindow } from "./lab-console";
 import { PhyPlan } from "./phy-plan";
 import { allCaptures, labOf } from "@/lib/desk/labs";
+import { helpEntries } from "@/lib/programme";
 
 /**
  * The step being worked, as a centred modal: the tool's screen on the left, the step's work on the
@@ -42,7 +47,7 @@ const ViewOnly = createContext(false);
 export function ToolModal({ toolKey, onClose, viewOnly = false }: { toolKey: string | null; onClose: () => void; viewOnly?: boolean }) {
   useEffect(() => {
     if (!toolKey) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !document.querySelector('[aria-label^="Guide:"]') && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !e.defaultPrevented && !document.querySelector('[aria-label^="Guide:"], .float-win, [data-guide-menu], [data-ref-sheet]') && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [toolKey, onClose]);
@@ -73,7 +78,8 @@ function DocWindow({ id, index, onClose, beside }: { id: string; index: number; 
   const { desk, here } = useDesk();
   const step = here ? desk.tasks[here.task].steps[here.n - 1] : undefined;
   const task = here ? desk.tasks[here.task] : undefined;
-  const cites = [...((task && step ? stepSources(task, step.n, step.refs.docs) : []).find(([d]) => d === id)?.[1] ?? [])].sort(bySec);
+  // The sections the step cites, and those its source list names (UX101 W4: lib/desk/step-sources.ts).
+  const cites = [...(task && step ? docSections(task, step.n, id) : [])].sort(bySec);
   const lib = desk.library.docs.find(([code]) => code === id);
   const place = useBeside(index);
   return (
@@ -233,7 +239,7 @@ function useBeside(index: number) {
 function Guard({ text }: { text: string }) {
   return (
     <div className="flex items-start gap-2 px-3.5 py-2.5">
-      <Icon name="shield" size={13} className="mt-0.5 shrink-0 text-[#8A91A3]" />
+      <Icon name="shield" size={13} className="mt-0.5 shrink-0 text-[#6B7280]" />
       <NoteList text={text} quiet className="min-w-0" />
     </div>
   );
@@ -307,7 +313,7 @@ function Dialog({ toolKey, onClose }: { toolKey: string; onClose: () => void }) 
   }, [away]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center p-3 pb-[88px] sm:p-6 sm:pb-[92px]" role="dialog" aria-modal="true" aria-label={heading}>
+    <div className="fixed inset-0 z-[60] flex items-start justify-center p-3 pb-[88px] max-sm:pb-[132px] sm:p-6 sm:pb-[92px]" role="dialog" aria-modal="true" aria-label={heading}>
       <motion.button
         type="button"
         aria-label="Close"
@@ -505,7 +511,7 @@ function Screen({ toolKey }: { toolKey: string }) {
   if (sec === "help")
     return (
       <dl className="grid gap-3 p-4">
-        {desk.help.map(([t, d]) => (
+        {helpEntries(desk).map(([t, d]) => (
           <div key={t} className="rounded border border-[#DDE1E8] bg-white px-4 py-3">
             <dt className="text-[13.5px] font-semibold text-slate-900">{t}</dt>
             <dd className="mt-0.5 text-[13px] leading-relaxed text-slate-600">{d}</dd>
@@ -516,10 +522,9 @@ function Screen({ toolKey }: { toolKey: string }) {
   if (mock?.dyn === "inbox") return <div className="p-4"><Inbox /></div>;
   if (toolKey === "policies|Policy Library") return <PolicyLibrary />;
   if (toolKey === "learn|Reference pages") return <ReferencePages />;
+  if (toolKey === "learn|Glossary") return <GlossaryPage />;
+  if (toolKey === "learn|Week 0 orientation") return <Week0 tool />;
   if (toolKey === "home|My plan") return <Plan />;
-  // The checkpoints and their task pairs are the Weeks sheet's (week.hc); the pack's old list named other tasks.
-  if (toolKey === "home|Checkpoints" && mock)
-    return <ToolScreen flush mock={{ ...mock, pl: { ...(mock.pl as object), i: checkpoints(desk.weeks).map((c) => [`${c.hc} checkpoint`, `The work of ${c.tasks.join(" and ")} is checked automatically against the server keys at checkpoint ${c.hc}, at the end of its week. No person reads it.`, `Week ${c.week}`]) } }} />;
   if (toolKey === "learn|Knowledge Checks") return <Tests />;
   if (toolKey === "evidence|Capture Screenshot" && mock)
     return <ToolScreen mock={{ ...mock, pl: { ...(mock.pl as object), h: ["Evidence ref", "View", "Filter", "Rows", "UTC", "SHA-256"], r: allCaptures(progress).map((c) => [c.ref, c.viewTitle, c.filter, String(c.ids.length), c.utc, c.sha]) } }} flush />;
@@ -697,6 +702,8 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
             })()}
           </div>
           <div className="flex-1 border-b border-[#E3E5EA] px-4 pb-4 sm:px-5 [&>*:first-child]:mt-4">
+            {/* A per-row decision reads first; any other step lists its sources (UX101 W4, C-05). */}
+            <StepReadFirst s={s} className="mb-3" sources={s.kind !== "each"} />
             {/* A decision first; then the work the pack puts after it, in the shape that work takes. */}
             {s.kind === "pick" ? (
               <>
@@ -803,7 +810,7 @@ function WorkPanel({ task, s, toolKey, onClose, onGuide }: { task: Task; s: Step
             data-guide="mark-complete"
             disabled={sealed || !stepAnswered(desk, progress, task, s, start)}
             onClick={complete}
-            className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] disabled:hover:brightness-100"
+            className="min-h-12 border-l border-[#DDE1E8] bg-[#4338CA] px-5 text-[14px] font-semibold text-white hover:brightness-90 focus-ring disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] disabled:hover:brightness-100"
           >
             Mark step complete
           </button>
@@ -863,7 +870,7 @@ function Folders({ taskId }: { taskId: string }) {
 /** Home › My plan: every due date of the 12 weeks from the mentee's own start, tests included. */
 function Plan() {
   const { desk, start, here } = useDesk();
-  const date = (d: Date) => `${fmtDay(d)} ${d.getFullYear()}`;
+  const date = (d: Date) => fmtDay(d);
   const rows = desk.weeks.flatMap((w) => {
     // "KC-01", or "FGE (Foundation Gate Exam)"
     const m = (w.kc ?? "").match(/^(\S+)(?: \((.+)\))?$/);
@@ -904,7 +911,7 @@ function Tests() {
   const pass = new Map(((screenOf(desk, "learn|Knowledge Checks")?.pl as { r?: string[][] })?.r ?? []).map((r) => [r[1]?.split(" ")[0], r[3]]));
   const rows = desk.weeks.flatMap((w) => {
     const m = (w.kc ?? "").match(/^(\S+)(?: \((.+)\))?$/);
-    return m ? [{ wk: w.n, id: m[1], title: m[2] ?? "Knowledge check", due: `${fmtDay(testDue(start, w.n))} ${testDue(start, w.n).getFullYear()}`, pass: pass.get(m[1]) ?? "" }] : [];
+    return m ? [{ wk: w.n, id: m[1], title: m[2] ?? "Knowledge check", due: fmtDay(testDue(start, w.n)), pass: pass.get(m[1]) ?? "" }] : [];
   });
   return (
     <div data-guide="tests" className="border-b border-[#DDE1E8] bg-white">
@@ -969,7 +976,11 @@ function PolicyLibrary() {
   const task = here ? desk.tasks[here.task] : undefined;
   // A step whose rows each name their own policy (T3.2 steps 3 and 6) tags those.
   const cited = new Set([...(task && step ? stepSources(task, step.n, step.refs.docs) : []).map(([id]) => id), ...(task && step ? rowDocs(task.id, step.n, progress) : [])]);
-  const docs = libraryDocs(desk);
+  // Search (UX101 W4, C-05): a document's code, its title or one of its section headings.
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const hits = (d: (typeof desk.library.docs)[number]) => (d[2] ?? []).filter(([, h]) => needle && h.toLowerCase().includes(needle));
+  const docs = libraryDocs(desk).filter((d) => !needle || `${d[0]} ${d[1]}`.toLowerCase().includes(needle) || hits(d).length > 0);
   const box = useCitedInView();
   const groups: [string, typeof docs][] = [
     ["Your organisations' addenda", docs.filter(([c]) => c.startsWith("SITL-ADD-"))],
@@ -979,11 +990,13 @@ function PolicyLibrary() {
   ];
   return (
     <div ref={box} data-guide="policy-library" className="grid gap-4 bg-white p-4">
+      <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search documents and section headings" aria-label="Search the Policy Library" className="w-full rounded border border-[#DDE1E8] bg-white px-3 py-2 text-[13px] text-[#111827] placeholder:text-[#6B7280] focus-ring" />
+      {needle && docs.length === 0 && <p className="text-[13px] text-[#5B6474]">No document or section heading matches “{q.trim()}”.</p>}
       {groups.filter(([, list]) => list.length > 0).map(([h, list]) => (
         <section key={h}>
           <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">{h}</h3>
           <ul className="divide-y divide-[#E9ECF1] rounded border border-[#DDE1E8]">
-            {list.map(([code, title]) => (
+            {list.map(([code, title, outline]) => (
               <li key={code}>
                 <button
                   type="button"
@@ -993,7 +1006,10 @@ function PolicyLibrary() {
                   className={`flex w-full items-center gap-3 px-3 py-2 text-left text-[13px] hover:bg-[#F7F8FA] focus-ring ${cited.has(code) ? "bg-[#FFFBF2] shadow-[inset_3px_0_0_#D97706]" : ""}`}
                 >
                   <span className="shrink-0 font-mono text-[12px] font-semibold text-[#111827]" style={{ width: `${Math.max(13, ...list.map(([c]) => c.length))}ch` }}>{code}</span>
-                  <span className="min-w-0 flex-1 text-[#3F4757]">{title}</span>
+                  <span className="min-w-0 flex-1 text-[#3F4757]">
+                    {title}
+                    {needle && hits([code, title, outline]).slice(0, 3).map(([n, h]) => <span key={n} className="block text-[12px] text-[#5B6474]">{/^\d/.test(n) ? `Section ${n}` : n} · {h}</span>)}
+                  </span>
                   {cited.has(code) && <span className="shrink-0 rounded-[3px] bg-[#FDE7B8] px-1.5 py-0.5 text-[11px] font-semibold text-[#78350F]">Step {here?.n}</span>}
                 </button>
               </li>

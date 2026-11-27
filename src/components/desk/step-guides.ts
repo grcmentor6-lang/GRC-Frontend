@@ -39,7 +39,7 @@ const decideInRow = (n: number, question: string, partTwo: TourStep[], finish: s
         body: `This step has two parts. Part 1 is ${question}`,
         steps: [
           { lead: "Pick an option", text: "Answer it as you did in step 2: read the situation, then all three options." },
-          { lead: "Click **Check my answer**", text: "Part 2 opens once your answer is checked." },
+          { lead: "Click **Check my answer**", text: "A line asks you to confirm: click **Yes, lock my pick**. Part 2 opens once your answer is checked." },
         ],
         getEl: () => row('[data-guide="decision"]'),
         pointAt: () => row('[data-guide="decision-context"]'),
@@ -63,7 +63,7 @@ const decideInRow = (n: number, question: string, partTwo: TourStep[], finish: s
     {
       title: "Pick and check",
       icon: "edit",
-      body: "Choose the option you would take, then click **Check my answer**.",
+      body: "Choose the option you would take, then click **Check my answer**. In weeks 1 to 3 a line then asks you to confirm: click **Yes, lock my pick**.",
       tips: [
         { kind: "avoid", text: "checking before you have read every option. Your pick locks once it is checked." },
       ],
@@ -107,7 +107,7 @@ const openFromHome = (screen: string, window: string, tagged: string): TourStep[
     body: "Every screen opens from the toolbar at the bottom of the page. Click **Home**.",
     getEl: () => $('[data-guide-section="home"]'),
     waitFor: () => !!$('[data-guide-menu="home"]'),
-    // The step opens its menu by itself (toolbar.tsx): already open, the click is done.
+    // The learner may have opened the menu already: then the click is done.
     skip: () => !!$('[data-guide-menu="home"]'),
     doIt: "Click Home",
   },
@@ -130,7 +130,7 @@ const nameAndSubmit = (ext: string, steps: string): TourStep[] => [
     steps: [
       { lead: "Use the four parts listed under the box", text: "Keep them in the order shown, joined by underscores." },
       { lead: `End with .${ext}` },
-      { lead: "Type the name as the last line under the box writes it", text: "**Put together** shows the whole name, with your own mentee ID. Next unlocks once the name is right." },
+      { lead: "Type the four parts together", text: "Use your own mentee ID. Next unlocks once the name follows the convention." },
     ],
     getEl: () => $('[data-guide="file-name"]'),
     pointAt: () => $('[data-guide="file-name-input"]'),
@@ -142,11 +142,11 @@ const nameAndSubmit = (ext: string, steps: string): TourStep[] => [
     doIt: "Type the file name",
   },
   {
-    title: "Submit it",
+    title: "Save it to 02_Working",
     icon: "upload",
-    body: `Submit opens once steps ${steps} are complete.`,
+    body: `Save to 02_Working opens once steps ${steps} are complete.`,
     steps: [
-      { lead: "Click **Submit**", text: "It hands the file in." },
+      { lead: "Click **Save to 02_Working**", text: "It saves the file and gives a receipt. Submit task, at the foot of the task, is a different button: it seals the task." },
       { lead: "Check the receipt", text: "It shows a hash (a fingerprint of the file) and a UTC time." },
     ],
     tips: [
@@ -189,7 +189,7 @@ const QR_WINDOW = 'section[role="dialog"][aria-label*="Framework Quick Reference
 const lowPick = (g: TourStep[]): TourStep[] => g.map((c) => (c.doIt === "Pick an option and click Check my answer" ? { ...c, low: true } : c));
 const finish = (body: string): TourStep => ({ title: "Finish here", icon: "check", body, getEl: () => $('[data-guide="mark-complete"]') });
 /** Check my answers under a per-row decision: the verdict, answer and reason per row. */
-const checkRowsCard = (body: string): TourStep => ({ title: "Then check your answers", icon: "check", body, getEl: () => $('[data-guide="check-rows"]') ?? $('[data-guide="row-result"]') });
+const checkRowsCard = (body: string): TourStep => ({ title: "Then check your answers", icon: "check", body: `${body} In weeks 1 to 3 a line then asks you to confirm: click **Yes, lock my rows**.`, getEl: () => $('[data-guide="check-rows"]') ?? $('[data-guide="row-result"]') });
 
 // F1.2's map, LI-FAM, and its sheet PDCA (registers.ts). A cell's row counts the worked rows too: ISO/IEC 27001 is row 4.
 const FAM = '[data-guide="register"][data-reg="LI-FAM"]';
@@ -271,7 +271,7 @@ const askFromQR = (n: number, question: string, term: string, read: string, part
     {
       title: "Pick and check",
       icon: "edit",
-      body: "Choose the option you would take, then click **Check my answer**.",
+      body: "Choose the option you would take, then click **Check my answer**. In weeks 1 to 3 a line then asks you to confirm: click **Yes, lock my pick**.",
       tips: [{ kind: "avoid", text: "checking before you have read every option. Your pick locks once it is checked." }],
       getEl: () => row('[data-guide="decision"]'),
       // On a phone the Quick Reference sits over the options: it has been read, so it closes here.
@@ -628,7 +628,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Check your answers",
       icon: "check",
-      body: "Click **Check my answers**. Each row then says whether it was right; a row still wrong is flagged with where to read it.",
+      body: "Click **Check my answers**. Each row then says whether it was right; a row still wrong is flagged with where to read it. A line then asks you to confirm: click **Yes, lock my answers**.",
       getEl: () => $('[data-guide="rmf-check"]') ?? $('[data-guide="rmf-result"]'),
       nextWhen: () => !!$('[data-guide="rmf-result"]'),
       doIt: "Click Check my answers",
@@ -642,7 +642,21 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
   ],
 
   // A question about your account; the undertaking is signed at the end of step 3.
-  "F1.1-2": decideInRow(2, "a question about your account.", [], "This button unlocks once you have checked your answer."),
+  "F1.1-2": [
+    // The first Read first card the learner meets (UX101 W9, integration B): what it is, before the situation and options.
+    {
+      title: "Read first",
+      icon: "book",
+      body: "Above the options, **Read first** names the rule or document section this question tests. It never says what the rule requires: you open it and read.",
+      steps: [
+        { lead: "Click the source", text: "It opens in its own window beside the step, at the part to read." },
+        { lead: "Then come back and choose", text: "On a step that is not a decision, the same card is headed **Sources for this step**." },
+      ],
+      tips: [{ kind: "note", text: "Stuck? The **?** on the step has three **Hints**, one at a time, none giving the answer." }],
+      getEl: () => $("#act-2 [data-guide=\"read-first\"]"),
+    },
+    ...decideInRow(2, "a question about your account.", [], "This button unlocks once you have checked your answer."),
+  ],
 
   // The data rules: a question, then the four rules ticked and saved.
   "F1.1-3": decideInRow(
@@ -737,7 +751,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Check your answers",
       icon: "check",
-      body: "Click **Check my answers**. Each date then says whether it was right; one still wrong is flagged with where to read it.",
+      body: "Click **Check my answers**. Each date then says whether it was right; one still wrong is flagged with where to read it. A line then asks you to confirm: click **Yes, lock my answers**.",
       getEl: () => $('[data-guide="rmf-check"]') ?? $('[data-guide="rmf-result"]'),
       nextWhen: () => !!$('[data-guide="rmf-result"]'),
       doIt: "Click Check my answers",
@@ -777,12 +791,12 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
   // GRC 101 was rebuilt to the Lead Implementer workbook (docs/li101): the guides of F1.2 … T12.2 went with their old steps.
   // Phase 2 writes each task's new ones.
 
-  // F1.2 step 1: finding the three parts of a finished row in LearnTech's two worked rows.
+  // F1.2 step 1: finding the three parts of a finished row in the two worked rows (general ISO facts).
   "F1.2-1": [
     {
       title: "Finished rows",
       icon: "table",
-      body: "This is template **T-LI-FAM**. These two rows are LearnTech Educational Solutions', filled in as worked examples. Your ten GlobalConnect Customer Solutions rows must end up looking like them.",
+      body: "This is template **T-LI-FAM**. These two rows (ISO/IEC 27000 and ISO/IEC 27002:2022) are worked examples; they hold general facts of the standards, not one organisation's. Your ten GlobalConnect Customer Solutions rows must end up looking like them.",
       getEl: () => $(FAM),
     },
     {
@@ -794,7 +808,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Find the first one",
       icon: "edit",
-      body: "ISO/IEC 27002:2022 has a worked row. Its type is in **column B**. Click that cell.",
+      body: "The first question describes a document by what it is for. Read **column C** to find that row, then click its type in **column B**.",
       onEnter: () => famStudy("B Type (L01)", "ISO/IEC 27002:2022")?.scrollIntoView({ block: "nearest", inline: "nearest" }),
       getEl: () => famStudy("B Type (L01)", "ISO/IEC 27002:2022")?.closest("tr") ?? null,
       pointAt: () => famStudy("B Type (L01)", "ISO/IEC 27002:2022"),
@@ -804,7 +818,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Now the other two",
       icon: "check",
-      body: "Find the purpose in **column C** and the user in **column D** the same way.",
+      body: "Find the purpose in **column C** and the user in **column D** the same way: the question tells you which row by its type or its purpose.",
       tips: [{ kind: "unsure", text: "A wrong cell turns amber and the question gives a hint." }],
       getEl: () => $('[data-guide="study"]'),
     },
@@ -874,7 +888,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Seven clauses",
       icon: "table",
-      body: "Sheet **PDCA** of your map lists Clauses 4 to 10 of ISO/IEC 27001:2022 with their titles. For each one you choose its place in the Plan-Do-Check-Act cycle.",
+      body: "Sheet **PDCA** of your map lists Clauses 4 to 10 of ISO/IEC 27001:2022 with their titles and, in the last column, what each requires in our own words. For each one you choose its place in the Plan-Do-Check-Act cycle.",
       getEl: () => $(PDCA),
     },
     {
@@ -906,7 +920,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       icon: "edit",
       body: "Do the same for Clauses 5 to 10.",
       steps: [
-        { lead: "Read the clause's title" },
+        { lead: "Read the clause's title and what it requires", text: "The last column. Its entry in Learn › Framework Quick Reference says more." },
         { lead: "Ask what it does", text: "Sets the ISMS up, runs it, checks it, or improves it?" },
         { lead: "Choose the phase L02 gives that" },
       ],
@@ -940,7 +954,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     {
       title: "Pick and check",
       icon: "edit",
-      body: "Choose the option you would take, then click **Check my answer**.",
+      body: "Choose the option you would take, then click **Check my answer**. In weeks 1 to 3 a line then asks you to confirm: click **Yes, lock my pick**.",
       tips: [{ kind: "avoid", text: "checking before you have read every option. Your pick locks once it is checked." }],
       getEl: () => $('#act-5 [data-guide="decision"]'),
       // On a phone the Quick Reference sits over the options: it has been read, so it closes here.
@@ -1185,7 +1199,8 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
   // F1.3 step 4, part 1: the climate question, answered from the Quick Reference. Part 2 opens from the row.
   "F1.3-4q": askFromQR(4, "whether GlobalConnect must determine if climate change is a relevant issue.", "ISO/IEC 27001:2022/Amd 1:2024", "Read the entry for **ISO/IEC 27001:2022/Amd 1:2024**: what it added to Clause 4.1, and for whom. Then hold each of the three options against it.", "Part 2 is the climate-change row of CTX-ISS: your conclusion for Manila and its reason."),
 
-  // F1.3 step 4, part 2: the climate row, from SITL-ERM-001 Annex B. Worked on another country, never on the Philippines.
+  // F1.3 step 4, part 2: the climate row, from the hazard profile in SITL-ADD-16 Section 1 (UX101 W4, C-02; its scores are
+  // SITL-ERM-001 Annex B's). Worked on another office, never on Manila.
   "F1.3-4": [
     {
       title: "The climate row",
@@ -1194,36 +1209,37 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
       body: "Your answer is in. Part 2 is the climate-change row of CTX-ISS: is climate change relevant to the Manila office, and why?",
       steps: [
         { lead: "Column A", text: "Your conclusion: relevant or not relevant." },
-        { lead: "Column D", text: "The reason, from what SITL-ERM-001 Annex B says." },
+        { lead: "Column D", text: "The reason, from the natural-hazard and climate profile in SITL-ADD-16 Section 1." },
       ],
       getEl: () => $(ISS),
     },
-    ...openDoc("SITL-ERM-001", "Then click **Annex B** at the top to jump to the country table."),
+    ...openDoc("SITL-ADD-16", "Then click **Section 1** at the top to jump to the organisation profile."),
     {
-      title: "Annex B",
+      title: "The hazard profile",
       icon: "search",
-      body: "Annex B scores each country from 1 (low) to 5 (very high). Find the **Philippines** row.",
+      body: "Under the profile table, Section 1 lists each office's natural hazards, scored from 1 (low) to 5 (very high). Find the **Manila** row. The scores come from SITL-ERM-001 Annex B, which the Policy Library also holds.",
       steps: [
-        { lead: "Nat.", text: "The natural-hazard score." },
+        { lead: "Natural-hazard score", text: "How exposed the country is." },
         { lead: "Principal hazards", text: "Which hazards they are. Ask which of them the weather drives." },
+        { lead: "Recorded at the office", text: "What those hazards have done to the office so far." },
       ],
-      getEl: () => $(docWindow("SITL-ERM-001")),
+      getEl: () => $(docWindow("SITL-ADD-16")),
     },
     {
       title: "How a row reads",
       icon: "help",
-      body: "An example on another country. For an office in **Austria** the reason would say: \"Annex B scores Austria 2 of 5 for natural hazards, with flooding and avalanches.\" The conclusion then follows from what those hazards can do to the office.",
-      getEl: () => (phone() ? $(docWindow("SITL-ERM-001")) : $(ISS)),
-      alsoShow: () => $(docWindow("SITL-ERM-001")),
+      body: "An example on another office. For **Warsaw** the reason would say: \"Section 1 scores Poland 2 of 5 for natural hazards, with flooding, and Warsaw lost no working day to weather.\" The conclusion then follows from what those hazards can do to the office.",
+      getEl: () => (phone() ? $(docWindow("SITL-ADD-16")) : $(ISS)),
+      alsoShow: () => $(docWindow("SITL-ADD-16")),
     },
     {
       title: "Record yours",
       icon: "edit",
-      body: "Choose your conclusion in column A and write the reason in column D, from the Philippines row. Next unlocks once both are in.",
+      body: "Choose your conclusion in column A and write the reason in column D, from the Manila row. Next unlocks once both are in.",
       tips: [REOPEN],
-      onEnter: () => { shutDoc("SITL-ERM-001"); issCell("A Issue", 14)?.scrollIntoView({ block: "nearest", inline: "nearest" }); },
+      onEnter: () => { shutDoc("SITL-ADD-16"); issCell("A Issue", 14)?.scrollIntoView({ block: "nearest", inline: "nearest" }); },
       getEl: () => issCell("A Issue", 14)?.closest("tr") ?? null,
-      alsoShow: () => $(docWindow("SITL-ERM-001")),
+      alsoShow: () => $(docWindow("SITL-ADD-16")),
       nextWhen: () => !!issCell("A Issue", 14)?.value && sentence(issCell(EFFECT, 14)),
       doIt: "Fill columns A and D of the climate row",
     },
@@ -2366,9 +2382,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the packs",
+      title: "Save the packs to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -2760,9 +2776,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the packs",
+      title: "Save the packs to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -3106,9 +3122,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the packs",
+      title: "Save the packs to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -3520,9 +3536,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the pack",
+      title: "Save the pack to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence pack is handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence pack is handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -3936,9 +3952,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the pack",
+      title: "Save the pack to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence pack is handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence pack is handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -4334,9 +4350,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the packs",
+      title: "Save the packs to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -4725,9 +4741,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the packs",
+      title: "Save the packs to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -5058,9 +5074,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the packs",
+      title: "Save the packs to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -5446,9 +5462,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the packs",
+      title: "Save the packs to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -5512,7 +5528,7 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
   // T10.1 steps 8–10: three questions answered from what the control requires; no part 2.
   "T10.1-8": askOnlyFromPage(8, "which control has the gap when the guest Wi-Fi can reach the internal file server.", "LI-A.8.22", "Read **What it requires** in the note, all three items: what A.8.22 asks of zones, of the traffic between them and of guest networks. Then hold each of the three options against it."),
   "T10.1-9": askOnlyFromPage(9, "what you record when a database's encryption key sits in plain text on the same server as the database.", "LI-A.8.24", "Read **What it requires** in the note: what A.8.24 asks of keys through their life. Then hold each of the three options against it."),
-  "T10.1-10": askOnlyFromPage(10, "which controls apply when production customer data is copied to a test system without masking.", "LI-A.8.11", "Read **What it requires** in the note: where A.8.11 asks for data to be masked. Then hold each of the three options against it."),
+  "T10.1-10": askOnlyFromPage(10, "which controls apply when production customer data is copied to a test system without masking.", "LI-A.8.11", "Read **What it requires** in the note: where A.8.11 asks for data to be masked. Then open **LI-A.8.33** (Test information, in Learn › Reference pages) and read how it treats test data. Hold each of the three options against both."),
 
   // T10.1 step 11: CFG-BASE, CRY-REG and CIT-S12 named and handed in, in its row.
   "T10.1-11": [
@@ -5848,9 +5864,9 @@ export const STEP_GUIDES: Record<string, TourStep[]> = {
     },
     checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
     {
-      title: "Submit the packs",
+      title: "Save the packs to 02_Working",
       icon: "upload",
-      body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+      body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
       getEl: () => $('[data-guide="submit"]'),
     },
     finish("With the receipt in, click **Mark step complete**."),
@@ -7333,9 +7349,9 @@ function t52Guides(): Record<string, TourStep[]> {
       },
       checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. If a ref turns out to be None, write its gap then."),
       {
-        title: "Submit the pack",
+        title: "Save the pack to 02_Working",
         icon: "upload",
-        body: "Click **Submit**: the evidence pack is handed in on the platform, and the receipt shows a hash and a UTC time.",
+        body: "Click **Save to 02_Working**: the evidence pack is handed in on the platform, and the receipt shows a hash and a UTC time.",
         getEl: () => $('[data-guide="submit"]'),
       },
       finish("With the receipt in, click **Mark step complete**."),
@@ -7452,6 +7468,8 @@ function t52Guides(): Record<string, TourStep[]> {
         icon: "table",
         body: "This is **IR-TTX**, the record of the tabletop exercise: the six injects of dataset TTX, in the order the team plays them. Phase, Decision and Control fill in as you work through steps 2 to 4.",
         getEl: () => $(TTXR),
+        // Kept in view and kept off: the card named Sources for this step sits beside the table (UX101 W9).
+        alsoShow: () => $('[data-guide="read-first"]'),
       },
       {
         title: "The scenario",
@@ -7468,7 +7486,12 @@ function t52Guides(): Record<string, TourStep[]> {
       {
         title: "Find the first one",
         icon: "edit",
-        body: "Manila is UTC+8: take eight hours off 11:20. Find that time in the **UTC time** column and click it.",
+        body: "Manila is 8 hours ahead of UTC (UTC+8). Find 11:20 Manila time in the **UTC time** column and click it.",
+        steps: [
+          { lead: "Manila to UTC: take 8 hours off", text: "17:30 in Manila is 09:30 UTC." },
+          { lead: "UTC to Manila: add 8 hours", text: "22:00 UTC is 06:00 the next day in Manila." },
+          { lead: "Now yours", text: "Convert 11:20 Manila time the same way." },
+        ],
         onEnter: () => ttxStudy("UTC time", "INJ-3")?.scrollIntoView({ block: "nearest", inline: "nearest" }),
         getEl: () => ttxStudy("UTC time", "INJ-3")?.closest("tr") ?? null,
         pointAt: () => ttxStudy("UTC time", "INJ-3"),
@@ -7575,7 +7598,7 @@ function t52Guides(): Record<string, TourStep[]> {
         title: "Now yours",
         icon: "edit",
         body: "Find in the injects the moment INC-2611-0142 was logged, and record it as the discovery time. Then add the clock and record the deadline. Next unlocks once both are in.",
-        tips: [REOPEN, { kind: "avoid", text: "starting the clock at the alert, or at a later inject. Section 6.3, step 6 says when it starts." }],
+        tips: [REOPEN, { kind: "avoid", text: "starting the clock at the alert, or at a later inject. Section 6.3, step 6 says when it starts." }, { kind: "note", text: "Both times stay in UTC, as the injects give them. Only if you want the Manila time, add 8 hours: 22:00 UTC is 06:00 the next day in Manila." }],
         onEnter: () => { shutDoc(POL14); notCell("Discovery time (UTC)")?.scrollIntoView({ block: "nearest", inline: "nearest" }); },
         getEl: () => notCell("Discovery time (UTC)")?.closest("tr") ?? null,
         pointAt: () => notCell("Discovery time (UTC)"),
@@ -7593,6 +7616,7 @@ function t52Guides(): Record<string, TourStep[]> {
         icon: "table",
         body: "This is your control implementation tracker, **T-LI-CIT**, at sprint 8: A.5.5, A.5.24 to A.5.28 and A.6.8. The earlier sprints' rows stand as you left them. Its first row is a LearnTech Educational Solutions worked example, filled in from A to G.",
         getEl: () => $(citSel(8)),
+        alsoShow: () => $('[data-guide="read-first"]'),
       },
       {
         title: "Three things to find",
@@ -7780,9 +7804,9 @@ function t52Guides(): Record<string, TourStep[]> {
       },
       checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
       {
-        title: "Submit the packs",
+        title: "Save the packs to 02_Working",
         icon: "upload",
-        body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+        body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
         getEl: () => $('[data-guide="submit"]'),
       },
       finish("With the receipt in, click **Mark step complete**."),
@@ -7895,8 +7919,8 @@ function withRequired(key: string, g: TourStep[]): TourStep[] {
   const [, task, ns] = m, n = Number(ns);
   const add: string[] = [];
   const names = LABS.filter((l) => l.task === task).map((l) => l.tool.split("|")[1].replace(" (business SaaS)", ""));
-  if (names.length && g.some((c) => c.title === "Submit it" || /Submit opens/.test(c.body ?? "")))
-    add.push(`**Submit** also needs the Tech Lab${names.length > 1 ? "s" : ""} ${names.join(" and ")} (Systems on the toolbar) completed with the findings recorded.`);
+  if (names.length && g.some((c) => c.title === "Save it to 02_Working" || /Save to 02_Working opens/.test(c.body ?? "")))
+    add.push(`**Submit task** also needs the Tech Lab${names.length > 1 ? "s" : ""} ${names.join(" and ")} (Systems on the toolbar) completed with the findings recorded.`);
   for (const [id, at] of Object.entries(INJ_AT)) {
     if (id.split("-")[0] !== task) continue;
     const hold = id === "F1.1-J2" ? at : STEP_GUIDES[`${task}-${at + 1}`] || STEP_GUIDES[`${task}-${at + 1}q`] ? at + 1 : at;
@@ -7904,7 +7928,7 @@ function withRequired(key: string, g: TourStep[]): TourStep[] {
     else if (n === at) add.push(`A message (${id}) arrives in the Inbox at this step. Reply to it before you complete step ${hold}.`);
   }
   if (!add.length) return g;
-  const i = g.map((c) => /Mark step complete|Submit opens/.test(c.body ?? "")).lastIndexOf(true);
+  const i = g.map((c) => /Mark step complete|Save to 02_Working opens/.test(c.body ?? "")).lastIndexOf(true);
   const note = add.join(" ");
   return i >= 0 ? g.map((c, j) => (j === i ? { ...c, body: `${c.body} ${note}` } : c)) : [...g, { title: "Before you finish", icon: "check", body: note, getEl: () => $(`#act-${n} [data-guide="step-complete"]`) }];
 }
@@ -8199,9 +8223,9 @@ function t71Guides(): Record<string, TourStep[]> {
       },
       checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
       {
-        title: "Submit the packs",
+        title: "Save the packs to 02_Working",
         icon: "upload",
-        body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+        body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
         getEl: () => $('[data-guide="submit"]'),
       },
       finish("With the receipt in, click **Mark step complete**."),
@@ -8665,9 +8689,9 @@ function t102Guides(): Record<string, TourStep[]> {
       },
       checkRowsCard("Once every row has its ref and every None its gap, click **Check my answers**. It shows each row's answer and why. If a ref turns out to be None, write its gap then."),
       {
-        title: "Submit the packs",
+        title: "Save the packs to 02_Working",
         icon: "upload",
-        body: "Click **Submit**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
+        body: "Click **Save to 02_Working**: the evidence packs are handed in on the platform, and the receipt shows a hash and a UTC time.",
         getEl: () => $('[data-guide="submit"]'),
       },
       finish("With the receipt in, click **Mark step complete**."),

@@ -1,5 +1,6 @@
 "use client";
 
+import { isoDmy } from "@/lib/dates";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
@@ -10,6 +11,7 @@ import { useDeskRecord } from "@/lib/desk-record";
 import { ALL_WEEKS_OPEN } from "@/lib/flags";
 import { planOf, dueText, type DueState, type PlanTask } from "@/lib/desk-plan";
 import { OrgMarks } from "@/lib/desk/org-tone";
+import { ExamsCard } from "@/components/app/exams-card";
 import type { Desk } from "@/lib/desk/model";
 
 const MotionLink = motion.create(Link);
@@ -27,6 +29,7 @@ const TONE: Record<DueState, { label: string; dot: string; bar: string; avatar: 
   overdue: { label: "Overdue", dot: "bg-rose-500", accent: "bg-rose-500", bar: "bg-rose-50 text-rose-700 ring-rose-100", avatar: "bg-rose-50 text-rose-600 ring-rose-100" },
   today: { label: "Due today", dot: "bg-amber-500", accent: "bg-amber-500", bar: "bg-amber-50 text-amber-700 ring-amber-100", avatar: "bg-amber-50 text-amber-600 ring-amber-100" },
   upcoming: { label: "Due", dot: "bg-indigo-500", accent: "bg-indigo-500", bar: "bg-indigo-50 text-indigo-700 ring-indigo-100", avatar: "bg-indigo-50 text-indigo-600 ring-indigo-100" },
+  "not-reached": { label: "Not started yet", dot: "bg-slate-400", accent: "bg-slate-400", bar: "bg-slate-100 text-slate-600 ring-slate-200", avatar: "bg-slate-100 text-slate-500 ring-slate-200" },
   "not-open": { label: "Week not open yet", dot: "bg-slate-400", accent: "bg-slate-400", bar: "bg-slate-100 text-slate-600 ring-slate-200", avatar: "bg-slate-100 text-slate-500 ring-slate-200" },
 };
 
@@ -48,7 +51,7 @@ function relativeDay(iso: string, todayISO: string): string {
   if (diff === -1) return "Yesterday";
   if (diff > 1 && diff <= 7) return `In ${diff} days`;
   if (diff < -1 && diff >= -7) return `${-diff} days ago`;
-  return parseISO(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return isoDmy(iso);
 }
 
 function EventCard({ t, reduce, orgs }: { t: PlanTask; reduce: boolean; orgs: Desk["orgs"] }) {
@@ -148,12 +151,12 @@ export default function CalendarPage() {
           <div>
             <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-slate-900">Calendar</h1>
             <p className="text-[12.5px] text-slate-500 mt-0.5">
-              {noStart ? "Your task due dates, once you pick your start date." : `When each Working Desk task is due, counted from your start date (${parseISO(user!.startDate!.slice(0, 10)).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}).`}
+              {noStart ? "Your task due dates, once you pick your start date." : `When each Working Desk task is due, counted from your start date (${isoDmy(user!.startDate!.slice(0, 10))}).`}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3.5 text-[11.5px] flex-wrap">
-          {(["upcoming", "today", "submitted", "overdue", "not-open"] as DueState[]).map((s) => (
+          {(["upcoming", "today", "submitted", "overdue", "not-reached", ...(plan.some((t) => t.state === "not-open") ? ["not-open"] : [])] as DueState[]).map((s) => (
             <span key={s} className="inline-flex items-center gap-1.5 text-slate-500"><span className={`w-2 h-2 rounded-full ${TONE[s].dot}`} /> {TONE[s].label}</span>
           ))}
         </div>
@@ -267,6 +270,8 @@ export default function CalendarPage() {
               )}
             </Card>
           )}
+
+          {desk && <ExamsCard desk={desk} />}
 
           {overdue.length > 0 && (
             <Card>

@@ -4,8 +4,8 @@ import { Fragment, useEffect, useRef } from "react";
 import { Icon } from "@/components/ui/icon";
 import { KcChip, openKc } from "./knowledge-check";
 import { useDesk } from "./desk-context";
-import { dueDate, fmtDay } from "@/lib/desk/model";
-import { dueText, planOf } from "@/lib/desk-plan";
+import { dueDate, fmtDay, weekOpen } from "@/lib/desk/model";
+import { dueText, LATE_RULE, planOf } from "@/lib/desk-plan";
 import { OrgMarks, OrgName } from "@/lib/desk/org-tone";
 
 // Task · what you do · organisation and owner · due · progress; the last three fold under the text on a narrow sheet.
@@ -50,9 +50,10 @@ function linesOf(obj: string, ids: string[]): { lines: Record<string, string>; n
  * practises. The tasks themselves open from the left panel.
  */
 export function WeekOverview({ week }: { week: number }) {
-  const { desk, start, isOpen, progress, openTask, taskLock } = useDesk();
+  const { desk, start, progress, openTask, taskLock } = useDesk();
   const w = desk.weeks[week - 1];
-  const plan = planOf(desk, progress, start);
+  // Every week is in the plan here, as in the week panel: a week the learner has not reached reads "Not started yet".
+  const plan = planOf(desk, progress, start, true);
   const ids = desk.order.filter((id) => desk.tasks[id].week === week);
   const { lines, note } = linesOf(w.obj, ids);
   // Open at the top, whatever the task view had scrolled to. Runs on mount, after the cross-fade.
@@ -75,7 +76,8 @@ export function WeekOverview({ week }: { week: number }) {
       <dl className="flex flex-wrap items-center gap-x-6 gap-y-1 border-b border-[#DDE1E8] px-4 py-2.5 text-[13px] text-[#3F4757]">
         <div className="flex gap-1.5"><dt className="text-[#5B6474]">Week</dt><dd className="font-semibold text-[#111827]">{week} of {desk.weeks.length}</dd></div>
         <div className="flex gap-1.5"><dt className="text-[#5B6474]">Phase</dt><dd className="font-semibold text-[#111827]">{w.ph}</dd></div>
-        <div className="flex gap-1.5"><dt className="text-[#5B6474]">{isOpen(week) ? "Opened" : "Opens"}</dt><dd className="font-semibold text-[#111827]">{fmtDay(dueDate(start, (week - 1) * 7))}</dd></div>
+        <div className="flex gap-1.5">{/* By the calendar alone: a week that is open to work ahead of its date has still not "opened" (tester, L-12). */}
+        <dt className="text-[#5B6474]">{weekOpen(week, start) ? "Started" : "Starts"}</dt><dd className="font-semibold text-[#111827]">{fmtDay(dueDate(start, (week - 1) * 7))}</dd></div>
       </dl>
       {/* The week's tasks as the step list draws its steps: a table whose rows open the task. The width the old
           one-column list left empty carries what a learner plans by: where, for whom, by when, how far. */}
@@ -98,7 +100,7 @@ export function WeekOverview({ week }: { week: number }) {
                   <span className="pl-4">
                     <span className="flex items-center gap-1.5 font-mono text-[13px] font-semibold text-[#3730A3]">
                       {id}
-                      {taskLock(id) && <span title={`Opens once you submit ${taskLock(id)}`} className="text-[#8A91A3]"><Icon name="lock" size={12} strokeWidth={2.5} aria-label="not open yet" /></span>}
+                      {taskLock(id) && <span title={`Opens once you submit ${taskLock(id)}`} className="text-[#6B7280]"><Icon name="lock" size={12} strokeWidth={2.5} aria-label="not open yet" /></span>}
                       {/* Narrow: the organisation column is folded away, so its marks ride beside the code. */}
                       <span className="@[860px]:hidden"><OrgMarks org={t.org} orgs={desk.orgs} /></span>
                     </span>
@@ -118,7 +120,7 @@ export function WeekOverview({ week }: { week: number }) {
                   </span>
                   <span className="hidden text-[13px] leading-snug @[640px]:block">
                     <span className="block font-semibold text-[#111827]">{fmtDay(p.due)}</span>
-                    <span className={`block text-[12px] ${late ? "font-semibold text-[#B91C1C]" : p.state === "submitted" ? "text-[#15803D]" : "text-[#5B6474]"}`}>{dueText(p)}</span>
+                    <span title={late ? LATE_RULE : undefined} className={`block text-[12px] ${late ? "font-semibold text-[#B91C1C]" : p.state === "submitted" ? "text-[#15803D]" : "text-[#5B6474]"}`}>{dueText(p)}</span>
                   </span>
                   <span className="hidden pr-4 @[640px]:block">
                     <span className="block text-[13px] font-semibold tabular-nums text-[#111827]">{p.stepsDone}/{p.steps}</span>
@@ -133,8 +135,8 @@ export function WeekOverview({ week }: { week: number }) {
         </ol>
       </div>
       <div className="grid gap-x-8 gap-y-3 px-4 pt-4 md:grid-cols-2">
-        {/* Before the week closes: the week's test and checkpoint, as the left panel lists them. */}
-        {(w.kc || w.hc) && (
+        {/* Before the week closes: the week's test, as the left panel lists them. */}
+        {w.kc && (
           <section>
             <h2 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#5B6474]">Before the week closes</h2>
             <ul className="mt-1.5 grid gap-1 text-[13px] text-[#3F4757]">
@@ -146,7 +148,6 @@ export function WeekOverview({ week }: { week: number }) {
                   <KcChip id={w.kc.split(" ")[0]} />
                 </li>
               )}
-              {w.hc && <li>Checkpoint {w.hc}</li>}
             </ul>
           </section>
         )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { whenDmy } from "@/lib/dates";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { api } from "@/lib/api";
@@ -52,6 +53,35 @@ export function useTaskScores(): Scores | null {
   return scores;
 }
 
+
+export interface ScoreItem {
+  kind: "decision" | "inbox" | "rows"; id: string; title: string; fraction: number; why: string;
+  rowsRight?: number; rowsTotal?: number; worth: number; earned: number; lost: number;
+  wrong: { label: string; pick: string; best: string; why: string }[];
+}
+/** What a released score is made of (backend desk_record.score_breakdown): earned points add up to the score. Private to the learner. */
+export interface ScoreBreakdown { score: number; items: ScoreItem[]; note: string }
+
+/**
+ * The breakdown of each submitted task's score, by task id, from the same GET /me/record. Null while loading.
+ * ponytail: its own GET beside useTaskScores' (as kc-record.tsx has); share one fetch if a fourth reader appears.
+ */
+export function useScoreBreakdowns(): Record<string, ScoreBreakdown> | null {
+  const [b, setB] = useState<Record<string, ScoreBreakdown> | null>(null);
+  useEffect(() => {
+    let live = true;
+    api
+      .get<{ tasks: { taskId: string; submittedAt: string | null; scoreBreakdown?: ScoreBreakdown | null }[] }>("/me/record")
+      .then((r) => Object.fromEntries(r.tasks.filter((t) => t.submittedAt && t.scoreBreakdown).map((t) => [t.taskId, t.scoreBreakdown as ScoreBreakdown])))
+      .catch(() => ({}))
+      .then((x) => live && setB(x));
+    return () => {
+      live = false;
+    };
+  }, []);
+  return b;
+}
+
 /** Shown for a submitted task the server released no score for: it had no item an answer key could check. */
 export const NOT_SCORED = "Not scored: this task has no answer-key items";
 
@@ -80,4 +110,4 @@ export function recordCounts(desk: Desk, p: Progress) {
 export const recordEmpty = (p: Progress) =>
   !Object.keys(p.done).length && !Object.keys(p.submitted).length && !Object.keys(p.answers).some((k) => k !== LI_MARK) && !Object.keys(p.picks).length && !Object.keys(p.grids ?? {}).length;
 
-export const fmtWhen = (iso: string) => new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+export const fmtWhen = (iso: string) => whenDmy(iso);

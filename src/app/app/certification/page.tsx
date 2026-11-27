@@ -118,7 +118,7 @@ function Certification() {
                     on ? "border-[#4338CA] bg-[#4338CA] text-white" : "border-[#DDE1E8] bg-white text-[#111827] hover:border-[#C9CED8]"
                   }`}
                 >
-                  {!r.live && <Icon name="lock" size={11} className={on ? "text-white/80" : "text-[#8A91A3]"} />}
+                  {!r.live && <Icon name="lock" size={11} className={on ? "text-white/80" : "text-[#6B7280]"} />}
                   {r.name}
                   <span className={`rounded-[2px] px-1 text-[10.5px] ${on ? "bg-white/20 text-white" : r.live ? "bg-[#F0FDF4] text-[#15803D]" : "bg-[#F3F4F7] text-[#5B6474]"}`}>
                     {r.live ? r.programme : "Planned"}
@@ -134,7 +134,7 @@ function Certification() {
         user && <LeadImplementerPath who={user.email} />
       ) : (
         <section className="rounded-md border border-[#DDE1E8] bg-white px-6 py-10 text-center">
-          <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-[#F3F4F7] text-[#8A91A3]">
+          <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-[#F3F4F7] text-[#6B7280]">
             <Icon name="lock" size={18} />
           </span>
           <h2 className="mt-3 text-[16px] font-bold text-[#111827]">

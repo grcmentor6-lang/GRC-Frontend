@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { attemptsLine } from "@/lib/desk/kc";
 
 interface KcRow { id: string; title: string; week: number; passMark: number | null; attempts: number; attemptsAllowed: number; bestScore: number | null; passed: boolean | null }
 
@@ -45,7 +46,7 @@ export function KcRecord() {
                   <span className="text-slate-600">{r.title}</span>
                 </td>
                 <td className={`${td} text-slate-600`}>{r.passMark === null ? "Practice" : `${r.passMark} %`}</td>
-                <td className={`${td} tabular-nums text-slate-600`}>{r.attempts} of {r.attemptsAllowed}</td>
+                <td className={`${td} tabular-nums text-slate-600`}>{attemptsLine(r.attempts, r.attemptsAllowed)}</td>
                 <td className={`${td} tabular-nums font-semibold ${r.passed === false ? "text-amber-700" : "text-slate-900"}`}>
                   {r.bestScore === null ? <span className="font-normal text-slate-400">Not taken</span> : `${r.bestScore}%${r.passed === true ? " · passed" : r.passed === false ? " · below the pass mark" : ""}`}
                 </td>

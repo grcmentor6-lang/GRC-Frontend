@@ -45,6 +45,8 @@ export const calDay = (start: string, n: number) => new Date(Date.parse(`${start
 export const calIso = (d: Date) => d.toISOString().slice(0, 10);
 /** "Mon 05 Oct" (Home › Calendar's format), or "Sun 1 Nov" unpadded (Learn & Grow › Knowledge Checks'). */
 export const calWeekday = (d: Date, pad = true) => `${DOW[d.getUTCDay()]} ${pad ? String(d.getUTCDate()).padStart(2, "0") : d.getUTCDate()} ${MON[d.getUTCMonth()]}`;
+/** "Mon 05-OCT-2026": the weekday and the programme's one date format (DD-MMM-YYYY), for the screens that list the calendar. */
+export const calWeekdayDmy = (d: Date) => `${DOW[d.getUTCDay()]} ${String(d.getUTCDate()).padStart(2, "0")}-${MON[d.getUTCMonth()].toUpperCase()}-${d.getUTCFullYear()}`;
 /** `k` calendar months after `d`, held to the month's last day (31 Mar + 1 month = 30 Apr). */
 export function calMonths(d: Date, k: number): Date {
   const [y, m] = [d.getUTCFullYear(), d.getUTCMonth() + k];

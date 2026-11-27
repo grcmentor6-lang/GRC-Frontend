@@ -34,7 +34,7 @@ function Body({ md, tree }: { md: string; tree?: boolean }) {
         run && i >= run.start && i < run.end ? (
           i === run.start && <div key={i} className="my-1"><TreeCard title="Decision tree" steps={run.steps} /></div>
         ) : b.t === "p" ? (
-          <p key={i} className="text-[13.5px] leading-relaxed text-[#3F4757]">{clean(b.text)}</p>
+          <p key={i} className="text-[14px] leading-[1.5] text-[#3F4757]">{clean(b.text)}</p>
         ) : (
           <div key={i} className="overflow-x-auto rounded border border-[#DDE1E8] bg-white">
             <table className="w-full border-collapse text-[13px]">
@@ -82,7 +82,7 @@ export function DocCitation({ id, cites, spot }: { id: string; cites: string[]; 
     tr.scrollIntoView({ block: "center" });
   }, [sections, spot]);
   if (!sections) return <div className="h-24 animate-pulse rounded bg-[#F3F4F7]" aria-busy="true" />;
-  if (!sections.length) return <p className="text-[13.5px] text-[#5B6474]">The text of this document is not on the platform yet.</p>;
+  if (!sections.length) return <p className="text-[14px] leading-[1.5] text-[#5B6474]">The text of this document is not on the platform yet.</p>;
   return <div ref={box}><DocText sections={sections} /></div>;
 }
 

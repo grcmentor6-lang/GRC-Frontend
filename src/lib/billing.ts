@@ -6,7 +6,7 @@ import type { IconName } from "@/components/ui/icon";
 
 // --- Foundations course price (placeholder — change here to update checkout + billing) ---
 export const FOUNDATION_PRICE = "$125";
-export const FOUNDATION_PRICE_CAPTION = "One-time payment · lifetime access";
+export const FOUNDATION_PRICE_CAPTION = "One-time payment · 14 weeks' access";
 
 export interface BillingPlanContent {
   id: string;

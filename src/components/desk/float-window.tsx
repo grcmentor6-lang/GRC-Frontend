@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { clearBelow, pickSpot, type R } from "@/lib/desk/clear-spot";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
@@ -78,6 +78,9 @@ export function FloatWindow({
     const host = panel.closest('[role="dialog"]') ?? panel.parentElement;
     // Its table cells too: a window must not hide the names of the rows the step is about (F2.1 step 5, the Process column).
     const others = host ? [...host.querySelectorAll(`${CTRL}, td, th`)].filter((c) => !panel.contains(c)).map((c) => rect(c.getBoundingClientRect())) : [];
+    // The panel's own text (the instruction being followed) counts as well, at twice a table cell's weight: a reference window
+    // sits over the table, which can be scrolled, rather than over the instruction it is read beside.
+    others.push(p, p);
     const w = el.offsetWidth, h = el.offsetHeight, y = el.offsetTop, vw = window.innerWidth / zoom;
     const here = { x: el.offsetLeft, y };
     const vh = window.innerHeight / zoom;
@@ -88,6 +91,17 @@ export function FloatWindow({
     if (spot && (spot.x !== here.x || spot.y !== here.y)) setPos(spot);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- placement on opening only; a drag or later layout never moves it back
   }, []);
+
+  // Escape closes the top-most window (the last one in the page), unless a menu or a guide card is up: they take it first.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented || document.querySelector('[data-guide-menu], [aria-label^="Guide:"]')) return;
+      const all = document.querySelectorAll(".float-win");
+      if (all[all.length - 1] === ref.current) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   const startDrag = (e: ReactPointerEvent<HTMLElement>) => {
     const el = ref.current;
@@ -147,7 +161,7 @@ export function FloatWindow({
             {eyebrow && <p className="truncate text-[11.5px] text-[#5B6474]">{eyebrow}</p>}
             <h2 className="truncate text-[15px] font-bold text-[#111827]">{title}</h2>
           </div>
-          <span className="flex items-center gap-1 pr-1 text-[#8A91A3]" aria-hidden>
+          <span className="flex items-center gap-1 pr-1 text-[#6B7280]" aria-hidden>
             <Icon name="move" size={14} />
           </span>
           <button

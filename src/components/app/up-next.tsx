@@ -9,7 +9,7 @@ import { DropdownPanel, useDismiss } from "@/components/ui/motion";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useDeskRecord } from "@/lib/desk-record";
 import { ALL_WEEKS_OPEN } from "@/lib/flags";
-import { planOf, dueText } from "@/lib/desk-plan";
+import { planOf, dueText, workWeek } from "@/lib/desk-plan";
 import { fmtDay } from "@/lib/desk/model";
 
 /** Only look this far ahead; beyond it is the Calendar page's job. */
@@ -47,7 +47,8 @@ export function UpNext() {
   const items: Item[] = useMemo(() => {
     if (!desk || !user?.startDate) return [];
     return planOf(desk, progress, start, ALL_WEEKS_OPEN || user.role === "admin")
-      .filter((t) => (t.state === "overdue" || t.state === "today" || t.state === "upcoming") && t.left <= HORIZON_DAYS)
+      // Only the week the learner is working in: a later week's date is no reminder to someone who has not reached it.
+      .filter((t) => (t.state === "overdue" || t.state === "today" || t.state === "upcoming") && t.left <= HORIZON_DAYS && t.week <= workWeek(desk, progress))
       .map((t) => ({
         id: `due-${t.id}-${t.state}`,
         icon: t.state === "overdue" ? "alertTriangle" : "clock",

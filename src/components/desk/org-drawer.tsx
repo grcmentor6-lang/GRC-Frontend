@@ -8,6 +8,7 @@ import { OrgLogo, logoFor } from "@/components/app/org-logo";
 import { loadDesk, type Desk, type Org } from "@/lib/desk/model";
 import { useDeskIdentity } from "@/lib/desk/identity";
 import { ORG_TONE } from "@/lib/desk/org-tone";
+import { orgCounts } from "@/lib/programme";
 
 /** The full organisation record a mentee works for, as the engine issues it. */
 export type OrgFull = Org & {
@@ -59,7 +60,7 @@ export function OrgBox({ open, orgKey, onClose }: { open: boolean; orgKey: Key; 
   // elsewhere leaves it open on purpose.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !e.defaultPrevented && !document.querySelector('[aria-label^="Guide:"]') && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
@@ -263,6 +264,7 @@ export function DashboardOrgs() {
     );
 
   const orgs = (["A", "B"] as const).map((k) => desk.orgs[k] as OrgFull);
+  const counts = orgCounts(desk);
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -293,8 +295,9 @@ export function DashboardOrgs() {
               <div className="grid grid-cols-3 gap-2">
                 {[
                   ["Offices", o.offices.length],
-                  ["Standards", `${mandatory}/${o.standards.length}`],
-                  ["Tasks", o.tasks.length],
+                  ["Mandatory standards", `${mandatory} of ${o.standards.length}`],
+                  // A joint task counts for the organisation you work for only; the other shows the tasks it lends examples to.
+                  (({ own, examplesIn, role }) => (role === "main" ? ["Tasks", own] : ["Examples in", `${examplesIn} task${examplesIn === 1 ? "" : "s"}`]))(counts.find((c) => c.key === o.key)!),
                 ].map(([k, v]) => (
                   <div key={k} className="rounded-lg bg-white px-2 py-1.5 text-center ring-1 ring-slate-200">
                     <div className="text-[15px] font-semibold tabular-nums tracking-[-0.02em] text-slate-900">{v}</div>

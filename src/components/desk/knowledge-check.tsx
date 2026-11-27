@@ -1,11 +1,12 @@
 "use client";
 
+import { isoDmy, whenDmy } from "@/lib/dates";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { api, ApiError } from "@/lib/api";
 import { fmtDay, testDue } from "@/lib/desk/model";
 import type { Progress } from "@/lib/desk/progress";
-import { checkOf, kcHash, kcStatus, type KcAttempt, type KcQuestion, type KcResultQuestion, type KcState } from "@/lib/desk/kc";
+import { attemptsLine, checkOf, kcHash, kcStatus, type KcAttempt, type KcQuestion, type KcResultQuestion, type KcState } from "@/lib/desk/kc";
 import type { Week } from "@/lib/desk/model";
 import { useDesk, type ViewItem } from "./desk-context";
 import { Label, press } from "./ui";
@@ -62,8 +63,7 @@ function WeekConfetti({ week }: { week: number }) {
 }
 
 export function KnowledgeCheck({ id }: { id: string }) {
-  const { desk, start, openTask, progress, liveTest, openTest } = useDesk();
-  const openRef = useOpenRef();
+  const { desk, start, openTask, progress, liveTest, openTest, update } = useDesk();
   const [st, setSt] = useState<KcState | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -88,6 +88,7 @@ export function KnowledgeCheck({ id }: { id: string }) {
     try {
       const next = await api.post<KcState>(`/me/desk/kc/${id}/start`, { attempt: st.form.attempt });
       setSt(next);
+      update((p) => ({ ...p, kc: { ...p.kc, [id]: { ...p.kc?.[id], live: true } } }));
       openTest(id);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "The check did not start. Check your connection and try again.");
@@ -114,7 +115,7 @@ export function KnowledgeCheck({ id }: { id: string }) {
     );
 
   const result = showing ? st.attempts.find((a) => a.n === showing) : st.attempts[st.attempts.length - 1];
-  const left = st.attemptsAllowed - st.attempts.length;
+  const left = st.form ? Math.max(st.attemptsLeft, 1) : st.attemptsLeft; // an exam's further attempt after a week is one more
   const other = liveTest && liveTest !== id ? liveTest : null;
 
   return (
@@ -124,17 +125,17 @@ export function KnowledgeCheck({ id }: { id: string }) {
         <Fact k="Questions">{st.size}</Fact>
         <Fact k="Time">{st.minutes} minutes, open book</Fact>
         <Fact k="Pass mark">{st.passMark === null ? "Practice: scored, no pass mark" : `${st.passMark} %`}</Fact>
-        <Fact k="Attempts">{st.attemptsAllowed === 2 ? "Two, a new form each time; the best counts" : st.attemptsAllowed}</Fact>
+        <Fact k="Attempts">{attemptsLine(st.attemptsUsed, st.attemptsAllowed)}{st.attemptsAllowed > 1 ? "; a new form each time, the best counts" : ""}</Fact>
         {due && <Fact k="Due">{fmtDay(due)}</Fact>}
       </dl>
       {st.kind === "final" && (
-        <p className="mt-3 text-[13px] text-[#5B6474]">This screen holds the exam&apos;s {st.size} questions. Some of them are the practical station: rows of an access extract, each to judge for an exception. The timed 60-row extract itself is not on the desk yet.</p>
+        <p className="mt-3 text-[14px] leading-[1.5] text-[#5B6474]">This screen holds the exam&apos;s {st.size} questions. Some of them are the practical station: rows of an access extract, each to judge for an exception. The timed 60-row extract itself is not on the desk yet.</p>
       )}
 
       {/* A check already taken is never shown as locked: its result stands. Where a task of its week is open again (it was
           rebuilt), a further attempt waits for that task, and the line says so without a padlock. */}
       {!st.open && st.attempts.length > 0 && (
-        <p data-kc="held" className="mt-5 rounded-[10px] border border-[#E3E5EA] bg-[#F7F8FA] px-4 py-3 text-[13.5px] text-[#3F4757]">
+        <p data-kc="held" className="mt-5 rounded-[10px] border border-[#E3E5EA] bg-[#F7F8FA] px-4 py-3 text-[14px] leading-[1.5] text-[#3F4757]">
           <strong className="font-semibold text-[#111827]">Your result stands.</strong> A further attempt opens once {st.opensAfter.filter((t) => !progress.submitted[t]).join(" and ") || "this week's tasks"} {st.opensAfter.filter((t) => !progress.submitted[t]).length > 1 ? "are" : "is"} handed in again.
         </p>
       )}
@@ -143,7 +144,7 @@ export function KnowledgeCheck({ id }: { id: string }) {
           <Icon name="lock" size={17} className="mt-0.5 shrink-0 text-[#5B6474]" />
           <div className="text-[14px] text-[#111827]">
             <p className="font-semibold">{st.whyClosed}</p>
-            <p className="mt-1 text-[13px] text-[#3F4757]">The questions come from this week&apos;s tasks and from your own work in them.</p>
+            <p className="mt-1 text-[14px] leading-[1.5] text-[#3F4757]">The questions come from this week&apos;s tasks and from your own work in them.</p>
             <div className="mt-2.5 flex flex-wrap gap-2">
               {st.opensAfter.filter((t) => !progress.submitted[t]).map((t) => (
                 <button key={t} type="button" onClick={() => openTask(t)} className={`rounded-md border border-[#DDE1E8] bg-white px-2.5 py-1 font-mono text-[12px] font-semibold text-[#3730A3] hover:bg-[#F5F6FF] ${press}`}>{t}</button>
@@ -153,7 +154,7 @@ export function KnowledgeCheck({ id }: { id: string }) {
         </div>
       )}
 
-      {result && <Results a={result} passMark={st.passMark} onRef={openRef} />}
+      {result && <Results a={result} passMark={st.passMark} />}
       {st.attempts.length > 1 && (
         <div className="mt-4 flex gap-2 text-[12.5px]">
           {st.attempts.map((a) => (
@@ -174,17 +175,26 @@ export function KnowledgeCheck({ id }: { id: string }) {
         </div>
       ) : st.form ? (
         <div className="mt-6">
+          <div data-kc="start-card" className="mb-4 rounded-[10px] border border-[#C7D2FE] bg-[#F5F6FF] px-4 py-3.5">
+            <p className="text-[14.5px] font-semibold text-[#1E1B4B]">The timer starts when you press Start.</p>
+            <p data-kc="start-facts" className="mt-1 text-[14px] leading-[1.5] font-medium text-[#3730A3]">
+              {st.minutes} minutes · {st.size} questions · {left} {left === 1 ? "attempt" : "attempts"} left
+            </p>
+            <p className="mt-1.5 text-[14px] leading-[1.5] text-[#3F4757]">
+              Nothing is counted and no attempt is used until you press Start. Your answers are saved as you pick them. When time runs out, the test is submitted with the answers you have given, and they are scored; a question left blank counts as wrong.
+            </p>
+          </div>
           <OpenBook minutes={st.minutes} />
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <button type="button" data-kc="start" disabled={busy || !!other} onClick={begin} className={`h-10 rounded-lg bg-[#4338CA] px-5 text-[13.5px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}>
-              {busy ? "Starting…" : st.attempts.length ? `Start attempt ${st.form.attempt} (new form)` : "Start the check"}
+            <button type="button" data-kc="start" disabled={busy || !!other} onClick={begin} className={`h-10 rounded-lg bg-[#4338CA] px-5 text-[13.5px] font-semibold text-white hover:brightness-110 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] ${press}`}>
+              {busy ? "Starting…" : `Start${st.attempts.length ? ` attempt ${st.form.attempt}` : ""} · ${st.minutes} min`}
             </button>
             <span className="text-[12.5px] text-[#5B6474]">
               {other
                 ? `${other} is in progress. Submit it before starting another.`
                 : st.attempts.length
-                  ? `${left} attempt left. It is a new form; your best score counts.`
-                  : `${st.size} questions. The ${st.minutes} minutes start when you press Start.`}
+                  ? "It is a new form; your best score counts."
+                  : null}
             </span>
             {err && <span role="alert" className="text-[12.5px] text-[#B42318]">{err}</span>}
           </div>
@@ -193,7 +203,7 @@ export function KnowledgeCheck({ id }: { id: string }) {
         st.open && st.attempts.length > 0 && (
           <p data-kc="used" className="mt-6 text-[13px] text-[#5B6474]">
             {st.retakeAt
-              ? `Both attempts are used and the pass mark of ${st.passMark} % is not met yet. A further attempt, on a new form, opens on ${new Date(st.retakeAt).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}. Use the days between to go back over the rules you missed.`
+              ? `Both attempts are used and the pass mark of ${st.passMark} % is not met yet. A further attempt, on a new form, opens on ${`${new Date(st.retakeAt).toLocaleDateString("en-GB", { weekday: "short" })} ${isoDmy(st.retakeAt)}`}. Use the days between to go back over the rules you missed.`
               : `Your attempts are used. Your best score, ${st.bestScore}%, is on your record.`}
           </p>
         )
@@ -226,12 +236,12 @@ export function KnowledgeCheck({ id }: { id: string }) {
 /** What "open book" means here, said before the clock starts. */
 function OpenBook({ minutes }: { minutes: number }) {
   return (
-    <div data-kc="open-book" className="flex items-start gap-3 rounded-[10px] border border-[#E7DCC3] bg-[#FFFBF2] px-4 py-3.5 text-[13.5px] leading-[1.55] text-[#3F4757]">
+    <div data-kc="open-book" className="flex items-start gap-3 rounded-[10px] border border-[#E7DCC3] bg-[#FFFBF2] px-4 py-3.5 text-[14px] leading-[1.5] text-[#3F4757]">
       <Icon name="book" size={17} className="mt-0.5 shrink-0 text-[#92600E]" />
       <ul className="grid gap-1">
         <li><strong className="font-semibold text-[#111827]">Open book.</strong> A rule, reference page or document a question names is underlined: click it and it opens where it lives on the desk (Learn › Rule tables, Learn › Reference pages, the Policy Library), with the line it cites marked.</li>
         <li>The test sits in its own panel beside the desk, so the toolbar and your own task files stay in reach while you answer.</li>
-        <li>You have {minutes} minutes from Start. Your answers are saved as you pick them, and when the time is up the test is submitted with the answers you have given.</li>
+        <li>You have {minutes} minutes from Start, and the clock does not stop if you close the tab.</li>
       </ul>
     </div>
   );
@@ -279,7 +289,6 @@ export function TestDock({ id, folded, onFold }: { id: string; folded: boolean; 
   const [err, setErr] = useState<string | null>(null);
   const touched = useRef(false);
   const lastTry = useRef(0);
-  const openRef = useOpenRef();
   // The desk's floating windows keep clear of the dock while it is open (float-window.tsx reads --test-dock).
   // The dock's width is a share of the desk's row, not of the viewport: the app is zoomed on large screens
   // (globals.css --app-zoom), where a vw width came out a quarter of the screen.
@@ -358,6 +367,7 @@ export function TestDock({ id, folded, onFold }: { id: string; folded: boolean; 
   const answered = qs.filter((q) => picks[q.qid] !== undefined).length;
   const total = (st?.minutes ?? 0) * 60;
   const low = left !== null && left <= 300;
+  const warn = left !== null && left > 0 && left <= 120;
   const last = left !== null && left <= 60;
   const title = st ? (st.title === "Knowledge check" ? `Knowledge check ${id}` : `${id} · ${st.title}`) : id;
   const timer = (
@@ -412,6 +422,11 @@ export function TestDock({ id, folded, onFold }: { id: string; folded: boolean; 
             style={{ transform: `scaleX(${left === null || !total ? 1 : Math.min(Math.max(left / total, 0), 1)})` }}
           />
         </div>
+        {warn && (
+          <p data-kc="warn" role="alert" className="bg-[#FDE68A] px-4 py-1.5 text-[12.5px] font-semibold text-[#78350F]">
+            Under 2 minutes left. When the time is up the test is submitted with the {answered} answers given so far.
+          </p>
+        )}
         {qs.length > 0 && (
           <nav aria-label="Questions" className="flex flex-wrap items-center gap-1.5 px-4 py-2">
             {qs.map((q, i) => {
@@ -429,7 +444,7 @@ export function TestDock({ id, folded, onFold }: { id: string; folded: boolean; 
                 </button>
               );
             })}
-            <span className="ml-auto whitespace-nowrap text-[12px] tabular-nums text-[#C7D2FE]">Open book · {answered} of {qs.length} answered</span>
+            <span className="ml-auto whitespace-nowrap text-[12px] tabular-nums text-[#C7D2FE]">Open book · {answered} of {qs.length} answered · saved as you pick</span>
           </nav>
         )}
       </header>
@@ -446,11 +461,6 @@ export function TestDock({ id, folded, onFold }: { id: string; folded: boolean; 
                 pick={picks[q.qid]}
                 locked={left !== null && left <= 0}
                 onPick={(d) => { touched.current = true; setPicks((p) => ({ ...p, [q.qid]: d })); }}
-                onRef={(it) => {
-                  // On a narrow screen the test covers the desk: fold it, so the window it opens can be read.
-                  if (window.matchMedia("(max-width: 1023px)").matches) onFold(true);
-                  openRef(it);
-                }}
               />
             ))}
           </ol>
@@ -463,7 +473,7 @@ export function TestDock({ id, folded, onFold }: { id: string; folded: boolean; 
             data-kc="submit"
             disabled={busy || answered < qs.length}
             onClick={submit}
-            className={`h-10 rounded-lg bg-[#1E1B4B] px-5 text-[13.5px] font-semibold text-white hover:brightness-125 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#8A91A3] ${press}`}
+            className={`h-10 rounded-lg bg-[#1E1B4B] px-5 text-[13.5px] font-semibold text-white hover:brightness-125 disabled:cursor-not-allowed disabled:bg-[#E3E6EC] disabled:text-[#6B7280] ${press}`}
           >
             {busy ? "Submitting…" : `Submit attempt ${st.form?.attempt}`}
           </button>
@@ -509,51 +519,10 @@ function useRefSplit(): (s: string) => Part[] {
 
 const WHERE: Record<string, string> = { rule: "Learn › Rule tables", page: "Learn › Reference pages", doc: "Policies › Policy Library" };
 
-/**
- * Opens a reference where it lives on the desk, as the window its toolbar menu opens, then brings the rule's row or
- * the document's section into view and marks it.
- */
-function useOpenRef(): (item: ViewItem) => void {
-  const { openTool } = useDesk();
-  return useCallback(
-    (item: ViewItem) => {
-      const [id, sec] = item.id.split("#");
-      openTool(item.kind === "rule" ? "learn|Rule tables" : item.kind === "page" ? `page|${id}` : `doc|${id}`);
-      if (item.kind === "page" || (item.kind === "doc" && !sec)) return;
-      // ponytail: the window is found in the page and its line marked from here, not by threading a "spot" through
-      // every window kind; move it into the windows if anything besides the checks needs it.
-      let tries = 0;
-      const find = () => {
-        const win = [...document.querySelectorAll<HTMLElement>('section[role="dialog"]')].reverse().find((w) => {
-          const label = w.getAttribute("aria-label") ?? "";
-          return item.kind === "rule" ? label.includes("Rule tables") : label.startsWith(id);
-        });
-        const el = !win
-          ? null
-          : item.kind === "rule"
-            ? ([...win.querySelectorAll("td")].find((td) => td.textContent?.trim() === id)?.parentElement ?? null)
-            : (win.querySelector<HTMLElement>(`[data-sec="${sec}"]`) ?? win.querySelector<HTMLElement>(`[data-sec="${sec.split(".")[0]}"]`));
-        if (!el) {
-          if (++tries < 20) setTimeout(find, 120);
-          return;
-        }
-        win!.querySelectorAll<HTMLElement>("[data-kc-spot]").forEach((x) => { x.removeAttribute("data-kc-spot"); x.style.boxShadow = ""; });
-        const mark = (item.kind === "rule" ? el.firstElementChild : el) as HTMLElement;
-        mark.setAttribute("data-kc-spot", id);
-        mark.style.boxShadow = "inset 3px 0 0 #D97706";
-        el.scrollIntoView({ block: item.kind === "rule" ? "center" : "start", behavior: "smooth" });
-        el.animate([{ backgroundColor: "#FDE68A" }, { backgroundColor: "#FDE68A", offset: 0.7 }, { backgroundColor: "transparent" }], { duration: 3200, easing: "ease-out" });
-      };
-      setTimeout(find, 150);
-    },
-    [openTool],
-  );
-}
-
 const refLink = "rounded-sm font-semibold text-[#7A4E07] underline decoration-[#D9B26A] decoration-dotted decoration-[1.5px] underline-offset-[3px] hover:decoration-solid focus-ring";
 
-/** Text with its references as links that open them on the desk. */
-function RefText({ text, onRef }: { text: string; onRef: (item: ViewItem) => void }) {
+/** Text with its references marked in the text; the learner opens them from the toolbar (desk method rule 3). */
+function RefText({ text }: { text: string }) {
   const split = useRefSplit();
   return (
     <>
@@ -561,9 +530,9 @@ function RefText({ text, onRef }: { text: string; onRef: (item: ViewItem) => voi
         typeof p === "string" ? (
           <Fragment key={i}>{p}</Fragment>
         ) : (
-          <button key={i} type="button" data-kc-ref={p.item.id} title={`Opens in ${WHERE[p.item.kind]}`} onClick={() => onRef(p.item)} className={refLink}>
+          <span key={i} data-kc-ref={p.item.id} title={`Find it in ${WHERE[p.item.kind]}`} className={refLink}>
             {p.text}
-          </button>
+          </span>
         ),
       )}
     </>
@@ -592,13 +561,13 @@ function Fact({ k, children }: { k: string; children: React.ReactNode }) {
 
 const card = "flex items-start gap-3 rounded-[10px] border px-4 py-3.5 transition-colors sm:gap-3.5 sm:px-5";
 
-function QuestionCard({ n, q, pick, locked, onPick, onRef }: { n: number; q: KcQuestion; pick: number | undefined; locked: boolean; onPick: (d: number) => void; onRef: (item: ViewItem) => void }) {
+function QuestionCard({ n, q, pick, locked, onPick }: { n: number; q: KcQuestion; pick: number | undefined; locked: boolean; onPick: (d: number) => void }) {
   return (
     <li data-kc-q={n} className="scroll-mt-3 rounded-xl border border-[#D5D9F2] bg-white p-3.5 sm:p-4">
       <fieldset className="grid min-w-0 gap-2.5" disabled={locked}>
         <legend className="mb-2 flex gap-2.5 text-[15px] font-semibold leading-[1.5] text-[#111827]">
           <span className="shrink-0 tabular-nums text-[#4338CA]">{n}.</span>
-          <span className="[text-wrap:pretty]"><RefText text={q.stem} onRef={onRef} /></span>
+          <span className="[text-wrap:pretty]"><RefText text={q.stem} /></span>
         </legend>
         {q.options.map((o, d) => {
           const on = pick === d;
@@ -607,6 +576,8 @@ function QuestionCard({ n, q, pick, locked, onPick, onRef }: { n: number; q: KcQ
               <input
                 type="radio"
                 name={q.qid}
+                value={String.fromCharCode(65 + d)}
+                aria-label={`${String.fromCharCode(65 + d)}: ${o}`}
                 checked={on}
                 onChange={() => onPick(d)}
                 className="mt-[3px] h-[18px] w-[18px] shrink-0 cursor-pointer appearance-none rounded-full border-2 border-[#C9CCD4] bg-white transition-[border] checked:border-[5px] checked:border-[#4338CA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4338CA]/30"
@@ -621,7 +592,7 @@ function QuestionCard({ n, q, pick, locked, onPick, onRef }: { n: number; q: KcQ
   );
 }
 
-function Results({ a, passMark, onRef }: { a: KcAttempt; passMark: number | null; onRef: (item: ViewItem) => void }) {
+function Results({ a, passMark }: { a: KcAttempt; passMark: number | null }) {
   const right = a.questions.filter((q) => q.correct).length;
   const ok = a.passed !== false;
   return (
@@ -633,25 +604,25 @@ function Results({ a, passMark, onRef }: { a: KcAttempt; passMark: number | null
           Attempt {a.n}: {right} of {a.questions.length} right.{" "}
           {a.passed === true ? `Passed (pass mark ${passMark} %).` : a.passed === false ? `Below the pass mark of ${passMark} %.` : "Practice check: no pass mark."}
         </span>
-        {a.at && <span className="text-[12.5px] font-normal opacity-80">Submitted {new Date(a.at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</span>}
+        {a.at && <span className="text-[12.5px] font-normal opacity-80">Submitted {whenDmy(a.at)}</span>}
       </p>
       {a.late && <p className="mt-2 text-[13px] text-[#5B6474]">The time ran out before this attempt was sent, so the answers saved before then were graded.</p>}
       <ol className="mt-5 grid gap-6">
-        {a.questions.map((q, i) => <ResultCard key={q.qid} n={i + 1} q={q} onRef={onRef} />)}
+        {a.questions.map((q, i) => <ResultCard key={q.qid} n={i + 1} q={q} />)}
       </ol>
     </section>
   );
 }
 
-function ResultCard({ n, q, onRef }: { n: number; q: KcResultQuestion; onRef: (item: ViewItem) => void }) {
+function ResultCard({ n, q }: { n: number; q: KcResultQuestion }) {
   return (
     <li data-kc-r={n} className="grid gap-2.5">
       <p className="flex gap-2.5 text-[15px] font-semibold leading-[1.5] text-[#111827]">
         <span className="shrink-0 tabular-nums text-[#4338CA]">{n}.</span>
-        <span className="[text-wrap:pretty]"><RefText text={q.stem} onRef={onRef} /></span>
+        <span className="[text-wrap:pretty]"><RefText text={q.stem} /></span>
         <Icon name={q.correct ? "checkCircle" : "xCircle"} size={18} className={`ml-auto mt-0.5 shrink-0 ${q.correct ? "text-[#15803D]" : "text-[#B45309]"}`} aria-label={q.correct ? "Right" : "Not right"} />
       </p>
-      {q.pick === null && <p className="text-[13px] font-medium text-[#92400E]">Not answered before the time ran out.</p>}
+      {q.pick === null && <p className="text-[13px] font-medium text-[#92400E]">Not answered.</p>}
       {q.options.map((o, d) => {
         const isBest = d === q.best;
         const on = d === q.pick;
@@ -667,7 +638,7 @@ function ResultCard({ n, q, onRef }: { n: number; q: KcResultQuestion; onRef: (i
                   {isBest && on ? "Your answer · right" : isBest ? "Right answer" : "Your answer"}
                 </span>
               )}
-              <span className="mt-1.5 block text-[13.5px] leading-[1.55] text-[#374151]"><strong className="font-semibold text-[#111827]">Why: </strong><RefText text={q.reasons[d]} onRef={onRef} /></span>
+              <span className="mt-1.5 block text-[13.5px] leading-[1.55] text-[#374151]"><strong className="font-semibold text-[#111827]">Why: </strong><RefText text={q.reasons[d]} /></span>
             </span>
           </div>
         );

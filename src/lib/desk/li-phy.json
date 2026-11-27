@@ -10,7 +10,7 @@
     ["Z3", "Agent floor", "Open-plan floor with 220 agent workstations, where every agent on shift works."],
     ["Z4", "Managers' offices", "Offices of the team leaders and managers, off the agent floor."],
     ["Z5", "Meeting rooms", "Four meeting rooms, used by staff and by visitors with their host."],
-    ["Z6", "Records room", "Print room and records store: the printers, and locked steel cabinets holding paper copies of clients' customers' identity documents (KYC), classified Client-Restricted."],
+    ["Z6", "Records room", "Print room and records store: the printers, and locked steel cabinets holding paper copies of clients' customers' identity documents (KYC), classified Client-Restricted (Tier 4)."],
     ["Z7", "Server room", "The Manila data centre: the core network, the PBX and the call-recording servers. Only the IT staff named on its access list badge in."],
     ["Z8", "IT store", "Spare and returned laptops, removable media, and equipment waiting for disposal. Only the IT desk staff badge in."],
     ["D2", "Goods entrance", "Door from the service lift, for deliveries and the cleaning contractor. It opens by badge."],

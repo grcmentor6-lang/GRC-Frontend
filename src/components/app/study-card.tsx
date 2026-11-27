@@ -39,7 +39,7 @@ export function StudyCard({
           {title}
         </h4>
       )}
-      <div className="font-serif text-[13.5px] leading-[1.62] text-[#4e5a6b] [&_p]:m-0 [&_p+p]:mt-2" style={{ textWrap: "pretty" }}>
+      <div className="font-serif text-[14px] leading-[1.5] text-[#4e5a6b] [&_p]:m-0 [&_p+p]:mt-2" style={{ textWrap: "pretty" }}>
         {children}
       </div>
       {meta && (

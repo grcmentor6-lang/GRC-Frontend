@@ -23,7 +23,7 @@ const KEEPALIVE_BYTES = 60_000;
 
 export const EMPTY: Progress = { done: {}, picks: {}, answers: {}, submitted: {}, msgs: {}, acks: {}, grids: {}, logs: {}, decisions: {} };
 
-const OBJECT_SECTIONS = ["done", "picks", "answers", "submitted", "msgs", "acks", "grids", "logs", "decisions", "rowChecks", "labs"] as const;
+const OBJECT_SECTIONS = ["done", "picks", "answers", "submitted", "msgs", "acks", "grids", "logs", "decisions", "rowChecks", "labs", "hints"] as const;
 
 export type LoadStatus = "loading" | "failed" | "ready";
 export type SaveState = "saved" | "saving" | "unsaved";
@@ -110,6 +110,9 @@ function resetStaleRowChecks(p: Progress): Progress {
   );
   return { ...p, rowChecks, done, logs, grids };
 }
+
+/** After the access end the desk is read-only (the server refuses writes with a 403): edits are ignored here instead of failing on each save. Set by components/app/access-banner.tsx. */
+export const access = { readOnly: false };
 
 const localKey = (who: string) => `grc101.desk.v7.${who}`;
 
@@ -211,7 +214,7 @@ export class ProgressStore {
 
   /** ponytail: dropped before the load. Only the desk writes, and it mounts once the load is done. */
   update = (fn: (p: Progress) => Progress) => {
-    if (this.status !== "ready") return;
+    if (this.status !== "ready" || access.readOnly) return;
     const prev = this.progress;
     const next = fn(prev);
     if (next === prev) return;

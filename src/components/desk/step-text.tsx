@@ -4,6 +4,8 @@ import { Fragment, useMemo, type ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
 import { ORG_TONE, type OrgKey } from "@/lib/desk/org-tone";
 import { deskIdentityNow } from "@/lib/desk/names";
+import { lookup } from "@/lib/desk/glossary";
+import { GlossText, GlossTip } from "./gloss-tip";
 
 /**
  * How a step's words are set on the desk (owner, 4–5 Nov 2026): say what to do, once, plainly.
@@ -75,7 +77,7 @@ export function StepInstruction({ text, opened = false, className = "" }: { text
             <span className="min-w-0"><Marked text={s} /></span>
           </li>
         ) : (
-          <li key={i} className="pl-[28px] text-[12.5px] leading-[1.55] text-[#6B7280]"><Marked text={s} /></li>
+          <li key={i} className="pl-[28px] text-[14px] leading-[1.5] text-[#6B7280]"><Marked text={s} /></li>
         ),
       )}
     </ol>
@@ -92,7 +94,7 @@ export function StepInstruction({ text, opened = false, className = "" }: { text
 /** The toolbar's sections and their tools, as `desk.sections` names them (step-text.test.ts holds them to sample.json). */
 export const SECTIONS = ["Home", "Evidence", "Frameworks", "Access Reviews", "Risk Register", "Vendors", "Control Testing", "Policies", "Awareness", "Regulatory Watch", "Learn", "Inbox", "Systems"];
 export const TOOLS = [
-  "My plan", "My Tasks", "Waiting On", "Checkpoints", "Calendar", "My Organisation", "My Scores",
+  "My plan", "My Tasks", "Waiting On", "Calendar", "My Organisation", "My Scores",
   "Capture Screenshot", "Import Log / Report", "Upload Config File", "Link to Control", "Evidence Library", "Audit Requests (PBC)", "Defect Codes",
   "Framework Library", "Map Control", "Gap Finder", "Export Mapping",
   "Privilege Check",
@@ -151,7 +153,7 @@ const DOC_WORDS = ["Charter", "Defect Codes"];
 
 /** The platform's buttons, as the desk components label them. Marked wherever they appear. */
 const BUTTONS = [
-  "Check my answers", "Check my answer", "Mark step complete", "Mark complete", "Submit task", "Submit attempt", "Submit again", "Next step",
+  "Check my answers", "Check my answer", "Mark step complete", "Mark complete", "Submit task", "Submit attempt", "Save again", "Save to 02_Working", "Yes, lock my rows", "Yes, lock my pick", "Yes, lock my answers", "Yes, lock this section", "Yes, submit and seal", "Next step",
   "▶ Show me how", "Show me how", "Report a problem", "Report data issue", "Check consistency again", "Check consistency", "Check this capture",
   "Put back a row", "Record Tier [N\\d]", "Record (?:Pass|Accept|Reject|Fails?)", "Try again", "Answer again", "Start the check", "Close tool",
   "Type instead", "Draw instead", "Clear filters", "Capture evidence", "Open and sign", "Back to step", "Open Inbox", "Show the \\d+ worked rows?",
@@ -294,13 +296,13 @@ export function Marked({ text }: { text: string }) {
   return (
     <>
       {markParts(text).map((p, i) =>
-        p.kind === "text" ? <Fragment key={i}>{p.text}</Fragment>
+        p.kind === "text" ? <GlossText key={i} text={p.text} />
         : p.kind === "bold" ? <strong key={i} className="font-semibold text-[#111827]"><Marked text={p.text} /></strong>
         : p.kind === "org" ? (
           <mark key={i} className="rounded-[3px] px-1 font-semibold [box-decoration-break:clone]" style={p.org ? { color: ORG_TONE[p.org].text, background: ORG_TONE[p.org].tint } : undefined}>{p.text}</mark>
         ) : p.kind === "btn" ? <span key={i} className={MARK_CLASS.btn}>{p.text}</span>
-        : p.kind === "code" ? <code key={i} className={MARK_CLASS.code}>{p.text}</code>
-        : <mark key={i} className={MARK_CLASS[p.kind]}>{p.text}</mark>,
+        : p.kind === "code" ? <code key={i} className={MARK_CLASS.code}>{((e) => (e ? <GlossTip entry={e}>{p.text}</GlossTip> : p.text))(lookup(p.text))}</code>
+        : <mark key={i} className={MARK_CLASS[p.kind]}>{p.kind === "doc" || p.kind === "field" ? <GlossText text={p.text} rowIds /> : p.text}</mark>,
       )}
     </>
   );
@@ -337,7 +339,7 @@ export function noteLines(text: string): { rule?: string; lines: NoteLine[] } {
 /** A note set as a short list. `quiet`: grey and small, for a screen's footnote; otherwise the step's own note. */
 export function NoteList({ text, guide, quiet = false, className = "" }: { text: string; guide?: string; quiet?: boolean; className?: string }) {
   const { rule, lines } = useMemo(() => noteLines(text), [text]);
-  const size = quiet ? "text-[12.5px] leading-[1.55] text-[#5B6474]" : "text-[13px] leading-[1.5] text-[#111827]";
+  const size = quiet ? "text-[12.5px] leading-[1.55] text-[#5B6474]" : "text-[14px] leading-[1.5] text-[#111827]";
   if (!rule && lines.length === 1 && !lines[0].sub) return <p data-guide={guide} className={`${size} ${className}`}><Marked text={lines[0].text} /></p>;
   return (
     <div data-guide={guide} className={className}>

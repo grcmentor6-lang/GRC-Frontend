@@ -1,12 +1,14 @@
 "use client";
 
+import { isoDmy } from "@/lib/dates";
 import { Icon } from "@/components/ui/icon";
+import { ACCESS_WEEKS, SHARE_BONUS_WEEKS } from "@/lib/programme";
 import { useAuth } from "@/components/auth/auth-provider";
 
 /** Formats an ISO yyyy-mm-dd as e.g. "5 Jan 2027". */
 export function formatAccessDate(iso: string | null): string | null {
   if (!iso) return null;
-  return new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  return isoDmy(iso);
 }
 
 /**
@@ -30,7 +32,11 @@ export function AccessChip({ variant = "light" }: { variant?: "light" | "dark" }
       : "bg-slate-50 text-slate-600 ring-slate-200";
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-[11.5px] font-medium tracking-tight ring-1 ${cls}`}>
+    <span
+      // How the date is made (tester, L-02: it read as a second start date when the LinkedIn weeks were in it unsaid).
+      title={`${ACCESS_WEEKS} weeks from your first start date${user?.linkedinShareClaimed ? `, plus ${SHARE_BONUS_WEEKS} weeks for your LinkedIn share` : ""}. Moving your due dates does not change it.`}
+      className={`inline-flex items-center gap-1.5 px-2.5 h-7 rounded-lg text-[11.5px] font-medium tracking-tight ring-1 ${cls}`}
+    >
       <Icon name="calendar" size={12} />
       {expired ? "Access ended" : "Access until"} {label}
     </span>

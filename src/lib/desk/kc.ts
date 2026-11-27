@@ -16,14 +16,14 @@ export const checkOf = (w: Week) => (w.kc ? w.kc.split(" ")[0] : null);
 export function opensAfter(desk: Desk, id: string): string[] {
   const w = desk.weeks.find((x) => checkOf(x) === id);
   if (!w) return [];
-  const weeks = id === "FGE" ? [1, 2] : [w.n];
+  const weeks = id === "FGE" ? [1, 2] : id === "FEX" ? desk.weeks.map((x) => x.n) : [w.n];
   return desk.order.filter((t) => weeks.includes(desk.tasks[t].week));
 }
 
 /** Null when open; otherwise why not, e.g. "Opens once you submit F1.1–F1.3." (services/desk_kc.why_closed). */
 export function whyClosed(desk: Desk, p: Progress, id: string): string | null {
   // A check already taken stays open and keeps its result, whatever happens to a task before it (locks.ts).
-  if (((p.kc ?? {})[id]?.attempts ?? []).length) return null;
+  if (((p.kc ?? {})[id]?.attempts ?? []).length || (p.kc ?? {})[id]?.live) return null;
   const all = opensAfter(desk, id);
   const missing = all.filter((t) => !p.submitted[t]);
   if (!missing.length) return null;
@@ -35,6 +35,9 @@ export function whyClosed(desk: Desk, p: Progress, id: string): string | null {
 }
 
 export interface KcAttemptStored { n: number; at?: string; score?: number | null; passed?: boolean | null }
+
+/** "2 of 2 attempts used": the one wording of a check's attempts, on the desk, the check page and Reports. */
+export const attemptsLine = (used: number, allowed: number) => `${used} of ${Math.max(used, allowed)} attempts used`;
 
 /** The stored attempts of a check, as the last load (or the last submission) left them. Display only: the record
  *  re-checks every score on the server. */
@@ -53,6 +56,7 @@ export function kcStatus(desk: Desk, p: Progress, id: string, free = false): { l
   // `free`: an account for whom the desk's order is lifted (flags.ts OPEN_DESK_FOR).
   const why = KC_ALL_OPEN || free ? null : whyClosed(desk, p, id);
   const best = bestScore(p, id);
+  if (best === null && (p.kc ?? {})[id]?.live) return { label: "In progress", tone: "open", why };
   if (best !== null) return { label: `Best ${best}%`, tone: "done", why };
   if (why) return { label: "Not open yet", tone: "closed", why };
   return { label: "Open", tone: "open", why };
@@ -69,7 +73,7 @@ export interface KcAttempt { n: number; at: string | null; score: number | null;
 export interface KcState {
   id: string; title: string; kind: "kc" | "gate" | "final"; week: number; weeks: number[];
   size: number; minutes: number; attemptsAllowed: number; passMark: number | null; opensAfter: string[];
-  open: boolean; whyClosed: string | null; attempts: KcAttempt[]; bestScore: number | null; passed: boolean | null;
+  attemptsUsed: number; attemptsLeft: number; open: boolean; whyClosed: string | null; attempts: KcAttempt[]; bestScore: number | null; passed: boolean | null;
   /** When a failed exam's further attempt opens (ISO), while one is waiting. */
   retakeAt: string | null;
   /** The next attempt. Its questions are served only once it is started: the clock is the server's. */

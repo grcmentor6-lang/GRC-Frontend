@@ -29,7 +29,7 @@ export interface User {
   language: string;
   /** Chosen program start (day-0 anchor), ISO yyyy-mm-dd. Null until picked on first visit. */
   startDate: string | null;
-  /** Last day new work can be submitted (start + 24wk + bonus), ISO. Null until start_date is set. */
+  /** Last day new work can be submitted (start + 14wk + bonus), ISO. Null until start_date is set. */
   accessExpiresOn: string | null;
   /** Last day they may choose as their start date — signup + 1 week, ISO. Once it passes with no
    *  choice made, the backend assigns this very date as the start date. */
@@ -39,6 +39,8 @@ export interface User {
   /** Holds a free GRC 101 seat. Granted at signup while seats remain under the backend's
    *  FREE_ACCESS_LIMIT, and never withdrawn once given. */
   freeAccess: boolean;
+  /** Reminder emails (weekly plan, last-day list, quiet nudge, access end). On by default. */
+  emailReminders: boolean;
   createdAt: string;
   /** Their mentee ID and organisation names on the shared desk. Absent on an older backend. */
   deskIdentity?: DeskIdentity;
@@ -104,6 +106,7 @@ export type MePatchRequest = Partial<
     | "linkedin"
     | "timezone"
     | "language"
+    | "emailReminders"
   >
 >;
 

@@ -7,7 +7,8 @@ import { OrgMarks } from "@/lib/desk/org-tone";
 import { useDesk } from "./desk-context";
 import { KcPanelItem, openKc } from "./knowledge-check";
 import { checkOf } from "@/lib/desk/kc";
-import { currentWeek, dayIndex, dueDate, fmtDay, type Desk, type Task } from "@/lib/desk/model";
+import { currentWeek, dueDate, fmtDay, type Desk, type Task } from "@/lib/desk/model";
+import { dueText, LATE_RULE, planOf, urgency, type PlanTask, type Urgency } from "@/lib/desk-plan";
 import { stepKey, taskStatus, type Progress } from "@/lib/desk/progress";
 
 /*
@@ -39,16 +40,11 @@ export function Ring({ value, done, size = 18, stroke = 3.5 }: { value: number; 
   );
 }
 
-type Urgency = "done" | "late" | "today" | "soon" | "later";
-/** "Due tomorrow" beats "Due Wed 7 Oct" for deciding what to do first; the date stays in the tooltip. */
-function due(start: Date, dueDay: number, submitted: boolean): { text: string; level: Urgency; title: string } {
-  const title = `Due ${fmtDay(dueDate(start, dueDay))}`;
-  if (submitted) return { text: "Submitted", level: "done", title };
-  const left = dueDay - dayIndex(start);
-  if (left < 0) return { text: `Overdue by ${-left} day${left === -1 ? "" : "s"}`, level: "late", title };
-  if (left === 0) return { text: "Due today", level: "today", title };
-  if (left === 1) return { text: "Due tomorrow", level: "soon", title };
-  return { text: `Due in ${left} days`, level: "later", title };
+/** "Due tomorrow" beats "Due Wed 7 Oct" for deciding what to do first; the date stays in the tooltip. The wording and
+ *  what counts as late are the plan's (lib/desk-plan.ts): a week the learner has not reached is never overdue. */
+function due(t: PlanTask): { text: string; level: Urgency; title: string } {
+  const level = urgency(t);
+  return { text: dueText(t), level, title: `${t.state === "not-reached" ? "Planned for" : "Due"} ${fmtDay(t.due)}${level === "late" ? `. ${LATE_RULE}` : ""}` };
 }
 const ON_LIGHT: Record<Urgency, string> = {
   done: "text-[#15803D]",
@@ -61,7 +57,7 @@ const ON_LIGHT: Record<Urgency, string> = {
 /**
  * The header timeline: twelve cells in a strip, each a label over its own progress bar. The week on
  * screen is the white cell with an indigo underline; today's week carries a dot; locked weeks a lock.
- * Exam weeks (amber diamond) and checkpoint weeks (dark dot) are marked in the cell.
+ * Exam weeks (amber diamond) are marked in the cell.
  */
 export function WeekTimeline({ week, onWeek, fit }: { week: number; onWeek: (n: number) => void; /** All twelve weeks in the width there is, none scrolled off: the desk beside a docked test. */ fit?: boolean }) {
   const { desk, progress, isOpen, start } = useDesk();
@@ -82,8 +78,7 @@ export function WeekTimeline({ week, onWeek, fit }: { week: number; onWeek: (n: 
         const allIn = ts.every((t) => progress.submitted[t.id]);
         const open = isOpen(w.n);
         const here = w.n === week;
-        const hc = w.hc?.split(" ")[0];
-        const notes = [w.gate, hc && `checkpoint ${hc}`].filter(Boolean).join(", ");
+        const notes = w.gate ?? "";
         // The organisations this week's tasks are for ("AB" is both), in A, B order.
         const orgs = (["A", "B"] as const).filter((k) => ts.some((t) => t.org.includes(k)));
         return (
@@ -111,8 +106,7 @@ export function WeekTimeline({ week, onWeek, fit }: { week: number; onWeek: (n: 
               </span>
               <span className="flex-1" />
               {w.gate && <span className="h-1.5 w-1.5 shrink-0 rotate-45 bg-[#D97706]" aria-label="exam week" />}
-              {hc && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#111827]" aria-label="checkpoint week" />}
-              {!open && <Icon name="lock" size={10} className="text-[#8A91A3]" />}
+              {!open && <Icon name="lock" size={10} className="text-[#6B7280]" />}
             </span>
             <span className={`block h-[3px] w-full ${open ? "bg-[#E3E6EC]" : "bg-transparent"}`}>
               {open && (
@@ -142,6 +136,7 @@ const Dot = () => <span className="h-[3px] w-[3px] shrink-0 rounded-full bg-[#C4
 /** The left column: the week and its tasks first, then the long view. */
 export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { week: number; taskId: string | null; overview: boolean; onOverview: () => void; onCollapse: () => void }) {
   const { desk, progress, start, openTask, isOpen, taskLock } = useDesk();
+  const plan = planOf(desk, progress, start, true);
   const all = desk.order.map((id) => desk.tasks[id]);
   const w = desk.weeks[week - 1];
   const tasks = weekTasks(desk, week);
@@ -151,7 +146,6 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
   const submitted = all.filter((t) => progress.submitted[t.id]).length;
   const weeksDone = desk.weeks.filter((x) => weekTasks(desk, x.n).every((t) => progress.submitted[t.id])).length;
   const pct = steps ? Math.round((stepsDone / steps) * 100) : 0;
-  const hc = w.hc?.split(" ")[0];
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
@@ -195,7 +189,7 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
             const here = t.id === taskId;
             const st = taskStatus(progress, t);
             const n = doneSteps(progress, t);
-            const d = isOpen(t.week) ? due(start, t.dueDay, st === "submitted") : null;
+            const d = isOpen(t.week) ? due(plan.find((x) => x.id === t.id)!) : null;
             const gate = taskLock(t.id);
             return (
               <li key={t.id} data-task-gate={gate ?? undefined} title={gate ? `Opens once you submit ${gate}` : undefined}>
@@ -214,7 +208,7 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
                   <span className="min-w-0">
                     <span className="mb-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold tracking-[0.02em] text-[#4338CA]">
                       {t.id}
-                      {gate && <Icon name="lock" size={11} strokeWidth={2.5} className="text-[#8A91A3]" aria-label="not open yet" />}
+                      {gate && <Icon name="lock" size={11} strokeWidth={2.5} className="text-[#6B7280]" aria-label="not open yet" />}
                       <OrgMarks org={t.org} orgs={desk.orgs} />
                     </span>
                     <span className="block text-balance text-[14.5px] font-semibold leading-[1.35] tracking-[-0.005em] text-[#111827]">{t.title}</span>
@@ -222,11 +216,10 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
                       {d ? (
                         <span className={ON_LIGHT[d.level]} title={d.title}>{d.text}</span>
                       ) : (
-                        <span className="text-[#8A91A3]">Opens {fmtDay(dueDate(start, (t.week - 1) * 7))}</span>
+                        <span className="text-[#6B7280]">Opens {fmtDay(dueDate(start, (t.week - 1) * 7))}</span>
                       )}
                       <Dot />
                       <span>{n} of {t.steps.length} steps</span>
-                      {t.hc && <span className="ml-0.5 rounded bg-[#1F2937] px-1.5 py-[3px] text-[10.5px] font-bold leading-none tracking-[0.04em] text-white">{t.hc}</span>}
                       {t.li.length > 0 && <span title={`Includes Lead Implementer extension ${t.li.join(", ")}`} className="rounded border border-[#C7CBF5] bg-[#EEF0FF] px-1.5 py-0.5 text-[10.5px] font-bold leading-none tracking-[0.04em] text-[#3730A3]">LI</span>}
                     </span>
                   </span>
@@ -236,7 +229,7 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
           })}
         </ul>
 
-        {(w.kc || hc) && (
+        {w.kc && (
           <>
             <h3 className={`${label} px-5 pb-1 pt-5`}>Before the week closes</h3>
             <ul className="pb-3.5 text-[14px] text-[#6B7280]">
@@ -246,12 +239,6 @@ export function WeekPanel({ week, taskId, overview, onOverview, onCollapse }: { 
               {w.kc && (
                 <li data-test={w.kc.split(" ")[0]}>
                   <KcPanelItem week={w} onOpen={onCollapse} />
-                </li>
-              )}
-              {hc && (
-                <li className="flex items-center gap-3 px-5 py-2.5 text-[#111827]">
-                  <span className="grid w-[18px] shrink-0 place-items-center"><span className="h-2 w-2 rounded-full bg-[#111827]" /></span>
-                  Checkpoint {w.hc}
                 </li>
               )}
             </ul>
@@ -313,7 +300,7 @@ export function WeekRail({ week, taskId, overview, onOverview, onExpand }: { wee
             title={taskLock(t.id) ? `${t.id} opens once you submit ${taskLock(t.id)}` : `${t.id} ${t.title}`}
             className={`${cell} gap-1 py-2 ${here ? "bg-[#F3F4FF] shadow-[inset_3px_0_0_#4338CA]" : "hover:bg-[#F3F4F7]"}`}
           >
-            {taskLock(t.id) ? <Icon name="lock" size={14} className="text-[#8A91A3]" /> : <Ring value={doneSteps(progress, t) / t.steps.length} done={st === "submitted"} size={18} />}
+            {taskLock(t.id) ? <Icon name="lock" size={14} className="text-[#6B7280]" /> : <Ring value={doneSteps(progress, t) / t.steps.length} done={st === "submitted"} size={18} />}
             <span className={`font-mono text-[9.5px] ${here ? "text-[#4338CA]" : "text-[#5B6474]"}`}>{t.id}</span>
           </button>
         );

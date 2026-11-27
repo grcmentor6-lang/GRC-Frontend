@@ -16,7 +16,7 @@ export const LI_MARK = "GRC101#v";
 export const SAVE_VERSION = "li1";
 export const REBUILT = ["F1.2", "F1.3", "F2.1", "F2.2", "T3.1", "T3.2", "T4.1", "T4.2", "T5.1", "T5.2", "T6.1", "T6.2",
   "T7.1", "T7.2", "T8.1", "T8.2", "T9.1", "T9.2", "T10.1", "T10.2", "T11.1", "T11.2", "T12.1", "T12.2"];
-const SECTIONS = ["done", "picks", "answers", "grids", "msgs", "logs", "acks", "rowChecks", "decisions", "submitted"];
+const SECTIONS = ["done", "picks", "answers", "grids", "msgs", "logs", "acks", "rowChecks", "decisions", "submitted", "hints"];
 // A key's task: "T3.2", "T3.2-4", "T3.2-4#hash", "T3.2|T-MAP", "T3.2:MAP-XW", "T3.2#v", "T3.2-J1", "T3.2-D3".
 const TASK = /^([FT]\d+\.\d+)(?=$|[-|:#])/;
 

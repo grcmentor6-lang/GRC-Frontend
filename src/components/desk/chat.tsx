@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
+import { ReadFirst, messageSourceItems } from "./read-first";
 import { useDesk } from "./desk-context";
 import type { Task } from "@/lib/desk/model";
 import { holdStep, released, waitingAt } from "@/lib/desk/inbox";
@@ -38,7 +39,7 @@ function Bubble({ who, label, text }: { who: "you" | "them"; label: string; text
     <div className={`flex items-start gap-2.5 ${mine ? "justify-end" : ""}`}>
       {!mine && <Avatar who="them" label={label} />}
       <div
-        className={`max-w-[82%] whitespace-pre-line rounded-2xl border border-[#d3dbe6] px-3.5 py-2 text-[13.5px] leading-relaxed tracking-tight text-slate-800 ${
+        className={`max-w-[82%] whitespace-pre-line rounded-2xl border border-[#d3dbe6] px-3.5 py-2 text-[14px] leading-[1.5] tracking-tight text-slate-800 ${
           mine ? "bg-indigo-50" : "bg-white"
         }`}
       >
@@ -83,7 +84,7 @@ const KIND: Record<string, { label: string; hint: string; chip: string; icon: "a
   },
   DECISION: {
     label: "Quick decision",
-    hint: "A colleague needs your call. Read the guidance named below, then choose.",
+    hint: "A colleague needs your call. Open the source under Read first, then choose.",
     chip: "bg-amber-50 text-amber-800 ring-amber-200",
     icon: "flag",
   },
@@ -118,9 +119,10 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
     return () => { live = false; };
   }, [m, picked, notice, fb, nokey, id, update]);
   if (!m) return null;
-  const kind = KIND[m.type] ?? KIND.DECISION;
+  // A drill is not named until it is answered: "Security drill" beside the message says what to do with it (U-01).
+  const kind = !picked && m.type === "DRILL" ? { ...KIND.DRILL, label: "New message", hint: "Someone has written to you. Read it, then decide how to reply.", chip: "bg-slate-100 text-slate-700 ring-slate-200", icon: "inbox" as const } : (KIND[m.type] ?? KIND.DECISION);
   // What the mentee's own bubble says: the option they took, or the pack's button label.
-  const answer = !picked ? undefined : notice ? "Rows added" : picked === "report" ? "Report" : m.options[picked.charCodeAt(0) - 65];
+  const answer = !picked ? undefined : notice ? "Rows added" : picked === "report" ? "Report this message" : m.options[picked.charCodeAt(0) - 65];
   const reply = (v: string) => update((p) => ({ ...p, msgs: { ...p.msgs, [id]: v } }));
   const bestText = fb?.best === "report" ? "Report" : fb?.best ? m.options[fb.best.charCodeAt(0) - 65] : undefined;
 
@@ -149,7 +151,7 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
         {picked ? <Bubble who="them" label={m.sender} text={m.notice} /> : <TypingBubble label={m.sender} text={m.notice} onDone={() => setArrived(true)} />}
 
         {notice && m.steps?.length > 0 && (
-          <ol className="ml-[38px] grid list-decimal gap-1 rounded-xl bg-white/70 py-2.5 pl-8 pr-3.5 text-[13px] leading-relaxed text-slate-700 ring-1 ring-inset ring-slate-200">
+          <ol className="ml-[38px] grid list-decimal gap-1 rounded-xl bg-white/70 py-2.5 pl-8 pr-3.5 text-[14px] leading-[1.5] text-slate-700 ring-1 ring-inset ring-slate-200">
             {m.steps.map((x) => (
               <li key={x}>{x}</li>
             ))}
@@ -158,6 +160,7 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
 
         {answer && <Bubble who="you" label="You" text={answer} />}
 
+        {!picked && arrived && !notice && <ReadFirst items={messageSourceItems(desk, m.ref)} />}
         {!picked && arrived && !notice && (
           <div className="pt-1">
             <p className="mb-2 text-center text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-400">Choose your reply</p>
@@ -168,7 +171,7 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
                   type="button"
                   disabled={locked}
                   onClick={() => reply(letter)}
-                  className="flex w-full gap-2.5 rounded-xl bg-white px-3.5 py-2.5 text-left text-[13px] leading-relaxed tracking-tight text-slate-800 ring-1 ring-slate-200 transition-colors hover:bg-indigo-50/40 hover:ring-indigo-400 focus-ring active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex w-full gap-2.5 rounded-xl bg-white px-3.5 py-2.5 text-left text-[14px] leading-[1.5] tracking-tight text-slate-800 ring-1 ring-slate-200 transition-colors hover:bg-indigo-50/40 hover:ring-indigo-400 focus-ring active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[11px] font-semibold text-slate-500">{"ABCDEF"[i]}</span>
                   <span>{o}</span>
@@ -181,10 +184,13 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
                 type="button"
                 disabled={locked}
                 onClick={() => reply("report")}
-                className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-lg bg-white px-3 text-[12.5px] font-semibold text-amber-800 ring-1 ring-amber-300 transition-colors hover:bg-amber-50 focus-ring active:scale-[0.98] disabled:opacity-60"
+                className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-lg bg-white px-3 text-[12.5px] font-semibold text-slate-700 ring-1 ring-slate-200 transition-colors hover:bg-slate-50 focus-ring active:scale-[0.98] disabled:opacity-60"
               >
-                <Icon name="flag" size={13} /> Report
+                <Icon name="flag" size={13} /> Report this message
               </button>
+            )}
+            {m.type === "DRILL" && (
+              <p className="mt-1 text-[12px] text-slate-500">This is an answer to the drill, like A, B and C: it reports the message in the scenario. To tell the programme about a fault on the desk, use Report a problem, bottom right.</p>
             )}
           </div>
         )}
@@ -203,7 +209,7 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
         )}
 
         {picked && fb && (
-          <div data-guide="message-result" className={`grid gap-1 rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed ring-1 ring-inset ${fb.correct ? "bg-emerald-50 text-emerald-900 ring-emerald-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
+          <div data-guide="message-result" className={`grid gap-1 rounded-xl px-3.5 py-2.5 text-[14px] leading-[1.5] ring-1 ring-inset ${fb.correct ? "bg-emerald-50 text-emerald-900 ring-emerald-200" : "bg-amber-50 text-amber-900 ring-amber-200"}`}>
             <p className="font-semibold">{fb.correct ? "That was the best reply." : `Not the best reply. The best is: ${bestText}`}</p>
             {fb.why && <p>{relabel(fb.why, order)}</p>}
           </div>
@@ -227,18 +233,15 @@ function Thread({ id, task, locked }: { id: string; task: Task; locked: boolean 
 
 /** On a step with a message waiting: who it is from, why it matters now, and the way to it. */
 export function MessageNotice({ task, n }: { task: Task; n: number }) {
-  const { desk, progress, openTool } = useDesk();
+  const { desk, progress } = useDesk();
   const id = waitingAt(desk, progress, task.id, n)[0];
   if (!id) return null;
   return (
     <div data-guide="message-notice" role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 border-y border-[#F3D08A] bg-[#FFFBF2] px-4 py-2.5">
       <Icon name="inbox" size={16} className="shrink-0 text-[#92400E]" />
-      <p className="min-w-[180px] flex-1 text-[13px] leading-snug text-[#78350F]">
-        <strong className="font-semibold">New message from {desk.inj[id].sender}.</strong> It is a separate part of this task{desk.inj[id].assess ? ` (${desk.inj[id].assess.toLowerCase()})` : ""}, not part of this step&rsquo;s own work. Do the step, and reply in the Inbox before you complete it.
+      <p className="min-w-[180px] flex-1 text-[14px] leading-[1.5] text-[#78350F]">
+        <strong className="font-semibold">New message from {desk.inj[id].sender}.</strong> It is a separate part of this task{desk.inj[id].assess ? ` (${desk.inj[id].assess.toLowerCase()})` : ""}, not part of this step&rsquo;s own work. Do the step, and reply in the Inbox (open it from the toolbar) before you complete it.
       </p>
-      <button type="button" data-guide="message-open" onClick={() => openTool("inbox|*")} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded bg-[#4338CA] px-3.5 text-[13px] font-semibold text-white hover:brightness-90 focus-ring">
-        Open Inbox
-      </button>
     </div>
   );
 }

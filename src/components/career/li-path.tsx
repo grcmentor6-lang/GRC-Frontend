@@ -264,7 +264,7 @@ function Summary({ desk, li, p, view }: Ctx) {
           </button>
         ))}
       </dl>
-      <Table head={["Week", "Theme", "Tasks", "Checkpoint", "Your progress"]}>
+      <Table head={["Week", "Theme", "Tasks", "Your progress"]}>
         {desk.weeks.map((w) => {
           const ids = desk.order.filter((t) => desk.tasks[t].week === w.n);
           const g = standing(desk, p, ids);
@@ -273,7 +273,6 @@ function Summary({ desk, li, p, view }: Ctx) {
               <td className={`${td} font-mono text-[12px] text-[#4338CA]`}>{w.n}</td>
               <td className={`${td} min-w-[260px] text-[#111827]`}>{w.th}</td>
               <td className={td}><Work cell={ids.join(", ")} desk={desk} p={p} /></td>
-              <td className={`${td} whitespace-nowrap text-[12.5px] text-[#3F4757]`}>{w.hc || "—"}</td>
               <td className={`${td} w-[180px]`}><Bar n={g.done} of={g.total} /></td>
             </tr>
           );

@@ -70,7 +70,7 @@ for (const s of [
 const s = "Click **Check my answers**: it reads SITL-ADD-16 Section 9, A-03 and Home › My Organisation.";
 assert.equal(markParts(s).map((p) => p.text).join(""), s.replace(/\*\*/g, ""));
 // Round 3: Submit as the button it names; sections opened from; the checklist's pair and lone button leads.
-eq("Submit opens once steps 1 to 5 are complete. If Submit is grey, read the line.", ["btn:Submit", "btn:Submit"]);
+eq("Save to 02_Working opens once steps 1 to 5 are complete. If Save to 02_Working is grey, read the line.", ["btn:Save to 02_Working", "btn:Save to 02_Working"]);
 eq("Submit hands both files in.", ["btn:Submit"]);
 eq("Reply from the Inbox, or open the Inbox; it is in the Inbox.", ["path:Inbox", "path:Inbox", "path:Inbox"]);
 eq("Use the Evidence request frame of Learn › Sentence frames.", ["field:Evidence request frame", "path:Learn › Sentence frames"]);

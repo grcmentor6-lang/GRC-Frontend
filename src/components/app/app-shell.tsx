@@ -486,7 +486,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       {/* On the desk the corner belongs to its toolbar, so the button sits above it. */}
       <BadgeRevealWatcher />
-      <FeedbackWidget placement={pathname.startsWith("/app/desk") ? "bottom-[22px] right-5 max-lg:bottom-[84px] max-lg:right-4" : undefined} />
+      <FeedbackWidget placement={pathname.startsWith("/app/desk") ? "bottom-[22px] right-5 max-lg:bottom-[84px] max-lg:right-4 max-sm:!bottom-[148px] max-sm:!right-0 max-sm:[&>button]:h-10 max-sm:[&>button]:w-10 max-sm:[&>button]:translate-x-[58%] max-sm:[&>button]:rounded-r-none max-sm:[&>button:focus-visible]:translate-x-0 max-sm:[&>button:active]:translate-x-0 max-sm:[&>div]:mr-3" : undefined} />
       <div className="print:hidden"><WelcomeTour openNav={() => setMobileOpen(true)} /></div>
     </div>
   );

@@ -508,15 +508,15 @@ function GuideBody({ steps, tips }: Pick<TourStep, "steps" | "tips">) {
                   s.mark === "stop" ? "bg-[#16A34A] border-[#16A34A] text-white" : s.mark === "default" ? "bg-[#111827] border-[#111827] text-white" : "bg-[#F1F2FF] border-[#C7CCF5] text-[#4338CA]"
                 }`}
               >
-                {s.mark === "stop" ? <Icon name="check" size={13} strokeWidth={3} /> : i + 1}
+                {i + 1}
               </span>
               <div className="min-w-0">
                 <Said text={s.lead} className="pt-[3px] text-[14px] font-semibold leading-[1.4] text-[#111827]" />
-                {s.text && <Said text={s.text} className="mt-0.5 text-[13.5px] leading-[1.55] text-[#4B5563]" />}
+                {s.text && <Said text={s.text} className="mt-0.5 text-[14px] leading-[1.5] text-[#4B5563]" />}
                 {!!s.fork?.length && (
                   <div className={`mt-2 grid gap-2 ${s.fork.length > 1 ? "grid-cols-2" : ""}`}>
                     {s.fork.map((f, j) => (
-                      <div key={j} className={`rounded-lg border px-2.5 py-2 text-[12.5px] leading-[1.45] ${j ? "bg-[#F8F9FB] text-[#374151] border-[#E3E5EA]" : "bg-[#EFFBF3] text-[#166534] border-[#C8ECD5]"}`}>
+                      <div key={j} className={`rounded-lg border px-2.5 py-2 text-[14px] leading-[1.5] ${j ? "bg-[#F8F9FB] text-[#374151] border-[#E3E5EA]" : "bg-[#EFFBF3] text-[#166534] border-[#C8ECD5]"}`}>
                         <b className="block mb-0.5 text-[10.5px] font-bold tracking-[0.08em] uppercase">{f.when}</b>
                         <Said text={f.then} as="div" />
                       </div>
@@ -531,7 +531,7 @@ function GuideBody({ steps, tips }: Pick<TourStep, "steps" | "tips">) {
       {!!tips?.length && (
         <div className="mx-5 mt-4 grid gap-2">
           {tips.map((t, i) => (
-            <div key={i} className={`grid grid-cols-[16px_1fr] gap-2.5 rounded-[10px] border px-3 py-2.5 text-[13px] leading-[1.5] ${TIP[t.kind].box}`}>
+            <div key={i} className={`grid grid-cols-[16px_1fr] gap-2.5 rounded-[10px] border px-3 py-2.5 text-[14px] leading-[1.5] ${TIP[t.kind].box}`}>
               <Icon name={TIP[t.kind].icon} size={16} strokeWidth={2.2} className={`mt-px ${TIP[t.kind].color}`} />
               {sentences(t.text).length < 2 ? <p><b className="font-semibold">{TIP[t.kind].label}</b> <Marked text={t.text} /></p> : (
                 <div><b className="font-semibold">{TIP[t.kind].label}</b><Said text={t.text} className="mt-0.5" /></div>

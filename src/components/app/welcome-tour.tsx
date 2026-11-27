@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { GuidedTour, markTourSeen, useTourOnce, type TourStep } from "./guided-tour";
 import { useAuth } from "@/components/auth/auth-provider";
 import { TOUR_SEEN_KEY } from "./nav";
@@ -128,7 +128,10 @@ export function WelcomeTour({ openNav }: { openNav: () => void }) {
   const tourSteps = useMemo(() => steps(showNav, goto), [showNav, goto]);
 
   // First run, per mentee. Delayed so the shell has painted and the nav targets are measurable.
-  useTourOnce(TOUR_SEEN_KEY, user?.email, true, () => setStep(0), 600);
+  // Not on the Working Desk: a first visit there meets the start-date screen and then the desk's own guide, and this
+  // card sat over both. It runs the first time they are anywhere else.
+  const onDesk = usePathname() === "/app/desk";
+  useTourOnce(TOUR_SEEN_KEY, user?.email, !onDesk, () => setStep(0), 600);
 
   // Manual relaunch.
   useEffect(() => {
